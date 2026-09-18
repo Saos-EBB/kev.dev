@@ -1,0 +1,1115 @@
+@font-face {
+  font-family: "Koeeya Trial";
+  src: url("/fonts/koeeya-trial.ttf") format("truetype");
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------- */
+/* Design tokens — placeholders, swap freely for the real palette.  */
+/* --color-line is an "r, g, b" triple (no rgb()) so canvas code    */
+/* in cloth.ts can read it via getComputedStyle and build rgba().   */
+/* ---------------------------------------------------------------- */
+:root {
+  --color-bg: #08070a;
+  --color-text: #f5f5f6;
+  --color-text-muted: #8a8a93;
+  --color-accent: #ff2e63;
+  --color-line: 226, 226, 235;
+
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-display: "Koeeya Trial", var(--font-sans);
+
+  --hero-pad-inline: clamp(1.25rem, 5vw, 3rem);
+
+  /* Timing tokens — the CSS-side half of the page's animation timing.
+     src/timings.ts holds the other half (everything GSAP/ScrollTrigger-
+     driven — hero drag feel, the about/projects/contact scroll scenes).
+     Hand-adjust durations in exactly one of these two places, never by
+     editing a selector below directly. */
+  --transition-hover: 0.2s ease; /* every plain color/border hover-state fade on the page (nav links/icons, card borders, footer/legal links, the scrollbar thumb) shares this one duration */
+  --edge-nav-fade: 0.25s ease; /* how long .site-header / .footer--floating take to fade in/out at the top/bottom 10% of scroll — see scroll/edge-nav.ts's EDGE threshold in timings.ts */
+  --hero-nav-fade-duration: 0.45s; /* .hero-nav's own entrance on page load, see the fade-up keyframes below */
+  --hero-nav-fade-delay: 0.55s;
+
+  /* Elevator shaft geometry — tune depth/perspective together until the
+     wall angles look right, everything else derives from these.
+     Depth is kept an exact multiple of the tile size so the grid lands
+     on a clean tile boundary right at the back wall on every side —
+     otherwise each wall's pattern meets it at a different fractional
+     phase, which is what read as a messy/unaligned seam there. */
+  --elevator-depth: 1440px;
+  --elevator-perspective: 1200px;
+  --elevator-tile: 80px;
+  /* CSS can't divide two length custom properties, so this is
+     perspective / (perspective + depth) computed by hand — how big the
+     back wall (and so the flat text overlay pinned to it) appears
+     on-screen. Keep it in sync if depth/perspective change. */
+  --elevator-overlay-scale: 0.4545;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  /* Native scrollbar hidden in favor of .scrollbar (see below) — purely
+     cosmetic, wheel/trackpad/touch/keyboard scroll are untouched. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------- */
+/* Site header — a slim fixed bar, separate from .hero-nav (which     */
+/* stays part of the hero card itself). edge-nav.ts toggles           */
+/* .is-visible from scroll progress, only shown near the top of the   */
+/* page — hidden the rest of the way through the scroll-driven scenes.*/
+/* ---------------------------------------------------------------- */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  border-bottom: 1px solid rgba(var(--color-line), 0.16);
+  background: var(--color-bg);
+  padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--edge-nav-fade),
+    visibility 0s linear var(--edge-nav-fade);
+}
+
+.site-header.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--edge-nav-fade),
+    visibility 0s linear;
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.site-header-brand {
+  color: var(--color-text-muted);
+}
+
+.site-header-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.site-header-links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: color var(--transition-hover);
+}
+
+.site-header-links a:hover,
+.site-header-links a:focus-visible {
+  color: rgb(var(--color-line));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .site-header {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Hero                                                              */
+/* ---------------------------------------------------------------- */
+
+.hero {
+  width: 100%;
+  height: 100svh;
+  padding: clamp(0.5rem, 1.5vw, 1rem);
+  background: var(--color-bg);
+}
+
+/* Bordered "card" holding the whole hero — nav, cloth box, name. The
+   cloth mesh is the only grid now; a second CSS background grid behind
+   it used to double up and look messy. */
+.hero-frame {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(var(--color-line), 0.16);
+  border-radius: 14px;
+  overflow: hidden;
+  background-color: var(--color-bg);
+}
+
+.hero-nav {
+  position: relative;
+  /* Above the canvas (z-index: 5) so its solid background actually
+     masks the cloth when a dragged node bleeds up underneath it. */
+  z-index: 10;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
+  background: var(--color-bg);
+  font-family: var(--font-mono);
+  animation: fade-up var(--hero-nav-fade-duration) ease-out
+    var(--hero-nav-fade-delay) both;
+}
+
+.nav-links,
+.nav-icons {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  gap: clamp(1.1rem, 3vw, 2.25rem);
+}
+
+.nav-links a {
+  font-size: clamp(0.85rem, 1.1vw, 1rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  transition: color var(--transition-hover);
+}
+
+/* Same rgb(--color-line) as the cloth mesh, the hero rule lines and the
+   elevator grid — one line color used consistently everywhere. */
+.nav-links a:hover,
+.nav-links a:focus-visible {
+  color: rgb(var(--color-line));
+}
+
+.nav-icons a {
+  display: inline-flex;
+  color: var(--color-text-muted);
+  transition: color var(--transition-hover);
+}
+
+.nav-icons a:hover,
+.nav-icons a:focus-visible {
+  color: rgb(var(--color-line));
+}
+
+.nav-icons svg {
+  width: 21px;
+  height: 21px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Cloth body: fills all remaining space between the two .hero-rule
+   lines below — its own bounded section, distinct from the header. Its
+   size/position is read via getBoundingClientRect in cloth.ts to build
+   the resting grid. The name/subtitle sit at its bottom edge, flush
+   against the lower rule. The canvas itself is bigger still — see
+   #cloth-canvas below — so a dragged node can bleed out over the nav
+   instead of clipping here. */
+.cloth-body {
+  flex: 1 1 auto;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* Thick rule above and below the cloth, marking it as its own section —
+   the name/subtitle sit directly on top of the lower one. */
+.hero-rule {
+  flex: 0 0 auto;
+  height: 5px;
+  background: rgba(var(--color-line), 0.7);
+}
+
+/* Sized to the whole card (not just .cloth-container) and painted above
+   the nav/name via z-index, so the mesh stays visible for as long as
+   it's dragged, clipped only at the card's own edge. */
+#cloth-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* The canvas spans the whole card so the mesh can bleed over the
+     nav/name — pointer-events stay off so those stay clickable, and
+     cloth.ts grabs nodes via a window-level listener + setPointerCapture
+     instead of relying on this element being hit-testable. */
+  pointer-events: none;
+  touch-action: pan-y;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(0.1rem, 0.5vw, 0.35rem);
+  padding: clamp(0.75rem, 2vw, 1.5rem) var(--hero-pad-inline) 0;
+}
+
+.hero-name {
+  font-family: var(--font-display);
+  /* Fallback until main.ts measures and sets an exact fit; JS keeps this
+     spanning the full container width for any text/font/viewport combo. */
+  font-size: clamp(2.75rem, 11vw, 8rem);
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  /* The cloth warps this text onto the mesh instead (see cloth.ts /
+     setTextTexture) — kept in the DOM at full size for layout, SEO and
+     screen readers, just not painted here. */
+  opacity: 0;
+}
+
+.hero-subtitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.6vw, 1.75rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  /* Warped onto the cloth alongside the name — see updateNameTexture()
+     in main.ts — kept in the DOM for layout, SEO and screen readers. */
+  opacity: 0;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .hero-nav {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-links {
+    gap: 1rem;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* About — static CSS-3D corridor (one fixed vanishing point)        */
+/* No scroll-driven motion at all here — it's a tall (4x a normal     */
+/* viewport) graphic that simply scrolls past with the rest of the   */
+/* page, ceiling up top and floor down below, like any other section.*/
+/* ---------------------------------------------------------------- */
+
+.about {
+  position: relative;
+  height: 400svh;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.elevator {
+  position: absolute;
+  inset: 0;
+  perspective: var(--elevator-perspective);
+  perspective-origin: 50% 50%;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.elevator-shaft {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* Static grid pattern painted directly on each wall — nothing streams,
+   nothing animates, so there's no need for a separate tiled layer. */
+.elevator-wall {
+  position: absolute;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(var(--color-line), 0.28) 0 1px,
+      transparent 1px var(--elevator-tile)
+    ),
+    repeating-linear-gradient(
+      to right,
+      rgba(var(--color-line), 0.28) 0 1px,
+      transparent 1px var(--elevator-tile)
+    );
+}
+
+/* Each side wall is sized to the shaft depth and rotated 90deg around
+   the edge it shares with the front (viewport) plane — its far edge
+   then lands exactly on the back wall, no manual convergence math. */
+.elevator-wall--left {
+  top: 0;
+  left: 0;
+  width: var(--elevator-depth);
+  height: 100%;
+  transform-origin: left center;
+  transform: rotateY(90deg);
+}
+
+.elevator-wall--right {
+  top: 0;
+  right: 0;
+  width: var(--elevator-depth);
+  height: 100%;
+  transform-origin: right center;
+  transform: rotateY(-90deg);
+}
+
+.elevator-wall--ceiling {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--elevator-depth);
+  transform-origin: top center;
+  transform: rotateX(-90deg);
+}
+
+.elevator-wall--floor {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--elevator-depth);
+  transform-origin: bottom center;
+  transform: rotateX(90deg);
+}
+
+.elevator-backwall {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(calc(-1 * var(--elevator-depth)));
+  background: var(--color-bg);
+}
+
+/* Fades the shaft to black at the top/bottom edges — sells the "shaft"
+   read instead of the walls just stopping at a hard viewport edge. */
+.elevator-vignette {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 20%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.elevator-vignette--top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--color-bg), transparent);
+}
+
+.elevator-vignette--bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-bg), transparent);
+}
+
+/* About text: a flat 2D layer, not part of the preserve-3d scene, so it
+   never tilts/distorts with the box — sized/centered to match how big
+   the back wall reads on screen, so it looks like it sits on it. */
+.about-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.4em;
+  pointer-events: none;
+}
+
+/* Small curated gallery — motto/quote/mood/inspiration "exhibits" (see
+   galleryItems in elevator.ts). Styled like a museum plaque: a framed
+   box holding the text, a small label line underneath — deliberately
+   not prose, so it stays scannable while scrolling past instead of
+   asking to be read closely. */
+.about-gallery-item {
+  width: calc(var(--elevator-overlay-scale) * 100%);
+  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+}
+
+.about-gallery-art {
+  margin: 0;
+  padding: 1.6em 1.4em;
+  border: 1px solid rgba(var(--color-line), 0.35);
+  background: rgba(var(--color-line), 0.03);
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.about-gallery-caption {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* CV facts, after the gallery above — same width/centering, own
+   heading + list treatment since this is data (role/org/dates), not prose. */
+.about-cv-section {
+  width: calc(var(--elevator-overlay-scale) * 100%);
+  max-width: 46rem;
+}
+
+.about-cv-heading {
+  margin-bottom: 0.7em;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.about-cv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+  line-height: 1.55;
+  color: var(--color-text);
+}
+
+/* ---------------------------------------------------------------- */
+/* Projects — scroll-driven 3D carousel (GSAP + ScrollTrigger pin)   */
+/* Cards travel through perspective space; carousel.ts sets each     */
+/* card's transform/opacity per frame from scroll progress — nothing */
+/* here positions them, this file only styles the card itself and    */
+/* the reduced-motion fallback layout.                                */
+/* ---------------------------------------------------------------- */
+
+.projects {
+  position: relative;
+  background: var(--color-bg);
+}
+
+/* Flat, frontal reference grid behind the cylinder. Always opacity 1 —
+   nothing (not even transition.ts) ever touches this. #projects only
+   ever enters the viewport from the bottom, so as soon as any of it is
+   on screen its grid is already there; no fade-in to time against the
+   elevator box's own approach (see transition.ts for that side).
+   Tile size reuses --elevator-tile (not its own value) on purpose: the
+   elevator floor sits right above this section, and --elevator-depth is
+   an exact multiple of --elevator-tile, so the floor's own grid lines
+   land on a tile boundary exactly at the seam — sharing the same tile
+   size is what makes this grid's lines continue that pattern line-for-
+   line instead of drifting out of phase with it. */
+.projects-bg-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 1;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(var(--color-line), 0.12) 0 1px,
+      transparent 1px var(--elevator-tile)
+    ),
+    repeating-linear-gradient(
+      to right,
+      rgba(var(--color-line), 0.12) 0 1px,
+      transparent 1px var(--elevator-tile)
+    );
+}
+
+.carousel-stage {
+  position: relative;
+  z-index: 1;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.carousel-perspective {
+  position: absolute;
+  inset: 0;
+  /* Paired with RADIUS in carousel.ts — the dead-ahead card sits at
+     perspective + RADIUS from the eye, so a smaller perspective here
+     (on top of the smaller RADIUS) is what actually brings it closer,
+     not just less far away. */
+  perspective: 1100px;
+}
+
+.carousel-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.carousel-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(280px, 34vw, 480px);
+  aspect-ratio: 4 / 5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* clips the image's top corners to the card radius, and is the safety net if any card's text runs long despite the clamps below */
+  border: 1px solid rgba(var(--color-line), 0.3);
+  border-radius: 10px;
+  background: var(--color-bg);
+  text-decoration: none;
+  will-change: transform;
+  transition: border-color var(--transition-hover);
+}
+
+.carousel-card.is-active {
+  border-color: var(--color-accent);
+}
+
+.carousel-card-number,
+.carousel-card-badge {
+  position: absolute;
+  top: 1.1rem;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  /* Readable over either a screenshot (horizontal cards) or the plain
+     card background (vertical ones) without a separate per-layout rule. */
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.carousel-card-number {
+  left: 1.3rem;
+}
+
+.carousel-card-badge {
+  right: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Horizontal cards (have a screenshot): image band across the top, sized
+   to leave enough of the card for title/role/proves/bullets/tags/code
+   below. Vertical cards (no screenshot — the ground-up/algorithm pieces)
+   skip this entirely and let .carousel-card-body take the full card. */
+.carousel-card-image {
+  flex: 0 0 38%;
+  overflow: hidden;
+}
+
+.carousel-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.3rem;
+}
+
+/* Vertical cards have no image eating into the card, so the same body
+   gets noticeably more breathing room — a bigger title and looser gaps
+   read as "this card is text/code-forward" without any extra markup. */
+.carousel-card[data-layout="vertical"] .carousel-card-body {
+  gap: 0.6rem;
+  padding-top: 2.75rem; /* clears the absolutely-positioned number/badge above */
+}
+
+.carousel-card-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.15;
+  color: var(--color-text);
+}
+
+.carousel-card[data-layout="vertical"] .carousel-card-title {
+  font-size: 1.4rem;
+}
+
+.carousel-card-role {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.carousel-card-proves {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.carousel-card-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
+}
+
+.carousel-card-bullets li {
+  position: relative;
+  padding-left: 0.85rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.carousel-card-bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.carousel-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+.carousel-card-tags span {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(var(--color-line), 0.08);
+  color: var(--color-text-muted);
+}
+
+.carousel-card-code {
+  margin-top: auto;
+  padding-top: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  transition: color var(--transition-hover);
+}
+
+.carousel-card-code svg {
+  width: 14px;
+  height: 14px;
+}
+
+.carousel-card:hover .carousel-card-code,
+.carousel-card:focus-visible .carousel-card-code {
+  color: rgb(var(--color-line));
+}
+
+.carousel-card:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No 3D ride — a plain, fully readable grid of links instead.
+     Scoped to :not(.force-motion) so ?motion can still preview the
+     real carousel locally despite the OS/browser setting. */
+  :root:not(.force-motion) .carousel-stage {
+    height: auto;
+    overflow: visible;
+  }
+  :root:not(.force-motion) .carousel-perspective {
+    position: static;
+    perspective: none;
+  }
+  :root:not(.force-motion) .carousel-track {
+    position: static;
+    transform-style: flat;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    padding: 4rem var(--hero-pad-inline);
+  }
+  :root:not(.force-motion) .carousel-card {
+    position: static;
+    width: 100%;
+    aspect-ratio: auto; /* content-driven height — a fixed ratio would either clip the richer card content or leave a lot of empty space */
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  :root:not(.force-motion) .carousel-card-proves,
+  :root:not(.force-motion) .carousel-card-bullets li {
+    -webkit-line-clamp: unset; /* plenty of room in the static grid, no need to clip here */
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Contact — closing section. contact.ts plays a one-shot fall-in    */
+/* when it scrolls into view; this file only styles the elements'    */
+/* resting (post-animation, and reduced-motion) layout — the same    */
+/* positions the JS timeline animates toward.                        */
+/* ---------------------------------------------------------------- */
+
+.contact {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 4rem var(--hero-pad-inline);
+}
+
+/* Carries the projects grid across the seam instead of a hard cut —
+   contact.ts builds individual line elements in here (not a CSS
+   background-image, unlike .projects-bg-grid) so each one can dissolve
+   on its own random schedule as the section scrolls into view, landing
+   at fully black well before the pin below takes over. Same tile size
+   as .projects-bg-grid so the lines land in phase right up to the seam. */
+.contact-bg-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.grid-line {
+  position: absolute;
+  background: rgba(var(--color-line), 0.12);
+}
+
+.grid-line--h {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.grid-line--v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.contact-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* contact.ts skips the dissolve entirely under reduced motion (see
+     the reducedMotion guard there) — hide the grid outright instead of
+     leaving it statically opaque behind the plain text. */
+  :root:not(.force-motion) .contact-bg-grid {
+    display: none;
+  }
+}
+
+.contact-headline {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.contact-mail {
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--transition-hover);
+}
+
+.contact-mail:hover,
+.contact-mail:focus-visible {
+  border-color: currentColor;
+}
+
+/* contact.ts splits the headline/mail text into one span per character
+   for the letter-by-letter fall-in — inline-block so translate/rotate
+   apply per letter instead of to the text run as a whole. */
+.contact-headline .letter,
+.contact-mail .letter {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.contact-icons {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  margin-top: 0.5rem;
+}
+
+.contact-icons a {
+  display: inline-flex;
+  color: var(--color-text-muted);
+  transition: color var(--transition-hover);
+}
+
+/* Same rgb(--color-line) hover as the hero nav icons — one hover color
+   used consistently everywhere. */
+.contact-icons a:hover,
+.contact-icons a:focus-visible {
+  color: rgb(var(--color-line));
+}
+
+.contact-icons svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Custom scroll-progress bar — stands in for the (now hidden) native */
+/* scrollbar. progress.ts only ever writes a translateY to the thumb  */
+/* from lenis.progress, no transition here so it tracks scroll        */
+/* 1:1 with no extra smoothing on top of Lenis's own.                 */
+/* ---------------------------------------------------------------- */
+
+.scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  width: 18px;
+  display: flex;
+  justify-content: center;
+  padding: 3px 0;
+}
+
+.scrollbar-thumb {
+  width: 3px;
+  height: 64px;
+  border-radius: 2px;
+  background: rgba(var(--color-line), 0.55);
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+  transition: background-color var(--transition-hover);
+}
+
+.scrollbar-thumb:hover,
+.scrollbar-thumb:active {
+  background: var(--color-accent);
+  cursor: grabbing;
+}
+
+@media (max-width: 640px) {
+  /* Touch scroll stays fully native/untouched — the bar is just visual
+     clutter at this width, so it's hidden rather than shrunk. */
+  .scrollbar {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Footer — shared markup (hand-kept in sync) across the main SPA    */
+/* page and the two standalone legal pages, impressum.html and       */
+/* datenschutz.html.                                                  */
+/* ---------------------------------------------------------------- */
+
+.footer {
+  border-top: 1px solid rgba(var(--color-line), 0.16);
+  padding: clamp(1.25rem, 3vw, 2rem) var(--hero-pad-inline);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.footer-copy {
+  color: var(--color-text-muted);
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.footer-links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-hover);
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: rgb(var(--color-line));
+}
+
+/* Only on the main SPA page (see main.ts) — edge-nav.ts toggles
+   .is-visible from scroll progress, only shown near the very bottom of
+   the page. The legal pages keep the plain, always-in-flow .footer
+   above untouched, since they have no such JS wired up. */
+.footer--floating {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 150;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--edge-nav-fade),
+    visibility 0s linear var(--edge-nav-fade);
+}
+
+.footer--floating.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--edge-nav-fade),
+    visibility 0s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .footer--floating {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Legal pages (impressum.html, datenschutz.html) — plain, static,   */
+/* fully readable content pages outside the scroll-driven scenes.    */
+/* ---------------------------------------------------------------- */
+
+.legal-header {
+  padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
+}
+
+.legal-back {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-hover);
+}
+
+.legal-back:hover,
+.legal-back:focus-visible {
+  color: rgb(var(--color-line));
+}
+
+.legal {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 2.5rem) var(--hero-pad-inline) clamp(3rem, 8vw, 5rem);
+}
+
+.legal-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 3rem);
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 2rem;
+}
+
+.legal h2 {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  color: var(--color-text);
+  margin-top: 2rem;
+  margin-bottom: 0.6rem;
+}
+
+.legal p {
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.legal a {
+  color: var(--color-accent);
+}
+
+.legal-note {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
