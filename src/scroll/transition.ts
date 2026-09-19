@@ -1,25 +1,31 @@
-// Box → grid handoff between About and Projects. `.projects-bg-grid` is
-// just always visible (plain CSS opacity: 1, nothing here touches it) —
-// #projects only ever enters the viewport from the bottom during this
-// same scroll (About's shrinking remainder sits above it, Projects'
-// growing remainder below), so there both never is and never needs to be
-// a moment where the entering section's grid isn't already there. All
-// this module animates is the About side:
-//  - the floor panel unfolds (rotateX 90deg -> 0deg, its resting CSS
-//    transform is the 90deg tunnel-floor look) while also dropping down
-//    the screen (translateY) — rotation alone reads as the far edge
-//    *lifting up*, which is the opposite of the "tips downward toward
-//    you" feel we want, so the added drop cancels that and sells it as
-//    the panel falling/tipping down into place instead of swinging open.
-//  - the whole shaft gets pushed toward the viewer (translateZ) over the
-//    same range, a camera-dolly-in accent on top of the ordinary scroll.
-//  - left/right walls fade out alongside it. Ceiling/backwall are left
-//    alone; they're out of frame well before the floor's done anyway.
+// Elevator → projects: the camera tips over the floor's near edge.
 //
-// Driven off the same shared scroll (ScrollTrigger, wired to Lenis in
-// main.ts) as the carousel, not a separate listener.
+// The elevator's floor lies flat at the bottom of #about, its near edge on
+// the section's bottom edge. Once that edge reaches the bottom of the
+// viewport #about pins (the elevator stops), and ONE scrubbed timeline
+// rotates the whole shaft about that edge (rotateX, pivot set in
+// style.css: transform-origin 50% 100%) until the floor stands frontal to
+// the camera — a wall carrying the same grid tile as `.projects-bg-grid`.
+// The pin then releases and the wall scrolls off exactly as the projects
+// section scrolls in below it, its grid continuing line for line.
 //
-// Skeleton only — none of these curves/magnitudes are tuned yet.
+// No morphing and no per-wall unfolding: one rotation, and the floor
+// becomes the wall because that is what a rotated floor is. Side
+// walls/ceiling/back wall ride along and end up edge-on or out of frame.
+//
+// Scrub-coupled: scroll position sets the angle directly, so scrolling
+// back tips the view back down. Nothing is triggered and played.
+//
+// What makes the last frame match the projects grid:
+//  - floor tile = projects tile (cell, line width, alpha, phase — see the
+//    floor rules in style.css; --elevator-depth is a whole number of
+//    cells, so the floor's lines land on cell boundaries at the seam);
+//  - the floor's extra brightness is a child layer (.elevator-floor-glow)
+//    whose opacity is faded to 0 here — no repainting;
+//  - the top/bottom vignettes, which the projects grid doesn't have, are
+//    faded out here too.
+// Driven off the same shared scroll (ScrollTrigger + Lenis) as the
+// carousel, not a separate listener.
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -27,26 +33,18 @@ import { TIMINGS } from "../timings";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const FLOOR_REST_ANGLE = 90; // matches .elevator-wall--floor's resting rotateX in style.css
-const FLOOR_DROP_PX = 220; // how far the floor sinks down-screen as it flattens
-const DOLLY_PUSH_PX = 450; // how far the whole shaft pushes toward the viewer (< --elevator-perspective's 1200px, well clear of the camera plane)
-const EXTRA_VH = 1; // extra viewport-heights of scroll added before the unfold starts, on top of the 1vh it always gets from "top bottom" to "top top"
+// The floor's resting angle is rotateX(90deg) (style.css); tipping the
+// shaft by -90 about the floor's near edge makes the net angle 0 — frontal.
+const SHAFT_TIP_DEG = -90;
+const MOBILE_BREAKPOINT_PX = 640;
 
-export function initBoxToGridTransition(
-  aboutSection: HTMLElement,
-  projectsSection: HTMLElement,
-) {
+export function initBoxToGridTransition(aboutSection: HTMLElement) {
   const shaft = aboutSection.querySelector<HTMLElement>(".elevator-shaft");
-  const left = aboutSection.querySelector<HTMLElement>(
-    ".elevator-wall--left",
+  const glow = aboutSection.querySelector<HTMLElement>(".elevator-floor-glow");
+  const vignettes = aboutSection.querySelectorAll<HTMLElement>(
+    ".elevator-vignette",
   );
-  const right = aboutSection.querySelector<HTMLElement>(
-    ".elevator-wall--right",
-  );
-  const floor = aboutSection.querySelector<HTMLElement>(
-    ".elevator-wall--floor",
-  );
-  if (!shaft || !left || !right || !floor) return;
+  if (!shaft || !glow) return;
 
   const forceMotion = document.documentElement.classList.contains(
     "force-motion",
@@ -55,31 +53,41 @@ export function initBoxToGridTransition(
     !forceMotion &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Reduced motion: no scrub, no rotation. The walls just keep their
-  // resting transform/opacity and scroll off with the rest of the page
-  // (ordinary scroll, not an animation) — `.projects-bg-grid` is already
-  // there regardless, so it's a hard cut instead of a staged unfold.
+  // Reduced motion: no pin, no rotation. The elevator just scrolls off and
+  // the projects section's own grid — the same grid — follows: a plain cut
+  // from elevator end to frontal grid wall.
   if (reducedMotion) return;
 
-  function apply(progress: number) {
-    const sideOpacity = 1 - progress;
-    const floorAngle = FLOOR_REST_ANGLE * (1 - progress);
-    const floorDrop = FLOOR_DROP_PX * progress;
-    const dollyZ = DOLLY_PUSH_PX * progress;
+  const { scrollPerUnit, mobileScrollScale, scrub, holdUnits, rotate } =
+    TIMINGS.aboutToProjects;
+  const scrollScale = window.matchMedia(
+    `(max-width: ${MOBILE_BREAKPOINT_PX}px)`,
+  ).matches
+    ? mobileScrollScale
+    : 1;
 
-    left!.style.opacity = String(sideOpacity);
-    right!.style.opacity = String(sideOpacity);
-    floor!.style.transform = `translateY(${floorDrop}px) rotateX(${floorAngle}deg)`;
-    shaft!.style.transform = `translateZ(${dollyZ}px)`;
-  }
-
-  apply(0);
+  // Timeline: hold (elevator has halted, view still) → rotation. The glow
+  // and vignettes fade over the same span, linearly against the tween, so
+  // they're gone exactly when the wall is frontal.
+  const tl = gsap.timeline({ paused: true });
+  tl.to({}, { duration: holdUnits }).addLabel("tip");
+  tl.to(
+    shaft,
+    { rotationX: SHAFT_TIP_DEG, duration: rotate.duration, ease: rotate.ease },
+    "tip",
+  );
+  tl.to(
+    [glow, ...vignettes],
+    { opacity: 0, duration: rotate.duration, ease: "none" },
+    "tip",
+  );
 
   ScrollTrigger.create({
-    trigger: projectsSection,
-    start: `top bottom+=${EXTRA_VH * 100}%`,
-    end: "top top",
-    scrub: TIMINGS.aboutToProjects.scrub,
-    onUpdate: (self) => apply(self.progress),
+    trigger: aboutSection,
+    start: "bottom bottom",
+    end: `+=${tl.duration() * scrollPerUnit * scrollScale}`,
+    pin: true,
+    scrub,
+    animation: tl,
   });
 }

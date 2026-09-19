@@ -4,22 +4,96 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Cloth } from "./hero/cloth";
 import { galleryItems, cvSections, trackElevatorPerspective } from "./about/elevator";
-import { initCarousel, projects, BADGE_LABEL } from "./projects/carousel";
-import { initContact } from "./contact/contact";
+import {
+  initCarousel,
+  projects,
+  getProjectCards,
+  BADGE_LABEL,
+  type AspectCard,
+} from "./projects/carousel";
+import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ?motion force-enables all motion for local testing when the
-// OS/browser reports prefers-reduced-motion. Cloth/Elevator use this
-// themselves for their own JS animation loops, but a plain JS check
-// can't override an `@media (prefers-reduced-motion: reduce)` block —
-// that's browser/OS-driven and CSS-only. This class is what actually
-// lets style.css's reduced-motion fallback rules be switched off too
-// (see the `:root:not(.force-motion)` scoping there).
-if (new URLSearchParams(window.location.search).has("motion")) {
+const CODE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7a5.44 5.44 0 0 0-1.5-3.78 5.07 5.07 0 0 0-.09-3.77s-1.18-.35-3.91 1.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+</svg>`;
+
+// One aspect card's inner markup — see AspectKind in carousel.ts for
+// what each kind means. Each project's cards share a small kicker tag
+// (project number + title) so which project a card belongs to stays
+// legible even once several are frozen on screen together.
+function renderAspectCard(card: AspectCard, projectIndex: number): string {
+  const { kind, project: p } = card;
+  const tag = `<span class="carousel-card-tag">${String(projectIndex + 1).padStart(2, "0")} · ${p.title}</span>`;
+
+  switch (kind) {
+    case "cover":
+      return `
+        <div class="carousel-card carousel-card--cover">
+          ${tag}
+          <span class="carousel-card-badge">${BADGE_LABEL[p.badge]}</span>
+          <span class="carousel-card-title">${p.title}</span>
+          <span class="carousel-card-role">${p.role}</span>
+        </div>
+      `;
+    case "image":
+      return `
+        <div class="carousel-card carousel-card--image">
+          ${tag}
+          <img src="${p.image}" alt="" loading="lazy" />
+        </div>
+      `;
+    case "proves":
+      return `
+        <blockquote class="carousel-card carousel-card--proves">
+          ${tag}
+          <span class="carousel-card-proves-text">${p.proves}</span>
+        </blockquote>
+      `;
+    case "highlights":
+      return `
+        <div class="carousel-card carousel-card--highlights">
+          ${tag}
+          <ul class="carousel-card-bullets">
+            ${p.bullets.map((b) => `<li>${b}</li>`).join("")}
+          </ul>
+        </div>
+      `;
+    case "tech":
+      return `
+        <div class="carousel-card carousel-card--tech">
+          ${tag}
+          <span class="carousel-card-tags">
+            ${p.tags.map((t) => `<span>${t}</span>`).join("")}
+          </span>
+          <a class="carousel-card-code" href="${p.href}" target="_blank" rel="noopener noreferrer">
+            ${CODE_ICON}
+            Code
+          </a>
+        </div>
+      `;
+  }
+}
+
+// Force-enables all motion for local testing when the OS/browser reports
+// prefers-reduced-motion. Cloth/Elevator use this themselves for their
+// own JS animation loops, but a plain JS check can't override an
+// `@media (prefers-reduced-motion: reduce)` block — that's browser/OS-
+// driven and CSS-only. This class is what actually lets style.css's
+// reduced-motion fallback rules be switched off too (see the
+// `:root:not(.force-motion)` scoping there).
+// Always on in `npm run dev` (import.meta.env.DEV) so local testing
+// never needs the query param; production builds only force it via an
+// explicit `?motion` in the URL, so real visitors' OS setting is still
+// respected.
+if (
+  import.meta.env.DEV ||
+  new URLSearchParams(window.location.search).has("motion")
+) {
   document.documentElement.classList.add("force-motion");
 }
 
@@ -101,7 +175,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <div class="elevator-wall elevator-wall--left"></div>
         <div class="elevator-wall elevator-wall--right"></div>
         <div class="elevator-wall elevator-wall--ceiling"></div>
-        <div class="elevator-wall elevator-wall--floor"></div>
+        <div class="elevator-wall elevator-wall--floor"><div class="elevator-floor-glow"></div></div>
         <div class="elevator-backwall"></div>
       </div>
       <div class="elevator-vignette elevator-vignette--top"></div>
@@ -139,38 +213,16 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
     <div class="carousel-stage">
-      <div class="carousel-perspective">
-        <div class="carousel-track">
-          ${projects
-            .map(
-              (p, i) => `
-            <a class="carousel-card" data-layout="${p.layout}" href="${p.href}" target="_blank" rel="noopener noreferrer">
-              <span class="carousel-card-number">${String(i + 1).padStart(2, "0")}</span>
-              <span class="carousel-card-badge">${BADGE_LABEL[p.badge]}</span>
-              ${p.image ? `<span class="carousel-card-image"><img src="${p.image}" alt="" loading="lazy" /></span>` : ""}
-              <span class="carousel-card-body">
-                <span class="carousel-card-title">${p.title}</span>
-                <span class="carousel-card-role">${p.role}</span>
-                <span class="carousel-card-proves">${p.proves}</span>
-                <ul class="carousel-card-bullets">
-                  ${p.bullets.map((b) => `<li>${b}</li>`).join("")}
-                </ul>
-                <span class="carousel-card-tags">
-                  ${p.tags.map((t) => `<span>${t}</span>`).join("")}
-                </span>
-                <span class="carousel-card-code">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7a5.44 5.44 0 0 0-1.5-3.78 5.07 5.07 0 0 0-.09-3.77s-1.18-.35-3.91 1.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-                  </svg>
-                  Code
-                </span>
-              </span>
-            </a>
-          `,
-            )
-            .join("")}
+      ${projects
+        .map((p, i) => {
+          const cards = getProjectCards(p);
+          return `
+        <div class="carousel-project" data-project="${i}" data-count="${cards.length}">
+          ${cards.map((card) => renderAspectCard(card, i)).join("")}
         </div>
-      </div>
+      `;
+        })
+        .join("")}
     </div>
   </section>
 
@@ -297,16 +349,43 @@ refreshHeroName();
 document.fonts.ready.then(refreshHeroName);
 window.addEventListener("resize", refreshHeroName, { passive: true });
 
+// Grid hairlines are one *device* pixel wide (see --grid-line in
+// style.css): on a 1.5x display a 1px CSS line covers 1.5 device pixels
+// and shimmers as it's resampled. Browser zoom changes devicePixelRatio
+// and fires resize, so this one listener covers that too.
+function syncGridLineWidth() {
+  const dpr = window.devicePixelRatio || 1;
+  document.documentElement.style.setProperty("--grid-line", `${1 / dpr}px`);
+}
+syncGridLineWidth();
+window.addEventListener("resize", syncGridLineWidth, { passive: true });
+
 const aboutSection = document.querySelector<HTMLElement>("#about")!;
 const projectsSection = document.querySelector<HTMLElement>("#projects")!;
 
 trackElevatorPerspective(aboutSection);
 
-initBoxToGridTransition(aboutSection, projectsSection);
+initBoxToGridTransition(aboutSection);
 
 initCarousel(projectsSection);
 
 initContact(document.querySelector<HTMLElement>("#contact")!);
+
+// A plain "#contact" anchor jump lands at the top of the pin, where the
+// grid has just started dissolving — not what "go to Contact" means.
+// Every link that points there jumps straight to the section already
+// landed on "Let's talk now" instead. Native anchor jumps on this page
+// are instant (no CSS scroll-behavior:smooth set), so this matches that
+// with `immediate: true` rather than introducing a different, smoother
+// feel just for this one link.
+document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link) => {
+  link.addEventListener("click", (e) => {
+    const target = getContactRevealScrollY();
+    if (target === null) return; // reduced motion — no pin, let the native jump happen
+    e.preventDefault();
+    lenis.scrollTo(target, { immediate: true });
+  });
+});
 
 initScrollProgress(lenis);
 

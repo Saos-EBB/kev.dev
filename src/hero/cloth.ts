@@ -7,6 +7,7 @@
 // is what makes constraint relaxation cheap and unconditionally stable.
 
 import { TIMINGS } from "../timings";
+import { COLORS } from "../colors";
 
 const SPACING = 23; // px between resting nodes
 const MAX_COLS = 220;
@@ -94,7 +95,7 @@ export class Cloth {
   private rows = 0;
   private width = 0;
   private height = 0;
-  private lineColor = "226, 226, 235";
+  private lineColor: string = COLORS.line; // fallback only — the constructor below always tries the live --grid-color first
 
   // The canvas is deliberately bigger than the area the grid rests in
   // (see `boundsEl`), so a dragged node can bleed out over the rest of
@@ -144,7 +145,7 @@ export class Cloth {
     this.ctx = ctx;
 
     const lineColorToken = getComputedStyle(document.documentElement)
-      .getPropertyValue("--color-line")
+      .getPropertyValue("--grid-color")
       .trim();
     if (lineColorToken) this.lineColor = lineColorToken;
 

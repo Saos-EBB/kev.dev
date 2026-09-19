@@ -86,19 +86,13 @@ export function trackElevatorPerspective(section: HTMLElement) {
   const elevator = section.querySelector<HTMLElement>(".elevator");
   if (!elevator) return;
 
-  let sectionTop = 0;
-  let sectionHeight = 1;
-
-  function measure() {
-    sectionTop = section.offsetTop;
-    sectionHeight = section.offsetHeight || 1;
-  }
-  measure();
-  window.addEventListener("resize", measure, { passive: true });
-
+  // Measured from the section's live rect, not from scrollY: transition.ts
+  // pins this section at its end, and scrollY keeps growing while it's
+  // held — the vanishing point has to stay at the *viewport's* center,
+  // wherever the section itself currently sits.
   function update() {
-    const viewportCenter = window.scrollY + window.innerHeight / 2;
-    const originY = ((viewportCenter - sectionTop) / sectionHeight) * 100;
+    const rect = section.getBoundingClientRect();
+    const originY = ((window.innerHeight / 2 - rect.top) / (rect.height || 1)) * 100;
     elevator!.style.perspectiveOrigin = `50% ${originY}%`;
     requestAnimationFrame(update);
   }

@@ -1,18 +1,31 @@
-// Scroll-driven 3D project carousel: a cylinder with the viewer at its
-// center axis. Cards are stuck to the inside of the cylinder wall,
-// facing inward toward the viewer, in a slow descending spiral around
-// the inside. The angle between cards is fixed at 360/CARDS_PER_LAYER
-// (not 360/total) — every four cards complete one full lap and form a
-// "layer" of the spiral, then the next four start a layer below. That
-// keeps the angular gap between neighbors constant and roomy no matter
-// how many projects get added; more projects just add more layers
-// instead of squeezing the ring tighter. Scrolling rotates the whole
-// cylinder around the viewer, sweeping cards from right to left until
-// the next one settles dead ahead — that's the active card.
+// Scroll-driven project reveal, three phases per project:
 //
-// GSAP + ScrollTrigger pin the section for the ride and drive a single
-// scroll-progress value; Lenis is wired to it in main.ts so there's one
-// shared scroll instead of two competing systems.
+//  1. IN: the whole card GROUP (.carousel-project) slides in from the
+//     right to its fixed center position — one unit, only its x animates.
+//  2. BUILD-UP: the group now sits still. Scrolling further reveals its
+//     3-5 cards one at a time (cover first, matching DOM/data order) —
+//     each just a small slide-in-from-the-right + fade, landing on its
+//     own fixed "papers on a desk" spot within the group. Only x and
+//     opacity animate; each card's rotation/scale/position are set once
+//     and never touched again (see the PRESETS below).
+//  3. OUT: once the full set has built up and held for a beat, the whole
+//     group slides out to the left, same as it came in.
+//
+// This makes a project's own span of the pinned scroll longer than
+// before (in + N card reveals + out) — intentional, not a bug to budget
+// against.
+//
+// ARRANGEMENT is data, not CSS or randomness: PRESETS below holds a
+// handful of hand-picked "papers on a desk" layouts (per card count),
+// and each project is assigned one by index — consecutive projects look
+// different from each other, but every layout is still one a human
+// picked to overlap cleanly, never Math.random(). Kept in TS (not CSS)
+// because the build-up phase needs these same numbers to animate each
+// card *to* its spot, not just render it there.
+//
+// One GSAP timeline drives the whole sequence, same pinned-and-scrubbed
+// shape as contact.ts's own timeline. Lenis is wired to ScrollTrigger in
+// main.ts so there's one shared scroll instead of two competing systems.
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -31,25 +44,19 @@ export const BADGE_LABEL: Record<Badge, string> = {
 export interface Project {
   title: string;
   role: string;
-  /** One line: what does this project prove? Shown right under the title. */
+  /** One line: what does this project prove? Its own card, quote-style. */
   proves: string;
-  bullets: string[]; // top 2 highlights — the card has room for these, not the full b2b-cv description
+  bullets: string[]; // top 2 highlights, their own card
   tags: string[];
   badge: Badge;
   href: string; // GitHub repo
-  image?: string; // public/-relative screenshot; projects without one render text-only
-  // "horizontal" (image band up top) vs "vertical" (text-only, more room
-  // for bullets) — picked per project by whether it has a screenshot to
-  // show, not a fixed choice; card footprint/position on the cylinder
-  // stays identical either way, only the content inside reflows.
-  layout: "horizontal" | "vertical";
+  image?: string; // public/-relative screenshot; projects without one just skip that card
 }
 
 // Sourced from b2b-cv's lib/portfolio/content.ts (the PROJECTS array
 // there) — same seven projects, same order (by strength, not chronology,
 // per that file's own comment), German only since this site has no
-// language toggle. Bullets trimmed to the top 2 per project to fit the
-// card; full descriptions stay on GitHub.
+// language toggle. Bullets trimmed to the top 2 per project to fit a card.
 export const projects: Project[] = [
   {
     title: "YourBrand",
@@ -64,7 +71,6 @@ export const projects: Project[] = [
     badge: "project",
     href: "https://github.com/Saos-EBB/WhiteLabel-SaaS---Comunity-Plattform-",
     image: "/projects/yourbrand.png",
-    layout: "horizontal",
   },
   {
     title: "TschoBBo",
@@ -79,7 +85,6 @@ export const projects: Project[] = [
     badge: "tool",
     href: "https://github.com/Saos-EBB/jobsuche-apply-bot",
     image: "/projects/jobbot.jpeg",
-    layout: "horizontal",
   },
   {
     title: "3D-Wireframe-Renderer",
@@ -93,7 +98,6 @@ export const projects: Project[] = [
     tags: ["JavaScript", "Canvas 2D", "Node.js", "Python"],
     badge: "ground-up",
     href: "https://github.com/Saos-EBB/Renderder",
-    layout: "vertical",
   },
   {
     title: "ReleaseWatcher",
@@ -107,7 +111,6 @@ export const projects: Project[] = [
     badge: "tool",
     href: "https://github.com/Saos-EBB/ReleaseWatcher",
     image: "/projects/releasewatcher.png",
-    layout: "horizontal",
   },
   {
     title: "Pokémon Battle-Sim",
@@ -121,7 +124,6 @@ export const projects: Project[] = [
     tags: ["Java"],
     badge: "ground-up",
     href: "https://github.com/Saos-EBB/pkemn",
-    layout: "vertical",
   },
   {
     title: "RPN-Rechner",
@@ -135,7 +137,6 @@ export const projects: Project[] = [
     tags: ["Java"],
     badge: "ground-up",
     href: "https://github.com/Saos-EBB/RPN-Calculator",
-    layout: "vertical",
   },
   {
     title: "Game of Life",
@@ -149,47 +150,156 @@ export const projects: Project[] = [
     tags: ["Java"],
     badge: "ground-up",
     href: "https://github.com/Saos-EBB/-GAMES-/tree/main/GameOfLife",
-    layout: "vertical",
   },
 ];
 
-const CARDS_PER_LAYER = 4; // one full lap of the cylinder per layer
-// 90deg is already the max spacing four cards can have on one lap, so
-// widening it further isn't on the table without dropping below 4/layer —
-// RADIUS is the real lever for "more air": a bigger ring puts the same
-// 90deg apart cards further apart in actual screen space.
-const ANGLE_PER_CARD = 360 / CARDS_PER_LAYER;
-// The viewer sits at the ring's axis, so every card is the same RADIUS
-// from them regardless of angle — but NOT the same distance from the eye
-// (which sits off-axis, `perspective` px back): the dead-ahead card is
-// the ring's farthest point from the eye (perspective + RADIUS), while a
-// card swinging toward the back is the ring's *closest* point
-// (|perspective - RADIUS|) — the smaller RADIUS is, relative to
-// perspective, the less that gap swings between "far" and "right in your
-// face". A bigger RADIUS alone can't fix both; it just moves where the
-// swing happens.
-const RADIUS = 650;
-const Y_STEP = 60; // px each card descends from the previous one
-const FOV_HALF = 70; // deg — cards past this from dead-ahead are fully hidden (not just dim, see the opacity floor removal below) — well before they'd reach the close/behind part of the ring
-const OTHER_LAYER_DIM = 0.35; // extra dim for cards sharing the active card's angular slot on a different layer, so they read as floors above/below rather than a second active card
-const ACTIVE_SCALE = 1.12; // the centered card grows slightly, reads as "free and big"
-const MIN_SCALE = 0.82; // cards at the edge of focus shrink instead of staying full-size while just fading
+export type AspectKind = "cover" | "image" | "proves" | "highlights" | "tech";
 
-// Slow near 0/1 (a card sitting centered), fast through the middle (the
-// swap between cards) — applied per card-step so the ring eases into a
-// brief dwell on each active card instead of drifting through at a flat
-// linear rate.
-function easeInOutCubic(t: number) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+export interface AspectCard {
+  kind: AspectKind;
+  project: Project;
 }
 
-export function initCarousel(section: HTMLElement) {
-  const track = section.querySelector<HTMLElement>(".carousel-track");
-  const cards = Array.from(
-    section.querySelectorAll<HTMLAnchorElement>(".carousel-card"),
+// Every project becomes 4 or 5 cards: the four aspects below, plus a
+// screenshot card inserted right after the cover if the project has one.
+// Order is the order cards swing onto the ring in.
+export function getProjectCards(project: Project): AspectCard[] {
+  const cards: AspectCard[] = [{ kind: "cover", project }];
+  if (project.image) cards.push({ kind: "image", project });
+  cards.push(
+    { kind: "proves", project },
+    { kind: "highlights", project },
+    { kind: "tech", project },
   );
-  const n = cards.length;
-  if (!track || n === 0) return;
+  return cards;
+}
+
+// One card's fixed spot within its group. x/y are percentages of the
+// card's *own* size (plain CSS translate() semantics — same reasoning as
+// the old static rules this replaces: the spread scales with the
+// viewport-relative card width instead of drifting apart from it).
+interface SlotLayout {
+  x: number;
+  y: number;
+  rotate: number;
+  scale: number;
+  zIndex: number;
+}
+
+// Three hand-picked "papers on a desk" layouts, one keyed set per
+// possible card count (3 isn't currently produced by getProjectCards,
+// but kept here so a future trimmed project — or Kevin's own tweak —
+// doesn't need new layout code, just new numbers). Card 1 (the cover) is
+// always the main/biggest/topmost; later cards sit further out, smaller,
+// lower in the stack. Each preset centers its main card somewhere
+// different (left/right/high) and fans the rest out around it, so
+// consecutive projects don't all clump around dead-center.
+const PRESET_LEFT: Record<number, SlotLayout[]> = {
+  3: [
+    { x: -6, y: -4, rotate: -2, scale: 1.15, zIndex: 3 },
+    { x: 58, y: -14, rotate: 4, scale: 1.0, zIndex: 2 },
+    { x: -52, y: 22, rotate: -4, scale: 0.9, zIndex: 1 },
+  ],
+  4: [
+    { x: -8, y: -6, rotate: -2, scale: 1.15, zIndex: 4 },
+    { x: 62, y: -16, rotate: 4, scale: 1.0, zIndex: 3 },
+    { x: -64, y: 16, rotate: -5, scale: 0.92, zIndex: 2 },
+    { x: 34, y: 30, rotate: 3, scale: 0.85, zIndex: 1 },
+  ],
+  5: [
+    { x: -8, y: -6, rotate: -2, scale: 1.15, zIndex: 5 },
+    { x: 62, y: -20, rotate: 4, scale: 1.0, zIndex: 4 },
+    { x: -64, y: 18, rotate: -5, scale: 0.95, zIndex: 3 },
+    { x: 40, y: 34, rotate: 3, scale: 0.88, zIndex: 2 },
+    { x: -38, y: -32, rotate: -3, scale: 0.82, zIndex: 1 },
+  ],
+};
+
+const PRESET_RIGHT: Record<number, SlotLayout[]> = {
+  3: [
+    { x: 8, y: -6, rotate: 2, scale: 1.15, zIndex: 3 },
+    { x: -54, y: -12, rotate: -4, scale: 1.0, zIndex: 2 },
+    { x: 56, y: 20, rotate: 4, scale: 0.9, zIndex: 1 },
+  ],
+  4: [
+    { x: 10, y: -8, rotate: 2, scale: 1.15, zIndex: 4 },
+    { x: -58, y: -18, rotate: -4, scale: 1.0, zIndex: 3 },
+    { x: 60, y: 18, rotate: 5, scale: 0.9, zIndex: 2 },
+    { x: -32, y: 30, rotate: -3, scale: 0.85, zIndex: 1 },
+  ],
+  5: [
+    { x: 10, y: -10, rotate: 2, scale: 1.15, zIndex: 5 },
+    { x: -58, y: -24, rotate: -4, scale: 1.0, zIndex: 4 },
+    { x: 66, y: 14, rotate: 5, scale: 0.95, zIndex: 3 },
+    { x: -36, y: 32, rotate: -3, scale: 0.88, zIndex: 2 },
+    { x: 30, y: -34, rotate: 3, scale: 0.82, zIndex: 1 },
+  ],
+};
+
+const PRESET_HIGH: Record<number, SlotLayout[]> = {
+  3: [
+    { x: 0, y: -14, rotate: 1, scale: 1.15, zIndex: 3 },
+    { x: 50, y: 10, rotate: -3, scale: 0.95, zIndex: 2 },
+    { x: -48, y: 12, rotate: 3, scale: 0.9, zIndex: 1 },
+  ],
+  4: [
+    { x: 0, y: -16, rotate: 1, scale: 1.15, zIndex: 4 },
+    { x: 52, y: 6, rotate: -3, scale: 1.0, zIndex: 3 },
+    { x: -52, y: 8, rotate: 4, scale: 0.9, zIndex: 2 },
+    { x: 0, y: 36, rotate: -2, scale: 0.85, zIndex: 1 },
+  ],
+  5: [
+    { x: 0, y: -18, rotate: 1, scale: 1.15, zIndex: 5 },
+    { x: 56, y: 8, rotate: -3, scale: 1.0, zIndex: 4 },
+    { x: -56, y: 6, rotate: 4, scale: 0.95, zIndex: 3 },
+    { x: 26, y: 34, rotate: -4, scale: 0.86, zIndex: 2 },
+    { x: -26, y: 32, rotate: 3, scale: 0.82, zIndex: 1 },
+  ],
+};
+
+// Assigned to projects by index (see initCarousel) — project 0 gets
+// PRESET_LEFT, project 1 gets PRESET_RIGHT, project 2 gets PRESET_HIGH,
+// project 3 wraps back to PRESET_LEFT, and so on.
+const PRESETS = [PRESET_LEFT, PRESET_RIGHT, PRESET_HIGH];
+
+// On a narrow viewport the full-size offsets above push cards mostly
+// off-screen instead of just "spread out" — scale them down instead of
+// hand-authoring a second set of presets.
+const MOBILE_BREAKPOINT_PX = 640;
+const MOBILE_SPREAD_SCALE = 0.55;
+
+// How far off-screen a group starts (entering) / ends up (clearing) — vw
+// units so it scales with viewport width, comfortably more than 100 so
+// it's off-screen regardless of how wide the group's own spread gets.
+const SLIDE_VW = 130;
+
+// "Round track" illusion — no ring, no radius, no sin/cos. The group's x
+// stays the only real travel; everything below is derived from it as
+// t = -x / SLIDE_VW: -1 (far right) … 0 (center) … +1 (far left).
+//   translateY = ARC * t²          parabola: center vs. edges
+//   rotateY    = TILT * t          right edge tips in, left edge tips away
+//   scale      = 1 - DEPTH * |t|   center slightly larger
+// ARC > 0: edges sit lower (group crests a hill in the middle);
+// ARC < 0: edges sit higher (group dips through a valley). TILT flips the
+// same way — negate it to mirror the lean.
+const ARC = 80; // px
+const TILT = 22; // deg
+const DEPTH = 0.12;
+const PERSPECTIVE = 1200; // px, on the stage so rotateY reads as depth
+// Compact on narrow viewports so the tilted group stays inside it.
+const MOBILE_ARC_SCALE = 0.5;
+const MOBILE_TILT_SCALE = 0.6;
+
+// A card's own small slide-in during the build-up phase — deliberately
+// modest (unlike the group's full off-screen SLIDE_VW): the group has
+// already arrived, this just sells "landing" one at a time.
+const CARD_ENTRY_VW = 6;
+
+export function initCarousel(section: HTMLElement) {
+  const projectGroups = Array.from(
+    section.querySelectorAll<HTMLElement>(".carousel-project"),
+  );
+  if (projectGroups.length === 0) return;
 
   const forceMotion = document.documentElement.classList.contains(
     "force-motion",
@@ -199,81 +309,104 @@ export function initCarousel(section: HTMLElement) {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // Reduced motion: the CSS fallback (see style.css, scoped to
-  // :not(.force-motion)) lays these out as a plain static grid of
-  // normal links — nothing here needs to run at all.
+  // :not(.force-motion)) lays each project out as a plain static block
+  // with its cards in a small readable row — nothing here needs to run.
   if (reducedMotion) return;
 
-  const layerOf = (i: number) => Math.floor(i / CARDS_PER_LAYER);
+  const { holdUnits, reveal, cardReveal, clear, scrollPerCard, scrub } =
+    TIMINGS.projects;
+  const isMobile = window.matchMedia(
+    `(max-width: ${MOBILE_BREAKPOINT_PX}px)`,
+  ).matches;
+  const spreadScale = isMobile ? MOBILE_SPREAD_SCALE : 1;
+  const arc = ARC * (isMobile ? MOBILE_ARC_SCALE : 1);
+  const tilt = TILT * (isMobile ? MOBILE_TILT_SCALE : 1);
 
-  // Each card's fixed spot on the cylinder wall — set once, never
-  // touched again except for the trailing scale() (below), which layout()
-  // rewrites every frame. Negative RADIUS (receding into the screen)
-  // combined with the un-flipped rotateY already faces the card inward
-  // toward the viewer at the axis, no extra 180deg flip needed.
-  const baseTransforms = cards.map((card, i) => {
-    const y = i * Y_STEP;
-    const angle = -i * ANGLE_PER_CARD;
-    const base = `translateY(${y}px) rotateY(${angle}deg) translateZ(${-RADIUS}px) translate(-50%, -50%)`;
-    card.style.transform = `${base} scale(1)`;
-    return base;
+  // Derives y/rotateY/scale from the group's current x. Called from the
+  // group's slide tweens' onUpdate, so it runs exactly as often as x
+  // changes and only ever writes transform.
+  const applyTrack = (group: HTMLElement) => {
+    // Unitless read: GSAP keeps x in the unit it was set in, and the group's
+    // x is only ever set in vw.
+    const t = -(gsap.getProperty(group, "x") as number) / SLIDE_VW;
+    gsap.set(group, {
+      y: arc * t * t,
+      rotationY: tilt * t,
+      scale: 1 - DEPTH * Math.abs(t),
+    });
+  };
+
+  // Groups start off-screen right; the group itself is the only thing
+  // whose x ever represents "on/off screen" — a card's x only ever
+  // represents its own small build-up slide, set up below.
+  gsap.set(projectGroups, { xPercent: -50, yPercent: -50, x: `${SLIDE_VW}vw` });
+  projectGroups.forEach((group) => {
+    if (group.parentElement) {
+      gsap.set(group.parentElement, { perspective: PERSPECTIVE });
+    }
+    applyTrack(group);
   });
 
-  function normalizeAngle(deg: number) {
-    let a = deg % 360;
-    if (a > 180) a -= 360;
-    if (a < -180) a += 360;
-    return a;
-  }
+  const tl = gsap.timeline({ paused: true });
 
-  function layout(progress: number) {
-    // Positive trackAngle here + negative per-card angle above is the
-    // combination that sweeps cards right-to-left in screen space while
-    // still bringing them into the active spot in array order (0..n-1)
-    // — verified by eye, not just by the angle math.
-    const raw = progress * (n - 1);
-    const step = Math.floor(raw);
-    const frac = raw - step;
-    const easedRaw = Math.min(step + easeInOutCubic(frac), n - 1);
-    const trackAngle = easedRaw * ANGLE_PER_CARD;
-    track!.style.transform = `rotateY(${trackAngle}deg)`;
+  projectGroups.forEach((group, i) => {
+    const cards = Array.from(
+      group.querySelectorAll<HTMLElement>(".carousel-card"),
+    );
+    if (cards.length === 0) return;
 
-    // Fixed 90deg spacing means every 4th card lands back in the same
-    // angular slot (one layer down), so angle alone can't tell the true
-    // active card from its lower-floor twins — pick it from raw (not
-    // eased) scroll progress instead, and dim anything outside that
-    // layer.
-    const activeIdx = Math.round(raw);
-    const activeLayer = layerOf(activeIdx);
+    const preset = PRESETS[i % PRESETS.length][cards.length];
+    if (!preset) return; // no hand-picked layout for this card count — skip rather than guess one
 
-    for (let i = 0; i < n; i++) {
-      const card = cards[i];
-      const rel = normalizeAngle(-i * ANGLE_PER_CARD + trackAngle);
-      const abs = Math.abs(rel);
-      const isActive = i === activeIdx;
-      let focus = Math.max(0, 1 - abs / FOV_HALF);
-      if (layerOf(i) !== activeLayer) focus *= OTHER_LAYER_DIM;
-      const scale = MIN_SCALE + (ACTIVE_SCALE - MIN_SCALE) * focus;
+    // Each card's slot (position/rotation/scale) is set once via
+    // xPercent/yPercent (percentage-of-its-own-size, same as the slot
+    // data) and never touched again; only x — a plain vw offset, kept
+    // separate from xPercent on purpose since GSAP can't mix two units
+    // in one value the way CSS calc() can — and opacity animate for the
+    // small entry slide.
+    cards.forEach((card, ci) => {
+      const slot = preset[ci];
+      gsap.set(card, {
+        xPercent: -50 + slot.x * spreadScale,
+        yPercent: -50 + slot.y * spreadScale,
+        rotate: slot.rotate,
+        scale: slot.scale,
+        zIndex: slot.zIndex,
+        opacity: 0,
+        x: `${CARD_ENTRY_VW}vw`,
+      });
+    });
 
-      card.style.transform = `${baseTransforms[i]} scale(${scale})`;
-      // No opacity floor: cards outside FOV_HALF go fully to 0 instead of
-      // staying faintly visible — otherwise they're still on screen (and
-      // uncomfortably close, see RADIUS above) while swinging through the
-      // side/back of the ring, just dim instead of gone.
-      card.style.opacity = String(focus);
-      card.classList.toggle("is-active", isActive);
-      card.style.pointerEvents = isActive ? "auto" : "none";
-      card.tabIndex = isActive ? 0 : -1;
-    }
-  }
+    const onSlide = () => applyTrack(group);
 
-  layout(0);
+    tl.to(group, {
+      x: "0vw",
+      duration: reveal.duration,
+      ease: reveal.ease,
+      onUpdate: onSlide,
+    })
+      .to(cards, {
+        x: "0vw",
+        opacity: 1,
+        duration: cardReveal.duration,
+        ease: cardReveal.ease,
+        stagger: cardReveal.staggerEach,
+      })
+      .to({}, { duration: holdUnits })
+      .to(group, {
+        x: `${-SLIDE_VW}vw`,
+        duration: clear.duration,
+        ease: clear.ease,
+        onUpdate: onSlide,
+      });
+  });
 
   ScrollTrigger.create({
     trigger: section,
     start: "top top",
-    end: `+=${(n - 1) * TIMINGS.projects.scrollPerCard + window.innerHeight}`,
+    end: `+=${tl.duration() * scrollPerCard + window.innerHeight}`,
     pin: true,
-    scrub: TIMINGS.projects.scrub,
-    onUpdate: (self) => layout(self.progress),
+    scrub,
+    animation: tl,
   });
 }

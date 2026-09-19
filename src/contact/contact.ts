@@ -27,6 +27,26 @@ gsap.registerPlugin(ScrollTrigger);
 // (TIMINGS.contact) — hand-adjust them there instead of here.
 const TIMING = TIMINGS.contact;
 
+// The pinned ScrollTrigger, once created — main.ts reads its start/end
+// through getContactRevealScrollY() so a nav click can jump straight to
+// "Let's talk now" already landed, instead of to the top of the pin
+// where the fall-in has only just begun.
+let pinTrigger: ScrollTrigger | null = null;
+
+// Exported for nav links: where to scroll so the section is landed on
+// "Let's talk now" (headline/mail/icons already settled) rather than at
+// the very start of the pin's black hold. Null under reduced motion (no
+// pin exists — the plain, always-visible layout needs no special target)
+// or before initContact has run.
+export function getContactRevealScrollY(): number | null {
+  if (!pinTrigger) return null;
+  // 0.97, not 1 — the very end of the pin's scroll range is also where
+  // it releases, so landing a hair before it keeps the section pinned
+  // with everything already settled rather than right on that boundary.
+  const progress = 0.97;
+  return pinTrigger.start + (pinTrigger.end - pinTrigger.start) * progress;
+}
+
 // Breaks an element's text into one <span class="letter"> per character
 // so each can fall in independently. The element keeps an aria-label
 // with the original text and the letters are aria-hidden — otherwise
@@ -81,9 +101,9 @@ export function initContact(section: HTMLElement) {
     const tileSize =
       parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue(
-          "--elevator-tile",
+          "--grid-cell",
         ),
-      ) || 80;
+      ) || 48;
 
     for (let y = 0; y <= window.innerHeight; y += tileSize) {
       const line = document.createElement("div");
@@ -191,7 +211,7 @@ export function initContact(section: HTMLElement) {
       `-=${TIMING.icons.startOffset}`,
     );
 
-  ScrollTrigger.create({
+  pinTrigger = ScrollTrigger.create({
     trigger: section,
     start: "top top",
     end: TIMING.pinScroll,
