@@ -15,6 +15,7 @@ import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
+import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -44,7 +45,7 @@ function renderAspectCard(card: AspectCard, projectIndex: number): string {
       return `
         <div class="carousel-card carousel-card--image">
           ${tag}
-          <img src="${p.image}" alt="" loading="lazy" />
+          <img src="${p.image}" alt="" decoding="async" />
         </div>
       `;
     case "proves":
@@ -175,7 +176,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <div class="elevator-wall elevator-wall--left"></div>
         <div class="elevator-wall elevator-wall--right"></div>
         <div class="elevator-wall elevator-wall--ceiling"></div>
-        <div class="elevator-wall elevator-wall--floor"><div class="elevator-floor-glow"></div></div>
+        <div class="elevator-wall elevator-wall--floor"><div class="elevator-floor-glow"></div><div class="elevator-floor-title">Projekte</div></div>
         <div class="elevator-backwall"></div>
       </div>
       <div class="elevator-vignette elevator-vignette--top"></div>
@@ -210,8 +211,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
   </section>
 
+  <div class="projects-headline" aria-hidden="true">Projekte</div>
+
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
+    <h2 class="projects-title">Projekte</h2>
     <div class="carousel-stage">
       ${projects
         .map((p, i) => {
@@ -277,8 +281,36 @@ const heroContent = document.querySelector<HTMLElement>(".hero-content")!;
 const heroName = document.querySelector<HTMLElement>(".hero-name")!;
 const heroSubtitle = document.querySelector<HTMLElement>(".hero-subtitle")!;
 
-// Scales the name's font-size so it always spans the full width of its
-// container, regardless of viewport size or which display font is active.
+// Scales an element's font-size so its (single-line) text is exactly
+// targetWidth wide, regardless of viewport size or which display font is active.
+function fitToWidth(el: HTMLElement, targetWidth: number) {
+  if (targetWidth <= 0) return;
+  const probeSize = 100;
+  el.style.fontSize = `${probeSize}px`;
+  const naturalWidth = el.scrollWidth || 1;
+  el.style.fontSize = `${(targetWidth / naturalWidth) * probeSize}px`;
+}
+
+// Same, for a block that already spans its container (so scrollWidth would
+// just report the container): probe the text's natural width shrink-wrapped.
+// maxHeightFrac caps the block's total height (line-height is 1, so font
+// size + vertical padding) at that share of the viewport — on wide screens
+// a full-width line would otherwise eat the space the projects need.
+function fitBlockToWidth(el: HTMLElement, maxHeightFrac = 1) {
+  const style = getComputedStyle(el);
+  const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const targetWidth = el.clientWidth - paddingX;
+  if (targetWidth <= 0) return; // display:none
+  const probeSize = 100;
+  el.style.width = "max-content";
+  el.style.fontSize = `${probeSize}px`;
+  const naturalWidth = el.scrollWidth - paddingX || 1;
+  el.style.width = "";
+  const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  const maxFont = Math.max(0, viewportHeight() * maxHeightFrac - paddingY);
+  el.style.fontSize = `${Math.min((targetWidth / naturalWidth) * probeSize, maxFont)}px`;
+}
+
 function fitHeroName() {
   const parent = heroName.parentElement;
   if (!parent) return;
@@ -288,14 +320,37 @@ function fitHeroName() {
   const parentStyle = getComputedStyle(parent);
   const paddingX =
     parseFloat(parentStyle.paddingLeft) + parseFloat(parentStyle.paddingRight);
-  const targetWidth = parent.clientWidth - paddingX;
-  if (targetWidth <= 0) return;
-
-  const probeSize = 100;
-  heroName.style.fontSize = `${probeSize}px`;
-  const naturalWidth = heroName.scrollWidth || 1;
-  heroName.style.fontSize = `${(targetWidth / naturalWidth) * probeSize}px`;
+  fitToWidth(heroName, parent.clientWidth - paddingX);
 }
+
+// The floor's "PROJEKTE" (lies on the elevator floor, stands up as the
+// projects wall's headline) and the reduced-motion heading in #projects:
+// both are full-width blocks, so fit to their own content box — but never
+// taller than a quarter of the viewport (PROJECTS_TITLE_MAX_VH).
+const PROJECTS_TITLE_MAX_VH = 0.25;
+const projectsTitles = document.querySelectorAll<HTMLElement>(
+  ".elevator-floor-title, .projects-title, .projects-headline",
+);
+function fitProjectsTitles() {
+  projectsTitles.forEach((el) => fitBlockToWidth(el, PROJECTS_TITLE_MAX_VH));
+  const headline = document.querySelector<HTMLElement>(".projects-headline");
+  if (headline) {
+    document.documentElement.style.setProperty(
+      "--projects-title-h",
+      `${headline.offsetHeight}px`,
+    );
+  }
+}
+fitProjectsTitles();
+document.fonts.ready.then(fitProjectsTitles);
+const projectsTitlesResize = makeHeightOnlyResizeFilter();
+window.addEventListener(
+  "resize",
+  () => {
+    if (!projectsTitlesResize()) fitProjectsTitles();
+  },
+  { passive: true },
+);
 
 // Size the name correctly before the cloth reads its box for the grid.
 fitHeroName();
@@ -347,7 +402,18 @@ function refreshHeroName() {
 
 refreshHeroName();
 document.fonts.ready.then(refreshHeroName);
-window.addEventListener("resize", refreshHeroName, { passive: true });
+const heroResize = makeHeightOnlyResizeFilter();
+window.addEventListener(
+  "resize",
+  () => {
+    if (!heroResize()) refreshHeroName();
+  },
+  { passive: true },
+);
+
+// Late-arriving images/fonts can change layout after ScrollTrigger measured
+// its starts/ends — re-measure once everything is in.
+window.addEventListener("load", () => ScrollTrigger.refresh());
 
 // Grid hairlines are one *device* pixel wide (see --grid-line in
 // style.css): on a 1.5x display a 1px CSS line covers 1.5 device pixels

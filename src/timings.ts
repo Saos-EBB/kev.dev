@@ -41,6 +41,7 @@ export const TIMINGS = {
     mobileScrollScale: 0.7, // shorter scroll distance on narrow viewports
     scrub: 0.4, // lag (seconds) between scroll position and the rotation angle — light smoothing, still 1:1 and reversible
     holdUnits: 0.3, // the elevator has stopped, the view holds still this long before the rotation starts
+    endHoldUnits: 0.3, // the wall rests frontal this long before the pin releases, so the scrub's lag has caught up by then (and the "PROJEKTE" hand-over happens on a settled wall)
     rotate: {
       duration: 1.2,
       ease: "power1.inOut", // gentle at both ends so the tip-over neither jolts in nor slams to a stop

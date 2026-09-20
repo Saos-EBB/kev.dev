@@ -393,7 +393,7 @@ button:focus-visible {
 
 .about {
   position: relative;
-  height: 400svh;
+  height: 400vh; /* vh, not svh: pinned scenes are sized in the unit ScrollTrigger measures (see src/viewport.ts) */
   background: var(--about-bg);
   overflow: hidden;
 }
@@ -521,6 +521,30 @@ button:focus-visible {
   background-size: var(--grid-cell) var(--grid-cell);
 }
 
+/* "PROJEKTE" lies on the floor and is a plain child of it, so the shaft's
+   tip-over (transition.ts) stands it up with the floor — no tween of its
+   own, no fade; it's legible only once perspective stops crushing it.
+   The tip pivots on the floor's NEAR edge, so the wall's visible top is
+   100vh above that edge, not the floor's far edge (which ends up
+   --elevator-depth above the viewport): `top` puts the headline exactly
+   there, one --hero-pad-inline in from the viewport's top. Text is upright
+   in the floor's own frame, so it reads correctly when the floor is
+   frontal. main.ts fits the font-size to one full-width line. */
+.elevator-floor-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: max(0px, calc(var(--elevator-depth) - 100vh));
+  padding: var(--hero-pad-inline);
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 11vw, 8rem); /* fallback until main.ts fits it */
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  pointer-events: none;
+}
+
 .elevator-backwall {
   position: absolute;
   inset: 0;
@@ -562,6 +586,16 @@ button:focus-visible {
   justify-content: center;
   gap: 1.4em;
   pointer-events: none;
+}
+
+/* On a narrow screen the text wraps to a tall block whose end reaches into
+   the section's last viewport — the one the wall stands in, with the
+   "PROJEKTE" headline at its top. Keep that viewport free of overlay
+   text. (On desktop the block already ends well above it.) */
+@media (max-width: 640px) {
+  .about-overlay {
+    padding-bottom: 100vh;
+  }
 }
 
 /* Small curated gallery — motto/quote/mood/inspiration "exhibits" (see
@@ -683,10 +717,55 @@ button:focus-visible {
   backface-visibility: hidden;
 }
 
+/* The real, semantic heading. With motion the headline you see is
+   .projects-headline below, so this one is only for screen readers;
+   under reduced motion it IS the static headline at the top of the
+   section (media block below). */
+.projects-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  padding: var(--hero-pad-inline);
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 11vw, 8rem); /* fallback until main.ts fits it */
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  clip-path: inset(50%); /* visually hidden, still announced */
+}
+
+/* The headline once the wall stands frontal (with motion only). Fixed to
+   the viewport's top from the moment transition.ts's tip-over ends — it
+   takes over from .elevator-floor-title at the very same pixels — until
+   carousel.ts scrolls it away with the section's exit; the wall's grid
+   and then the project cards move on beneath it. Deliberately NOT inside
+   #projects: ScrollTrigger's pin puts a transform on that section, which
+   would turn `fixed` into "fixed to the section". Hidden by opacity 0
+   (an instant swap in transition.ts, never a fade) until then. */
+.projects-headline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: var(--hero-pad-inline);
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 11vw, 8rem);
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+
 .carousel-stage {
   position: relative;
   z-index: 1;
-  height: 100svh;
+  height: 100vh; /* vh, not svh — see .about */
   overflow: hidden;
 }
 
@@ -696,7 +775,9 @@ button:focus-visible {
    here, so this rule doesn't fight that with a conflicting transform. */
 .carousel-project {
   position: absolute;
-  top: 50%;
+  /* Centered in the space below the fixed "PROJEKTE" headline (its
+     height is published by main.ts's fitProjectsTitles). */
+  top: calc(50% + var(--projects-title-h, 0px) / 2);
   left: 50%;
 }
 
@@ -864,13 +945,23 @@ button:focus-visible {
      each with its aspect cards laid out as a small static row. Scoped to
      :not(.force-motion) so ?motion can still preview the real carousel
      locally despite the OS/browser setting. */
+  :root:not(.force-motion) .projects-title {
+    position: relative;
+    clip-path: none;
+  }
+  :root:not(.force-motion) .projects-headline {
+    display: none;
+  }
+  :root:not(.force-motion) .elevator-floor-title {
+    display: none;
+  }
   :root:not(.force-motion) .carousel-stage {
     height: auto;
     overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    padding: 4rem var(--hero-pad-inline);
+    padding: 2rem var(--hero-pad-inline) 4rem;
   }
   :root:not(.force-motion) .carousel-project {
     position: static;

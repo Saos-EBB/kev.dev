@@ -30,6 +30,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TIMINGS } from "../timings";
+import { viewportHeight } from "../viewport";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -401,12 +402,32 @@ export function initCarousel(section: HTMLElement) {
       });
   });
 
-  ScrollTrigger.create({
+  const pinTrigger = ScrollTrigger.create({
     trigger: section,
     start: "top top",
-    end: `+=${tl.duration() * scrollPerCard + window.innerHeight}`,
+    end: `+=${tl.duration() * scrollPerCard + viewportHeight()}`,
     pin: true,
     scrub,
     animation: tl,
   });
+
+  // The fixed "PROJEKTE" headline (see .projects-headline) leaves with the
+  // section: once the pin releases and the section scrolls up (one
+  // viewport of scroll), the headline is carried off at exactly the scroll
+  // speed, as if it were attached to the section all along.
+  const headline = document.querySelector<HTMLElement>(".projects-headline");
+  if (headline) {
+    gsap.to(headline, {
+      y: () => -viewportHeight(),
+      ease: "none",
+      scrollTrigger: {
+        // Measured from the pin's own end, not "bottom bottom": on a
+        // pinned trigger that reads the un-pinned position, i.e. mid-pin.
+        start: () => pinTrigger.end,
+        end: () => pinTrigger.end + viewportHeight(),
+        scrub: true,
+        invalidateOnRefresh: true,
+      },
+    });
+  }
 }

@@ -205,7 +205,9 @@ export class Cloth {
   }
 
   private resize() {
-    const dpr = window.devicePixelRatio || 1;
+    // Capped: a full-frame canvas at 3x is 9x the pixels of 1x for a mesh
+    // of hairlines that look the same at 2x — the mobile frame-time cost.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.width = this.canvas.clientWidth || window.innerWidth;
     this.height = this.canvas.clientHeight || window.innerHeight;
     this.canvas.width = Math.round(this.width * dpr);

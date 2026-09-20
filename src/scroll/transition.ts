@@ -9,6 +9,13 @@
 // The pin then releases and the wall scrolls off exactly as the projects
 // section scrolls in below it, its grid continuing line for line.
 //
+// "PROJEKTE" (.elevator-floor-title) is a plain child of the floor: it lies
+// flat on it and stands up with it, so it needs no tween or fade of its own
+// — perspective alone makes it unreadable while flat and legible once
+// frontal. Its CSS `top` puts it where the wall's visible top ends up. At
+// that moment it hands over to the fixed .projects-headline, which
+// then stays at the top of the screen while the projects scroll in below.
+//
 // No morphing and no per-wall unfolding: one rotation, and the floor
 // becomes the wall because that is what a rotated floor is. Side
 // walls/ceiling/back wall ride along and end up edge-on or out of frame.
@@ -44,7 +51,11 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
   const vignettes = aboutSection.querySelectorAll<HTMLElement>(
     ".elevator-vignette",
   );
-  if (!shaft || !glow) return;
+  const floorTitle = aboutSection.querySelector<HTMLElement>(
+    ".elevator-floor-title",
+  );
+  const headline = document.querySelector<HTMLElement>(".projects-headline");
+  if (!shaft || !glow || !floorTitle || !headline) return;
 
   const forceMotion = document.documentElement.classList.contains(
     "force-motion",
@@ -58,7 +69,14 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
   // from elevator end to frontal grid wall.
   if (reducedMotion) return;
 
-  const { scrollPerUnit, mobileScrollScale, scrub, holdUnits, rotate } =
+  const {
+    scrollPerUnit,
+    mobileScrollScale,
+    scrub,
+    holdUnits,
+    endHoldUnits,
+    rotate,
+  } =
     TIMINGS.aboutToProjects;
   const scrollScale = window.matchMedia(
     `(max-width: ${MOBILE_BREAKPOINT_PX}px)`,
@@ -82,12 +100,39 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     "tip",
   );
 
-  ScrollTrigger.create({
+  // Rest at the end: the scrub lags the scroll by ~`scrub` seconds, so
+  // without this the pin would release while the wall is still finishing
+  // its last degrees.
+  tl.to({}, { duration: endHoldUnits });
+
+  const pin = ScrollTrigger.create({
     trigger: aboutSection,
     start: "bottom bottom",
     end: `+=${tl.duration() * scrollPerUnit * scrollScale}`,
     pin: true,
     scrub,
     animation: tl,
+  });
+
+  // The wall is frontal: hand "PROJEKTE" over from the floor's copy to the
+  // fixed headline, which sits on the very same pixels (see
+  // .projects-headline) and stays put once the wall scrolls off. Done in
+  // the middle of the end rest — while the section is pinned and nothing
+  // moves — so the swap can't coincide with the pin releasing (a frame
+  // where the pin and a fixed element disagree would show as a jump).
+  // Keyed to the scroll position, NOT to the scrubbed timeline: the
+  // timeline lags the scroll and would fire late. Stateless, so it works
+  // both ways.
+  ScrollTrigger.create({
+    start: () =>
+      pin.start +
+      (holdUnits + rotate.duration + endHoldUnits / 2) *
+        scrollPerUnit *
+        scrollScale,
+    end: () => ScrollTrigger.maxScroll(window),
+    onToggle: ({ isActive }) => {
+      gsap.set(floorTitle, { opacity: isActive ? 0 : 1 });
+      gsap.set(headline, { opacity: isActive ? 1 : 0 });
+    },
   });
 }

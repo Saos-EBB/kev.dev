@@ -4,7 +4,7 @@ Portfolio-Site, Vanilla TypeScript + Vite. Kein Framework, kein React/Vue.
 Lenis fürs Smooth-Scrolling, GSAP + ScrollTrigger nur für die Szenen, die es
 brauchen (Projects, Contact). Canvas 2D für die Cloth-Simulation im Hero.
 
-Stand: 2026-09-18
+Stand: 2026-09-20
 
 ## Stack
 
@@ -63,21 +63,40 @@ lineares Perspective-Karussell → verworfen zugunsten Zylinder. Linearer
 Z-Depth-Pfad (explizite Korrektur-Vorgabe) → nochmal verworfen, zurück zum
 Zylinder ("Ring war besser").
 
-#### Übergang Box → Projekte (`src/scroll/transition.ts`)
+#### Übergang Aufzug → Projekte (`src/scroll/transition.ts`)
 
-Kein geometrisches Morphing der 5 Box-Flächen — ein getimter Crossfade.
-Eigenes `ScrollTrigger` (`trigger: #projects, start: "top bottom", end:
-"top top"`, `scrub`), das zwei Opacities aus demselben Fortschrittswert
-ableitet: `.elevator-shaft` (alle 5 Box-Flächen, ein gemeinsames Element)
-blendet über die ersten 70% des Bereichs aus, `.projects-bg-grid` (flaches
-Gitter, liegt als erstes Kind vor `.carousel-stage` in `#projects`, damit
-es hinterm Zylinder bleibt) blendet ab 30% ein — 40% Überlappung in der
-Mitte, damit nie eine Lücke entsteht (immer mindestens ein Gitter-Muster
-sichtbar). Endet exakt dort, wo Carousels eigenes Pin einsetzt, damit das
-Hintergrund-Gitter beim Start der Zylinder-Fahrt schon fertig eingeblendet
-ist. Reduced-Motion: kein Scrub — `.projects-bg-grid` steht per CSS-Default
-schon auf `opacity: 1`, die Box verschwindet einfach durch normales
-Scrollen (kein JS-Override), also ein harter Wechsel statt Blend.
+Kein Crossfade und kein Morphing: `#about` pinnt, sobald die vordere
+Bodenkante den Viewport-Boden erreicht, und **eine** gescrubbte Timeline
+kippt den ganzen Schacht (`rotateX`, Pivot = vordere Bodenkante) um -90°,
+bis der Boden frontal steht — als Wand mit demselben Gitter-Tile wie
+`.projects-bg-grid`. Halo (`.elevator-floor-glow`) und Vignetten blenden
+dabei aus. Am Ende hält die Wand `endHoldUnits` still, damit der Scrub-Lag
+(`scrub` s) aufgeholt hat, bevor der Pin löst.
+
+**"PROJEKTE"-Schriftzug** (drei Elemente, ein Text):
+- `.elevator-floor-title` liegt als normales Kind auf dem Boden und kippt
+  mit. Kein eigener Tween, kein Fade — flach ist er perspektivisch kaum
+  lesbar, frontal groß. Sein `top` (`depth − 100vh`) setzt ihn dorthin, wo
+  die *sichtbare* Wand-Oberkante landet (nicht an die hintere Bodenkante:
+  die liegt nach der Klappe 1440px über dem Viewport).
+- `.projects-headline` ist eine fixierte, dekorative Kopie (`aria-hidden`),
+  **außerhalb** von `#projects` (der Pin setzt dort ein Transform, dann
+  wäre `fixed` am Abschnitt statt am Viewport verankert). Der Tausch
+  Boden-Text → Kopie passiert scroll-positionsbasiert (nicht in der
+  Timeline, die dem Scroll hinterherläuft) mitten in der Ruhephase, in
+  der nichts bewegt wird — beide sitzen pixelgleich auf `top: 0`. Danach
+  bleibt die Kopie oben, die Wand scrollt weg, die Karten laufen darunter
+  (`.carousel-project` sitzt unter der Überschrift, Höhe kommt als
+  `--projects-title-h` aus `fitProjectsTitles`). `carousel.ts` trägt sie
+  nach dem Projekte-Pin mit Scroll-Tempo raus (Trigger am Pin-*Ende*, nicht
+  `"bottom bottom"` — das liest bei gepinnten Triggern die ungepinnte
+  Position).
+- `.projects-title` (`<h2>`) ist die semantische Überschrift: mit Motion nur
+  für Screenreader, unter Reduced-Motion die statische Headline oben in der
+  Projektliste (Boden-Text und Kopie sind dort `display: none`).
+
+Schriftgröße aller drei: `fitBlockToWidth` (main.ts) passt sie auf eine
+volle Breite an (bei Resize/`fonts.ready`).
 
 ### Contact (`src/contact/contact.ts`)
 
@@ -108,6 +127,28 @@ sauber/klickbar, bei echter Physik nicht.
   damit sie im hidden-State nicht per Tab fokussierbar sind. `.hero-nav`
   bleibt bewusst unangetastet Teil der Hero-Card (eigenes Element, keine
   Restrukturierung des Cloth-Masking-Aufbaus).
+
+#### Mobile-Robustheit
+
+- **Viewport-Einheiten**: ScrollTrigger misst die Höhe über ein `100vh`-
+  Element (auf dem Handy = große Viewport-Höhe, Adressleiste eingefahren).
+  Gepinnte Szenen (`.about`, `.carousel-stage`, Titel-`top`) sind deshalb in
+  `vh` statt `svh` gerechnet, JS-Seite nutzt `viewportHeight()`
+  (`src/viewport.ts`). Gemischt driftet der Pin auf dem Handy um die
+  Adressleistenhöhe (Desktop merkt nichts, dort sind beide gleich).
+- **Height-only-Resizes** (Adressleiste ein/aus) lösen auf Touch keinen
+  Cloth-Rebuild und kein Titel-Refit mehr aus (`makeHeightOnlyResizeFilter`).
+- **Cloth-Canvas** DPR auf 2 gedeckelt (Vollbild-Canvas bei 3x = 9x Pixel).
+- **Preload**: Display-Font per `<link rel="preload">`, Projekt-Bilder nicht
+  mehr `loading="lazy"` (liegen im Pin außerhalb des Bildschirms und wurden
+  erst spät nachgeladen), `ScrollTrigger.refresh()` nach `load`.
+- **About-Overlay** auf ≤640px mit `padding-bottom: 100vh`: der umgebrochene
+  CV-Text reichte sonst in den letzten Viewport und lag über der Überschrift.
+- **Nicht gemessen / offen**: echte Geräte-Performance. Die Seitenwände des
+  Schachts sind 1440×~400vh große 3D-Ebenen (bei DPR 3 ~4320×8000 Geräte-
+  Pixel je Wand) — der wahrscheinlichste Ruckel-Kandidat; Hebel wären eine
+  kleinere `--elevator-depth` auf Mobile oder `normalizeScroll` für Pins auf
+  Touch. Headless-Chromium (SwiftShader) sagt dazu nichts Verlässliches.
 
 ### Footer & Legal (`src/legal/legal.ts`, `impressum.html`, `datenschutz.html`)
 
