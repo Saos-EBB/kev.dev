@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloth-Grid Experiment</title>
+    <style>
+      html.lenis, html.lenis body { height: auto; }
+      body { margin: 0; background: #0b0b10; color: #8a8fa8; font: 12px/1.4 ui-monospace, monospace; }
+      #cloth { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+      #spacer { height: 600vh; }
+      #readout { position: fixed; left: 16px; bottom: 12px; opacity: 0.6; }
+    </style>
+  </head>
+  <body>
+    <canvas id="cloth"></canvas>
+    <div id="readout"></div>
+    <div id="spacer"></div>
+    <script type="module" src="/src/experiments/cloth-grid/main.ts"></script>
+  </body>
+</html>
