@@ -1,4 +1,4 @@
-// Standalone entry for cloth.html. This is the only place that knows about Lenis.
+// Standalone entry for cloth-grid.html. This is the only place that knows about Lenis.
 
 import Lenis from "lenis";
 import { mountClothGrid } from "./cloth-grid";
@@ -20,7 +20,7 @@ const grid = mountClothGrid(
 );
 const lenis = new Lenis({ autoRaf: true });
 
-// `cloth.html?p=0.5` pins the progress, handy for tuning one frame without scrolling.
+// `cloth-grid.html?p=0.5` pins the progress, handy for tuning one frame without scrolling.
 const pinned = new URLSearchParams(location.search).get("p");
 
 function onProgress() {

@@ -14,7 +14,8 @@ export default defineConfig({
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         testMobile: root("testMobile.html"), // same app as index.html, reachable at /testMobile for on-device checks
-        cloth: root("cloth.html"), // cloth-grid experiment, /cloth
+        clothGrid: root("cloth-grid.html"), // standalone cloth-grid experiment, /cloth-grid
+        cloth: root("cloth.html"), // elevator room + cloth-grid overlay, /cloth
       },
     },
   },
