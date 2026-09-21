@@ -122,7 +122,14 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
   // where the pin and a fixed element disagree would show as a jump).
   // Keyed to the scroll position, NOT to the scrubbed timeline: the
   // timeline lags the scroll and would fire late. Stateless, so it works
-  // both ways.
+  // both ways. Only enter/leave-back matter: the headline's fade-out at
+  // the end of the projects is carousel.ts's timeline, and it must not be
+  // undone by this trigger "ending" (maxScroll is not final at this point
+  // of init — the projects/contact pins don't exist yet).
+  const setHandOver = (on: boolean) => {
+    gsap.set(floorTitle, { opacity: on ? 0 : 1 });
+    headline.style.setProperty("--handover", on ? "1" : "0"); // opacity = --handover * --fade, see .projects-headline
+  };
   ScrollTrigger.create({
     start: () =>
       pin.start +
@@ -130,9 +137,7 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
         scrollPerUnit *
         scrollScale,
     end: () => ScrollTrigger.maxScroll(window),
-    onToggle: ({ isActive }) => {
-      gsap.set(floorTitle, { opacity: isActive ? 0 : 1 });
-      gsap.set(headline, { opacity: isActive ? 1 : 0 });
-    },
+    onEnter: () => setHandOver(true),
+    onLeaveBack: () => setHandOver(false),
   });
 }

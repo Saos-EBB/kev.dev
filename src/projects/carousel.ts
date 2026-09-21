@@ -402,7 +402,29 @@ export function initCarousel(section: HTMLElement) {
       });
   });
 
-  const pinTrigger = ScrollTrigger.create({
+  // The fixed "PROJEKTE" headline (see .projects-headline) stays until the
+  // last project scrolls out, and fades out together with that last
+  // "clear" (the timeline's final tween). In the timeline, not a trigger of
+  // its own, so it shares the scrub and reverses with it. It drives the
+  // CSS variable --fade, not `opacity` itself: opacity is also switched by
+  // transition.ts's hand-over (--handover), and two GSAP writers on one
+  // property lose track of each other when scrubbing back or jumping.
+  const headline = document.querySelector<HTMLElement>(".projects-headline");
+  if (headline) {
+    const fade = { v: 1 };
+    tl.to(
+      fade,
+      {
+        v: 0,
+        duration: clear.duration,
+        ease: "none",
+        onUpdate: () => headline.style.setProperty("--fade", String(fade.v)),
+      },
+      tl.duration() - clear.duration,
+    );
+  }
+
+  ScrollTrigger.create({
     trigger: section,
     start: "top top",
     end: `+=${tl.duration() * scrollPerCard + viewportHeight()}`,
@@ -410,24 +432,4 @@ export function initCarousel(section: HTMLElement) {
     scrub,
     animation: tl,
   });
-
-  // The fixed "PROJEKTE" headline (see .projects-headline) leaves with the
-  // section: once the pin releases and the section scrolls up (one
-  // viewport of scroll), the headline is carried off at exactly the scroll
-  // speed, as if it were attached to the section all along.
-  const headline = document.querySelector<HTMLElement>(".projects-headline");
-  if (headline) {
-    gsap.to(headline, {
-      y: () => -viewportHeight(),
-      ease: "none",
-      scrollTrigger: {
-        // Measured from the pin's own end, not "bottom bottom": on a
-        // pinned trigger that reads the un-pinned position, i.e. mid-pin.
-        start: () => pinTrigger.end,
-        end: () => pinTrigger.end + viewportHeight(),
-        scrub: true,
-        invalidateOnRefresh: true,
-      },
-    });
-  }
 }

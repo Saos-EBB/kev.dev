@@ -540,6 +540,7 @@ button:focus-visible {
   font-size: clamp(2.75rem, 11vw, 8rem); /* fallback until main.ts fits it */
   line-height: 1;
   white-space: nowrap;
+  text-align: center;
   text-transform: uppercase;
   color: var(--color-accent);
   pointer-events: none;
@@ -740,11 +741,12 @@ button:focus-visible {
 /* The headline once the wall stands frontal (with motion only). Fixed to
    the viewport's top from the moment transition.ts's tip-over ends — it
    takes over from .elevator-floor-title at the very same pixels — until
-   carousel.ts scrolls it away with the section's exit; the wall's grid
+   the last project has scrolled out; the wall's grid
    and then the project cards move on beneath it. Deliberately NOT inside
    #projects: ScrollTrigger's pin puts a transform on that section, which
    would turn `fixed` into "fixed to the section". Hidden by opacity 0
-   (an instant swap in transition.ts, never a fade) until then. */
+   (an instant swap in transition.ts, never a fade) until then; it fades
+   out with the last project's exit (carousel.ts). */
 .projects-headline {
   position: fixed;
   top: 0;
@@ -756,9 +758,11 @@ button:focus-visible {
   font-size: clamp(2.75rem, 11vw, 8rem);
   line-height: 1;
   white-space: nowrap;
+  text-align: center;
   text-transform: uppercase;
   color: var(--color-accent);
-  opacity: 0;
+  /* --handover (0/1) is set by transition.ts, --fade (1→0) by carousel.ts */
+  opacity: calc(var(--handover, 0) * var(--fade, 1));
   pointer-events: none;
 }
 
