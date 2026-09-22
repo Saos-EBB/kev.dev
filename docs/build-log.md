@@ -1,3 +1,19 @@
+## 2026-09-22 — fix(about): floor relief read as a blob, not a skull
+
+**Was:** two changes to `src/about/floor-relief.ts`, both from direct feedback after the first
+look in the browser. (1) The patch's own mesh cell is now a quarter of the live `--grid-cell`
+(`CELL_DIVISOR`), local to this patch only — at the page's 48px cell a skull-sized patch only had
+a handful of cells across, way too coarse to read as a face (same root cause as the abandoned
+side-wall relief, see `docs/errors.md`, just fixed here instead of dropped: unraised cells stay
+transparent, so the coarser CSS grid still shows through outside the silhouette, no seam). (2)
+`PLACEMENT.width` 450 → 1350 (3×), `stretch` 1.1 → 0.6 (now compressing the depth axis, not
+expanding it — the only way a picture this wide still fits inside the 1440px shaft depth), `push`
+changed from a share of `width` to a flat `PUSH_PX` (50) — scaling push with the new width would
+have blown the depth budget on its own. At these numbers the patch covers ~87% of the shaft's
+depth — expected and intended for a skull this size, not a bug to shrink away.
+**Nicht gebaut:** band timing (rise/peak/fall against the pin's own progress) left unchanged —
+it already settles to 0 before the rotation completes, matching "gone once fully tipped."
+
 ## 2026-09-22 — feat(cloth-relief): generic frontal relief mount for plain page elements
 
 **Was:** `src/cloth-relief.ts`, `mountClothRelief(el, depthUrl, placement, band, colorSource?)`

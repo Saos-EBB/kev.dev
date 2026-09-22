@@ -4,9 +4,16 @@
 // renderer built for the /cloth room test (see skull-field.ts, mesh-patch.ts)
 // — no separate copy of that geometry here.
 //
-// Unlike the side-wall test, this reads the live page's own --grid-cell
-// (48px, 32px on narrow mobile — see style.css), so the relief's quads land
-// on the same grid the rest of the floor/wall already draws, seamlessly.
+// The patch's own mesh is finer than the live page's --grid-cell (48px, 32px
+// on narrow mobile — see style.css): at the page's own cell size a skull-
+// sized patch only has a handful of cells across and reads as a blob, not a
+// face (see docs/errors.md's side-wall entry — same problem there, why that
+// was dropped instead of fixed like this). It doesn't need to match the
+// surrounding grid's cell here the way the old side-wall test assumed —
+// unraised cells in the patch just stay transparent, so the coarser CSS grid
+// underneath still shows through everywhere outside the silhouette; only the
+// filled shape's own edge has to read cleanly, not literal gridline-for-
+// gridline continuity.
 //
 // Placement is a first pass, meant to be tuned by eye once it's on screen —
 // see the comment on PLACEMENT below for why the numbers are what they are.
@@ -17,21 +24,27 @@ import { floorSkull, type FloorPlacement } from "../experiments/room-cloth/skull
 import { mountMeshPatch, type MeshPatch } from "../experiments/room-cloth/mesh-patch";
 import skullUrl from "../experiments/cloth-grid/depth/skull.png?url";
 
+/** Patch mesh resolution: a quarter of the live grid's own cell, patch-local only (see above). */
+const CELL_DIVISOR = 4;
+
 /**
  * The floor is only --elevator-depth (1440px) deep in total — far less room than a side wall's
  * 400vh — and the skull picture is near-square, so its depth-axis footprint (computed from
- * `width` via the picture's own aspect) ends up comparable to `width` itself: a "big" skull
- * inevitably takes up a large share of that depth. `stretch` and `push` both grow the patch
- * further (see skull-field.ts's displace() — the push reprojection needs extra depth room
- * proportional to how far it stands out), so both are kept modest here on purpose.
+ * `width` via the picture's own aspect) ends up comparable to `width` itself: at this width,
+ * even with `stretch` pulled below 1 (compressing rather than expanding the depth axis, the
+ * opposite of the side-wall test's use of it), the patch still fills most of the shaft's depth —
+ * a large skull here unavoidably does, there's no way to keep it big *and* small in that axis.
+ * `push` is a flat px amount, not a share of `width` any more: at this size scaling it with
+ * `width` would blow the depth budget on its own (see skull-field.ts's displace() — the push
+ * reprojection needs extra depth room proportional to how far it stands out).
  */
 const PLACEMENT: Omit<FloorPlacement, "push"> = {
-  d: 450,
+  d: 650,
   sx: 0,
-  width: 450,
-  stretch: 1.1,
+  width: 1350,
+  stretch: 0.6,
 };
-const PUSH_SHARE = 0.15; // share of `width`
+const PUSH_PX = 50;
 
 export interface FloorRelief {
   setProgress(progress: number, snap?: boolean): void;
@@ -42,7 +55,7 @@ export async function mountFloorRelief(floorEl: HTMLElement): Promise<FloorRelie
   const depth = await imageDepth(skullUrl);
 
   const rootStyle = getComputedStyle(document.documentElement);
-  const cell = parseFloat(rootStyle.getPropertyValue("--grid-cell"));
+  const cell = parseFloat(rootStyle.getPropertyValue("--grid-cell")) / CELL_DIVISOR;
   const linePx = parseFloat(rootStyle.getPropertyValue("--grid-line"));
   const rgbOf = (css: string): [number, number, number] => {
     const [r, g, b] = css.match(/[\d.]+/g)!.map(Number);
@@ -56,7 +69,7 @@ export async function mountFloorRelief(floorEl: HTMLElement): Promise<FloorRelie
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const push = PLACEMENT.width * PUSH_SHARE;
+  const push = PUSH_PX;
   const skull = floorSkull(depth, { vw, vh, perspective, depthPx }, { ...PLACEMENT, push }, cell);
 
   const canvas = document.createElement("canvas");
