@@ -119,3 +119,101 @@ export function wallSkull(source: DepthSource, cam: Camera, p: SkullPlacement, c
     },
   };
 }
+
+// One skull relief standing up out of the floor.
+//
+// Same reprojection trick as wallSkull, with the axes swapped: the floor's plane is fixed at
+// world Y = +vh/2 (its bottom edge — see style.css, rotateX(90deg) around `transform-origin:
+// bottom center`), so "push up" shrinks that fixed Y exactly as "push in" shrunk the side
+// wall's fixed X. Canvas x is the floor's local x = screen x directly (untouched by rotateX,
+// so unlike the wall it needs no eye-tracking conversion); canvas y is the floor's local y =
+// depth (0 at the far/top edge, depthPx at the near/bottom edge — inverted, always, no
+// left/right split like the wall has). The skull's picture-height axis maps to depth (canvas
+// y) so it stands upright once transition.ts tips the floor up into the wall; picture-width
+// maps to screen x (canvas x), which rotateX never touches.
+
+export interface FloorCamera {
+  vw: number;
+  vh: number;
+  /** CSS perspective distance, px. */
+  perspective: number;
+  /** Shaft depth, px. */
+  depthPx: number;
+}
+
+export interface FloorPlacement {
+  /** Centre of the skull along the shaft: px behind the viewport plane. */
+  d: number;
+  /** Centre across the floor: screen-x px from the viewport centre (+ = right). */
+  sx: number;
+  /** Skull width across the floor (screen-x extent), px. */
+  width: number;
+  /** Stretch along the shaft (depth axis) compensating the perspective squash, 1 = natural. */
+  stretch: number;
+  /** How far it stands up out of the floor, px. */
+  push: number;
+}
+
+export interface FloorSkull {
+  /** Patch bounds in floor px (x = screen x, y = depth-derived local y), whole cells. */
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  field: DepthSource;
+  displace(lx: number, ly: number, delta: number): { x: number; y: number };
+}
+
+export function floorSkull(source: DepthSource, cam: FloorCamera, p: FloorPlacement, cell: number): FloorSkull {
+  const { vw, vh, perspective: P, depthPx } = cam;
+  const halfH = vh / 2;
+  const lean = (delta: number) => halfH / (halfH - delta) - 1; // t − 1
+
+  const dc = p.d;
+  const xc = vw / 2 + p.sx;
+  const ww = p.width;
+  const wh = (ww / CROP_ASPECT) * p.stretch; // depth-axis extent, stretched
+
+  const dLo = dc - wh / 2;
+  const dHi = dc + wh / 2;
+  const xLo = xc - ww / 2;
+  const xHi = xc + ww / 2;
+  const leanDepth = lean(p.push) * (P + dHi);
+  const leanX = lean(p.push) * Math.max(Math.abs(xLo - vw / 2), Math.abs(xHi - vw / 2));
+  const dMin = Math.max(0, dLo);
+  const dMax = Math.min(depthPx, dHi + leanDepth);
+  // local y = depthPx − d: far edge (small d) sits at small y, near edge (large d) at large y.
+  const y0 = Math.floor((depthPx - dMax) / cell) * cell - cell;
+  const y1 = Math.ceil((depthPx - dMin) / cell) * cell + cell;
+  const x0 = Math.floor((xLo - leanX) / cell) * cell - cell;
+  const x1 = Math.ceil((xHi + leanX) / cell) * cell + cell;
+
+  const depthAt = (localY: number) => depthPx - localY;
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+  const field: DepthSource = {
+    sample(u, v) {
+      const x = lerp(x0, x1, u);
+      const d = depthAt(lerp(y0, y1, v));
+      const uu = (x - xc) / ww + 0.5;
+      const vv = (d - dc) / wh + 0.5;
+      if (uu < 0 || uu > 1 || vv < 0 || vv > 1) return 0;
+      const h = source.sample(CROP.x0 + uu * (CROP.x1 - CROP.x0), CROP.y0 + vv * (CROP.y1 - CROP.y0));
+      return smoothstep(0.1, 0.16, h) * (0.3 + 0.7 * h);
+    },
+  };
+
+  return {
+    x0,
+    x1,
+    y0,
+    y1,
+    field,
+    displace(lx, ly, delta) {
+      const d = depthAt(y0 + ly);
+      const t1 = lean(delta);
+      // Canvas x is screen x directly (no left/right split); canvas y runs against depth.
+      return { x: t1 * (x0 + lx - vw / 2), y: -t1 * (P + d) };
+    },
+  };
+}
