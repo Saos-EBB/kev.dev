@@ -37,6 +37,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TIMINGS } from "../timings";
+import { mountFloorRelief, type FloorRelief } from "../about/floor-relief";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -68,6 +69,14 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
   // the projects section's own grid — the same grid — follows: a plain cut
   // from elevator end to frontal grid wall.
   if (reducedMotion) return;
+
+  // The floor's own relief (see floor-relief.ts): a skull stands up out of the floor as this
+  // pin's timeline runs, sunk back down again before the tip finishes. Mounted async (loads the
+  // depth image) without blocking the pin below — `relief` is undefined for the first few
+  // frames, `onUpdate` just no-ops until it resolves.
+  let relief: FloorRelief | undefined;
+  const floorEl = aboutSection.querySelector<HTMLElement>(".elevator-wall--floor");
+  if (floorEl) mountFloorRelief(floorEl).then((r) => (relief = r));
 
   const {
     scrollPerUnit,
@@ -112,6 +121,7 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     pin: true,
     scrub,
     animation: tl,
+    onUpdate: (self) => relief?.setProgress(self.progress),
   });
 
   // The wall is frontal: hand "PROJEKTE" over from the floor's copy to the

@@ -44,6 +44,19 @@ einzige JS-Bewegung ist `perspective-origin`, die dem Viewport-Scroll folgt
 weite Strecken schief wirken statt nur genau dann, wenn man sie direkt
 anschaut.
 
+**Boden-Relief** (`src/about/floor-relief.ts`): ein Skull steht während des
+Kipp-Übergangs (siehe unten) kurz aus dem Boden heraus und sinkt vor dem
+vollständigen Kippen wieder ein — getrieben vom selben Pin/ScrollTrigger wie
+die Rotation (`onUpdate` in `transition.ts`). Baut auf Geometrie/Renderer aus
+`src/experiments/cloth-grid/` und `src/experiments/room-cloth/` auf
+(`depth-map.ts`, `skull-field.ts`s `floorSkull()`, `mesh-patch.ts`) — die
+Live-Seite hängt damit bewusst an Code unter `src/experiments/`, kein
+duplizierter Zweitstand. Ein Seitenwand-Pendant wurde verworfen: bei der
+Live-Seite `--grid-cell` (48px) hat ein wandgroßer Patch zu wenige Zellen,
+um als Relief statt als Blockmatsch zu lesen (Details: `docs/errors.md`).
+Die `/cloth`- und `/cloth-grid`-Testseiten, in denen das entwickelt wurde,
+sind inzwischen wieder raus.
+
 ### Projects (`src/projects/carousel.ts`)
 
 Rotierender Zylinder, Viewpoint auf der Achse. Cards kleben innen am
