@@ -71,8 +71,7 @@ export async function mountClothRelief(
 
   // `el` can be much taller than the viewport (e.g. .projects-bg-grid is inset:0 of #projects,
   // which spans the whole pinned carousel's scroll room, not just one screen) — while pinned,
-  // only a viewport-sized slice at its own top is ever actually visible, so centre within that
-  // slice, not the element's full (mostly off-screen) box.
+  // only a viewport-sized slice at its own top is ever actually visible.
   const rect = el.getBoundingClientRect();
   const visibleWidth = Math.min(rect.width, window.innerWidth);
   const visibleHeight = Math.min(rect.height, window.innerHeight);
@@ -81,10 +80,14 @@ export async function mountClothRelief(
   const ww = placement.width;
   const wh = ww / cropAspect;
 
-  const x0 = Math.floor((centreX - ww / 2) / cell) * cell - cell;
-  const x1 = Math.ceil((centreX + ww / 2) / cell) * cell + cell;
-  const y0 = Math.floor((centreY - wh / 2) / cell) * cell - cell;
-  const y1 = Math.ceil((centreY + wh / 2) / cell) * cell + cell;
+  // The canvas covers the *whole* visible background, not just a box around the picture — cells
+  // outside the picture's own silhouette simply never rise (mesh-patch only draws raised quads),
+  // so this costs nothing extra to look at, only a few thousand more (cheap) vertices to update
+  // per frame while the relief is actively animating.
+  const x0 = 0;
+  const x1 = Math.ceil(visibleWidth / cell) * cell + cell;
+  const y0 = 0;
+  const y1 = Math.ceil(visibleHeight / cell) * cell + cell;
 
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
   const field: DepthSource = {
