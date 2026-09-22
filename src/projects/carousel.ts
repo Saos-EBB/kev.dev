@@ -329,7 +329,7 @@ export function initCarousel(section: HTMLElement) {
     mountClothRelief(
       bgGrid,
       skullUrl,
-      { crop: { x0: 0.25, x1: 0.75, y0: 0.05, y1: 0.97 }, cx: 0, cy: -40, width: 420, push: 60 },
+      { crop: { x0: 0.25, x1: 0.75, y0: 0.05, y1: 0.97 }, cx: 0, cy: -40, width: 850, push: 90 },
       { start: 0, end: 0.1, rise: 0.04, fall: 0.06 },
       section,
     ).then((r) => (bgRelief = r));

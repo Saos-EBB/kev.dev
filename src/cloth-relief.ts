@@ -39,6 +39,13 @@ const rgbOf = (css: string): [number, number, number] => {
   return [r, g, b];
 };
 
+// Patch-local mesh resolution: a quarter of the live --grid-cell. At the page's own cell (48px,
+// 32px on narrow mobile) a relief-sized patch only has a handful of cells across and reads as a
+// blob, not a recognizable shape (see docs/errors.md / floor-relief.ts's same fix) — unraised
+// cells stay transparent regardless, so the coarser CSS grid underneath still shows through
+// outside the silhouette, no seam.
+const CELL_DIVISOR = 4;
+
 /**
  * Mounts a cloth relief as a transparent canvas child of `el`, positioned/sized in `el`'s own
  * plane per `placement`. `colorSource` is the element to read the resting wall/line colour off
@@ -57,14 +64,20 @@ export async function mountClothRelief(
   const cropAspect = (crop.x1 - crop.x0) / (crop.y1 - crop.y0); // width / height
 
   const rootStyle = getComputedStyle(document.documentElement);
-  const cell = parseFloat(rootStyle.getPropertyValue("--grid-cell"));
+  const cell = parseFloat(rootStyle.getPropertyValue("--grid-cell")) / CELL_DIVISOR;
   const linePx = parseFloat(rootStyle.getPropertyValue("--grid-line"));
   const gridColor = rgbOf(`rgb(${rootStyle.getPropertyValue("--grid-color")})`);
   const wallColor = rgbOf(getComputedStyle(colorSource).backgroundColor);
 
+  // `el` can be much taller than the viewport (e.g. .projects-bg-grid is inset:0 of #projects,
+  // which spans the whole pinned carousel's scroll room, not just one screen) — while pinned,
+  // only a viewport-sized slice at its own top is ever actually visible, so centre within that
+  // slice, not the element's full (mostly off-screen) box.
   const rect = el.getBoundingClientRect();
-  const centreX = rect.width / 2 + placement.cx;
-  const centreY = rect.height / 2 + placement.cy;
+  const visibleWidth = Math.min(rect.width, window.innerWidth);
+  const visibleHeight = Math.min(rect.height, window.innerHeight);
+  const centreX = visibleWidth / 2 + placement.cx;
+  const centreY = visibleHeight / 2 + placement.cy;
   const ww = placement.width;
   const wh = ww / cropAspect;
 

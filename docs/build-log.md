@@ -1,3 +1,23 @@
+## 2026-09-22 — fix: floor skull was upside down, enlarge + fix the projects-wall relief
+
+**Was:** three fixes from another look in the browser.
+1. `skull-field.ts`'s `floorSkull()` sampled the depth image with the vertical axis inverted
+   (`vv = (d − dc) / wh + 0.5`) — chin ended up at the wall's top, forehead at floor level once
+   tipped. Local y=0 (the floor div's own top edge) is what becomes the wall's *top* after
+   `transition.ts`'s rotation (same fact `.elevator-floor-title`'s own `top` comment in
+   style.css relies on), so v=0 (canvas top) needs the picture's own top — flipped to
+   `vv = (dc − d) / wh + 0.5`.
+2. `cloth-relief.ts` centred itself on `el.getBoundingClientRect()`'s full box — wrong for
+   `.projects-bg-grid`, which is `inset:0` of `#projects`, a section many viewport-heights tall
+   (it holds the whole carousel's scroll room). While pinned only a viewport-sized slice at the
+   top is ever visible, so centring on the *full* (mostly off-screen) box put the patch well
+   below the fold. Now clamps to `min(rect.width/height, window.innerWidth/innerHeight)`.
+3. Gave `cloth-relief.ts` the same patch-local `CELL_DIVISOR` (a quarter of `--grid-cell`) as
+   `floor-relief.ts` already has, and enlarged the projects-wall placement (`width` 420 → 850,
+   `push` 60 → 90 in `carousel.ts`) — "make the whole projects wall cloth," read as: the relief
+   should dominate the visible background, not sit in a small centred box.
+**Nicht gebaut:** no change to timing/band on either relief this round — only geometry/sizing.
+
 ## 2026-09-22 — fix(about): floor relief read as a blob, not a skull
 
 **Was:** two changes to `src/about/floor-relief.ts`, both from direct feedback after the first
