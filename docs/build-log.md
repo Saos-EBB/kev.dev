@@ -8,8 +8,12 @@ obliquely, so there's nothing to correct for. Depth image, its crop and placemen
 parameters, not baked in, so a later "render something else here" is a new call, not a new
 module. Reuses `mountMeshPatch()` unchanged. Also memoized `imageDepth()` by URL in
 `depth-map.ts` — `floor-relief.ts` and this both load `skull.png`, now the second load is free.
-**Nicht gebaut:** noch nicht an einem Element verdrahtet — folgt als eigener Step
-(`src/projects/carousel.ts`, siehe Plan).
+Verdrahtet in `src/projects/carousel.ts`: mounted on `.projects-bg-grid`, driven off the
+existing carousel pin's `onUpdate` (`self.progress`, band `{start:0, end:0.1, rise:0.04,
+fall:0.06}` — pops once as the pin starts, settled/idle for the remaining ~90% of the long
+carousel scroll). `colorSource` passed as `#projects` itself, since `.projects-bg-grid` has no
+`background-color` of its own. Placement (`cx`/`cy`/`width`/`push`) is a first pass, not yet
+eyeballed in the browser.
 
 ## 2026-09-22 — feat(about): wire the floor relief into the live page, drop /cloth
 

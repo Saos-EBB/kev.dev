@@ -31,6 +31,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TIMINGS } from "../timings";
 import { viewportHeight } from "../viewport";
+import { mountClothRelief, type ClothRelief } from "../cloth-relief";
+import skullUrl from "../experiments/cloth-grid/depth/skull.png?url";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -314,6 +316,25 @@ export function initCarousel(section: HTMLElement) {
   // with its cards in a small readable row — nothing here needs to run.
   if (reducedMotion) return;
 
+  // The background grid's own relief (see cloth-relief.ts): continues the elevator floor's
+  // reveal into the projects section — pops once as the pin's progress rises past 0, settles
+  // back to the plain static grid (`.projects-bg-grid`'s own CSS, untouched) for the rest of the
+  // long carousel scroll. `.projects-bg-grid` has no background-color of its own (only the
+  // gradients), so the colour comes from its parent `.projects` instead. Mounted async (loads
+  // the depth image) without blocking the pin below — same fire-and-forget pattern as
+  // transition.ts's floor relief.
+  let bgRelief: ClothRelief | undefined;
+  const bgGrid = section.querySelector<HTMLElement>(".projects-bg-grid");
+  if (bgGrid) {
+    mountClothRelief(
+      bgGrid,
+      skullUrl,
+      { crop: { x0: 0.25, x1: 0.75, y0: 0.05, y1: 0.97 }, cx: 0, cy: -40, width: 420, push: 60 },
+      { start: 0, end: 0.1, rise: 0.04, fall: 0.06 },
+      section,
+    ).then((r) => (bgRelief = r));
+  }
+
   const { holdUnits, reveal, cardReveal, clear, scrollPerCard, scrub } =
     TIMINGS.projects;
   const isMobile = window.matchMedia(
@@ -431,5 +452,6 @@ export function initCarousel(section: HTMLElement) {
     pin: true,
     scrub,
     animation: tl,
+    onUpdate: (self) => bgRelief?.setProgress(self.progress),
   });
 }
