@@ -1,3 +1,14 @@
+## 2026-09-22 — chore: unwire the floor relief, pause for brainstorming
+
+**Was:** removed the `mountFloorRelief` import/mount/`onUpdate` from `src/scroll/transition.ts` —
+back to exactly what it was before this whole thread, verified via `git diff` against `02225b5`.
+Nothing deleted: `floor-relief.ts`, `cloth-relief.ts` and everything they depend on stay in the
+tree, unimported. Confirmed via `npm run build` that Vite drops the whole unreferenced chain from
+the bundle (`skull.png` no longer in `dist/`, main.js back to 164KB from 172KB) — dormant costs
+nothing, same as `cloth-relief.ts` already did after the projects-wall pivot.
+**Nicht gebaut:** nothing new this step — see `docs/handoff.md` for the full state/how-to-
+resume writeup asked for here instead of more code.
+
 ## 2026-09-22 — fix: drop the CSS-mask skull, make the floor relief a brief flash
 
 **Was:** removed `.projects-bg-grid::after` (the CSS-mask skull from the previous step) entirely
