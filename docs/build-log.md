@@ -1,3 +1,16 @@
+## 2026-09-22 — feat(cloth-relief): generic frontal relief mount for plain page elements
+
+**Was:** `src/cloth-relief.ts`, `mountClothRelief(el, depthUrl, placement, band, colorSource?)`
+— a cloth relief for a plain, frontally-viewed element (no CSS-3D plane, no perspective camera,
+unlike `skull-field.ts`'s wall/floor versions). Displacement is a simple radial puff away from
+the patch's own centre instead of the wall/floor's ray-reprojection trick — nothing here is seen
+obliquely, so there's nothing to correct for. Depth image, its crop and placement are all
+parameters, not baked in, so a later "render something else here" is a new call, not a new
+module. Reuses `mountMeshPatch()` unchanged. Also memoized `imageDepth()` by URL in
+`depth-map.ts` — `floor-relief.ts` and this both load `skull.png`, now the second load is free.
+**Nicht gebaut:** noch nicht an einem Element verdrahtet — folgt als eigener Step
+(`src/projects/carousel.ts`, siehe Plan).
+
 ## 2026-09-22 — feat(about): wire the floor relief into the live page, drop /cloth
 
 **Was:** `src/about/floor-relief.ts` mounts a canvas patch on the real `.elevator-wall--floor`

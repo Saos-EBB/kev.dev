@@ -35,8 +35,21 @@ export function proceduralDepth(bumps: Bump[]): DepthSource {
   };
 }
 
+// Two mounts can want the same baked PNG (e.g. the elevator floor and the projects background
+// both use skull.png) — cache by URL so the second caller reuses the first's decode instead of
+// re-fetching pixels into a second offscreen canvas.
+const depthCache = new Map<string, Promise<DepthSource>>();
+
 /** Loads a baked greyscale PNG (see above) as a depth source, sampled bilinearly. */
-export async function imageDepth(url: string): Promise<DepthSource> {
+export function imageDepth(url: string): Promise<DepthSource> {
+  const cached = depthCache.get(url);
+  if (cached) return cached;
+  const promise = loadImageDepth(url);
+  depthCache.set(url, promise);
+  return promise;
+}
+
+async function loadImageDepth(url: string): Promise<DepthSource> {
   const img = new Image();
   img.src = url;
   await img.decode();
