@@ -1,3 +1,15 @@
+## 2026-09-22 — feat(cloth-relief): canvas covers the whole visible background
+
+**Was:** clarified — "make the whole projects wall cloth" meant the canvas itself should span
+the entire visible background, not a (however large) centred box on it. `cloth-relief.ts`'s
+patch bounds (`x0..x1`, `y0..y1`) are now always `0..visibleWidth`/`0..visibleHeight` (the same
+viewport-clamped size from the previous fix), independent of the picture's own `width`/`cx`/`cy`
+— those still place the silhouette within that full canvas, cells outside it simply never rise
+(mesh-patch only draws raised quads), so this costs nothing extra to look at, only more
+(cheap) vertices to update per frame while actively animating.
+**Nicht gebaut:** no change to `carousel.ts`'s call itself — same placement numbers, now just
+sitting inside a full-background canvas instead of a bounded one.
+
 ## 2026-09-22 — fix: floor skull was upside down, enlarge + fix the projects-wall relief
 
 **Was:** three fixes from another look in the browser.
