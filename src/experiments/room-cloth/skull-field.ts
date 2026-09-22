@@ -196,7 +196,13 @@ export function floorSkull(source: DepthSource, cam: FloorCamera, p: FloorPlacem
       const x = lerp(x0, x1, u);
       const d = depthAt(lerp(y0, y1, v));
       const uu = (x - xc) / ww + 0.5;
-      const vv = (d - dc) / wh + 0.5;
+      // Canvas v runs far→near (small d at v=0, large d at v=1 — see depthAt above), but far
+      // (small d, small local y) is what ends up as the WALL'S TOP once transition.ts tips the
+      // floor up (local y=0 is the floor div's own top edge, which the rotation carries to the
+      // top of the frontal wall — see .elevator-floor-title's own `top` comment in style.css for
+      // the same fact from the other side). So v=0 (wall-top-to-be) has to read the picture's own
+      // top (forehead), not its bottom (chin) — hence dc − d here, not d − dc.
+      const vv = (dc - d) / wh + 0.5;
       if (uu < 0 || uu > 1 || vv < 0 || vv > 1) return 0;
       const h = source.sample(CROP.x0 + uu * (CROP.x1 - CROP.x0), CROP.y0 + vv * (CROP.y1 - CROP.y0));
       return smoothstep(0.1, 0.16, h) * (0.3 + 0.7 * h);
