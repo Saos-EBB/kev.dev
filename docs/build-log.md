@@ -1,3 +1,15 @@
+## 2026-09-22 — fix: drop the CSS-mask skull, make the floor relief a brief flash
+
+**Was:** removed `.projects-bg-grid::after` (the CSS-mask skull from the previous step) entirely
+— called ugly on sight, no salvage attempt. Kept: the floor relief (liked, "kinda cool"), but its
+band was way too wide (`start:0, end:0.78` — visible across most of the tip-over). `bandValue`
+(`push-strength.ts`) has no plateau, it only ever rises then immediately falls, so "how long it's
+visible" is entirely rise+fall's width — narrowed to `{start:0.32, end:0.48, rise:0.06,
+fall:0.08}`: a quick flash around 40% into the tip-over, not a sustained reveal.
+**Nicht gebaut:** floor relief's size (width/push) untouched — the ask was about duration/
+subtlety, not shrinking it; it stays the same big skull, just seen for a moment instead of
+a long stretch.
+
 ## 2026-09-22 — refactor(projects): skull as a CSS mask, not a JS mesh relief
 
 **Was:** dropped the mesh-relief skull from `.projects-bg-grid` (was reading as a small,

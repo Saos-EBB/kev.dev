@@ -718,31 +718,6 @@ button:focus-visible {
   backface-visibility: hidden;
 }
 
-/* The skull, directly part of the wall — not a JS relief (see docs/errors.md /
-   docs/build-log.md: a cell-mesh version was tried here and dropped, too small/costly for what's
-   meant to be a fixed background element, not a momentary pop). Pure CSS: the depth map (baked
-   greyscale, white = skull, see bake-depth.mjs) used as a luminance mask, tinted with the grid's
-   own line colour so it reads as part of the same system instead of a foreign image. Oversized
-   (mask-size > 100%) because the source PNG has generous black margin around the actual skull
-   (see the CROP rect in skull-field.ts) — a plain 100% would show mostly empty space. */
-.projects-bg-grid::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-color: rgba(var(--grid-color), 0.35);
-  -webkit-mask-image: url("./experiments/cloth-grid/depth/skull.png");
-  mask-image: url("./experiments/cloth-grid/depth/skull.png");
-  -webkit-mask-mode: luminance;
-  mask-mode: luminance;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: 200% 200%;
-  mask-size: 200% 200%;
-}
-
 /* The real, semantic heading. With motion the headline you see is
    .projects-headline below, so this one is only for screen readers;
    under reduced motion it IS the static headline at the top of the
