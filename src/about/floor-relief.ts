@@ -85,10 +85,13 @@ export async function mountFloorRelief(floorEl: HTMLElement): Promise<FloorRelie
 
   const cloth: ClothConfig = {
     ...defaultConfig,
-    // Rises across the first ~35% of the pinned tip-over, gone again by ~78% — comfortably
-    // before the rotation itself finishes at (holdUnits+rotate.duration)/tl.duration() (see
-    // TIMINGS.aboutToProjects), so the relief has settled flat before the wall stands frontal.
-    band: { start: 0, end: 0.78, rise: 0.35, fall: 0.43 },
+    // A brief flash, not a sustained reveal: rises and falls quickly around the ~40% mark of
+    // the pinned tip-over (partway through the rotation — see TIMINGS.aboutToProjects), gone
+    // long before the rotation itself finishes at (holdUnits+rotate.duration)/tl.duration()
+    // (≈0.83). Widen rise/fall here to make it linger longer, not by adding a hold — the band
+    // has no plateau (see push-strength.ts's bandValue), it only ever rises then immediately
+    // falls, so "how long it lingers" is entirely rise+fall's width.
+    band: { start: 0.32, end: 0.48, rise: 0.06, fall: 0.08 },
   };
 
   const patch: MeshPatch = mountMeshPatch({
