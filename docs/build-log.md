@@ -1,3 +1,20 @@
+## 2026-09-22 — refactor(projects): skull as a CSS mask, not a JS mesh relief
+
+**Was:** dropped the mesh-relief skull from `.projects-bg-grid` (was reading as a small,
+secondary "mini" version next to the floor's now much bigger one) — the carousel.ts wiring
+(`mountClothRelief` call, its `onUpdate`) is gone, back to exactly what it was before this whole
+detour. In its place: `.projects-bg-grid::after`, a plain CSS layer using `skull.png` (the same
+baked depth map, white = skull) as a `mask-image` with `mask-mode: luminance`, tinted with
+`rgba(var(--grid-color), 0.35)` so it reads as part of the same grid system instead of a foreign
+image — no canvas, no JS, no per-frame cost at all, zero bundle-size change (same asset, already
+loaded for the floor). `mask-size: 200% 200%` compensates for the source PNG's generous black
+margin around the actual skull (see `skull-field.ts`'s `CROP` rect) — a first-pass number, not
+yet eyeballed.
+**Nicht gebaut:** `cloth-relief.ts` (the generic mount function) stays in the tree unused — it's
+the reusable piece asked for earlier ("later render a hand or something else"), costs nothing
+sitting idle (nothing imports it, so it doesn't even reach the bundle), not deleted on the
+strength of a single caller going away.
+
 ## 2026-09-22 — feat(cloth-relief): canvas covers the whole visible background
 
 **Was:** clarified — "make the whole projects wall cloth" meant the canvas itself should span
