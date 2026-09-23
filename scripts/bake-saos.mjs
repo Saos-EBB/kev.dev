@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Bakes the floor's "SAOS" relief: a depth map, a Lambert shading overlay,
-// and a warped grid-line mask — three static images, no canvas/mesh
-// rendering at runtime (see src/about/floor-relief.ts for the old per-frame
-// approach this replaces). Build-time tool, run by hand.
+// Bakes the "SAOS" wordmark relief: a depth map and a Lambert shading
+// overlay — two static images, no canvas/mesh rendering at runtime.
+// Build-time tool, run by hand.
 //
 // Text rasterisation from a TTF needs a real font renderer, which pure Node
 // doesn't have — rather than add a canvas/font-rasteriser npm dependency,
@@ -31,7 +30,6 @@
 // Output:
 //   src/assets/relief/saos-depth.png  — greyscale depth (white = raised)
 //   src/assets/relief/saos-shade.webp — RGBA Lambert shading overlay
-//   src/assets/relief/saos-lines.webp — RGBA grid-line mask, warped by depth
 
 import { execFileSync } from "node:child_process";
 import { resolve, join, dirname } from "node:path";
@@ -57,7 +55,6 @@ const W = Math.round(H * ASPECT);
 const assetsDir = resolve(root, "src/assets/relief");
 const depthPath = join(assetsDir, "saos-depth.png");
 const shadePath = join(assetsDir, "saos-shade.webp");
-const linesPath = join(assetsDir, "saos-lines.webp");
 
 // --- step 1: depth map -------------------------------------------------------
 // caption: fits the largest pointsize of the given font that renders the
@@ -162,57 +159,6 @@ function bakeShade(depth) {
   console.log(`shade  -> ${shadePath}`);
 }
 
-// --- step 3: warped grid-line mask -------------------------------------------
-// A grid at the page's own --grid-cell density, converted to this image's
-// pixel scale via the SAME --scale factor the whole bake is calibrated
-// to (1 CSS px = `scale` image px, exactly like a retina backing store —
-// so a 48px CSS grid cell is `48 * scale` image px here), sampled through
-// a parallax-style offset built from the same depth gradient: near a
-// raised edge, the sample point shifts by the slope times a push
-// distance, so the lines bend around the bulge instead of cutting
-// straight through it. Pure white on transparent — an alpha mask,
-// colored at runtime via CSS mask-image + background-color so it always
-// matches the live theme.
-const GRID_CELL_CSS_PX = 48; // style.css's --grid-cell (desktop value)
-const CELL_PX = GRID_CELL_CSS_PX * scale;
-const LINE_HALF_WIDTH_PX = scale; // ~1 CSS px wide
-const MAX_WARP_PX = 14 * scale; // displacement at the steepest slope; raw gradients are tiny (soft blur), so scale relative to the field's own max rather than a flat multiplier
-
-function distToGrid(v, cell) {
-  const m = ((v % cell) + cell) % cell;
-  return Math.min(m, cell - m);
-}
-
-function bakeLines(depth) {
-  const gradients = new Float32Array(W * H * 2);
-  let maxMag = 0;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const [gx, gy] = gradient(depth, x, y);
-      const i = (y * W + x) * 2;
-      gradients[i] = gx; gradients[i + 1] = gy;
-      maxMag = Math.max(maxMag, Math.hypot(gx, gy));
-    }
-  }
-  const warpScale = MAX_WARP_PX / (maxMag || 1);
-
-  const rgba = new Uint8ClampedArray(W * H * 4);
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const i2 = (y * W + x) * 2;
-      const sx = x - gradients[i2] * warpScale;
-      const sy = y - gradients[i2 + 1] * warpScale;
-      const d = Math.min(distToGrid(sx, CELL_PX), distToGrid(sy, CELL_PX));
-      const alpha = Math.max(0, 1 - d / LINE_HALF_WIDTH_PX);
-      const i = (y * W + x) * 4;
-      rgba[i] = 255; rgba[i + 1] = 255; rgba[i + 2] = 255; rgba[i + 3] = Math.round(alpha * 255);
-    }
-  }
-  writeRgba(rgba, linesPath);
-  console.log(`lines  -> ${linesPath} (cell ${CELL_PX.toFixed(1)}px, warp scale ${warpScale.toFixed(0)})`);
-}
-
 bakeDepth();
 const depth = readDepth();
 bakeShade(depth);
-bakeLines(depth);
