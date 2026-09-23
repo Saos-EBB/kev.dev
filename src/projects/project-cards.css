@@ -285,13 +285,31 @@
   /* Details open as an overlay over the whole bento, which stays as it
      is underneath: faded in/out, own scroll (initProjectCards already
      sets data-lenis-prevent while open). */
+  /* The overlay uses the free space below the headline instead of the
+     bento's own 480px: as tall as fits, in whole 2-cell steps so it stays
+     centered on the card with its edges on grid lines. */
+  .pcard {
+    --open-h: max(
+      calc(10 * var(--grid-cell)),
+      round(
+        down,
+        calc(100vh - var(--projects-title-h, 0px) - var(--grid-cell)),
+        calc(2 * var(--grid-cell))
+      )
+    );
+  }
+
   .pcard-details {
     position: absolute;
-    inset: 0;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: var(--open-h);
+    transform: translateY(-50%);
     z-index: 1;
     display: block;
-    padding: 1rem;
-    overflow-y: auto;
+    padding: 1rem 1rem 3.5rem; /* bottom: room for the toggle button */
+    overflow-y: auto; /* fallback when a project's text still doesn't fit */
     border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
     border-radius: 8px;
     background: var(--projects-bg);
@@ -315,6 +333,13 @@
      button stays, floating bottom-left above the overlay as the close
      control. */
   .pcard.is-open .pcard-part--more {
+    grid-area: auto;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: calc(9 * var(--grid-cell));
+    height: var(--open-h);
+    transform: translateY(-50%);
     justify-content: flex-end;
     border-color: transparent;
     background: none;
@@ -327,8 +352,22 @@
     background: var(--projects-bg);
   }
 
+  /* Sections side by side, one column each (decisions | challenge +
+     origin | screenshots/widget). */
   .pcard-details-inner {
     overflow: visible;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 1.5rem;
+    height: 100%;
+  }
+
+  .pcard-sec {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   .pcard.is-open .pcard-details-inner {
