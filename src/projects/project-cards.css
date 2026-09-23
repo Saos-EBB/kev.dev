@@ -1,4 +1,10 @@
 .pcard {
+  /* Inside a .carousel-project the card sits at the group's own anchor;
+     carousel.ts places it via GSAP transforms (its slot preset). */
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform, opacity;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -36,8 +42,8 @@
 }
 
 .pcard-claim {
-  font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   line-height: 1.4;
   color: var(--color-text);
 }
@@ -88,6 +94,12 @@
   color: var(--color-accent);
 }
 
+.pcard-open {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-accent);
+}
+
 .pcard-toggle {
   align-self: flex-start;
   font-family: var(--font-mono);
@@ -123,9 +135,7 @@
 }
 
 /* Collapsed via grid-template-rows so the height animates without JS
-   measuring. The inner wrapper is what actually clips and scrolls;
-   data-lenis-prevent (set in markup) lets the wheel scroll it instead of
-   the page while the carousel is pinned. */
+   measuring. */
 .pcard-details {
   display: grid;
   grid-template-rows: 0fr;
@@ -144,9 +154,16 @@
   gap: 0.5rem;
 }
 
-.pcard.is-open .pcard-details-inner {
-  max-height: 55vh;
+/* An open card is capped to the space below the fixed "PROJEKTE"
+   headline and scrolls internally (initProjectCards sets
+   data-lenis-prevent while open so the wheel scrolls the card, not the
+   page). Centered growth keeps it inside that region. */
+.pcard.is-open {
+  max-height: calc(100vh - var(--projects-title-h, 0px) - 2rem);
   overflow-y: auto;
+}
+
+.pcard.is-open .pcard-details-inner {
   padding-top: 0.5rem;
 }
 
@@ -212,5 +229,13 @@
 @media (prefers-reduced-motion: reduce) {
   :root:not(.force-motion) .pcard-details {
     transition: none;
+  }
+  /* No carousel: each project block just holds its card in normal flow. */
+  :root:not(.force-motion) .pcard {
+    position: static;
+    width: 100%;
+    transform: none !important;
+    opacity: 1 !important;
+    box-shadow: none;
   }
 }

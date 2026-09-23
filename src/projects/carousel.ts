@@ -34,147 +34,6 @@ import { viewportHeight } from "../viewport";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export type Badge = "project" | "tool" | "ground-up";
-
-export const BADGE_LABEL: Record<Badge, string> = {
-  project: "Projekt",
-  tool: "Werkzeug",
-  "ground-up": "Von Grund auf",
-};
-
-export interface Project {
-  title: string;
-  role: string;
-  /** One line: what does this project prove? Its own card, quote-style. */
-  proves: string;
-  bullets: string[]; // top 2 highlights, their own card
-  tags: string[];
-  badge: Badge;
-  href: string; // GitHub repo
-  image?: string; // public/-relative screenshot; projects without one just skip that card
-}
-
-// Sourced from b2b-cv's lib/portfolio/content.ts (the PROJECTS array
-// there) — same seven projects, same order (by strength, not chronology,
-// per that file's own comment), German only since this site has no
-// language toggle. Bullets trimmed to the top 2 per project to fit a card.
-export const projects: Project[] = [
-  {
-    title: "YourBrand",
-    role: "Modulare White-Label-Plattform",
-    proves:
-      "Beweist Umfang: allein von der Datenbank bis zum Frontend, mit Zahlungen, Echtzeit und DSGVO-Ablauf.",
-    bullets: [
-      "NestJS + PostgreSQL/PostGIS Backend mit Echtzeit-Chat über WebSockets",
-      "Stripe-Zahlungen und vollständiger DSGVO-konformer Consent-Flow",
-    ],
-    tags: ["NestJS", "Next.js", "PostgreSQL", "PostGIS", "WebSockets", "Stripe"],
-    badge: "project",
-    href: "https://github.com/Saos-EBB/WhiteLabel-SaaS---Comunity-Plattform-",
-    image: "/projects/yourbrand.png",
-  },
-  {
-    title: "TschoBBo",
-    role: "Lokaler Job-Scraper + LLM-Anschreiben",
-    proves:
-      "Beweist Urteilsvermögen: lokale Sprachmodelle statt Cloud, und der Versand bleibt bewusst manuell.",
-    bullets: [
-      "Scrape → Filter → Anschreiben-Pipeline über mehrere Jobportale",
-      "Mehrere lokale Ollama-Modelle verglichen und für Qualität/RAM-Verbrauch ausgewählt",
-    ],
-    tags: ["TypeScript", "Node.js", "Playwright", "Ollama"],
-    badge: "tool",
-    href: "https://github.com/Saos-EBB/jobsuche-apply-bot",
-    image: "/projects/jobbot.jpeg",
-  },
-  {
-    title: "3D-Wireframe-Renderer",
-    role: "Canvas, ohne Bibliothek",
-    proves:
-      "Beweist Tiefe: Projektion, Rotation und Tiefenschattierung von Hand, ohne Bibliothek.",
-    bullets: [
-      "Eigene Projektion und Rotation, Tiefen-Shading in 16 Stufen aus der echten z-Spanne des Meshes",
-      "Cutaway über Flächen-Schwerpunkte: die Schnittkante bleibt gezackt, das Innere liegt hohl frei",
-    ],
-    tags: ["JavaScript", "Canvas 2D", "Node.js", "Python"],
-    badge: "ground-up",
-    href: "https://github.com/Saos-EBB/Renderder",
-  },
-  {
-    title: "ReleaseWatcher",
-    role: "CLI, spoilerfrei",
-    proves: "Beweist Zurückhaltung: das Werkzeug tut genau eine Sache und keine mehr.",
-    bullets: [
-      "Reiner HTTP-Status-Check — kein Scraping, keine Vorschau, keine Spoiler",
-      "Watchlist im Terminal: hinzufügen, löschen, alle auf einmal prüfen",
-    ],
-    tags: ["JavaScript", "CLI"],
-    badge: "tool",
-    href: "https://github.com/Saos-EBB/ReleaseWatcher",
-    image: "/projects/releasewatcher.png",
-  },
-  {
-    title: "Pokémon Battle-Sim",
-    role: "Java-Original → SAOS·BOY-Port",
-    proves:
-      "Beweist Objektorientierung: Klassenhierarchie, Kampfschleife und Datenhaltung selbst entworfen.",
-    bullets: [
-      "Klassenhierarchie für Pokémon und Attacken",
-      "Rundenbasierte Kampfschleife mit Textausgabe",
-    ],
-    tags: ["Java"],
-    badge: "ground-up",
-    href: "https://github.com/Saos-EBB/pkemn",
-  },
-  {
-    title: "RPN-Rechner",
-    role: "Java, Datenstrukturen von Grund auf",
-    proves:
-      "Beweist Grundlagen: verkettete Liste und Stack selbst gebaut, statt die fertigen zu nehmen.",
-    bullets: [
-      "Selbst implementierte einfach verkettete Liste",
-      "Stack darauf aufgebaut, zum Auswerten der Ausdrücke genutzt",
-    ],
-    tags: ["Java"],
-    badge: "ground-up",
-    href: "https://github.com/Saos-EBB/RPN-Calculator",
-  },
-  {
-    title: "Game of Life",
-    role: "Java, Terminal",
-    proves:
-      "Beweist Genauigkeit: Nachbarschaftslogik und Zykluserkennung, erst auf Papier, dann im Code.",
-    bullets: [
-      "Gitter- und Nachbar-Zähllogik von Grund auf gebaut",
-      "Schritt-für-Schritt-Simulation mit Zykluserkennung — stoppt von selbst, wenn sich ein Muster wiederholt",
-    ],
-    tags: ["Java"],
-    badge: "ground-up",
-    href: "https://github.com/Saos-EBB/-GAMES-/tree/main/GameOfLife",
-  },
-];
-
-export type AspectKind = "cover" | "image" | "proves" | "highlights" | "tech";
-
-export interface AspectCard {
-  kind: AspectKind;
-  project: Project;
-}
-
-// Every project becomes 4 or 5 cards: the four aspects below, plus a
-// screenshot card inserted right after the cover if the project has one.
-// Order is the order cards swing onto the ring in.
-export function getProjectCards(project: Project): AspectCard[] {
-  const cards: AspectCard[] = [{ kind: "cover", project }];
-  if (project.image) cards.push({ kind: "image", project });
-  cards.push(
-    { kind: "proves", project },
-    { kind: "highlights", project },
-    { kind: "tech", project },
-  );
-  return cards;
-}
-
 // One card's fixed spot within its group. x/y are percentages of the
 // card's *own* size (plain CSS translate() semantics — same reasoning as
 // the old static rules this replaces: the spread scales with the
@@ -196,6 +55,7 @@ interface SlotLayout {
 // different (left/right/high) and fans the rest out around it, so
 // consecutive projects don't all clump around dead-center.
 const PRESET_LEFT: Record<number, SlotLayout[]> = {
+  1: [{ x: 0, y: 0, rotate: -1, scale: 1, zIndex: 1 }],
   3: [
     { x: -6, y: -4, rotate: -2, scale: 1.15, zIndex: 3 },
     { x: 58, y: -14, rotate: 4, scale: 1.0, zIndex: 2 },
@@ -217,6 +77,7 @@ const PRESET_LEFT: Record<number, SlotLayout[]> = {
 };
 
 const PRESET_RIGHT: Record<number, SlotLayout[]> = {
+  1: [{ x: 0, y: 0, rotate: 1, scale: 1, zIndex: 1 }],
   3: [
     { x: 8, y: -6, rotate: 2, scale: 1.15, zIndex: 3 },
     { x: -54, y: -12, rotate: -4, scale: 1.0, zIndex: 2 },
@@ -238,6 +99,7 @@ const PRESET_RIGHT: Record<number, SlotLayout[]> = {
 };
 
 const PRESET_HIGH: Record<number, SlotLayout[]> = {
+  1: [{ x: 0, y: 0, rotate: 0, scale: 1, zIndex: 1 }],
   3: [
     { x: 0, y: -14, rotate: 1, scale: 1.15, zIndex: 3 },
     { x: 50, y: 10, rotate: -3, scale: 0.95, zIndex: 2 },
@@ -352,7 +214,7 @@ export function initCarousel(section: HTMLElement) {
 
   projectGroups.forEach((group, i) => {
     const cards = Array.from(
-      group.querySelectorAll<HTMLElement>(".carousel-card"),
+      group.querySelectorAll<HTMLElement>(".pcard"),
     );
     if (cards.length === 0) return;
 
