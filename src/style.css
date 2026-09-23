@@ -521,18 +521,40 @@ button:focus-visible {
   background-size: var(--grid-cell) var(--grid-cell);
 }
 
-/* The floor's own relief: two pre-baked layers (scripts/bake-saos.mjs —
-   see that script for how they're made), no canvas/mesh rendering at
-   runtime. Sized to the floor exactly and stretched to fill it, so the
-   baked 5:3 canvas isn't pixel-registered to the live grid, just density-
-   matched. Stays fully transparent (opacity 0) except for a brief flash
-   transition.ts drives during the tip-over — see the "tip" tween there
-   for the band (same start/end/rise/fall the old canvas version used). */
-.elevator-floor-relief {
+/* Groups SAOS + "PROJEKTE" so transition.ts can slide both together as
+   one unit in Phase B (see that file) without touching the floor's own
+   grid/glow layers, which are siblings, not children, of this wrapper.
+   Holds the two numbers both children position off of, derived from
+   ONE source each (never redefined below): --saos-height/--saos-gap are
+   the actual knobs; --saos-offset is how much lower "PROJEKTE" sits to
+   make room for SAOS above it, and how far Phase B has to slide things
+   back up to land PROJEKTE at its original, pre-existing handover
+   position (see .elevator-floor-title and transition.ts). */
+.elevator-floor-heading {
   position: absolute;
   inset: 0;
-  opacity: 0;
   pointer-events: none;
+  --saos-gap: 1rem;
+  --saos-height: clamp(12rem, 35vh, 400px); /* letter strokes need to stay >= ~2x --grid-cell to read; see scripts/bake-saos.mjs, calibrated to this same 400px max */
+  --saos-offset: calc(var(--saos-height) + var(--saos-gap));
+}
+
+/* The SAOS wordmark: two pre-baked layers (scripts/bake-saos.mjs — see
+   that script for how it's calibrated to this exact height), no canvas/
+   mesh rendering at runtime. Part of the heading now, not a flash:
+   transition.ts fades it in once the wall starts turning and leaves it
+   up through the rotation; Phase B (also transition.ts) slides it off
+   the top edge and fades it out together. Sits exactly where
+   .elevator-floor-title used to sit before --saos-offset existed — see
+   that rule below for where PROJEKTE moved to instead. */
+.elevator-floor-relief {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: max(0px, calc(var(--elevator-depth) - 100vh));
+  height: var(--saos-height);
+  aspect-ratio: 5 / 3;
+  opacity: 0;
 }
 
 /* Lambert shading, baked: white = lit, black = shadowed, transparent =
@@ -563,15 +585,20 @@ button:focus-visible {
    own, no fade; it's legible only once perspective stops crushing it.
    The tip pivots on the floor's NEAR edge, so the wall's visible top is
    100vh above that edge, not the floor's far edge (which ends up
-   --elevator-depth above the viewport): `top` puts the headline exactly
-   there, one --hero-pad-inline in from the viewport's top. Text is upright
-   in the floor's own frame, so it reads correctly when the floor is
-   frontal. main.ts fits the font-size to one full-width line. */
+   --elevator-depth above the viewport) — `max(0px, ...) + --saos-offset`
+   puts the headline --saos-offset below there instead of exactly there,
+   leaving room for SAOS above it. Phase B (transition.ts) slides the
+   whole .elevator-floor-heading wrapper up by --saos-offset once the
+   wall is frontal, landing PROJEKTE back at that original position —
+   the exact pixels .projects-headline takes over at, unchanged from
+   before SAOS existed. Text is upright in the floor's own frame, so it
+   reads correctly when the floor is frontal. main.ts fits the font-size
+   to one full-width line. */
 .elevator-floor-title {
   position: absolute;
   left: 0;
   right: 0;
-  top: max(0px, calc(var(--elevator-depth) - 100vh));
+  top: calc(max(0px, var(--elevator-depth) - 100vh) + var(--saos-offset));
   padding: var(--hero-pad-inline);
   font-family: var(--font-display);
   font-size: clamp(2.75rem, 11vw, 8rem); /* fallback until main.ts fits it */
@@ -773,6 +800,15 @@ button:focus-visible {
   text-transform: uppercase;
   color: var(--color-accent);
   clip-path: inset(50%); /* visually hidden, still announced */
+}
+
+/* The SAOS wordmark's reduced-motion fallback: with motion it lives on
+   the floor (.elevator-floor-relief) and is never reached here (the
+   elevator never turns to face the camera without motion), so this is a
+   separate, always-static copy shown above .projects-title instead — see
+   the media block below. Hidden by default; motion never touches it. */
+.projects-saos {
+  display: none;
 }
 
 /* The headline once the wall stands frontal (with motion only). Fixed to
@@ -995,6 +1031,19 @@ button:focus-visible {
   }
   :root:not(.force-motion) .elevator-floor-title {
     display: none;
+  }
+  /* SAOS belongs to the heading, so it has to show up somewhere even
+     without motion — .projects-title is that heading here, so SAOS goes
+     directly above it, same shading layer as the animated version, just
+     static (no lines/mask layer, no fade — this is never mid-transition). */
+  :root:not(.force-motion) .projects-saos {
+    display: block;
+    width: 12rem;
+    max-width: 50%;
+    aspect-ratio: 5 / 3;
+    margin: 0 auto 0.5rem;
+    background-image: url("./assets/relief/saos-shade.webp");
+    background-size: 100% 100%;
   }
   :root:not(.force-motion) .carousel-stage {
     height: auto;
