@@ -19,8 +19,8 @@ löschen.
 
 ### About (`src/about/about-blocks.ts`)
 
-- **A2 „Der Weg hierher“:** Die 6 Absätze existieren im Repo nicht (`buildlog.md` sagt, die Prosa-Fassung
-  wurde bewusst entfernt). Text liefern und entscheiden: 1:1 oder leicht straffen.
+- **A2 „Der Weg hierher“:** Die 6 Absätze existieren im Repo nicht (laut dem alten `buildlog.md`, jetzt nur noch
+  in der Git-History, wurde die Prosa-Fassung bewusst entfernt). Text liefern und entscheiden: 1:1 oder leicht straffen.
   **Achtung Höhe:** Das Overlay hat eine feste Höhe (4 Viewports, auf Mobile abzüglich des reservierten
   letzten). Sechs Absätze passen nicht mehr hinein. Dann muss die Höhe der `#about`-Section wachsen, und
   die hängt an der Elevator-Geometrie und am Übergang in `transition.ts`.
@@ -87,13 +87,20 @@ Die CheerpJ-Runtime kommt vom fremden CDN und braucht beim Start sehr unterschie
 
 ## Aufräumen
 
-- Die alten `.carousel-card*`-Regeln in `src/style.css` (22 Treffer) sind ungenutzt, seit die Projekte auf
-  `.pcard` laufen. Entfernen.
-- `buildlog.md` im Repo-Root ist veraltet: Es beschreibt das Carousel noch als rotierenden Zylinder, und die
-  Sections About/Projects stimmen nicht mehr.
+Der Repo-Cleanup vom 2026-09-23 ist erledigt: Relief-Experiment samt seiner Docs, `buildlog.md`,
+`saos-lines.webp`, tote CSS-Regeln, ungenutzte `COLORS`-Werte und der Branch `experiment/cloth-grid`
+sind weg (Gründe stehen in den Commit-Messages, alles bleibt in der Git-History).
+
+Bewusst noch da: `testMobile.html` samt Eintrag in `vite.config.ts` (Seite für Geräte-Checks, Nutzung
+unklar), `public/projects/releasewatcher.png` und `yourbrand.png` (seit den neuen Cards ohne Verweis).
+Wenn nicht mehr gebraucht: löschen.
+
 - Commit `8803eb9` (Zoom-Arbeit) hat meine `main.ts`-Änderung für die About-Blöcke mitgenommen. Er importiert
   `about-blocks`, das erst in `9bb00e1` liegt, und baut allein nicht. Mit `9bb00e1` darauf ist alles
   konsistent. Nur relevant für Bisect.
+- **Kontrast:** Mit dem dunkelroten Schema ist `--color-accent` (`#5f0027`) auf dem Hintergrund (`#08070a`)
+  bei etwa 1,4:1 kaum lesbar (WCAG verlangt 4,5:1 für Text). Betrifft alles, was den Akzent als Textfarbe
+  nutzt: die `[OFFEN]`-Zeilen, die Rolle in der Profilkarte, Card-Überschriften der Details, Terminal-Prompt.
 
 ## Nicht getestet
 
