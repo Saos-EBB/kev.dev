@@ -1,0 +1,104 @@
+/* Blocks A1–A5 inside .about-overlay (see about-blocks.ts). Same width and
+   centering as the CV sections, so everything reads as one column on the
+   back wall. The overlay itself ignores the pointer; only links opt in. */
+.about-block {
+  width: calc(var(--elevator-overlay-scale) * 100%);
+  max-width: 46rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
+  line-height: 1.55;
+  color: var(--color-text);
+}
+
+.about-card {
+  align-items: flex-start;
+  padding: 1.4em;
+  border: 1px solid rgba(var(--color-line), 0.35);
+  background: rgba(var(--color-line), 0.03);
+}
+
+.about-card-name {
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.1;
+}
+
+.about-card-role {
+  color: var(--color-accent);
+}
+
+.about-heading {
+  font-family: var(--font-mono);
+  font-weight: normal;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.about-quote {
+  margin: 0;
+  padding: 1em 1.2em;
+  border-left: 2px solid var(--color-accent);
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.about-open {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-accent);
+}
+
+.about-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.about-button {
+  align-self: flex-start;
+  pointer-events: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(var(--color-line), 0.4);
+  border-radius: 4px;
+  color: var(--color-text);
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.about-button:hover,
+.about-button:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.about-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* The overlay's height is fixed (4 viewports, minus the reserved last one
+   on mobile), so on a narrow screen the blocks have to stay compact or
+   they spill past the section's top. */
+@media (max-width: 640px) {
+  .about-block {
+    gap: 0.4em;
+  }
+
+  .about-card {
+    padding: 1em;
+  }
+
+  .about-quote {
+    padding: 0.5em 0.8em;
+    font-size: 1rem;
+  }
+}
