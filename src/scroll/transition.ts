@@ -48,6 +48,9 @@ const MOBILE_BREAKPOINT_PX = 640;
 export function initBoxToGridTransition(aboutSection: HTMLElement) {
   const shaft = aboutSection.querySelector<HTMLElement>(".elevator-shaft");
   const glow = aboutSection.querySelector<HTMLElement>(".elevator-floor-glow");
+  const relief = aboutSection.querySelector<HTMLElement>(
+    ".elevator-floor-relief",
+  );
   const vignettes = aboutSection.querySelectorAll<HTMLElement>(
     ".elevator-vignette",
   );
@@ -55,7 +58,7 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     ".elevator-floor-title",
   );
   const headline = document.querySelector<HTMLElement>(".projects-headline");
-  if (!shaft || !glow || !floorTitle || !headline) return;
+  if (!shaft || !glow || !relief || !floorTitle || !headline) return;
 
   const forceMotion = document.documentElement.classList.contains(
     "force-motion",
@@ -104,6 +107,29 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
   // without this the pin would release while the wall is still finishing
   // its last degrees.
   tl.to({}, { duration: endHoldUnits });
+
+  // The floor's own relief: a brief flash, not a sustained reveal — rises
+  // and falls quickly around the ~40% mark of the pinned tip-over
+  // (partway through the rotation), gone long before the rotation itself
+  // finishes at (holdUnits+rotate.duration)/totalDuration. Same
+  // start/end/rise/fall the old per-frame canvas version used (see
+  // src/about/floor-relief.ts, now dormant) — there it drove a spring-
+  // damped push strength every frame; here the relief is two pre-baked
+  // images, so a plain scrubbed opacity tween on the same tl gets the
+  // same "rises then immediately falls, no plateau" shape for free.
+  const FLASH_BAND = { start: 0.32, end: 0.48, rise: 0.06, fall: 0.08 };
+  const totalDuration = holdUnits + rotate.duration + endHoldUnits;
+  gsap.set(relief, { opacity: 0 });
+  tl.to(
+    relief,
+    { opacity: 1, duration: FLASH_BAND.rise * totalDuration, ease: "power1.in" },
+    FLASH_BAND.start * totalDuration,
+  );
+  tl.to(
+    relief,
+    { opacity: 0, duration: FLASH_BAND.fall * totalDuration, ease: "power1.out" },
+    (FLASH_BAND.end - FLASH_BAND.fall) * totalDuration,
+  );
 
   const pin = ScrollTrigger.create({
     trigger: aboutSection,

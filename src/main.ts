@@ -176,7 +176,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <div class="elevator-wall elevator-wall--left"></div>
         <div class="elevator-wall elevator-wall--right"></div>
         <div class="elevator-wall elevator-wall--ceiling"></div>
-        <div class="elevator-wall elevator-wall--floor"><div class="elevator-floor-glow"></div><div class="elevator-floor-title">Projekte</div></div>
+        <div class="elevator-wall elevator-wall--floor"><div class="elevator-floor-glow"></div><div class="elevator-floor-relief"><div class="elevator-floor-relief__shade"></div><div class="elevator-floor-relief__lines"></div></div><div class="elevator-floor-title">Projekte</div></div>
         <div class="elevator-backwall"></div>
       </div>
       <div class="elevator-vignette elevator-vignette--top"></div>
