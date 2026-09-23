@@ -1,3 +1,4 @@
+import roomSvg from "./assets/room.svg?raw";
 import "./style.css";
 import Lenis from "lenis";
 import gsap from "gsap";
@@ -121,31 +122,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
 
     <div class="office" aria-hidden="true">
-      <svg class="office-scene" viewBox="0 0 600 300">
-        <!-- couch -->
-        <rect x="40" y="180" width="180" height="60" rx="12" />
-        <rect x="20" y="225" width="220" height="45" rx="8" />
-        <rect x="20" y="205" width="28" height="65" rx="10" />
-        <rect x="212" y="205" width="28" height="65" rx="10" />
-        <path d="M40 270v20M220 270v20" />
-        <!-- plant -->
-        <g class="office-accent">
-          <path d="M300 250C280 220 282 195 300 180C318 195 320 220 300 250Z" />
-          <path d="M300 250C270 240 262 215 272 205C292 210 300 230 300 250Z" />
-          <path d="M300 250C330 240 338 215 328 205C308 210 300 230 300 250Z" />
-        </g>
-        <path d="M285 250h30l-4 40h-22Z" />
-        <!-- desk -->
-        <rect x="350" y="235" width="230" height="12" />
-        <rect x="358" y="247" width="12" height="43" />
-        <rect x="560" y="247" width="12" height="43" />
-        <!-- monitor (the screen itself is the HTML box below) -->
-        <rect x="390" y="110" width="160" height="102" rx="6" />
-        <rect x="462" y="212" width="16" height="16" />
-        <rect x="440" y="228" width="60" height="7" rx="2" />
-        <rect class="office-accent" x="397.25" y="117.25" width="145.5" height="82.5" />
-        <circle class="office-accent" cx="470" cy="206" r="2" />
-      </svg>
+      ${roomSvg}
       <div class="office-screen"></div>
     </div>
     </div>

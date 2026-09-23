@@ -74,6 +74,15 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
   const measure = () => {
     const previous = zoom.style.transform;
     zoom.style.transform = "none";
+    // Place the live screen over the SVG's #screen rect (layout only, so
+    // this is the untransformed box).
+    const office = screen.parentElement!;
+    const box = office.querySelector("#screen")!.getBoundingClientRect();
+    const o = office.getBoundingClientRect();
+    screen.style.left = `${box.left - o.left}px`;
+    screen.style.top = `${box.top - o.top}px`;
+    screen.style.width = `${box.width}px`;
+    screen.style.height = `${box.height}px`;
     const z = zoom.getBoundingClientRect();
     const s = screen.getBoundingClientRect();
     zoom.style.transform = previous;

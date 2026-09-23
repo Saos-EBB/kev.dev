@@ -533,56 +533,42 @@ button:focus-visible {
   }
 }
 
-/* The office at the shaft's bottom: flat, frontal, a plain 2D layer above
-   the 3D scene (never inside .elevator's perspective). Anchored to the
-   section's bottom edge and lifted by the height of the back wall's foot
-   above it — 50vh * (1 - overlay scale) — so it rises into view from below
-   with the last stretch of the ride and, once #about pins, stands at the
-   back wall's foot. Line art only: antiquewhite strokes, fill = section
-   background (hides the grid behind), mediumpurple as the sole accent. */
+/* The office at the shaft's bottom: desk, monitor and plant baked into
+   src/assets/room.svg (scripts/bake-room.mjs) with the shaft's own
+   perspective at the end of the ride, for a 1440x900 reference viewport —
+   so it scales with vh. A flat 2D layer above the 3D scene (never inside
+   .elevator's perspective), anchored to the section's bottom edge so it
+   rises into view from below with the last stretch of the ride and, once
+   #about pins, stands where it was baked. --room-* are the bake script's
+   output; narrow viewports shrink it to fit the width instead. */
 .office {
+  --room-width: 50.08vh;
+  --room-aspect: 450.68 / 229.84;
+  --room-bottom: 23.24vh;
   position: absolute;
   z-index: 1;
   left: 0;
   right: 0;
   margin-inline: auto;
-  bottom: calc(50vh * (1 - var(--elevator-overlay-scale)));
-  width: clamp(220px, 40vw, 620px);
-  aspect-ratio: 2 / 1;
+  bottom: var(--room-bottom);
+  width: min(var(--room-width), 96vw);
+  aspect-ratio: var(--room-aspect);
   pointer-events: none;
 }
 
-.office-scene {
+.office svg {
   display: block;
   width: 100%;
   height: 100%;
-  fill: var(--about-bg);
-  stroke: antiquewhite;
-  stroke-width: 1.5;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  overflow: visible;
 }
 
-.office-accent {
-  stroke: mediumpurple;
-}
-
-circle.office-accent {
-  fill: mediumpurple;
-}
-
-/* The monitor's screen: an HTML box exactly over the SVG's screen rect
-   (viewBox 600x300 → 398/600, 118/300, 144/600, 81/300). Same grid tile as
-   .projects-bg-grid. transition.ts sets --screen-cell/-line/-ox/-oy so that
+/* The monitor's screen: a live HTML box, placed by transition.ts over the
+   bounding box of the SVG's #screen rect. Same grid tile as
+   .projects-bg-grid; transition.ts sets --screen-cell/-line/-ox/-oy so that
    at full zoom the tile is exactly --grid-cell and its lines fall on the
    projects grid's lines (cell = --grid-cell / maxScale). */
 .office-screen {
   position: absolute;
-  left: 66.3333%;
-  top: 39.3333%;
-  width: 24%;
-  height: 27%;
   background-color: var(--about-bg);
   background-image:
     linear-gradient(
