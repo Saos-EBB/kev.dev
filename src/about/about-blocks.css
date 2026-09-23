@@ -15,8 +15,8 @@
 .about-card {
   align-items: flex-start;
   padding: 1.4em;
-  border: 1px solid rgba(var(--color-line), 0.35);
-  background: rgba(var(--color-line), 0.03);
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  background: color-mix(in srgb, var(--color-line) 3%, transparent);
 }
 
 .about-card-name {
@@ -68,7 +68,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 0.5rem 0.9rem;
-  border: 1px solid rgba(var(--color-line), 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
   border-radius: 4px;
   color: var(--color-text);
   transition: color var(--transition-hover), border-color var(--transition-hover);

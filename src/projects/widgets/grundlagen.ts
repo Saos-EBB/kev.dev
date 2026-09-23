@@ -22,7 +22,7 @@ const excerpt = (src: string, from: number, to: number) =>
 interface Note {
   id: string;
   label: string;
-  hue: number; // one colour per project; the terminal takes it over
+  color: string; // one colour per project (--note-N in style.css); the terminal takes it over
   bullets?: string[];
   open?: string; // shown as [OFFEN: …] where copy or code is still missing
   code?: { file: string; text: string };
@@ -39,7 +39,7 @@ const NOTES: Note[] = [
   {
     id: "gameoflife",
     label: "Game of Life",
-    hue: 140,
+    color: "var(--note-1)",
     bullets: [
       "Gitter- und Nachbar-Zähllogik von Grund auf gebaut",
       "Schritt-für-Schritt-Simulation mit Zykluserkennung — stoppt von selbst, wenn sich ein Muster wiederholt",
@@ -51,7 +51,7 @@ const NOTES: Note[] = [
   {
     id: "pokemon",
     label: "Pokémon",
-    hue: 175,
+    color: "var(--note-2)",
     bullets: [
       "Klassenhierarchie für Pokémon und Attacken",
       "Rundenbasierte Kampfschleife mit Textausgabe",
@@ -68,7 +68,7 @@ const NOTES: Note[] = [
   {
     id: "mastermind",
     label: "Mastermind",
-    hue: 205,
+    color: "var(--note-3)",
     open: "Info-Text zu Mastermind fehlt",
     code: { file: "MasterMind.java", text: excerpt(masterMindSrc, 40, 69) },
     run: "mastermind",
@@ -77,7 +77,7 @@ const NOTES: Note[] = [
   {
     id: "rpn",
     label: "RPN-Rechner",
-    hue: 235,
+    color: "var(--note-4)",
     bullets: [
       "Selbst implementierte einfach verkettete Liste",
       "Stack darauf aufgebaut, zum Auswerten der Ausdrücke genutzt",
@@ -89,14 +89,14 @@ const NOTES: Note[] = [
   {
     id: "personal",
     label: "Personalverwaltung",
-    hue: 265,
+    color: "var(--note-5)",
     open: "Info-Text fehlt; das Repo PersonalManagement hat kein main, also kein Terminal",
     x: 38, y: 52, rotate: -1.5,
   },
   {
     id: "bibliothek",
     label: "Bibliothek",
-    hue: 295,
+    color: "var(--note-6)",
     open: "Info-Text und Quellcode fehlen — ich finde das Projekt in keinem öffentlichen Repo",
     x: 70, y: 60, rotate: 2,
   },
@@ -111,7 +111,7 @@ export function mount(host: HTMLElement) {
     <div class="gwidget-notes" role="group" aria-label="Projekte">
       ${NOTES.map(
         (n) => `<button type="button" class="gwidget-note" data-note="${n.id}" aria-pressed="false"
-          style="--pc: hsl(${n.hue} 100% 67%); --x: ${n.x}%; --y: ${n.y}%; --r: ${n.rotate}deg">${esc(n.label)}</button>`,
+          style="--pc: ${n.color}; --x: ${n.x}%; --y: ${n.y}%; --r: ${n.rotate}deg">${esc(n.label)}</button>`,
       ).join("")}
     </div>
     <div class="gwidget-info" hidden></div>
@@ -222,7 +222,7 @@ export function mount(host: HTMLElement) {
   function select(note: Note) {
     active = note;
     buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.note === note.id)));
-    host.style.setProperty("--pc", `hsl(${note.hue} 100% 67%)`);
+    host.style.setProperty("--pc", note.color);
 
     info.hidden = false;
     info.innerHTML = `

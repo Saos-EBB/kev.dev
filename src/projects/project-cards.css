@@ -10,10 +10,10 @@
   gap: 0.6rem;
   width: clamp(320px, 42vw, 640px);
   padding: 1.25rem;
-  border: 1px solid rgba(var(--color-line), 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
   border-radius: 8px;
   background: var(--projects-bg);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
 }
 
 .pcard-goal {
@@ -66,7 +66,7 @@
   font-size: 0.65rem;
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
-  background: rgba(var(--color-line), 0.08);
+  background: color-mix(in srgb, var(--color-line) 8%, transparent);
   color: var(--color-text-muted);
 }
 
@@ -107,7 +107,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 0.4rem 0.8rem;
-  border: 1px solid rgba(var(--color-line), 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
   border-radius: 4px;
   background: transparent;
   color: var(--color-text);

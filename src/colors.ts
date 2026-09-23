@@ -2,10 +2,10 @@
 // *shared* colors in style.css's :root (--color-bg, --color-text, etc),
 // the same pairing as timings.ts is for animation timing. Two things in
 // :root aren't mirrored here, since they only matter to CSS: the
-// per-section background overrides (--hero-bg, --about-bg, --projects-bg,
-// --contact-bg, each defaulting to --color-bg), and the grid system
-// (--grid-cell, --grid-line, --grid-color, deliberately shared across
-// every scene rather than per-section — see the comment in :root).
+// per-section backgrounds (--hero-bg, --about-bg, --projects-bg,
+// --contact-bg), the room/projects colors (--color-room-*, --note-*,
+// --term-*, --shade-*, ...) and --grid-color (deliberately shared across
+// every scene). All of them are plain hex values in :root.
 //
 // Unlike timings, this isn't a real two-sided split: almost every color
 // on the page is rendered by CSS (backgrounds, text, borders, hover
@@ -23,9 +23,13 @@ export const COLORS = {
   bg: "#08070a",
   text: "#f5f5f6",
   textMuted: "#8a8a93",
-  accent: "#55ff88",
-  // "r, g, b" (no rgb(), matching --color-line's own format in CSS) —
-  // cloth.ts builds its own `rgba(${COLORS.line}, alpha)` strings from
-  // this rather than storing a ready-made rgba() string.
-  line: "009, 226, 009",
+  accent: "#5f0027",
+  line: "#c80032",
 } as const;
+
+// "#rrggbb" -> "r, g, b" — for building rgba(${...}, alpha) strings.
+export const hexToRgb = (hex: string): [number, number, number] => {
+  const n = parseInt(hex.trim().slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+export const hexToRgbTriple = (hex: string): string => hexToRgb(hex).join(", ");

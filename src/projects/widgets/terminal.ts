@@ -4,10 +4,7 @@
 // movement, no clearing. Output is batched into one DOM update per frame,
 // because the programs write one small chunk per token.
 
-const PALETTE = [
-  "#3b3f4a", "#ff5c6c", "#55ff88", "#ffd866", "#5c9dff", "#c792ea", "#4dd6e4", "#d8dae0",
-  "#6b7080", "#ff8592", "#8affaa", "#ffe38f", "#8ab8ff", "#dbb2f5", "#86e6ef", "#ffffff",
-];
+const PALETTE = Array.from({ length: 16 }, (_, i) => `var(--term-${i})`); // colors live in style.css :root
 
 // Keeps the DOM small when a program prints boards in an endless loop.
 const MAX_NODES = 2500;

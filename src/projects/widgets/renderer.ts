@@ -30,11 +30,11 @@ const loaders = import.meta.glob("./renderer-models/*.js") as Record<
   () => Promise<{ default: Model }>
 >;
 
-// 16 blues, near (bright) to far (dark), from the original renderer.
-const SHADES = [
-  "#89bff5", "#76b5f4", "#63abf2", "#50a1f1", "#3e96ef", "#2b8cee", "#1882ec", "#1278de",
-  "#106ecb", "#0f63b8", "#0d59a5", "#0c4f92", "#0a457f", "#093b6d", "#07305a", "#062647",
-];
+// 16 blues, near (bright) to far (dark) — colors live in style.css :root (--shade-0..15).
+const readShades = () => {
+  const st = getComputedStyle(document.documentElement);
+  return Array.from({ length: 16 }, (_, i) => st.getPropertyValue(`--shade-${i}`).trim());
+};
 
 const CAMERA_DISTANCE = 2.5;
 const DRAG_SPEED = 0.01; // radians per pixel
@@ -106,8 +106,9 @@ export function mount(host: HTMLElement) {
   let mesh: Mesh | null = null;
   let requested = "";
   let pending = 0;
-  let projected = new Float32Array(0); // x, y, z per vertex, reused
+  const SHADES = readShades();
   const buckets: number[][] = SHADES.map(() => []);
+  let projected = new Float32Array(0); // x, y, z per vertex, reused
 
   function draw() {
     pending = 0;

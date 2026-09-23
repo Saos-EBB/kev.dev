@@ -7,6 +7,7 @@
 // Generic on purpose: takes the depth image, its crop, size and position as parameters, so a
 // later "render something else here" is a new call with a different image, not a new module.
 
+import { hexToRgb } from "./colors";
 import { imageDepth } from "./experiments/cloth-grid/depth-map";
 import { defaultConfig, type ClothConfig } from "./experiments/cloth-grid/config";
 import { mountMeshPatch, type MeshPatch } from "./experiments/room-cloth/mesh-patch";
@@ -66,7 +67,7 @@ export async function mountClothRelief(
   const rootStyle = getComputedStyle(document.documentElement);
   const cell = parseFloat(rootStyle.getPropertyValue("--grid-cell")) / CELL_DIVISOR;
   const linePx = parseFloat(rootStyle.getPropertyValue("--grid-line"));
-  const gridColor = rgbOf(`rgb(${rootStyle.getPropertyValue("--grid-color")})`);
+  const gridColor = hexToRgb(rootStyle.getPropertyValue("--grid-color"));
   const wallColor = rgbOf(getComputedStyle(colorSource).backgroundColor);
 
   // `el` can be much taller than the viewport (e.g. .projects-bg-grid is inset:0 of #projects,

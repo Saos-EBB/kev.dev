@@ -107,7 +107,7 @@
   margin-top: 0.3rem;
   padding: 0.6rem;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--color-shadow) 45%, transparent);
   font-family: var(--font-mono);
   font-size: 0.68rem;
   line-height: 1.45;
@@ -120,7 +120,7 @@
   flex-direction: column;
   border: 1px solid var(--pc);
   border-radius: 4px;
-  background: #050507;
+  background: var(--color-terminal-bg);
 }
 
 .gwidget-term[hidden],
@@ -135,7 +135,7 @@
   gap: 0.5rem;
   padding: 0.35rem 0.6rem;
   border-bottom: 1px solid color-mix(in srgb, var(--pc) 40%, transparent);
-  background: color-mix(in srgb, var(--pc) 12%, #050507);
+  background: color-mix(in srgb, var(--pc) 12%, var(--color-terminal-bg));
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--pc);

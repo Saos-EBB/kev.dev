@@ -10,26 +10,76 @@
 /* — src/colors.ts is only a JS-readable mirror of these same values   */
 /* (for cloth.ts's canvas mesh), not a second source; if you change a  */
 /* color here, mirror the same value there too.                       */
-/* --color-line is an "r, g, b" triple (no rgb()) so canvas code      */
-/* in cloth.ts can read it via getComputedStyle and build rgba().     */
+/* All colors are hex, listed in the order they first appear on the  */
+/* page. Alpha variants are built with color-mix() from these.        */
 /* ---------------------------------------------------------------- */
 :root {
-  --color-bg: #08070a;
-  --color-text: #f5f5f6;
-  --color-text-muted: #8a8a93;
-  --color-accent: #55ff88;
-  --color-line: 009, 226, 009;
+  --color-bg: #08070a; /* page + header background */
+  --color-text: #f5f5f6; /* primary text */
+  --color-line: #c80032; /* grid / cloth / rule lines, hover color */
+  --color-text-muted: #8a8a93; /* secondary text */
+  --color-accent: #5f0027; /* focus outlines, highlights */
+  --hero-bg: #08070a; /* hero section backdrop */
+  --grid-color: #c80032; /* shared grid line color, all scenes */
+  --about-bg: #08070a; /* about section backdrop */
+  --color-room-line: #faebd7; /* about: room/desk/monitor/plant outlines + grid (was "antiquewhite") */
+  --color-room-accent: #9370db; /* about: monitor frame + LED (was "mediumpurple") */
+  --projects-bg: #08070a; /* projects section backdrop */
+  --color-shadow: #000000; /* projects: card, text + terminal shadows */
+  --color-canvas-bg: #000000; /* projects: 3D renderer canvas */
+  --color-terminal-bg: #050507; /* projects: Java terminal */
 
-  /* Per-section background overrides — each defaults to --color-bg so
-     nothing changes visually until one is edited directly. Lets a single
+  /* projects: Bootcamp project note colors + terminal tint (one per note) */
+  --note-1: #57ff8f;
+  --note-2: #57fff1;
+  --note-3: #57b9ff;
+  --note-4: #5765ff;
+  --note-5: #9d57ff;
+  --note-6: #f157ff;
+
+  /* projects: Java terminal ANSI palette (codes 30-37 then 90-97) */
+  --term-0: #3b3f4a;
+  --term-1: #ff5c6c;
+  --term-2: #55ff88;
+  --term-3: #ffd866;
+  --term-4: #5c9dff;
+  --term-5: #c792ea;
+  --term-6: #4dd6e4;
+  --term-7: #d8dae0;
+  --term-8: #6b7080;
+  --term-9: #ff8592;
+  --term-10: #8affaa;
+  --term-11: #ffe38f;
+  --term-12: #8ab8ff;
+  --term-13: #dbb2f5;
+  --term-14: #86e6ef;
+  --term-15: #ffffff;
+
+  --contact-bg: #08070a; /* contact section backdrop */
+
+  /* projects: 3D renderer wireframe blues, near (bright) to far (dark) */
+  --shade-0: #89bff5;
+  --shade-1: #76b5f4;
+  --shade-2: #63abf2;
+  --shade-3: #50a1f1;
+  --shade-4: #3e96ef;
+  --shade-5: #2b8cee;
+  --shade-6: #1882ec;
+  --shade-7: #1278de;
+  --shade-8: #106ecb;
+  --shade-9: #0f63b8;
+  --shade-10: #0d59a5;
+  --shade-11: #0c4f92;
+  --shade-12: #0a457f;
+  --shade-13: #093b6d;
+  --shade-14: #07305a;
+  --shade-15: #062647;
+
+  /* Per-section background overrides — set in the color list above. Lets a single
      section's backdrop be switched on its own instead of every section
      moving together. Grid color/size is deliberately NOT per-section —
      see the grid system block below: every scene's grid is meant to read
      as the same space, not four different ones. */
-  --hero-bg: var(--color-bg);
-  --about-bg: var(--color-bg);
-  --projects-bg: var(--color-bg);
-  --contact-bg: var(--color-bg);
 
   /* Grid system — the one shared visual language behind every scene: the
      elevator's tilted walls, the carousel's flat background grid, the
@@ -45,7 +95,6 @@
      specific hardcoding", the color and cell size they share are. */
   --grid-cell: 48px; /* fixed px, not vw — density should look the same everywhere regardless of viewport width ("real space"), not scale with it; see the mobile override below for the one place that changes */
   --grid-line: 1px; /* one *device* pixel, not one CSS pixel: main.ts overrides this with 1 / devicePixelRatio (e.g. 0.667px at 150%) so hairlines land on whole device pixels instead of blurring/shimmering across two; 1px is just the fallback before that runs */
-  --grid-color: var(--color-line);
 
   --font-sans:
     system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -137,7 +186,7 @@ a {
   left: 0;
   right: 0;
   z-index: 150;
-  border-bottom: 1px solid rgba(var(--color-line), 0.16);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-line) 16%, transparent);
   background: var(--color-bg);
   padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
   opacity: 0;
@@ -186,7 +235,7 @@ a {
 
 .site-header-links a:hover,
 .site-header-links a:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -214,7 +263,7 @@ a {
   height: 100%;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(var(--color-line), 0.16);
+  border: 1px solid color-mix(in srgb, var(--color-line) 16%, transparent);
   border-radius: 14px;
   overflow: hidden;
   background-color: var(--hero-bg);
@@ -257,7 +306,7 @@ a {
    elevator grid — one line color used consistently everywhere. */
 .nav-links a:hover,
 .nav-links a:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 .nav-icons a {
@@ -268,7 +317,7 @@ a {
 
 .nav-icons a:hover,
 .nav-icons a:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 .nav-icons svg {
@@ -303,7 +352,7 @@ button:focus-visible {
 .hero-rule {
   flex: 0 0 auto;
   height: 5px;
-  background: rgba(var(--color-line), 0.7);
+  background: color-mix(in srgb, var(--color-line) 70%, transparent);
 }
 
 /* Sized to the whole card (not just .cloth-container) and painted above
@@ -438,12 +487,12 @@ button:focus-visible {
   background-image:
     repeating-linear-gradient(
       to bottom,
-      rgba(var(--grid-color), 0.28) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 28%, transparent) 0 var(--grid-line),
       transparent var(--grid-line) var(--grid-cell)
     ),
     repeating-linear-gradient(
       to right,
-      rgba(var(--grid-color), 0.28) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 28%, transparent) 0 var(--grid-line),
       transparent var(--grid-line) var(--grid-cell)
     );
 }
@@ -494,12 +543,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      rgba(var(--grid-color), 0.12) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
       transparent var(--grid-line)
     ),
     linear-gradient(
       to right,
-      rgba(var(--grid-color), 0.12) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
       transparent var(--grid-line)
     );
   background-size: var(--grid-cell) var(--grid-cell);
@@ -516,12 +565,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      rgba(var(--grid-color), 0.5) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 50%, transparent) 0 var(--grid-line),
       transparent var(--grid-line)
     ),
     linear-gradient(
       to right,
-      rgba(var(--grid-color), 0.5) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 50%, transparent) 0 var(--grid-line),
       transparent var(--grid-line)
     );
   background-size: var(--grid-cell) var(--grid-cell);
@@ -573,12 +622,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      rgba(var(--grid-color), 0.12) 0 var(--screen-line, var(--grid-line)),
+      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--screen-line, var(--grid-line)),
       transparent var(--screen-line, var(--grid-line))
     ),
     linear-gradient(
       to right,
-      rgba(var(--grid-color), 0.12) 0 var(--screen-line, var(--grid-line)),
+      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--screen-line, var(--grid-line)),
       transparent var(--screen-line, var(--grid-line))
     );
   background-size: var(--screen-cell, calc(var(--grid-cell) / 8)) var(--screen-cell, calc(var(--grid-cell) / 8));
@@ -654,8 +703,8 @@ button:focus-visible {
 .about-gallery-art {
   margin: 0;
   padding: 1.6em 1.4em;
-  border: 1px solid rgba(var(--color-line), 0.35);
-  background: rgba(var(--color-line), 0.03);
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  background: color-mix(in srgb, var(--color-line) 3%, transparent);
   font-family: var(--font-display);
   font-size: clamp(1.1rem, 1.8vw, 1.5rem);
   line-height: 1.4;
@@ -739,12 +788,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      rgba(var(--grid-color), 0.12) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
       transparent var(--grid-line)
     ),
     linear-gradient(
       to right,
-      rgba(var(--grid-color), 0.12) 0 var(--grid-line),
+      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
       transparent var(--grid-line)
     );
   background-size: var(--grid-cell) var(--grid-cell);
@@ -846,10 +895,10 @@ button:focus-visible {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1.1rem;
-  border: 1px solid rgba(var(--color-line), 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
   border-radius: 8px;
   background: var(--projects-bg);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35); /* lifts a card off the "table" a little */
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent); /* lifts a card off the "table" a little */
   will-change: transform, opacity;
 }
 
@@ -897,7 +946,7 @@ button:focus-visible {
   left: 0.8rem;
   z-index: 1;
   color: var(--color-text);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 4px color-mix(in srgb, var(--color-shadow) 60%, transparent);
 }
 
 .carousel-card--image img {
@@ -913,7 +962,7 @@ button:focus-visible {
   margin: 0;
   align-items: center;
   text-align: center;
-  background: rgba(var(--color-line), 0.03);
+  background: color-mix(in srgb, var(--color-line) 3%, transparent);
 }
 
 .carousel-card-proves-text {
@@ -960,7 +1009,7 @@ button:focus-visible {
   font-size: 0.62rem;
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
-  background: rgba(var(--color-line), 0.08);
+  background: color-mix(in srgb, var(--color-line) 8%, transparent);
   color: var(--color-text-muted);
 }
 
@@ -981,7 +1030,7 @@ button:focus-visible {
 
 .carousel-card-code:hover,
 .carousel-card-code:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 .carousel-card-code:focus-visible {
@@ -1028,7 +1077,7 @@ button:focus-visible {
     flex-wrap: wrap;
     gap: 1rem;
     padding: 1.5rem;
-    border: 1px solid rgba(var(--color-line), 0.2);
+    border: 1px solid color-mix(in srgb, var(--color-line) 20%, transparent);
     border-radius: 10px;
   }
   :root:not(.force-motion) .carousel-card {
@@ -1074,7 +1123,7 @@ button:focus-visible {
 
 .grid-line {
   position: absolute;
-  background: rgba(var(--grid-color), 0.12);
+  background: color-mix(in srgb, var(--grid-color) 12%, transparent);
 }
 
 .grid-line--h {
@@ -1157,7 +1206,7 @@ button:focus-visible {
    used consistently everywhere. */
 .contact-icons a:hover,
 .contact-icons a:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 .contact-icons svg {
@@ -1188,7 +1237,7 @@ button:focus-visible {
   width: 3px;
   height: 64px;
   border-radius: 2px;
-  background: rgba(var(--color-line), 0.55);
+  background: color-mix(in srgb, var(--color-line) 55%, transparent);
   cursor: grab;
   touch-action: none;
   will-change: transform;
@@ -1216,7 +1265,7 @@ button:focus-visible {
 /* ---------------------------------------------------------------- */
 
 .footer {
-  border-top: 1px solid rgba(var(--color-line), 0.16);
+  border-top: 1px solid color-mix(in srgb, var(--color-line) 16%, transparent);
   padding: clamp(1.25rem, 3vw, 2rem) var(--hero-pad-inline);
 }
 
@@ -1248,7 +1297,7 @@ button:focus-visible {
 
 .footer-links a:hover,
 .footer-links a:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 /* Only on the main SPA page (see main.ts) — edge-nav.ts toggles
@@ -1317,7 +1366,7 @@ button:focus-visible {
   top: 0;
   z-index: 10;
   background: var(--color-bg);
-  border-bottom: 1px solid rgba(var(--color-line), 0.16);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-line) 16%, transparent);
   padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
 }
 
@@ -1331,7 +1380,7 @@ button:focus-visible {
 
 .legal-back:hover,
 .legal-back:focus-visible {
-  color: rgb(var(--color-line));
+  color: var(--color-line);
 }
 
 .legal {
