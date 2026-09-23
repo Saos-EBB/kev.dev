@@ -1,0 +1,57 @@
+.rwidget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rwidget-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.rwidget-tabs button {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.rwidget-tabs button:hover,
+.rwidget-tabs button:focus-visible,
+.rwidget-tabs button[aria-pressed="true"] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.rwidget-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid color-mix(in srgb, var(--color-line) 20%, transparent);
+  border-radius: 4px;
+  background: var(--color-canvas-bg);
+  cursor: grab;
+  touch-action: none;
+}
+
+.rwidget-canvas:active {
+  cursor: grabbing;
+}
+
+.rwidget-canvas:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.rwidget-status {
+  min-height: 1em;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}

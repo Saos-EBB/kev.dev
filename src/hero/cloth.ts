@@ -7,7 +7,7 @@
 // is what makes constraint relaxation cheap and unconditionally stable.
 
 import { TIMINGS } from "../timings";
-import { COLORS } from "../colors";
+import { COLORS, hexToRgbTriple } from "../colors";
 
 const SPACING = 23; // px between resting nodes
 const MAX_COLS = 220;
@@ -537,7 +537,7 @@ export class Cloth {
       const indices = this.bucketed[bi];
       if (indices.length === 0) continue;
       const alpha = this.ALPHA_MIN + (bi / (this.ALPHA_BUCKETS - 1)) * span;
-      ctx.strokeStyle = `rgba(${this.lineColor}, ${alpha.toFixed(2)})`;
+      ctx.strokeStyle = `rgba(${hexToRgbTriple(this.lineColor)}, ${alpha.toFixed(2)})`;
       ctx.beginPath();
       for (const idx of indices) {
         const { a, b } = this.constraints[idx];
