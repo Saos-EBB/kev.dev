@@ -168,13 +168,35 @@ export function mount(host: HTMLElement) {
       status.textContent = "Für dieses Projekt gibt es keinen Konsolen-Einstieg.";
       return;
     }
-    status.textContent = "Java lädt … beim ersten Mal dauert das einen Moment.";
+    // The runtime (and then the JVM) can take a while on a cold cache; a
+    // running counter, kept until the program's first output, shows that
+    // something is happening.
+    const t0 = Date.now();
+    let loading = true;
+    const showLoading = () => {
+      if (id !== runId) return stopLoading();
+      const seconds = Math.round((Date.now() - t0) / 1000);
+      status.textContent = `Java lädt … ${seconds} s. Das kann bis zu einer Minute oder länger dauern.`;
+    };
+    const ticker = setInterval(showLoading, 1000);
+    function stopLoading() {
+      if (!loading) return;
+      loading = false;
+      clearInterval(ticker);
+      if (id === runId) status.textContent = "";
+    }
+    showLoading();
     try {
       if (note.files) await writeFiles(note.files);
       const started = await runJava(note.run, {
-        onOutput: (text) => id === runId && term.write(text),
+        onOutput: (text) => {
+          if (id !== runId) return;
+          stopLoading();
+          term.write(text);
+        },
         onExit: (code) => {
           if (id !== runId) return;
+          stopLoading();
           term.write(`\n[Programm beendet, Code ${code}]\n`);
           process = null;
           setInputEnabled(false);
@@ -186,11 +208,11 @@ export function mount(host: HTMLElement) {
         return;
       }
       process = started;
-      status.textContent = "";
       setInputEnabled(true);
       restart.disabled = false;
       input.focus({ preventScroll: true });
     } catch (e) {
+      stopLoading();
       if (id !== runId) return;
       status.textContent = e instanceof Error ? e.message : "Java konnte nicht gestartet werden.";
       restart.disabled = false;
