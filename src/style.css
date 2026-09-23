@@ -521,6 +521,43 @@ button:focus-visible {
   background-size: var(--grid-cell) var(--grid-cell);
 }
 
+/* The floor's own relief: two pre-baked layers (scripts/bake-saos.mjs —
+   see that script for how they're made), no canvas/mesh rendering at
+   runtime. Sized to the floor exactly and stretched to fill it, so the
+   baked 5:3 canvas isn't pixel-registered to the live grid, just density-
+   matched. Stays fully transparent (opacity 0) except for a brief flash
+   transition.ts drives during the tip-over — see the "tip" tween there
+   for the band (same start/end/rise/fall the old canvas version used). */
+.elevator-floor-relief {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Lambert shading, baked: white = lit, black = shadowed, transparent =
+   flat — plain alpha compositing over the floor's own background reads
+   correctly in either theme, no blend-mode trick needed. */
+.elevator-floor-relief__shade {
+  position: absolute;
+  inset: 0;
+  background-image: url("./assets/relief/saos-shade.webp");
+  background-size: 100% 100%;
+}
+
+/* Grid-line mask, baked warped around the relief's bulge — colored here,
+   at runtime, via mask + the live --grid-color so it always matches the
+   theme instead of being baked with a fixed color. */
+.elevator-floor-relief__lines {
+  position: absolute;
+  inset: 0;
+  mask-image: url("./assets/relief/saos-lines.webp");
+  mask-size: 100% 100%;
+  -webkit-mask-image: url("./assets/relief/saos-lines.webp");
+  -webkit-mask-size: 100% 100%;
+  background-color: rgb(var(--grid-color));
+}
+
 /* "PROJEKTE" lies on the floor and is a plain child of it, so the shaft's
    tip-over (transition.ts) stands it up with the floor — no tween of its
    own, no fade; it's legible only once perspective stops crushing it.
