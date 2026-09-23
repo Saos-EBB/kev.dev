@@ -53,7 +53,10 @@ löschen.
 - **Lizenz:** CheerpJ Community License: kostenlos für persönliche Projekte, mit Credit (steht im Widget), und
   nur vom CDN `cjrtnc.leaningtech.com`. Kein Self-Hosting ohne kommerzielle Lizenz.
 - **Server muss `Range`-Header können,** sonst kann CheerpJ das JAR nicht laden. Vite (dev) kann es. Bei
-  Vercel bin ich davon ausgegangen, **nicht getestet**.
+  Vercel bin ich davon ausgegangen, **nicht getestet**. **Vor dem Live-Gang auf der echten Vercel-URL
+  prüfen**, dass `/java/grundlagen.jar` auf einen `Range`-Request mit `206 Partial Content` antwortet
+  (z. B. `curl -s -o /dev/null -w "%{http_code}\n" -H "Range: bytes=0-99" https://<url>/java/grundlagen.jar`).
+  CheerpJ lädt das JAR oft per Range-Request, und lokal funktionieren heißt nicht, dass es auf Vercel geht.
 - **Launcher:** `MasterMind` (`static void main`, nicht public) und `pkemn/Main.java` (`void main()` außerhalb
   einer Klasse, Java 21+) starten unter Java 17 nicht. `java/Launcher.java` ruft sie auf. Die Originale sind
   unverändert. Ohne `--release`-Unterstützung im lokalen JDK baut das Skript mit `-source 17 -target 17`.
@@ -62,6 +65,21 @@ löschen.
 - **Renderer-Widget:** portiert aus `Saos-EBB/Renderder`, zeichnet nur bei Interaktion. **Nicht gebaut:**
   Zoom und Schnittebene (Cutaway) aus dem Original. Die 4 Modelle liegen als lazy Chunks in
   `src/projects/widgets/renderer-models/` (~4 MB Quelltext, das CT ~525 kB gzip).
+
+## Deployment und Alternative
+
+**Vercel in zwei Zeilen:** (1) Der CheerpJ-Loader kommt zur Laufzeit vom CDN, nicht aus dem Bundle: ein
+dynamisch angehängtes `<script>` in `java-runner.ts`, erst beim ersten Aufklappen der Card. (2) Das JAR
+liegt in `public/java/grundlagen.jar` und wird von Vercel statisch ausgeliefert (Range-Test siehe oben).
+
+**Warum `<script>` und nicht `import()`:** Der Loader ist ein klassisches Skript, das Globals setzt
+(`cheerpjInit`, `cheerpjRunMain`). Als ES-Modul importiert würden diese Globals nicht entstehen.
+
+**TeaVM als Alternative, ausdrücklich nicht der Default:** TeaVM übersetzt Java-Bytecode nach JavaScript
+oder WebAssembly, ohne fremde Runtime vom CDN. Das Prinzip ist bekannt, **hier aber ungetestet**: ob die
+vier Programme (`Scanner` auf `System.in`, ANSI-Ausgabe, Dateizugriff bei Pokémon) damit laufen und wie
+Ein-/Ausgabe anzubinden wäre, ist offen. Nur ein Thema, falls CheerpJ (Lizenz, Startzeit, interne Globals)
+zum Problem wird.
 
 ## Startzeit des Java-Widgets
 
