@@ -91,9 +91,8 @@ Der Repo-Cleanup vom 2026-09-23 ist erledigt: Relief-Experiment samt seiner Docs
 `saos-lines.webp`, tote CSS-Regeln, ungenutzte `COLORS`-Werte und der Branch `experiment/cloth-grid`
 sind weg (Gründe stehen in den Commit-Messages, alles bleibt in der Git-History).
 
-Bewusst noch da: `testMobile.html` samt Eintrag in `vite.config.ts` (Seite für Geräte-Checks, Nutzung
-unklar), `public/projects/releasewatcher.png` und `yourbrand.png` (seit den neuen Cards ohne Verweis).
-Wenn nicht mehr gebraucht: löschen.
+Bewusst noch da: `public/projects/releasewatcher.png` und `yourbrand.png` (seit den neuen Cards ohne
+Verweis). Wenn nicht mehr gebraucht: löschen. `testMobile.html` ist inzwischen auch weg.
 
 - Commit `8803eb9` (Zoom-Arbeit) hat meine `main.ts`-Änderung für die About-Blöcke mitgenommen. Er importiert
   `about-blocks`, das erst in `9bb00e1` liegt, und baut allein nicht. Mit `9bb00e1` darauf ist alles
