@@ -41,6 +41,7 @@ export const TIMINGS = {
     scrub: 0.4, // lag (seconds) between scroll position and timeline position
     haltVh: 10, // scroll LENGTH (vh): the ride is over, the view holds still on the office
     zoomVh: 150, // scroll LENGTH (vh): the camera zooms into the monitor (exponential, so it reads as constant speed)
+    fadeVh: 10, // scroll LENGTH (vh): the projects headline fades in once the screen fills the viewport
     endHoldUnits: 0.3, // rest at the end so the scrub's lag has caught up before the pin releases
   },
 

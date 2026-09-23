@@ -574,8 +574,9 @@ circle.office-accent {
 
 /* The monitor's screen: an HTML box exactly over the SVG's screen rect
    (viewBox 600x300 → 398/600, 118/300, 144/600, 81/300). Same grid tile as
-   .projects-bg-grid; the cell size here is a placeholder until the zoom
-   sizes it (cell = --grid-cell / maxScale). */
+   .projects-bg-grid. transition.ts sets --screen-cell/-line/-ox/-oy so that
+   at full zoom the tile is exactly --grid-cell and its lines fall on the
+   projects grid's lines (cell = --grid-cell / maxScale). */
 .office-screen {
   position: absolute;
   left: 66.3333%;
@@ -586,15 +587,16 @@ circle.office-accent {
   background-image:
     linear-gradient(
       to bottom,
-      rgba(var(--grid-color), 0.12) 0 var(--grid-line),
-      transparent var(--grid-line)
+      rgba(var(--grid-color), 0.12) 0 var(--screen-line, var(--grid-line)),
+      transparent var(--screen-line, var(--grid-line))
     ),
     linear-gradient(
       to right,
-      rgba(var(--grid-color), 0.12) 0 var(--grid-line),
-      transparent var(--grid-line)
+      rgba(var(--grid-color), 0.12) 0 var(--screen-line, var(--grid-line)),
+      transparent var(--screen-line, var(--grid-line))
     );
-  background-size: calc(var(--grid-cell) / 8) calc(var(--grid-cell) / 8);
+  background-size: var(--screen-cell, calc(var(--grid-cell) / 8)) var(--screen-cell, calc(var(--grid-cell) / 8));
+  background-position: var(--screen-ox, 0) var(--screen-oy, 0);
 }
 
 .elevator-backwall {
@@ -818,7 +820,7 @@ circle.office-accent {
   text-align: center;
   text-transform: uppercase;
   color: var(--color-accent);
-  /* --handover (0/1) is set by transition.ts, --fade (1→0) by carousel.ts */
+  /* --handover (0→1) is tweened in transition.ts's timeline, --fade (1→0) by carousel.ts */
   opacity: calc(var(--handover, 0) * var(--fade, 1));
   pointer-events: none;
 }

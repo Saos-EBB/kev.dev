@@ -3,7 +3,8 @@ import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Cloth } from "./hero/cloth";
-import { galleryItems, cvSections, trackElevatorPerspective } from "./about/elevator";
+import { cvSections, trackElevatorPerspective } from "./about/elevator";
+import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
 import { renderProjectCard, initProjectCards } from "./projects/project-cards";
@@ -150,18 +151,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
 
     <div class="about-overlay">
-      ${galleryItems
-        .map(
-          (item) => `
-        <figure class="about-gallery-item">
-          <blockquote class="about-gallery-art">${item.text}</blockquote>
-          <figcaption class="about-gallery-caption">
-            ${item.label}${item.attribution ? ` · ${item.attribution}` : ""}
-          </figcaption>
-        </figure>
-      `,
-        )
-        .join("")}
+      ${renderAboutBlocks()}
       ${cvSections
         .map(
           (section) => `
@@ -174,6 +164,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       `,
         )
         .join("")}
+      ${renderAboutFooter()}
     </div>
   </section>
 
