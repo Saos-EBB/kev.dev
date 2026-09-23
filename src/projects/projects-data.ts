@@ -133,17 +133,13 @@ export const projectCards: ProjectCard[] = [
     learnGoal: "Die Basics — von Hand, im Bootcamp gelernt (Java, OOP, SQL, Datenstrukturen).",
     title: "Grundlagen",
     claim: "Die Handwerks-Grundlagen — alles von Hand getippt, im Bootcamp gelernt.",
-    tags: [
-      "Game of Life",
-      "Pokémon",
-      "Mastermind",
-      "RPN-Rechner",
-      "Personalverwaltung",
-      "Bibliothek",
-    ],
+    widget: {
+      label: "Bootcamp-Projekte, direkt im Browser ausführbar",
+      mount: (el) => import("./widgets/grundlagen").then((m) => m.mount(el)),
+    },
     open: [
-      "Notizen mit Code-Ausschnitt und CLI-Terminal (CheerpJ) kommen in Schritt 5",
-      "Java-Version der Bootcamp-Projekte (CheerpJ unterstützt 8/11/17)",
+      "Info-Texte zu Mastermind, Personalverwaltung und Bibliothek",
+      "Bibliothek-Quelle fehlt; Personalverwaltung hat kein main (kein Terminal)",
     ],
   },
 ];
