@@ -171,6 +171,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   </section>
 
   <section class="about" id="about">
+    <div class="about-zoom">
     <div class="elevator" aria-hidden="true">
       <div class="elevator-shaft">
         <div class="elevator-wall elevator-wall--left"></div>
@@ -206,10 +207,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <rect x="390" y="110" width="160" height="102" rx="6" />
         <rect x="462" y="212" width="16" height="16" />
         <rect x="440" y="228" width="60" height="7" rx="2" />
-        <rect class="office-accent" x="398" y="118" width="144" height="81" />
+        <rect class="office-accent" x="397.25" y="117.25" width="145.5" height="82.5" />
         <circle class="office-accent" cx="470" cy="206" r="2" />
       </svg>
       <div class="office-screen"></div>
+    </div>
     </div>
 
     <div class="about-overlay">
