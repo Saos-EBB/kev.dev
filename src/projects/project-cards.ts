@@ -108,12 +108,15 @@ export function renderProjectCard(card: ProjectCard): string {
         <div class="pcard-details-inner">
           ${
             card.decisions?.length
-              ? `<h4>Entscheidungen</h4>
-          <ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`
+              ? `<div class="pcard-sec"><h4>Entscheidungen</h4>
+          <ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></div>`
               : ""
           }
-          ${card.challenge ? `<h4>Herausforderung</h4><p>${esc(card.challenge)}</p>` : ""}
-          ${card.origin ? `<h4>So entstanden</h4><p>${esc(card.origin)}</p>` : ""}
+          ${
+            card.challenge || card.origin
+              ? `<div class="pcard-sec">${card.challenge ? `<h4>Herausforderung</h4><p>${esc(card.challenge)}</p>` : ""}${card.origin ? `<h4>So entstanden</h4><p>${esc(card.origin)}</p>` : ""}</div>`
+              : ""
+          }
           ${
             card.screenshots?.length
               ? `<div class="pcard-shots">${card.screenshots
