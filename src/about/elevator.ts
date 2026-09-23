@@ -9,7 +9,7 @@
 
 // The CV facts — sourced from b2b-cv's lib/portfolio/career.ts (CAREER,
 // EDUCATION, SKILLS, LANGUAGES). Rendered as labeled sections after the
-// narrative above, on the same backwall overlay.
+// blocks A1–A4 (about-blocks.ts), on the same backwall overlay.
 export interface CvSection {
   heading: string;
   items: string[];
