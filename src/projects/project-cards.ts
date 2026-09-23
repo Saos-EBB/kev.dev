@@ -2,9 +2,9 @@
 // which optional fields they fill — a missing optional field means its
 // slot simply isn't rendered.
 //
-// Slots (see the handoff): learnGoal, title, claim, what, tags, meta,
-// links on the front; decisions, challenge, origin (+ optional widget /
-// screenshots) inside the click-to-expand "Details" panel.
+// The card is a container of parts (head, what, facts, links, more) plus
+// the click-to-expand "Details" panel (decisions, challenge, origin, and
+// optional widget / screenshots). A part with no data isn't rendered.
 
 import "./project-cards.css";
 
@@ -60,34 +60,50 @@ export function renderProjectCard(card: ProjectCard): string {
     card.widget;
   return `
     <article class="pcard" data-card="${esc(card.id)}">
-      <p class="pcard-goal">${esc(card.learnGoal)}</p>
-      <h3 class="pcard-title">${esc(card.title)}</h3>
-      ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
-      <p class="pcard-claim">${esc(card.claim)}</p>
-      ${card.what ? `<p class="pcard-what">${esc(card.what)}</p>` : ""}
+      <div class="pcard-part pcard-part--head">
+        <p class="pcard-goal">${esc(card.learnGoal)}</p>
+        <h3 class="pcard-title">${esc(card.title)}</h3>
+        ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
+        <p class="pcard-claim">${esc(card.claim)}</p>
+      </div>
+      ${card.what ? `<div class="pcard-part pcard-part--what"><p class="pcard-what">${esc(card.what)}</p></div>` : ""}
       ${
-        card.tags?.length
-          ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
+        card.tags?.length || card.meta
+          ? `<div class="pcard-part pcard-part--facts">
+        ${
+          card.tags?.length
+            ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
+            : ""
+        }
+        ${card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : ""}
+      </div>`
           : ""
       }
-      ${card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : ""}
       ${
-        card.links?.length
-          ? `<div class="pcard-links">${card.links
-              .map((l) =>
-                l.href
-                  ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`
-                  : `<span>${esc(l.label)}</span>`,
-              )
-              .join("")}</div>`
+        card.links?.length || card.open?.length
+          ? `<div class="pcard-part pcard-part--links">
+        ${
+          card.links?.length
+            ? `<div class="pcard-links">${card.links
+                .map((l) =>
+                  l.href
+                    ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`
+                    : `<span>${esc(l.label)}</span>`,
+                )
+                .join("")}</div>`
+            : ""
+        }
+        ${card.open?.map((o) => `<p class="pcard-open">[OFFEN: ${esc(o)}]</p>`).join("") ?? ""}
+      </div>`
           : ""
       }
-      ${card.open?.map((o) => `<p class="pcard-open">[OFFEN: ${esc(o)}]</p>`).join("") ?? ""}
       ${
         hasDetails
-          ? `<button class="pcard-toggle" type="button" aria-expanded="false" aria-controls="${panelId}">
-        Details
-      </button>
+          ? `<div class="pcard-part pcard-part--more">
+        <button class="pcard-toggle" type="button" aria-expanded="false" aria-controls="${panelId}">
+          Details
+        </button>
+      </div>
       <div class="pcard-details" id="${panelId}">
         <div class="pcard-details-inner">
           ${
