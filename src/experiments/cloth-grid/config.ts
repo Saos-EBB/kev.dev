@@ -62,8 +62,6 @@ export interface ClothConfig {
   };
 
   lines: {
-    /** Resting line colour, `#rrggbb`. */
-    color: string;
     width: number;
     baseAlpha: number;
     /** Alpha at full highlight. */
@@ -110,7 +108,6 @@ export const defaultConfig: ClothConfig = {
   },
 
   lines: {
-    color: "#8a8fa8",
     width: 0.7,
     baseAlpha: 0.2,
     peakAlpha: 0.95,

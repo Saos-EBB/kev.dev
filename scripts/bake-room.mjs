@@ -207,11 +207,11 @@ const vbH = bottom - top;
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${f(REF_VW / 2 - half)} ${f(top)} ${f(vbW)} ${f(vbH)}">
 <style>
-.room-solid,.room-leaf{fill:var(--about-bg,#08070a);stroke:antiquewhite;stroke-width:1.5;stroke-linejoin:round}
-.room-leaf,.room-accent{stroke:mediumpurple}
+.room-solid,.room-leaf{fill:var(--about-bg,#08070a);stroke:var(--color-room-line,#faebd7);stroke-width:1.5;stroke-linejoin:round}
+.room-leaf,.room-accent{stroke:var(--color-room-accent,#9370db)}
 .room-accent{fill:none;stroke-width:${stroke}}
-.room-grid{fill:none;stroke:antiquewhite;stroke-width:.75;opacity:.3}
-.room-led{fill:mediumpurple}
+.room-grid{fill:none;stroke:var(--color-room-line,#faebd7);stroke-width:.75;opacity:.3}
+.room-led{fill:var(--color-room-accent,#9370db)}
 </style>
 ${body}</svg>
 `;

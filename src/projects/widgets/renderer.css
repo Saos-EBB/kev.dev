@@ -14,7 +14,7 @@
   font-family: var(--font-mono);
   font-size: 0.68rem;
   padding: 0.3rem 0.6rem;
-  border: 1px solid rgba(var(--color-line), 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
   border-radius: 4px;
   background: transparent;
   color: var(--color-text-muted);
@@ -33,9 +33,9 @@
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 1px solid rgba(var(--color-line), 0.2);
+  border: 1px solid color-mix(in srgb, var(--color-line) 20%, transparent);
   border-radius: 4px;
-  background: #000;
+  background: var(--color-canvas-bg);
   cursor: grab;
   touch-action: none;
 }

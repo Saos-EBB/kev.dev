@@ -18,6 +18,7 @@
 // Placement is a first pass, meant to be tuned by eye once it's on screen —
 // see the comment on PLACEMENT below for why the numbers are what they are.
 
+import { hexToRgb } from "../colors";
 import { imageDepth } from "../experiments/cloth-grid/depth-map";
 import { defaultConfig, type ClothConfig } from "../experiments/cloth-grid/config";
 import { floorSkull, type FloorPlacement } from "../experiments/room-cloth/skull-field";
@@ -61,7 +62,7 @@ export async function mountFloorRelief(floorEl: HTMLElement): Promise<FloorRelie
     const [r, g, b] = css.match(/[\d.]+/g)!.map(Number);
     return [r, g, b];
   };
-  const gridColor = rgbOf(`rgb(${rootStyle.getPropertyValue("--grid-color")})`);
+  const gridColor = hexToRgb(rootStyle.getPropertyValue("--grid-color"));
   const wallColor = rgbOf(getComputedStyle(floorEl).backgroundColor);
   const depthPx = parseFloat(getComputedStyle(floorEl).height);
   const elevator = floorEl.closest<HTMLElement>(".elevator")!;
