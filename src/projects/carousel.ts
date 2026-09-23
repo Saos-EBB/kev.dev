@@ -131,6 +131,11 @@ const PRESETS = [PRESET_LEFT, PRESET_RIGHT, PRESET_HIGH];
 const MOBILE_BREAKPOINT_PX = 640;
 const MOBILE_SPREAD_SCALE = 0.55;
 
+// From here the card is the flat desktop bento (project-cards.css, same
+// number — 26 * --grid-cell). Its edges sit on the background grid's
+// lines, so the preset's rotation must not tilt it.
+const BENTO_MIN_WIDTH_PX = 1248;
+
 // How far off-screen a group starts (entering) / ends up (clearing) — vw
 // units so it scales with viewport width, comfortably more than 100 so
 // it's off-screen regardless of how wide the group's own spread gets.
@@ -180,6 +185,9 @@ export function initCarousel(section: HTMLElement) {
     TIMINGS.projects;
   const isMobile = window.matchMedia(
     `(max-width: ${MOBILE_BREAKPOINT_PX}px)`,
+  ).matches;
+  const isBento = window.matchMedia(
+    `(min-width: ${BENTO_MIN_WIDTH_PX}px)`,
   ).matches;
   const spreadScale = isMobile ? MOBILE_SPREAD_SCALE : 1;
   const arc = ARC * (isMobile ? MOBILE_ARC_SCALE : 1);
@@ -232,7 +240,7 @@ export function initCarousel(section: HTMLElement) {
       gsap.set(card, {
         xPercent: -50 + slot.x * spreadScale,
         yPercent: -50 + slot.y * spreadScale,
-        rotate: slot.rotate,
+        rotate: isBento ? 0 : slot.rotate,
         scale: slot.scale,
         zIndex: slot.zIndex,
         opacity: 0,

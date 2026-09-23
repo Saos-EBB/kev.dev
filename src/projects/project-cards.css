@@ -226,6 +226,115 @@
   border-radius: 4px;
 }
 
+/* Desktop bento. 26 * --grid-cell (48px) = 1248px: 24 cells of card plus
+   a cell of margin per side. Media queries can't read custom properties,
+   so the number is spelled out — keep it in sync with --grid-cell and
+   BENTO_MIN_WIDTH_PX in carousel.ts.
+
+   The card becomes a 24 x 10 grid of --grid-cell tracks; empty tracks
+   (col 10/18, row 6) are the gaps. Every size and position is a whole
+   number of cells, so with the background grid anchored on the viewport
+   center (style.css) the part edges sit on grid lines. */
+@media (min-width: 1248px) {
+  .pcard {
+    display: grid;
+    grid-template-columns: repeat(24, var(--grid-cell));
+    grid-template-rows: repeat(10, var(--grid-cell));
+    gap: 0;
+    width: calc(24 * var(--grid-cell));
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .pcard-part {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-height: 0;
+    padding: 1rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
+    border-radius: 8px;
+    background: var(--projects-bg);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
+  }
+
+  .pcard-part--head {
+    grid-area: 1 / 1 / 6 / 10;
+  }
+  .pcard-part--what {
+    grid-area: 1 / 11 / 6 / 25;
+  }
+  .pcard-part--more {
+    grid-area: 7 / 1 / 11 / 10;
+    position: relative;
+    z-index: 2; /* stays clickable above the open details overlay */
+    justify-content: center;
+  }
+  .pcard-part--facts {
+    grid-area: 7 / 11 / 11 / 18;
+  }
+  .pcard-part--links {
+    grid-area: 7 / 19 / 11 / 25;
+  }
+
+  /* Details open as an overlay over the whole bento, which stays as it
+     is underneath: faded in/out, own scroll (initProjectCards already
+     sets data-lenis-prevent while open). */
+  .pcard-details {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    padding: 1rem;
+    overflow-y: auto;
+    border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
+    border-radius: 8px;
+    background: var(--projects-bg);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+  }
+
+  .pcard.is-open {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .pcard.is-open .pcard-details {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
+  /* Open: the "more" part gives up its own frame and only its toggle
+     button stays, floating bottom-left above the overlay as the close
+     control. */
+  .pcard.is-open .pcard-part--more {
+    justify-content: flex-end;
+    border-color: transparent;
+    background: none;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .pcard.is-open .pcard-toggle {
+    pointer-events: auto;
+    background: var(--projects-bg);
+  }
+
+  .pcard-details-inner {
+    overflow: visible;
+  }
+
+  .pcard.is-open .pcard-details-inner {
+    padding-top: 0;
+  }
+}
+
 @media (max-width: 640px) {
   .pcard {
     width: min(92vw, 420px);
@@ -239,7 +348,7 @@
   }
   /* No carousel: each project block just holds its card in normal flow. */
   :root:not(.force-motion) .pcard {
-    position: static;
+    position: relative; /* anchor for the desktop details overlay */
     width: 100%;
     transform: none !important;
     opacity: 1 !important;

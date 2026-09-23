@@ -845,6 +845,18 @@ button:focus-visible {
   left: 50%;
 }
 
+/* Desktop bento (breakpoint: see project-cards.css): a grid line runs
+   through the viewport's horizontal center, and the group's top snaps to
+   a whole cell, so the centered 24 x 10 card's edges sit on grid lines. */
+@media (min-width: 1248px) {
+  .projects-bg-grid {
+    background-position: calc(50% + var(--grid-cell) / 2) 0;
+  }
+  .carousel-project {
+    top: round(calc(50% + var(--projects-title-h, 0px) / 2), var(--grid-cell));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* No slide — a plain, fully readable stack of project blocks instead,
      each holding its card in normal flow (see project-cards.css). Scoped to
