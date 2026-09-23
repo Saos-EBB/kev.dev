@@ -16,6 +16,13 @@
   box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
 }
 
+/* The parts are layout hooks only: by default they don't generate a box,
+   so their children stay direct flex items of .pcard (one frame, one gap)
+   — the desktop bento gives them boxes of their own. */
+.pcard-part {
+  display: contents;
+}
+
 .pcard-goal {
   font-family: var(--font-mono);
   font-size: 0.68rem;
