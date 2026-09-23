@@ -98,9 +98,13 @@ export const projectCards: ProjectCard[] = [
     ],
     challenge:
       "Es war durchgehend Neuland — Projektion, Rotation, das Einlesen von OBJ und STL, überall Probleme, die ich mir vorher nie gestellt hatte. Der Reiz war der Aufstieg: vom simplen Wireframe bis dahin, ein komplettes Schädel-CT aus DICOM-Daten auf einem 2D-Canvas zu rendern.",
+    widget: {
+      label: "3D-Modelle, mit der Maus drehbar",
+      mount: (el) => import("./widgets/renderer").then((m) => m.mount(el)),
+    },
     open: [
-      "Live-Widget kommt in Schritt 4",
-      "Projektion aus dem Profil-Hero wiederverwenden ja/nein; Modell-Reihenfolge",
+      "Baldur's-Gate-Modelle fehlen im Widget — welche zwei? (duoOG ist 41 MB und nicht im Renderer-Repo)",
+      "Ist craniumCut01 das Schädel-CT aus DICOM? Modell-Reihenfolge bestätigen",
     ],
   },
   {
