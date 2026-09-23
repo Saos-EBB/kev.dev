@@ -398,6 +398,15 @@ button:focus-visible {
   overflow: hidden;
 }
 
+/* The zoom wrapper: sits OUTSIDE .elevator's perspective context, so
+   transition.ts can scale the already-projected image with one plain 2D
+   transform (origin 0 0 — the translate is tweened together with the scale). */
+.about-zoom {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
 .elevator {
   position: absolute;
   inset: 0;
@@ -516,6 +525,12 @@ button:focus-visible {
       transparent var(--grid-line)
     );
   background-size: var(--grid-cell) var(--grid-cell);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .office {
+    display: none;
+  }
 }
 
 /* The office at the shaft's bottom: flat, frontal, a plain 2D layer above
