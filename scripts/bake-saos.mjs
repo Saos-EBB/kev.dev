@@ -82,10 +82,24 @@ function readDepth() {
   return field;
 }
 
+// Both layers are soft/blurred by construction, and CSS stretches them to
+// fill the floor box regardless of source size (background-size: 100%
+// 100%), so shipping them at the full working resolution buys nothing —
+// downscale at encode time instead. Cuts saos-shade.webp from ~245KB to
+// ~110KB with no visible difference (checked by eye).
+const ENCODE_SCALE = 0.5;
+
 function writeRgba(rgba, outPath) {
+  const outW = Math.round(W * ENCODE_SCALE);
+  const outH = Math.round(H * ENCODE_SCALE);
   execFileSync(
     "magick",
-    ["-size", `${W}x${H}`, "-depth", "8", "RGBA:-", outPath],
+    [
+      "-size", `${W}x${H}`, "-depth", "8", "RGBA:-",
+      "-filter", "Lanczos", "-resize", `${outW}x${outH}`,
+      "-quality", "82", "-define", "webp:alpha-quality=80",
+      outPath,
+    ],
     { input: rgba, maxBuffer: MAX_BUFFER },
   );
 }
