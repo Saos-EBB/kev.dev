@@ -1,0 +1,103 @@
+# Offen — Projekt-Cards, About, Widgets
+
+Stand: 2026-09-23, Branch `feat/monitor-zoom`. Alles hier ist auf der Seite als `[OFFEN: …]`
+sichtbar (Projekt-Cards über das Feld `open`, About über `about-blocks.ts`), bis es beantwortet
+ist. Wenn ein Punkt erledigt ist: Text eintragen und den `open`-Eintrag bzw. `open(...)`-Aufruf
+löschen.
+
+## Inhalt, den nur Kevin liefern kann
+
+### Projekt-Cards (`src/projects/projects-data.ts`)
+
+| Card | Offen |
+|---|---|
+| YourBrand | Multi-Tenancy: „angelegt/gedacht“ oder „voll umgesetzt“? Wortwahl bestätigen (kommt in Claim, Lernziel und Beschreibung vor). |
+| TschoBBo | Screenshot der Mail-Client-UI. Aktuell liegt nur `public/projects/jobbot.jpeg` drin, und das ist das Maskottchen, nicht die UI. |
+| Renderer | (1) Welche **zwei Baldur's-Gate-Modelle** sollen ins Widget? Im Renderer-Repo ist nur `duoOG` gelistet (41 MB, nie committet, also unbrauchbar für das Web). Ich kann keine andere Datei eindeutig zuordnen. Entweder Dateinamen nennen oder eine dezimierte Fassung liefern. (2) Ist `craniumCut01` das Schädel-CT aus DICOM? Angenommen wegen Name und Doku, nicht bestätigt. (3) Modell-Reihenfolge: aktuell Ducky, Auto, Pochita, Schädel-CT. |
+| AniScript | GitHub-Link (fehlt komplett, Link-Slot zeigt nur den Text). Brave MV2→V3 / Violentmonkey→ScriptCat-Detail final gegenchecken. |
+| Grundlagen | Info-Texte für **Mastermind**, **Personalverwaltung**, **Bibliothek**. Siehe auch „Grundlagen-Widget“ unten. |
+
+### About (`src/about/about-blocks.ts`)
+
+- **A2 „Der Weg hierher“:** Die 6 Absätze existieren im Repo nicht (`buildlog.md` sagt, die Prosa-Fassung
+  wurde bewusst entfernt). Text liefern und entscheiden: 1:1 oder leicht straffen.
+  **Achtung Höhe:** Das Overlay hat eine feste Höhe (4 Viewports, auf Mobile abzüglich des reservierten
+  letzten). Sechs Absätze passen nicht mehr hinein. Dann muss die Höhe der `#about`-Section wachsen, und
+  die hängt an der Elevator-Geometrie und am Übergang in `transition.ts`.
+- **A3 Grundsätze:** Aktuell stehen 3 Kandidaten da. Finale Auswahl (3–4).
+- **A4 „Wie ich arbeite“:** Wortlaut inklusive CC-Framing (Architektur und Entscheidungen von dir,
+  Umsetzung mit CC, danach Kontrolle/Debug). Steht bisher nur als Platzhalter da.
+- **A5:** Playlist-Link („was beim Bauen läuft“).
+- **Lebenslauf:** PDF nach `public/cv/lebenslauf.pdf` legen (Ordner existiert, `.gitkeep` drin). Anderer
+  Name: `CV_HREF` in `about-blocks.ts` anpassen. Bis dahin liefern die beiden Buttons 404.
+- **CV-Sections:** Werdegang/Ausbildung/Skills/Sprachen stehen unverändert zwischen A4 und A5, weil es keine
+  Profil-Seite gibt, auf die sie sonst gehen würden. Wenn sie raus sollen: in `main.ts` den
+  `cvSections`-Block entfernen.
+- Der Terry-Davis-Zitat-Platzhalter ist weg (A3 ersetzt ihn). Steht noch in der Git-History.
+
+## Grundlagen-Widget (Terminal)
+
+- **Personalverwaltung:** Das Repo `PersonalManagement` hat kein `main`. Entweder ein `main` ergänzen (dann
+  in `java/Launcher.java` und `NOTES` in `grundlagen.ts` eintragen) oder ohne Terminal lassen.
+- **Bibliothek:** Ich finde das Projekt in keinem öffentlichen Repo. Quellcode liefern, dann in `java/`
+  ablegen, im Launcher registrieren, `scripts/build-java.sh` laufen lassen.
+- **Mastermind:** Nur der Info-Text fehlt.
+- Neue oder geänderte Java-Quellen: `./scripts/build-java.sh` neu laufen lassen und
+  `public/java/grundlagen.jar` mit committen. Das JAR ist eingecheckt.
+
+## Technik, die man wissen sollte
+
+- **CheerpJ hängt an internen Funktionen.** Es gibt keine öffentliche stdin-API. `java-runner.ts` ersetzt
+  `cheerpOSInitFds` und nutzt `cheerpjCreateConsole`. Deshalb ist der Loader auf **4.3** gepinnt. Vor einem
+  Upgrade die Bridge neu testen (Ein- und Ausgabe an RPN und MasterMind).
+- **Lizenz:** CheerpJ Community License: kostenlos für persönliche Projekte, mit Credit (steht im Widget), und
+  nur vom CDN `cjrtnc.leaningtech.com`. Kein Self-Hosting ohne kommerzielle Lizenz.
+- **Server muss `Range`-Header können,** sonst kann CheerpJ das JAR nicht laden. Vite (dev) kann es. Bei
+  Vercel bin ich davon ausgegangen, **nicht getestet**.
+- **Launcher:** `MasterMind` (`static void main`, nicht public) und `pkemn/Main.java` (`void main()` außerhalb
+  einer Klasse, Java 21+) starten unter Java 17 nicht. `java/Launcher.java` ruft sie auf. Die Originale sind
+  unverändert. Ohne `--release`-Unterstützung im lokalen JDK baut das Skript mit `-source 17 -target 17`.
+- **Pokémon** liest seine Daten über den relativen Pfad `Pkmn/src/Persistierung/…`. Das Widget schreibt die
+  drei Dateien vor dem Start nach `/files/` (dort liegt das Arbeitsverzeichnis).
+- **Renderer-Widget:** portiert aus `Saos-EBB/Renderder`, zeichnet nur bei Interaktion. **Nicht gebaut:**
+  Zoom und Schnittebene (Cutaway) aus dem Original. Die 4 Modelle liegen als lazy Chunks in
+  `src/projects/widgets/renderer-models/` (~4 MB Quelltext, das CT ~525 kB gzip).
+
+## Startzeit des Java-Widgets
+
+Die CheerpJ-Runtime kommt vom fremden CDN und braucht beim Start sehr unterschiedlich lange. Gemessen
+(Klick auf „Details“ bis zur ersten Programmausgabe, Chromium headless, kalter Cache):
+
+| Messung | Zeit |
+|---|---|
+| Einzelläufe an einem Tag | 32 s, 43 s, 50 s, 55 s, 88 s, 107 s |
+| Zwei Läufe parallel, gleiche Bedingungen | 195 s bis 376 s (CDN war zu der Zeit stark gedrosselt) |
+| Zweiter Start im selben Browser-Profil (Cache gefüllt) | 106 s, also **nicht** schneller als der Erststart mit 43 s |
+| Wechsel des Programms, wenn die Runtime läuft | ca. 3 s |
+
+- **`preloadResources`** (offizielle Startzeit-Optimierung, Liste per `cjGetRuntimeResources()` profiliert)
+  habe ich ausprobiert und wieder ausgebaut: In zwei parallelen Vergleichsrunden war es nicht schneller
+  (376 s gegen 363 s, 264 s gegen 195 s). Der Profil-Lauf hatte nur 6 Dateien ergeben.
+- **Ein Browser-Cache-Vorteil ist nicht belegt.** Ob er in echten Browsern greift, habe ich nicht messen können.
+- Die Wartezeit ist also Netzwerk zum CDN und nicht mein Code. Das Widget zeigt deshalb während des Ladens einen
+  Sekundenzähler, bis die erste Ausgabe kommt.
+- **Idee, falls es stört:** Das Laden schon starten, wenn die Grundlagen-Card ins Bild scrollt (statt erst beim
+  Aufklappen). Das widerspricht der Handoff-Regel „Runtime erst beim Aufklappen“, deshalb nicht gebaut. Und
+  die Zeit auf echtem Server (Vercel) und echtem Netz messen, nicht vom Entwickler-Rechner aus.
+
+## Aufräumen
+
+- Die alten `.carousel-card*`-Regeln in `src/style.css` (22 Treffer) sind ungenutzt, seit die Projekte auf
+  `.pcard` laufen. Entfernen.
+- `buildlog.md` im Repo-Root ist veraltet: Es beschreibt das Carousel noch als rotierenden Zylinder, und die
+  Sections About/Projects stimmen nicht mehr.
+- Commit `8803eb9` (Zoom-Arbeit) hat meine `main.ts`-Änderung für die About-Blöcke mitgenommen. Er importiert
+  `about-blocks`, das erst in `9bb00e1` liegt, und baut allein nicht. Mit `9bb00e1` darauf ist alles
+  konsistent. Nur relevant für Bisect.
+
+## Nicht getestet
+
+- Nur Chromium (Playwright) geprüft, kein Firefox/Safari, kein echtes Touch-Gerät, keine Bildschirmleser.
+- Das `prefers-reduced-motion`-Layout der neuen Cards und der About-Blöcke: Regeln stehen in
+  `project-cards.css`, aber ich habe es nicht im Browser angesehen.
+- Nicht auf `main` gemergt und nicht deployed. Alles liegt auf `feat/monitor-zoom`, kein Push.
