@@ -4,13 +4,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Cloth } from "./hero/cloth";
 import { galleryItems, cvSections, trackElevatorPerspective } from "./about/elevator";
-import {
-  initCarousel,
-  projects,
-  getProjectCards,
-  BADGE_LABEL,
-  type AspectCard,
-} from "./projects/carousel";
+import { initCarousel } from "./projects/carousel";
+import { projectCards } from "./projects/projects-data";
+import { renderProjectCard, initProjectCards } from "./projects/project-cards";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
@@ -18,67 +14,6 @@ import { initBoxToGridTransition } from "./scroll/transition";
 import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const CODE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7a5.44 5.44 0 0 0-1.5-3.78 5.07 5.07 0 0 0-.09-3.77s-1.18-.35-3.91 1.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-</svg>`;
-
-// One aspect card's inner markup — see AspectKind in carousel.ts for
-// what each kind means. Each project's cards share a small kicker tag
-// (project number + title) so which project a card belongs to stays
-// legible even once several are frozen on screen together.
-function renderAspectCard(card: AspectCard, projectIndex: number): string {
-  const { kind, project: p } = card;
-  const tag = `<span class="carousel-card-tag">${String(projectIndex + 1).padStart(2, "0")} · ${p.title}</span>`;
-
-  switch (kind) {
-    case "cover":
-      return `
-        <div class="carousel-card carousel-card--cover">
-          ${tag}
-          <span class="carousel-card-badge">${BADGE_LABEL[p.badge]}</span>
-          <span class="carousel-card-title">${p.title}</span>
-          <span class="carousel-card-role">${p.role}</span>
-        </div>
-      `;
-    case "image":
-      return `
-        <div class="carousel-card carousel-card--image">
-          ${tag}
-          <img src="${p.image}" alt="" decoding="async" />
-        </div>
-      `;
-    case "proves":
-      return `
-        <blockquote class="carousel-card carousel-card--proves">
-          ${tag}
-          <span class="carousel-card-proves-text">${p.proves}</span>
-        </blockquote>
-      `;
-    case "highlights":
-      return `
-        <div class="carousel-card carousel-card--highlights">
-          ${tag}
-          <ul class="carousel-card-bullets">
-            ${p.bullets.map((b) => `<li>${b}</li>`).join("")}
-          </ul>
-        </div>
-      `;
-    case "tech":
-      return `
-        <div class="carousel-card carousel-card--tech">
-          ${tag}
-          <span class="carousel-card-tags">
-            ${p.tags.map((t) => `<span>${t}</span>`).join("")}
-          </span>
-          <a class="carousel-card-code" href="${p.href}" target="_blank" rel="noopener noreferrer">
-            ${CODE_ICON}
-            Code
-          </a>
-        </div>
-      `;
-  }
-}
 
 // Force-enables all motion for local testing when the OS/browser reports
 // prefers-reduced-motion. Cloth/Elevator use this themselves for their
@@ -249,15 +184,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div class="projects-saos" aria-hidden="true"></div>
     <h2 class="projects-title">Projekte</h2>
     <div class="carousel-stage">
-      ${projects
-        .map((p, i) => {
-          const cards = getProjectCards(p);
-          return `
-        <div class="carousel-project" data-project="${i}" data-count="${cards.length}">
-          ${cards.map((card) => renderAspectCard(card, i)).join("")}
+      ${projectCards
+        .map(
+          (card, i) => `
+        <div class="carousel-project" data-project="${i}" data-count="1">
+          ${renderProjectCard(card)}
         </div>
-      `;
-        })
+      `,
+        )
         .join("")}
     </div>
   </section>
@@ -464,6 +398,8 @@ const projectsSection = document.querySelector<HTMLElement>("#projects")!;
 trackElevatorPerspective(aboutSection);
 
 initBoxToGridTransition(aboutSection);
+
+initProjectCards(projectsSection, projectCards);
 
 initCarousel(projectsSection);
 

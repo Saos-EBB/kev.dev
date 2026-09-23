@@ -8,9 +8,10 @@
 
 import "./project-cards.css";
 
+// A link without href renders as plain text (e.g. "Live-Demo auf Anfrage").
 export interface ProjectLink {
   label: string;
-  href: string;
+  href?: string;
 }
 
 // A widget is mounted lazily: `mount` is only called the first time the
@@ -27,14 +28,16 @@ export interface ProjectCard {
   learnGoal: string;
   title: string;
   claim: string;
-  what: string;
-  tags: string[];
-  meta: string;
-  links: ProjectLink[];
-  decisions: string[];
-  challenge: string;
-  origin: string;
+  what?: string;
+  tags?: string[];
+  meta?: string;
+  links?: ProjectLink[];
+  decisions?: string[];
+  challenge?: string;
+  origin?: string;
   status?: string;
+  // Unresolved content questions, shown visibly on the card until answered.
+  open?: string[];
   screenshots?: { src: string; alt: string }[];
   widget?: ProjectWidget;
 }
@@ -49,34 +52,52 @@ function esc(s: string): string {
 
 export function renderProjectCard(card: ProjectCard): string {
   const panelId = `details-${card.id}`;
+  const hasDetails =
+    card.decisions?.length ||
+    card.challenge ||
+    card.origin ||
+    card.screenshots?.length ||
+    card.widget;
   return `
     <article class="pcard" data-card="${esc(card.id)}">
       <p class="pcard-goal">${esc(card.learnGoal)}</p>
       <h3 class="pcard-title">${esc(card.title)}</h3>
       ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
       <p class="pcard-claim">${esc(card.claim)}</p>
-      <p class="pcard-what">${esc(card.what)}</p>
-      <ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-      <p class="pcard-meta">${esc(card.meta)}</p>
-      <div class="pcard-links">
-        ${card.links
-          .map(
-            (l) =>
-              `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`,
-          )
-          .join("")}
-      </div>
-      <button class="pcard-toggle" type="button" aria-expanded="false" aria-controls="${panelId}">
+      ${card.what ? `<p class="pcard-what">${esc(card.what)}</p>` : ""}
+      ${
+        card.tags?.length
+          ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
+          : ""
+      }
+      ${card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : ""}
+      ${
+        card.links?.length
+          ? `<div class="pcard-links">${card.links
+              .map((l) =>
+                l.href
+                  ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`
+                  : `<span>${esc(l.label)}</span>`,
+              )
+              .join("")}</div>`
+          : ""
+      }
+      ${card.open?.map((o) => `<p class="pcard-open">[OFFEN: ${esc(o)}]</p>`).join("") ?? ""}
+      ${
+        hasDetails
+          ? `<button class="pcard-toggle" type="button" aria-expanded="false" aria-controls="${panelId}">
         Details
       </button>
-      <div class="pcard-details" id="${panelId}" data-lenis-prevent>
+      <div class="pcard-details" id="${panelId}">
         <div class="pcard-details-inner">
-          <h4>Entscheidungen</h4>
-          <ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>
-          <h4>Herausforderung</h4>
-          <p>${esc(card.challenge)}</p>
-          <h4>So entstanden</h4>
-          <p>${esc(card.origin)}</p>
+          ${
+            card.decisions?.length
+              ? `<h4>Entscheidungen</h4>
+          <ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`
+              : ""
+          }
+          ${card.challenge ? `<h4>Herausforderung</h4><p>${esc(card.challenge)}</p>` : ""}
+          ${card.origin ? `<h4>So entstanden</h4><p>${esc(card.origin)}</p>` : ""}
           ${
             card.screenshots?.length
               ? `<div class="pcard-shots">${card.screenshots
@@ -86,7 +107,9 @@ export function renderProjectCard(card: ProjectCard): string {
           }
           ${card.widget ? `<div class="pcard-widget" aria-label="${esc(card.widget.label)}"></div>` : ""}
         </div>
-      </div>
+      </div>`
+          : ""
+      }
     </article>
   `;
 }
@@ -107,6 +130,7 @@ export function initProjectCards(root: HTMLElement, cards: ProjectCard[]) {
       const open = toggle.getAttribute("aria-expanded") !== "true";
       toggle.setAttribute("aria-expanded", String(open));
       el.classList.toggle("is-open", open);
+      el.toggleAttribute("data-lenis-prevent", open);
 
       if (open && data.widget && !widgetMounted) {
         widgetMounted = true;
