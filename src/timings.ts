@@ -33,19 +33,16 @@ export const TIMINGS = {
   // ------------------------------------------------------------------
   // About → Projects — src/scroll/transition.ts. #about pins once its
   // floor edge reaches the bottom of the viewport (the elevator halts),
-  // then one scrubbed timeline rotates the shaft over that edge until
-  // the floor stands frontal as the projects grid wall.
+  // holds on the office, zooms into the monitor, then releases into the projects.
   // ------------------------------------------------------------------
   aboutToProjects: {
-    scrollPerUnit: 700, // px of scroll per timeline "duration unit" (same convention as the sections below); the rotation gets the bulk of it so it never jumps
+    scrollPerUnit: 700, // px of scroll per timeline "duration unit" (same convention as the sections below)
     mobileScrollScale: 0.7, // shorter scroll distance on narrow viewports
-    scrub: 0.4, // lag (seconds) between scroll position and the rotation angle — light smoothing, still 1:1 and reversible
-    holdUnits: 0.3, // the elevator has stopped, the view holds still this long before the rotation starts
-    endHoldUnits: 0.3, // the wall rests frontal this long before the pin releases, so the scrub's lag has caught up by then (and the "PROJEKTE" hand-over happens on a settled wall)
-    rotate: {
-      duration: 1.2,
-      ease: "power1.inOut", // gentle at both ends so the tip-over neither jolts in nor slams to a stop
-    },
+    scrub: 0.4, // lag (seconds) between scroll position and timeline position
+    haltVh: 10, // scroll LENGTH (vh): the ride is over, the view holds still on the office
+    zoomVh: 150, // scroll LENGTH (vh): the camera zooms into the monitor (exponential, so it reads as constant speed)
+    fadeVh: 10, // scroll LENGTH (vh): the projects headline fades in once the screen fills the viewport
+    endHoldUnits: 0.3, // rest at the end so the scrub's lag has caught up before the pin releases
   },
 
   // ------------------------------------------------------------------

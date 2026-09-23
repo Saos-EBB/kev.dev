@@ -1,0 +1,20 @@
+1;Pound;Deals damage with no additional effect.;Normal;Physical;40;100;35
+2;Karate Chop;Has a high critical hit ratio.;Fighting;Physical;50;100;25
+3;DoubleSlap;Attacks 2-5 times in one turn.;Normal;Physical;15;85;10
+4;Comet Punch;Attacks 2-5 times in one turn.;Normal;Physical;18;85;15
+5;Mega Punch;Deals damage with no additional effect.;Normal;Physical;80;85;20
+6;Pay Day;The player picks up extra money after in-game battles.;Normal;Physical;40;100;20
+7;Fire Punch;Has a 10% chance to burn the target.;Fire;Physical;75;100;15
+8;Ice Punch;Has a 10% chance to freeze the target.;Ice;Physical;75;100;15
+9;ThunderPunch;Has a 10% chance to paralyze the target.;Electric;Physical;75;100;15
+10;Scratch;Deals damage with no additional effect.;Normal;Physical;40;100;35
+11;Rock Slide;May cause flinching.;Rock;Physical;75;90;10
+12;Psychic;May lower the target's Special Defense.;Psychic;Special;90;100;10
+13;Thunderbolt;May paralyze the target.;Electric;Special;90;100;15
+14;Dark Pulse;May cause flinching.;Dark;Special;80;100;15
+15;Body Slam;May paralyze the target.;Normal;Physical;85;100;15
+16;X-Scissor;Deals damage with critical hit chance  effect.;Bug;Physical;80;100;15
+17;Iron Head;May cause flinching.;Steel;Physical;80;100;15
+18;Hypnosis;Puts the target to sleep.;Psychic;Status;0;60;20
+19;Sludge Bomb;Has a high chance to poison the target.;Poison;Special;90;100;10
+20;Psybeam;May confuse the target.;Psychic;Special;65;100;20

@@ -7,33 +7,9 @@
 // geometry lines up, the browser's own perspective projection draws the
 // taper toward the vanishing point.
 
-// The about-me narrative (six prose beats) was tried here and then cut —
-// too much text for a wall you're scrolling past, not sitting to read.
-// What's left is a small, curated gallery instead: motto/quote/mood/
-// inspiration, each a single framed "exhibit" rather than a paragraph.
-// Add or remove entries freely — that's the point of keeping this a
-// plain array instead of hardcoded markup.
-export type GalleryKind = "motto" | "quote" | "mood" | "inspiration";
-
-export interface GalleryItem {
-  kind: GalleryKind;
-  label: string; // the small plaque label, e.g. "Zitat"
-  text: string; // the main "exhibit" text
-  attribution?: string;
-}
-
-export const galleryItems: GalleryItem[] = [
-  {
-    kind: "quote",
-    label: "Zitat",
-    text: "An idiot admires complexity, a genius admires simplicity.",
-    attribution: "— Terry A. Davis",
-  },
-];
-
 // The CV facts — sourced from b2b-cv's lib/portfolio/career.ts (CAREER,
 // EDUCATION, SKILLS, LANGUAGES). Rendered as labeled sections after the
-// narrative above, on the same backwall overlay.
+// blocks A1–A4 (about-blocks.ts), on the same backwall overlay.
 export interface CvSection {
   heading: string;
   items: string[];

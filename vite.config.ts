@@ -13,8 +13,6 @@ export default defineConfig({
         main: root("index.html"),
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
-        testMobile: root("testMobile.html"), // same app as index.html, reachable at /testMobile for on-device checks
-        cloth: root("cloth.html"), // cloth-grid experiment, /cloth
       },
     },
   },
