@@ -687,41 +687,7 @@ button:focus-visible {
   }
 }
 
-/* Small curated gallery — motto/quote/mood/inspiration "exhibits" (see
-   galleryItems in elevator.ts). Styled like a museum plaque: a framed
-   box holding the text, a small label line underneath — deliberately
-   not prose, so it stays scannable while scrolling past instead of
-   asking to be read closely. */
-.about-gallery-item {
-  width: calc(var(--elevator-overlay-scale) * 100%);
-  max-width: 40rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7em;
-}
-
-.about-gallery-art {
-  margin: 0;
-  padding: 1.6em 1.4em;
-  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
-  background: color-mix(in srgb, var(--color-line) 3%, transparent);
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  line-height: 1.4;
-  text-align: center;
-  color: var(--color-text);
-}
-
-.about-gallery-caption {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  text-align: center;
-  color: var(--color-text-muted);
-}
-
-/* CV facts, after the gallery above — same width/centering, own
+/* CV facts, after the About blocks (about-blocks.css) — same width/centering, own
    heading + list treatment since this is data (role/org/dates), not prose. */
 .about-cv-section {
   width: calc(var(--elevator-overlay-scale) * 100%);
@@ -879,168 +845,9 @@ button:focus-visible {
   left: 50%;
 }
 
-/* Every card sits at the group's own (0,0) anchor point. Its "papers on a
-   desk" spread — position/rotation/scale/z-index, and the build-up
-   phase's entry slide — is set entirely by carousel.ts's PRESETS (kept
-   in TS, not CSS, since the build-up animation needs those same numbers
-   to animate a card *to* its spot, not just render it there). No
-   transform here at all, so there's nothing for JS's inline style to
-   fight with. */
-.carousel-card {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: clamp(360px, 40vw, 620px);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
-  border-radius: 8px;
-  background: var(--projects-bg);
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent); /* lifts a card off the "table" a little */
-  will-change: transform, opacity;
-}
-
-.carousel-card-tag {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
-
-.carousel-card--cover {
-  align-items: flex-start;
-  gap: 0.6rem;
-}
-
-.carousel-card-badge {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-}
-
-.carousel-card-title {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  line-height: 1.15;
-  color: var(--color-text);
-}
-
-.carousel-card-role {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-}
-
-.carousel-card--image {
-  padding: 0;
-  overflow: hidden;
-}
-
-.carousel-card--image .carousel-card-tag {
-  position: absolute;
-  top: 0.7rem;
-  left: 0.8rem;
-  z-index: 1;
-  color: var(--color-text);
-  text-shadow: 0 1px 4px color-mix(in srgb, var(--color-shadow) 60%, transparent);
-}
-
-.carousel-card--image img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-}
-
-/* Quote-styled, same visual family as .about-gallery-art in the elevator
-   — one consistent "framed statement" look reused across the site. */
-.carousel-card--proves {
-  margin: 0;
-  align-items: center;
-  text-align: center;
-  background: color-mix(in srgb, var(--color-line) 3%, transparent);
-}
-
-.carousel-card-proves-text {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  line-height: 1.4;
-  color: var(--color-text);
-}
-
-.carousel-card-bullets {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  list-style: none;
-}
-
-.carousel-card-bullets li {
-  position: relative;
-  padding-left: 0.85rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: var(--color-text-muted);
-}
-
-.carousel-card-bullets li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.5em;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--color-accent);
-}
-
-.carousel-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.carousel-card-tags span {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--color-line) 8%, transparent);
-  color: var(--color-text-muted);
-}
-
-.carousel-card-code {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-  transition: color var(--transition-hover);
-}
-
-.carousel-card-code svg {
-  width: 14px;
-  height: 14px;
-}
-
-.carousel-card-code:hover,
-.carousel-card-code:focus-visible {
-  color: var(--color-line);
-}
-
-.carousel-card-code:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 4px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   /* No slide — a plain, fully readable stack of project blocks instead,
-     each with its aspect cards laid out as a small static row. Scoped to
+     each holding its card in normal flow (see project-cards.css). Scoped to
      :not(.force-motion) so ?motion can still preview the real carousel
      locally despite the OS/browser setting. */
   :root:not(.force-motion) .projects-title {
@@ -1079,14 +886,6 @@ button:focus-visible {
     padding: 1.5rem;
     border: 1px solid color-mix(in srgb, var(--color-line) 20%, transparent);
     border-radius: 10px;
-  }
-  :root:not(.force-motion) .carousel-card {
-    position: static;
-    width: clamp(180px, 22vw, 260px);
-    transform: none !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    box-shadow: none;
   }
 }
 
