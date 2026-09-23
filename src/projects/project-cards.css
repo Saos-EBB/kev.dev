@@ -1,0 +1,216 @@
+.pcard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: clamp(320px, 42vw, 640px);
+  padding: 1.25rem;
+  border: 1px solid rgba(var(--color-line), 0.3);
+  border-radius: 8px;
+  background: var(--projects-bg);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.pcard-goal {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.pcard-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.15;
+  font-weight: normal;
+  color: var(--color-text);
+}
+
+.pcard-status {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  color: var(--color-accent);
+}
+
+.pcard-claim {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.pcard-what {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.pcard-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+}
+
+.pcard-tags li {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(var(--color-line), 0.08);
+  color: var(--color-text-muted);
+}
+
+.pcard-meta {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+.pcard-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.pcard-links a {
+  color: var(--color-text);
+  transition: color var(--transition-hover);
+}
+
+.pcard-links a:hover,
+.pcard-links a:focus-visible {
+  color: var(--color-accent);
+}
+
+.pcard-toggle {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(var(--color-line), 0.4);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.pcard-toggle::after {
+  content: " +";
+}
+
+.pcard-toggle[aria-expanded="true"]::after {
+  content: " −";
+}
+
+.pcard-toggle:hover,
+.pcard-toggle:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.pcard-toggle:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* Collapsed via grid-template-rows so the height animates without JS
+   measuring. The inner wrapper is what actually clips and scrolls;
+   data-lenis-prevent (set in markup) lets the wheel scroll it instead of
+   the page while the carousel is pinned. */
+.pcard-details {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.pcard.is-open .pcard-details {
+  grid-template-rows: 1fr;
+}
+
+.pcard-details-inner {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pcard.is-open .pcard-details-inner {
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-top: 0.5rem;
+}
+
+.pcard-details h4 {
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.pcard-details p,
+.pcard-decisions li {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.pcard-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+}
+
+.pcard-decisions li {
+  position: relative;
+  padding-left: 0.85rem;
+}
+
+.pcard-decisions li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.pcard-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pcard-shots img {
+  display: block;
+  width: 100%;
+  border-radius: 4px;
+}
+
+@media (max-width: 640px) {
+  .pcard {
+    width: min(92vw, 420px);
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .pcard-details {
+    transition: none;
+  }
+}
