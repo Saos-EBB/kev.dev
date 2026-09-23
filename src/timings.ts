@@ -33,29 +33,13 @@ export const TIMINGS = {
   // ------------------------------------------------------------------
   // About → Projects — src/scroll/transition.ts. #about pins once its
   // floor edge reaches the bottom of the viewport (the elevator halts),
-  // then one scrubbed timeline rotates the shaft over that edge until
-  // the floor stands frontal as the projects grid wall.
+  // holds still, then releases into the projects.
   // ------------------------------------------------------------------
   aboutToProjects: {
-    scrollPerUnit: 700, // px of scroll per timeline "duration unit" (same convention as the sections below); the rotation gets the bulk of it so it never jumps
+    scrollPerUnit: 700, // px of scroll per timeline "duration unit" (same convention as the sections below)
     mobileScrollScale: 0.7, // shorter scroll distance on narrow viewports
-    scrub: 0.4, // lag (seconds) between scroll position and the rotation angle — light smoothing, still 1:1 and reversible
-    holdUnits: 0.3, // the elevator has stopped, the view holds still this long before the rotation starts
-    endHoldUnits: 0.3, // the wall rests frontal this long before the pin releases, so the scrub's lag has caught up by then (and the "PROJEKTE" hand-over happens on a settled wall)
-    rotate: {
-      duration: 1.2,
-      ease: "power1.inOut", // gentle at both ends so the tip-over neither jolts in nor slams to a stop
-    },
-    // After the wall is fully frontal: PROJEKTE sits --saos-offset lower
-    // than its final handover position (see style.css), SAOS above it.
-    // This phase scrubs both back up by that same offset — SAOS drives
-    // off the top edge and fades out, PROJEKTE lands exactly where
-    // .projects-headline takes over. A scroll LENGTH (vh), not a
-    // timeline duration unit like the others above, because it has to
-    // survive scrollPerUnit changing independently.
-    phaseB: {
-      scrollVh: 40,
-    },
+    scrub: 0.4, // lag (seconds) between scroll position and timeline position
+    holdUnits: 0.3, // the elevator has stopped, the view holds still this long
   },
 
   // ------------------------------------------------------------------
