@@ -46,6 +46,16 @@ export const TIMINGS = {
       duration: 1.2,
       ease: "power1.inOut", // gentle at both ends so the tip-over neither jolts in nor slams to a stop
     },
+    // After the wall is fully frontal: PROJEKTE sits --saos-offset lower
+    // than its final handover position (see style.css), SAOS above it.
+    // This phase scrubs both back up by that same offset — SAOS drives
+    // off the top edge and fades out, PROJEKTE lands exactly where
+    // .projects-headline takes over. A scroll LENGTH (vh), not a
+    // timeline duration unit like the others above, because it has to
+    // survive scrollPerUnit changing independently.
+    phaseB: {
+      scrollVh: 40,
+    },
   },
 
   // ------------------------------------------------------------------

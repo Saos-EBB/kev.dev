@@ -10,13 +10,23 @@
 // both for the text-to-bitmap step and for raw-pixel <-> PNG/WebP I/O
 // (`gray:-` / `RGBA:-` streams), while the shading/warp math is plain Node.
 //
-//   node scripts/bake-saos.mjs [--size WxH] [--margin M] [--blur N]
+// Calibrated to a specific on-screen size, not an arbitrary canvas: SAOS
+// ships as a standalone wordmark at up to --saos-height (400px, see
+// style.css), not stretched across the floor's whole variable width
+// any more, so "how big it'll actually be drawn" is a known, fixed
+// number and the bake can target it directly instead of guessing.
 //
-//   --size WxH   canvas pixels, 5:3 landscape like the cloth-grid bakes
-//                (default 1600x960)
-//   --margin M   empty border as a fraction of the canvas (default 0.1)
-//   --blur N     gaussian sigma in px for the depth map — bigger = softer
-//                bulges (default 24)
+//   node scripts/bake-saos.mjs [--display-height N] [--scale N] [--margin M] [--blur-ratio N]
+//
+//   --display-height N  target on-screen height in CSS px — match
+//                        --saos-height's largest value (default 400)
+//   --scale N            working/shipped resolution as a multiple of
+//                         display size, for a crisp look on retina
+//                         screens (default 2)
+//   --margin M            empty border as a fraction of the canvas (default 0.1)
+//   --blur-ratio N        gaussian sigma as a fraction of the letters'
+//                         own height, not an absolute px count, so it
+//                         scales with --display-height (default 0.028)
 //
 // Output:
 //   src/assets/relief/saos-depth.png  — greyscale depth (white = raised)
@@ -31,12 +41,18 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 const MAX_BUFFER = 64 * 1024 * 1024;
 
+const ASPECT = 5 / 3; // landscape, like the cloth-grid bakes
+
 const rest = process.argv.slice(2);
-const opt = { size: "1600x960", margin: 0.1, blur: 24 };
+const opt = { "display-height": 400, scale: 2, margin: 0.1, "blur-ratio": 0.028 };
 for (let i = 0; i < rest.length; i += 2) opt[rest[i].replace(/^--/, "")] = rest[i + 1];
-const [W, H] = String(opt.size).split("x").map(Number);
+const displayHeight = Number(opt["display-height"]);
+const scale = Number(opt.scale);
 const margin = Number(opt.margin);
-const sigma = Number(opt.blur);
+const blurRatio = Number(opt["blur-ratio"]);
+
+const H = Math.round(displayHeight * scale);
+const W = Math.round(H * ASPECT);
 
 const assetsDir = resolve(root, "src/assets/relief");
 const depthPath = join(assetsDir, "saos-depth.png");
@@ -48,11 +64,15 @@ const linesPath = join(assetsDir, "saos-lines.webp");
 // word without wrapping inside the margin box — an auto-fit "as bold and
 // big as the margin allows" instead of a guessed --pointsize. -extent then
 // pads that back out to the full canvas on black, centered, before the
-// blur turns the hard edges into soft bulges.
+// blur turns the hard edges into soft bulges. Blur sigma is a fraction of
+// the letters' own box height (textH), not a flat px count, so it looks
+// the same regardless of --display-height/--scale.
+let sigma;
 function bakeDepth() {
   const fontPath = join(root, "public/fonts/koeeya-trial.ttf");
   const textW = Math.round(W * (1 - 2 * margin));
   const textH = Math.round(H * (1 - 2 * margin));
+  sigma = Math.round(blurRatio * textH);
   execFileSync("magick", [
     "-size", `${textW}x${textH}`,
     "-background", "black",
@@ -82,21 +102,14 @@ function readDepth() {
   return field;
 }
 
-// Both layers are soft/blurred by construction, and CSS stretches them to
-// fill the floor box regardless of source size (background-size: 100%
-// 100%), so shipping them at the full working resolution buys nothing —
-// downscale at encode time instead. Cuts saos-shade.webp from ~245KB to
-// ~110KB with no visible difference (checked by eye).
-const ENCODE_SCALE = 0.5;
-
+// Ships at the full working resolution now (that resolution IS the
+// intended 2x-for-retina size, not an oversized intermediate) — just
+// lossy-compressed, no further downscale.
 function writeRgba(rgba, outPath) {
-  const outW = Math.round(W * ENCODE_SCALE);
-  const outH = Math.round(H * ENCODE_SCALE);
   execFileSync(
     "magick",
     [
       "-size", `${W}x${H}`, "-depth", "8", "RGBA:-",
-      "-filter", "Lanczos", "-resize", `${outW}x${outH}`,
       "-quality", "82", "-define", "webp:alpha-quality=80",
       outPath,
     ],
@@ -150,19 +163,20 @@ function bakeShade(depth) {
 }
 
 // --- step 3: warped grid-line mask -------------------------------------------
-// A grid at roughly the page's own --grid-cell density (converted to this
-// image's pixel scale, assuming a representative floor width — the live
-// floor's actual width varies with the viewport, so this is a density
-// match, not a pixel-registered overlay), sampled through a parallax-style
-// offset built from the same depth gradient: near a raised edge, the
-// sample point shifts by the slope times a push distance, so the lines
-// bend around the bulge instead of cutting straight through it. Pure
-// white on transparent — an alpha mask, colored at runtime via CSS
-// mask-image + background-color so it always matches the live theme.
-const REFERENCE_FLOOR_WIDTH_PX = 1920; // typical desktop viewport, for the density conversion above
-const CELL_PX = (W * 48) / REFERENCE_FLOOR_WIDTH_PX;
-const LINE_HALF_WIDTH_PX = 0.8;
-const MAX_WARP_PX = 14; // displacement at the steepest slope; raw gradients are tiny (soft blur), so scale relative to the field's own max rather than a flat multiplier
+// A grid at the page's own --grid-cell density, converted to this image's
+// pixel scale via the SAME --scale factor the whole bake is calibrated
+// to (1 CSS px = `scale` image px, exactly like a retina backing store —
+// so a 48px CSS grid cell is `48 * scale` image px here), sampled through
+// a parallax-style offset built from the same depth gradient: near a
+// raised edge, the sample point shifts by the slope times a push
+// distance, so the lines bend around the bulge instead of cutting
+// straight through it. Pure white on transparent — an alpha mask,
+// colored at runtime via CSS mask-image + background-color so it always
+// matches the live theme.
+const GRID_CELL_CSS_PX = 48; // style.css's --grid-cell (desktop value)
+const CELL_PX = GRID_CELL_CSS_PX * scale;
+const LINE_HALF_WIDTH_PX = scale; // ~1 CSS px wide
+const MAX_WARP_PX = 14 * scale; // displacement at the steepest slope; raw gradients are tiny (soft blur), so scale relative to the field's own max rather than a flat multiplier
 
 function distToGrid(v, cell) {
   const m = ((v % cell) + cell) % cell;
