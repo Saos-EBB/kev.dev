@@ -26,6 +26,9 @@ löschen.
   die hängt an der Elevator-Geometrie und am Übergang in `transition.ts`. Im Browser prüfen.
 - **A3 Grundsätze:** Erledigt, drei Zitate. Ein vierter („Code ist Handwerk …“) ist nicht eingebaut.
 - **A4, A5:** Erledigt. Die persönliche Zeile in A5 ist ein Vorschlag und darf getauscht werden.
+- **Header-Musik:** `PLAYLIST_URI` in `src/music/spotify.ts` setzen (`spotify:playlist:<id>`). Bis dahin ist der Button
+  deaktiviert (Tooltip `[OFFEN: Playlist-URL fehlt]`). Danach einmal im Browser prüfen, ob `play()` nach dem Laden
+  greift oder der Browser es blockt (dann muss der Nutzer im Embed selbst auf Play).
 - **Lebenslauf:** PDF nach `public/cv/lebenslauf.pdf` legen (Ordner existiert, `.gitkeep` drin). Anderer
   Name: `CV_HREF` in `about-blocks.ts` anpassen. Bis dahin liefern die beiden Buttons 404.
 - **CV-Sections:** Werdegang/Ausbildung/Skills/Sprachen stehen unverändert zwischen A4 und A5, weil es keine
