@@ -36,6 +36,9 @@
   --note-4: #5765ff;
   --note-5: #9d57ff;
   --note-6: #f157ff;
+  --note-7: #a8ff57;
+  --note-8: #57ffc8;
+  --note-9: #cd57ff;
 
   /* projects: Java terminal ANSI palette (codes 30-37 then 90-97) */
   --term-0: #3b3f4a;

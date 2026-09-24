@@ -1,4 +1,4 @@
-// "Grundlagen" widget: six notes, one shared terminal. Clicking a note shows
+// "Grundlagen" widget: nine notes, one shared terminal. Clicking a note shows
 // its info and a code excerpt and runs the original Java program in the
 // terminal (see java-runner.ts). The runtime starts loading when the card is
 // first expanded, never on page view.
@@ -9,6 +9,10 @@ import { Terminal } from "./terminal";
 
 import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
 import masterMindSrc from "../../../java/MasterMind.java?raw";
+import bibliothekSrc from "../../../java/Bibliothek.java?raw";
+import minesweeperSrc from "../../../java/MinesweaperV2.java?raw";
+import chiffreSrc from "../../../java/ChiffrePOLY.java?raw";
+import pmSrc from "../../../java/PersonenVerwaltung/PM.java?raw";
 import myStackSrc from "../../../java/MyStack.java?raw";
 import dmgCalcSrc from "../../../java/src/Logik/DmgCalc.java?raw";
 import pokemonRaw from "../../../java/src/Persistierung/PokemonRawData?raw";
@@ -27,13 +31,14 @@ interface Note {
   open?: string; // shown as [OFFEN: …] where copy or code is still missing
   code?: { file: string; text: string };
   run?: string; // Launcher argument; no run = no console entry point
+  noRunReason?: string; // shown instead of the generic "no entry point" text when there is no run
   files?: Record<string, string>; // written to the virtual /files/ before the run
   x: number; // free placement on wide screens, in % of the note area
   y: number;
   rotate: number;
 }
 
-// Hues stay within green → violet so the six read as one family with the
+// Hues stay within green → violet so the nine read as one family with the
 // page's green accent (hue 140), not as a rainbow.
 const NOTES: Note[] = [
   {
@@ -46,7 +51,7 @@ const NOTES: Note[] = [
     ],
     code: { file: "GameOfLife.java", text: excerpt(gameOfLifeSrc, 85, 116) },
     run: "gameoflife",
-    x: 1, y: 6, rotate: -2,
+    x: 1, y: 4, rotate: -2,
   },
   {
     id: "pokemon",
@@ -72,7 +77,7 @@ const NOTES: Note[] = [
     open: "Info-Text zu Mastermind fehlt",
     code: { file: "MasterMind.java", text: excerpt(masterMindSrc, 40, 69) },
     run: "mastermind",
-    x: 68, y: 12, rotate: -1,
+    x: 68, y: 8, rotate: -1,
   },
   {
     id: "rpn",
@@ -84,21 +89,67 @@ const NOTES: Note[] = [
     ],
     code: { file: "MyStack.java", text: excerpt(myStackSrc, 1, 32) },
     run: "rpn",
-    x: 6, y: 56, rotate: 1,
+    x: 6, y: 36, rotate: 1,
   },
   {
     id: "personal",
     label: "Personalverwaltung",
     color: "var(--note-5)",
-    open: "Info-Text fehlt; das Repo PersonalManagement hat kein main, also kein Terminal",
-    x: 38, y: 52, rotate: -1.5,
+    bullets: [
+      "Verwaltungen (Standorte) anlegen und Personen mit Adresse, Geschlecht (Enum) und Geburtsdatum darin ablegen",
+      "Überladene create-Methoden je nach Datenumfang; ein falsches Datumsformat wird abgefangen",
+    ],
+    code: { file: "PersonenVerwaltung/PM.java", text: excerpt(pmSrc, 5, 27) },
+    run: "personal",
+    x: 38, y: 32, rotate: -1.5,
   },
   {
     id: "bibliothek",
     label: "Bibliothek",
     color: "var(--note-6)",
-    open: "Info-Text und Quellcode fehlen — ich finde das Projekt in keinem öffentlichen Repo",
-    x: 70, y: 60, rotate: 2,
+    bullets: [
+      "Autoren und ihre Bücher in einer HashMap mit HashSets, dazu Zitate pro Titel",
+      "Menü: Autoren auflisten, Bibliografie ansehen, Zitat zu einem Titel, Autor zu einem Titel finden, eigene Autoren ergänzen",
+    ],
+    code: { file: "Bibliothek.java", text: excerpt(bibliothekSrc, 10, 29) },
+    run: "bibliothek",
+    x: 70, y: 40, rotate: 2,
+  },
+  {
+    id: "minesweeper",
+    label: "Minesweeper",
+    color: "var(--note-7)",
+    bullets: [
+      "10×10-Feld, Eingabe per Koordinate (z. B. A3): du rätst, wo keine Mine liegt",
+      "Aufgedeckt wird je nach Feldwert 1×1, 3×3 oder 5×5 rund um das Feld",
+    ],
+    code: { file: "MinesweaperV2.java", text: excerpt(minesweeperSrc, 49, 80) },
+    run: "minesweeper",
+    x: 2, y: 68, rotate: 1.5,
+  },
+  {
+    id: "zahlenraten",
+    label: "Zahlenraten",
+    color: "var(--note-8)",
+    bullets: [
+      "Roboter gegen Mensch: abwechselnd eine Zahl von 0 bis 100 raten",
+      "Der Roboter nimmt jeweils die Mitte der noch möglichen Zahlen und streicht anhand der Hinweise („Fast da“, „Relativ nah“ …) ganze Bereiche",
+    ],
+    noRunReason:
+      "Läuft hier nicht im Terminal: das Programm nutzt List.getLast() (Java 21), die Browser-Runtime ist Java 17.",
+    x: 36, y: 64, rotate: -1,
+  },
+  {
+    id: "chiffre",
+    label: "Chiffre",
+    color: "var(--note-9)",
+    bullets: [
+      "Polyalphabetische Verschlüsselung: jeder Buchstabe wird um den passenden Buchstaben des Passworts verschoben, das Passwort wiederholt sich",
+      "Eingabe wird bereinigt (Umlaute → AE/OE/UE, ß → SS, nur A–Z); das Ergebnis wird direkt wieder entschlüsselt",
+    ],
+    code: { file: "ChiffrePOLY.java", text: excerpt(chiffreSrc, 62, 80) },
+    run: "chiffre",
+    x: 66, y: 70, rotate: -2,
   },
 ];
 
@@ -165,7 +216,8 @@ export function mount(host: HTMLElement) {
     restart.disabled = true;
 
     if (!note.run) {
-      status.textContent = "Für dieses Projekt gibt es keinen Konsolen-Einstieg.";
+      status.textContent =
+        note.noRunReason ?? "Für dieses Projekt gibt es keinen Konsolen-Einstieg.";
       return;
     }
     // The runtime (and then the JVM) can take a while on a cold cache; a

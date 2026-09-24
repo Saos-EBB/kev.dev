@@ -9,7 +9,7 @@
    become a plain stacked list (see the media query). */
 .gwidget-notes {
   position: relative;
-  height: 9rem;
+  height: 13rem; /* three rows of notes */
 }
 
 .gwidget-note {
