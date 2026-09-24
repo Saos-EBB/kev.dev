@@ -1,0 +1,6 @@
+/* Reading font for prose-heavy areas (About blocks, project cards):
+   JetBrains Mono, SIL OFL, self-hosted via @fontsource. Inside those
+   areas the mono token points at it too, so labels and body match. */
+:root {
+  --font-read: "JetBrains Mono Variable", var(--font-mono);
+}
