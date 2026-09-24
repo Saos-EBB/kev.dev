@@ -38,7 +38,10 @@ export function renderAboutBlocks(): string {
 
     <section class="about-block" aria-labelledby="about-work">
       <h3 class="about-heading" id="about-work">Wie ich arbeite</h3>
-      <p>Ich denke, bevor ich baue. Planung war schon als Bodenleger das A und O — Rapport-Muster für verwinkelte Gänge, die durchlaufen mussten — und als Systemadministrator erst recht: Termine, Ausfallpläne, Behörden, alles unter Zeitdruck. Beim Code ist es dieselbe Denkweise, nur neues Werkzeug: Ist das Konzept durchdacht, ist das Implementieren der entspannte Teil. Ich setze Ideen direkt um und teste sie; hakt es, ist das für mich das Signal, dass der Plan noch nicht scharf genug war — dann gehe ich einen Schritt zurück, strukturiere neu und setze wieder an, bis es sitzt. Die Umsetzung läuft heute oft über Claude Code als Implementierungs-Agent: Architektur und Entscheidungen kommen von mir, CC baut, ich kontrolliere und schärfe nach. Dieselbe Schleife, nur schneller.</p>
+      <p>Ich denke, bevor ich baue. Planung war schon als Bodenleger das A und O — Rapport-Muster für verwinkelte Gänge, die durchlaufen mussten — und als Systemadministrator erst recht: Termine, Ausfallpläne, Behörden, alles unter Zeitdruck.</p>
+      <p>Beim Code ist es dieselbe Denkweise, nur neues Werkzeug: Ist das Konzept durchdacht, ist das Implementieren der entspannte Teil.</p>
+      <p>Ich setze Ideen direkt um und teste sie; hakt es, ist das für mich das Signal, dass der Plan noch nicht scharf genug war — dann gehe ich einen Schritt zurück, strukturiere neu und setze wieder an, bis es sitzt.</p>
+      <p>Die Umsetzung läuft heute oft über Claude Code als Implementierungs-Agent: Architektur und Entscheidungen kommen von mir, CC baut, ich kontrolliere und schärfe nach. Dieselbe Schleife, nur schneller.</p>
     </section>
   `;
 }

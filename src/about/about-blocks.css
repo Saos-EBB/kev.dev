@@ -114,3 +114,40 @@
   font-family: var(--font-read);
   line-height: 1.7;
 }
+
+/* Structure: a hairline above every block after the profile card, and a
+   short red bar in front of each heading. --color-line, not --color-accent:
+   the accent is too dark to read on this background. */
+.about-overlay {
+  gap: 1.1em;
+}
+
+.about-overlay > .about-block:not(:first-child),
+.about-overlay > .about-cv-section {
+  padding-top: 1.1em;
+  border-top: 1px solid color-mix(in srgb, var(--color-line) 25%, transparent);
+}
+
+.about-block {
+  gap: 0.8em;
+}
+
+.about-heading,
+.about-cv-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  color: var(--color-text);
+}
+
+.about-heading::before,
+.about-cv-heading::before {
+  content: "";
+  width: 1.4rem;
+  height: 2px;
+  background: var(--color-line);
+}
+
+.about-card-role {
+  color: var(--color-line);
+}
