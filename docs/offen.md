@@ -19,15 +19,13 @@ löschen.
 
 ### About (`src/about/about-blocks.ts`)
 
-- **A2 „Der Weg hierher“:** Die 6 Absätze existieren im Repo nicht (laut dem alten `buildlog.md`, jetzt nur noch
-  in der Git-History, wurde die Prosa-Fassung bewusst entfernt). Text liefern und entscheiden: 1:1 oder leicht straffen.
+- **A2 „Der Weg hierher“:** Die Story-Absätze existieren weder im Repo noch in der Git-History. Text liefern;
+  der Planungs-Faden (Bodenleger → Systemadministrator → Code) wird dann eingewoben. Bis dahin steht der `[OFFEN]`-Platzhalter.
   **Achtung Höhe:** Das Overlay hat eine feste Höhe (4 Viewports, auf Mobile abzüglich des reservierten
-  letzten). Sechs Absätze passen nicht mehr hinein. Dann muss die Höhe der `#about`-Section wachsen, und
-  die hängt an der Elevator-Geometrie und am Übergang in `transition.ts`.
-- **A3 Grundsätze:** Aktuell stehen 3 Kandidaten da. Finale Auswahl (3–4).
-- **A4 „Wie ich arbeite“:** Wortlaut inklusive CC-Framing (Architektur und Entscheidungen von dir,
-  Umsetzung mit CC, danach Kontrolle/Debug). Steht bisher nur als Platzhalter da.
-- **A5:** Playlist-Link („was beim Bauen läuft“).
+  letzten). Story plus der lange A4-Absatz passen evtl. nicht mehr hinein. Dann muss die Höhe der `#about`-Section wachsen, und
+  die hängt an der Elevator-Geometrie und am Übergang in `transition.ts`. Im Browser prüfen.
+- **A3 Grundsätze:** Erledigt, drei Zitate. Ein vierter („Code ist Handwerk …“) ist nicht eingebaut.
+- **A4, A5:** Erledigt. Die persönliche Zeile in A5 ist ein Vorschlag und darf getauscht werden.
 - **Lebenslauf:** PDF nach `public/cv/lebenslauf.pdf` legen (Ordner existiert, `.gitkeep` drin). Anderer
   Name: `CV_HREF` in `about-blocks.ts` anpassen. Bis dahin liefern die beiden Buttons 404.
 - **CV-Sections:** Werdegang/Ausbildung/Skills/Sprachen stehen unverändert zwischen A4 und A5, weil es keine
