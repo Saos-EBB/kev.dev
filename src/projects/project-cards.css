@@ -9,6 +9,8 @@
   flex-direction: column;
   gap: 0.6rem;
   width: clamp(320px, 42vw, 640px);
+  font-family: var(--font-read);
+  --font-mono: var(--font-read);
   padding: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
   border-radius: 8px;
@@ -26,8 +28,8 @@
 
 .pcard-goal {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  line-height: 1.4;
+  font-size: 0.72rem;
+  line-height: 1.5;
   color: var(--color-text-muted);
 }
 
@@ -57,8 +59,8 @@
 }
 
 .pcard-what {
-  font-size: 0.82rem;
-  line-height: 1.5;
+  font-size: 0.86rem;
+  line-height: 1.65;
   color: var(--color-text-muted);
 }
 
@@ -187,8 +189,8 @@
 
 .pcard-details p,
 .pcard-decisions li {
-  font-size: 0.8rem;
-  line-height: 1.5;
+  font-size: 0.84rem;
+  line-height: 1.65;
   color: var(--color-text-muted);
 }
 
