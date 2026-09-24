@@ -11,6 +11,7 @@ public class Launcher {
             case "personal" -> Main.main(new String[0]);
             case "bibliothek" -> Bibliothek.main(new String[0]);
             case "minesweeper" -> MinesweaperV2.main(new String[0]);
+            case "zahlenraten" -> ZahlenRatenV2.main(new String[0]);
             case "chiffre" -> ChiffrePOLY.main(new String[0]);
             case "pokemon" -> new src.Logik.GameEngine().game();
             default -> System.out.println("Unbekanntes Projekt: " + args[0]);
