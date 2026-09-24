@@ -15,7 +15,7 @@ löschen.
 | TschoBBo | Screenshot der Mail-Client-UI. Aktuell liegt nur `public/projects/jobbot.jpeg` drin, und das ist das Maskottchen, nicht die UI. |
 | Renderer | (1) Welche **zwei Baldur's-Gate-Modelle** sollen ins Widget? Im Renderer-Repo ist nur `duoOG` gelistet (41 MB, nie committet, also unbrauchbar für das Web). Ich kann keine andere Datei eindeutig zuordnen. Entweder Dateinamen nennen oder eine dezimierte Fassung liefern. (2) Ist `craniumCut01` das Schädel-CT aus DICOM? Angenommen wegen Name und Doku, nicht bestätigt. (3) Modell-Reihenfolge: aktuell Ducky, Auto, Pochita, Schädel-CT. |
 | AniScript | GitHub-Link (fehlt komplett, Link-Slot zeigt nur den Text). Brave MV2→V3 / Violentmonkey→ScriptCat-Detail final gegenchecken. |
-| Grundlagen | Info-Texte für **Mastermind**, **Personalverwaltung**, **Bibliothek**. Siehe auch „Grundlagen-Widget“ unten. |
+| Grundlagen | Info-Text für **Mastermind**. Siehe auch „Grundlagen-Widget“ unten. |
 
 ### About (`src/about/about-blocks.ts`)
 
@@ -37,10 +37,14 @@ löschen.
 
 ## Grundlagen-Widget (Terminal)
 
-- **Personalverwaltung:** Das Repo `PersonalManagement` hat kein `main`. Entweder ein `main` ergänzen (dann
-  in `java/Launcher.java` und `NOTES` in `grundlagen.ts` eintragen) oder ohne Terminal lassen.
-- **Bibliothek:** Ich finde das Projekt in keinem öffentlichen Repo. Quellcode liefern, dann in `java/`
-  ablegen, im Launcher registrieren, `scripts/build-java.sh` laufen lassen.
+- **Personalverwaltung, Bibliothek, Minesweeper, Chiffre:** laufen im Terminal. Die Quellen sind unveränderte
+  Kopien aus dem Monorepo (`learning/first-steps-in-java`, Bibliothek und Personalverwaltung liegen dort
+  vollständig vor). Beim Bibliothek-Menü beendet ein unbekannter Autor das Programm mit einer Exception
+  (`bib.get` liefert null): „Neu starten“ startet neu. Das Original wurde bewusst nicht angefasst.
+- **Zahlenraten:** Nur Info-Notiz, kein Terminal. `ZahlenRatenV2` nutzt `List.getLast()` (Java 21), CheerpJ
+  hat Java 17 (`NoSuchMethodError`). Zum Freischalten `getLast()` durch `get(size() - 1)` ersetzen, dann in
+  `java/` ablegen, in `Launcher` und `NOTES` eintragen und das JAR neu bauen. Achtung: `build-java.sh` fällt
+  auf `-source 17` zurück und würde so einen Java-21-Aufruf nicht bemängeln.
 - **Mastermind:** Nur der Info-Text fehlt.
 - Neue oder geänderte Java-Quellen: `./scripts/build-java.sh` neu laufen lassen und
   `public/java/grundlagen.jar` mit committen. Das JAR ist eingecheckt.
