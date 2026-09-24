@@ -1,5 +1,9 @@
 # Build-Log
 
+## 2026-09-24 — feat(about): Trennlinien, Absätze, Akzente
+**Was:** „Wie ich arbeite“ ist an Satzgrenzen in vier Absätze geteilt (Wortlaut unverändert). Jeder Block nach der Karte (Story, Zitate, Wie ich arbeite, CV-Sections, Footer) hat oben eine dünne Linie. Überschriften haben einen kurzen roten Balken davor, die Rolle in der Karte ist rot. Der Overlay-Abstand sinkt von 1.4em auf 1.1em, damit die Linien die feste Höhe nicht sprengen.
+**Nicht gebaut:** Kein Umschreiben, keine neuen Texte, `style.css` unberührt. Ungetestet im Browser. `--color-accent` (#5f0027) ist auf dem Hintergrund kaum lesbar (~1,5:1), deshalb hier `--color-line`. Der Token wird an anderen Stellen weiter als Textfarbe genutzt (Projekt-Cards, `[OFFEN]`).
+
 ## 2026-09-24 — feat(projects): Cards im Lesefont
 **Was:** `.pcard` nutzt `--font-read` (Fließtext und Labels), Beschreibung/Details/Ziel leicht größer, Zeilenabstand 1.65.
 **Nicht gebaut:** Kein Umbau von Karten- oder Bento-Layout, Titel bleibt in Koeeya. Nicht im Browser geprüft; die Karten haben feste Slots, längere Texte können dort eng werden.
