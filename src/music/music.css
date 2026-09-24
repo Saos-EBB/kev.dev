@@ -1,0 +1,50 @@
+/* Header play/pause button and the compact Spotify embed it starts. The
+   panel is fixed and separate from .site-header, so the music keeps its
+   controls when the header fades out at mid-scroll. */
+.music-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.music-button:hover:not(:disabled),
+.music-button:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.music-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.music-icon {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.music-icon--pause,
+.music-button.is-playing .music-icon--play {
+  display: none;
+}
+
+.music-button.is-playing .music-icon--pause {
+  display: block;
+}
+
+.music-panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 140;
+  width: min(352px, calc(100vw - 2rem));
+}

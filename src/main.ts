@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Cloth } from "./hero/cloth";
 import { cvSections, trackElevatorPerspective } from "./about/elevator";
 import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
+import { initSpotifyButton } from "./music/spotify";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
 import { renderProjectCard, initProjectCards } from "./projects/project-cards";
@@ -57,9 +58,15 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
         <a href="#contact">Contact</a>
+        <button class="music-button" type="button" aria-label="Musik abspielen" aria-pressed="false">
+          <svg class="music-icon music-icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+          <svg class="music-icon music-icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+        </button>
       </nav>
     </div>
   </header>
+
+  <div class="music-panel" hidden><div class="music-mount"></div></div>
 
   <section class="hero" id="hero">
     <div class="hero-frame">
@@ -392,3 +399,4 @@ document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link
 initScrollProgress(lenis);
 
 initEdgeNav(lenis);
+initSpotifyButton();
