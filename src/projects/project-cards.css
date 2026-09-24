@@ -33,6 +33,17 @@
   color: var(--color-text-muted);
 }
 
+.pcard-label {
+  display: inline-block;
+  margin-right: 0.6em;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-line); /* --color-accent is too dark to read here */
+}
+
 .pcard-title {
   font-family: var(--font-display);
   font-size: 1.5rem;
@@ -184,7 +195,7 @@
   font-weight: normal;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-accent);
+  color: var(--color-line);
 }
 
 .pcard-details p,

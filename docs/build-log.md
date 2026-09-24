@@ -1,5 +1,9 @@
 # Build-Log
 
+## 2026-09-24 — feat(projects): Labels Ziel / Beweis / Projekt
+**Was:** Die drei Textteile der Karte tragen ein kleines Label: `learnGoal` = „Ziel“, `claim` = „Beweis“, `what` = „Projekt“. Die Details-Überschriften (Entscheidungen, Herausforderung, So entstanden) gab es schon und sind jetzt in `--color-line` statt dem zu dunklen `--color-accent`.
+**Nicht gebaut:** Kein „Problem“-Label (`learnGoal` ist bei YourBrand ein Lernziel, kein Problem), keine Labels für Tags/Meta, kein Text geändert. Labels stehen inline, damit die festen Bento-Boxen nicht höher werden. Nicht im Browser geprüft.
+
 ## 2026-09-24 — feat(about): Trennlinien, Absätze, Akzente
 **Was:** „Wie ich arbeite“ ist an Satzgrenzen in vier Absätze geteilt (Wortlaut unverändert). Jeder Block nach der Karte (Story, Zitate, Wie ich arbeite, CV-Sections, Footer) hat oben eine dünne Linie. Überschriften haben einen kurzen roten Balken davor, die Rolle in der Karte ist rot. Der Overlay-Abstand sinkt von 1.4em auf 1.1em, damit die Linien die feste Höhe nicht sprengen.
 **Nicht gebaut:** Kein Umschreiben, keine neuen Texte, `style.css` unberührt. Ungetestet im Browser. `--color-accent` (#5f0027) ist auf dem Hintergrund kaum lesbar (~1,5:1), deshalb hier `--color-line`. Der Token wird an anderen Stellen weiter als Textfarbe genutzt (Projekt-Cards, `[OFFEN]`).

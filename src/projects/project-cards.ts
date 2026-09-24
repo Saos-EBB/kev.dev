@@ -42,6 +42,10 @@ export interface ProjectCard {
   widget?: ProjectWidget;
 }
 
+// Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt"),
+// inline so it costs no extra row in the fixed-size bento boxes.
+const label = (text: string) => `<span class="pcard-label">${text}</span>`;
+
 function esc(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -61,12 +65,12 @@ export function renderProjectCard(card: ProjectCard): string {
   return `
     <article class="pcard" data-card="${esc(card.id)}">
       <div class="pcard-part pcard-part--head">
-        <p class="pcard-goal">${esc(card.learnGoal)}</p>
+        <p class="pcard-goal">${label("Ziel")}${esc(card.learnGoal)}</p>
         <h3 class="pcard-title">${esc(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
-        <p class="pcard-claim">${esc(card.claim)}</p>
+        <p class="pcard-claim">${label("Beweis")}${esc(card.claim)}</p>
       </div>
-      ${card.what ? `<div class="pcard-part pcard-part--what"><p class="pcard-what">${esc(card.what)}</p></div>` : ""}
+      ${card.what ? `<div class="pcard-part pcard-part--what"><p class="pcard-what">${label("Projekt")}${esc(card.what)}</p></div>` : ""}
       ${
         card.tags?.length || card.meta
           ? `<div class="pcard-part pcard-part--facts">
