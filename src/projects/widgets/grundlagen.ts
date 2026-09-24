@@ -11,6 +11,7 @@ import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
 import masterMindSrc from "../../../java/MasterMind.java?raw";
 import bibliothekSrc from "../../../java/Bibliothek.java?raw";
 import minesweeperSrc from "../../../java/MinesweaperV2.java?raw";
+import zahlenratenSrc from "../../../java/ZahlenRatenV2.java?raw";
 import chiffreSrc from "../../../java/ChiffrePOLY.java?raw";
 import pmSrc from "../../../java/PersonenVerwaltung/PM.java?raw";
 import myStackSrc from "../../../java/MyStack.java?raw";
@@ -31,7 +32,6 @@ interface Note {
   open?: string; // shown as [OFFEN: …] where copy or code is still missing
   code?: { file: string; text: string };
   run?: string; // Launcher argument; no run = no console entry point
-  noRunReason?: string; // shown instead of the generic "no entry point" text when there is no run
   files?: Record<string, string>; // written to the virtual /files/ before the run
   x: number; // free placement on wide screens, in % of the note area
   y: number;
@@ -135,8 +135,8 @@ const NOTES: Note[] = [
       "Roboter gegen Mensch: abwechselnd eine Zahl von 0 bis 100 raten",
       "Der Roboter nimmt jeweils die Mitte der noch möglichen Zahlen und streicht anhand der Hinweise („Fast da“, „Relativ nah“ …) ganze Bereiche",
     ],
-    noRunReason:
-      "Läuft hier nicht im Terminal: das Programm nutzt List.getLast() (Java 21), die Browser-Runtime ist Java 17.",
+    code: { file: "ZahlenRatenV2.java", text: excerpt(zahlenratenSrc, 30, 54) },
+    run: "zahlenraten",
     x: 36, y: 64, rotate: -1,
   },
   {
@@ -216,8 +216,7 @@ export function mount(host: HTMLElement) {
     restart.disabled = true;
 
     if (!note.run) {
-      status.textContent =
-        note.noRunReason ?? "Für dieses Projekt gibt es keinen Konsolen-Einstieg.";
+      status.textContent = "Für dieses Projekt gibt es keinen Konsolen-Einstieg.";
       return;
     }
     // The runtime (and then the JVM) can take a while on a cold cache; a
