@@ -8,9 +8,9 @@ import "./about-blocks.css";
 const CV_HREF = "/cv/lebenslauf.pdf";
 
 const PRINCIPLES = [
-  "Etwas nervt mich oder interessiert mich — dann baue ich es.",
-  "Ich habe noch nie akzeptiert, dass etwas nicht geht.",
-  "Ich wollte es wissen.",
+  "Wenn das Konzept durchdacht ist, ist das Implementieren der entspannte Teil.",
+  "Einfache Lösungen brechen weniger leicht — und jeder nach mir versteht sie.",
+  "Gute Software muss man im Prozess hassen und lieben, sonst wird\u2019s nichts.",
 ];
 
 const open = (text: string) => `<p class="about-open">[OFFEN: ${text}]</p>`;
@@ -29,17 +29,16 @@ export function renderAboutBlocks(): string {
 
     <section class="about-block" aria-labelledby="about-story">
       <h3 class="about-heading" id="about-story">Der Weg hierher</h3>
-      ${open("die 6 Absätze der Story fehlen im Repo — Kevin liefert den Text; 1:1 übernehmen oder leicht straffen")}
+      ${open("Story-Absätze fehlen im Repo — Kevin liefert den Text; der Planungs-Faden (Bodenleger → Systemadministrator → Code) wird dann eingewoben")}
     </section>
 
     <section class="about-block" aria-label="Grundsätze">
       ${PRINCIPLES.map((q) => `<blockquote class="about-quote">${q}</blockquote>`).join("")}
-      ${open("finale Auswahl 3–4 Grundsätze durch Kevin")}
     </section>
 
     <section class="about-block" aria-labelledby="about-work">
       <h3 class="about-heading" id="about-work">Wie ich arbeite</h3>
-      ${open("finaler Wortlaut A4 inkl. CC-Framing")}
+      <p>Ich denke, bevor ich baue. Planung war schon als Bodenleger das A und O — Rapport-Muster für verwinkelte Gänge, die durchlaufen mussten — und als Systemadministrator erst recht: Termine, Ausfallpläne, Behörden, alles unter Zeitdruck. Beim Code ist es dieselbe Denkweise, nur neues Werkzeug: Ist das Konzept durchdacht, ist das Implementieren der entspannte Teil. Ich setze Ideen direkt um und teste sie; hakt es, ist das für mich das Signal, dass der Plan noch nicht scharf genug war — dann gehe ich einen Schritt zurück, strukturiere neu und setze wieder an, bis es sitzt. Die Umsetzung läuft heute oft über Claude Code als Implementierungs-Agent: Architektur und Entscheidungen kommen von mir, CC baut, ich kontrolliere und schärfe nach. Dieselbe Schleife, nur schneller.</p>
     </section>
   `;
 }
@@ -48,7 +47,7 @@ export function renderAboutBlocks(): string {
 export function renderAboutFooter(): string {
   return `
     <section class="about-block about-footer" aria-label="Zum Schluss">
-      ${open("Playlist-Link „was beim Bauen läuft“ — Kevin fügt ihn später ein")}
+      <p>Wenn ich nicht am Bildschirm sitze, bastle ich meistens trotzdem an irgendwas — aus reiner Lust am Bauen.</p>
       <div class="about-cta">
         <a class="about-button" href="#projects">Projekte</a>
         <a class="about-button" href="${CV_HREF}" download>Lebenslauf ↓</a>
