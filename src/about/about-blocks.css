@@ -7,8 +7,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.6em;
-  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
-  line-height: 1.55;
+  font-family: var(--font-read);
+  --font-mono: var(--font-read);
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+  line-height: 1.7;
   color: var(--color-text);
 }
 
@@ -43,9 +45,8 @@
   margin: 0;
   padding: 1em 1.2em;
   border-left: 2px solid var(--color-accent);
-  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
-  font-style: italic;
-  line-height: 1.4;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.5;
 }
 
 .about-open {
@@ -101,4 +102,15 @@
     padding: 0.5em 0.8em;
     font-size: 1rem;
   }
+}
+
+/* CV sections sit between the blocks, so they read in the same font.
+   (Two classes to win over the base rule in style.css without editing it.) */
+.about-cv-section {
+  --font-mono: var(--font-read);
+}
+
+.about-cv-section .about-cv-list {
+  font-family: var(--font-read);
+  line-height: 1.7;
 }

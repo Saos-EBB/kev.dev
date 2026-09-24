@@ -1,5 +1,7 @@
 import roomSvg from "./assets/room.svg?raw";
+import "@fontsource-variable/jetbrains-mono";
 import "./style.css";
+import "./reading.css";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
