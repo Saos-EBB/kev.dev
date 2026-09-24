@@ -38,13 +38,12 @@ löschen.
 ## Grundlagen-Widget (Terminal)
 
 - **Personalverwaltung, Bibliothek, Minesweeper, Chiffre:** laufen im Terminal. Die Quellen sind unveränderte
-  Kopien aus dem Monorepo (`learning/first-steps-in-java`, Bibliothek und Personalverwaltung liegen dort
+  Kopien aus dem Monorepo (Ausnahme: Zahlenraten, siehe unten) (`learning/first-steps-in-java`, Bibliothek und Personalverwaltung liegen dort
   vollständig vor). Beim Bibliothek-Menü beendet ein unbekannter Autor das Programm mit einer Exception
   (`bib.get` liefert null): „Neu starten“ startet neu. Das Original wurde bewusst nicht angefasst.
-- **Zahlenraten:** Nur Info-Notiz, kein Terminal. `ZahlenRatenV2` nutzt `List.getLast()` (Java 21), CheerpJ
-  hat Java 17 (`NoSuchMethodError`). Zum Freischalten `getLast()` durch `get(size() - 1)` ersetzen, dann in
-  `java/` ablegen, in `Launcher` und `NOTES` eintragen und das JAR neu bauen. Achtung: `build-java.sh` fällt
-  auf `-source 17` zurück und würde so einen Java-21-Aufruf nicht bemängeln.
+- **Zahlenraten:** läuft im Terminal. In der Kopie unter `java/` ist `List.getLast()` (Java 21) durch
+  `get(size() - 1)` ersetzt, weil CheerpJ Java 17 hat; das Original im Monorepo ist unverändert.
+  Achtung: `build-java.sh` fällt auf `-source 17` zurück und würde einen Java-21-Aufruf nicht bemängeln.
 - **Mastermind:** Nur der Info-Text fehlt.
 - Neue oder geänderte Java-Quellen: `./scripts/build-java.sh` neu laufen lassen und
   `public/java/grundlagen.jar` mit committen. Das JAR ist eingecheckt.
