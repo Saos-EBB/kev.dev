@@ -20,7 +20,7 @@ public class ZahlenRatenV2 {
 
         System.out.println("Yo, \nRoboter gegen Fleisch, wer wird gewinnen ? ");
         dice = randy.nextInt(101);
-        System.out.println("Zahl generiert! (Test: " + FG_GREEN + dice + RESET + ")");
+        System.out.println("Zahl generiert!");
         coin = randy.nextBoolean();
         System.out.println(coin ? "Robo beginnt!" : "Mensch beginnt!");
 

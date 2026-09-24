@@ -42,7 +42,8 @@ löschen.
   vollständig vor). Beim Bibliothek-Menü beendet ein unbekannter Autor das Programm mit einer Exception
   (`bib.get` liefert null): „Neu starten“ startet neu. Das Original wurde bewusst nicht angefasst.
 - **Zahlenraten:** läuft im Terminal. In der Kopie unter `java/` ist `List.getLast()` (Java 21) durch
-  `get(size() - 1)` ersetzt, weil CheerpJ Java 17 hat; das Original im Monorepo ist unverändert.
+  `get(size() - 1)` ersetzt, weil CheerpJ Java 17 hat; die „(Test: …)“-Ausgabe,
+  die die gesuchte Zahl verriet, ist entfernt. Das Original im Monorepo ist unverändert.
   Achtung: `build-java.sh` fällt auf `-source 17` zurück und würde einen Java-21-Aufruf nicht bemängeln.
 - **Mastermind:** Nur der Info-Text fehlt.
 - Neue oder geänderte Java-Quellen: `./scripts/build-java.sh` neu laufen lassen und
