@@ -1,6 +1,4 @@
-/* Header play/pause button and the compact Spotify embed it starts. The
-   panel is fixed and separate from .site-header, so the music keeps its
-   controls when the header fades out at mid-scroll. */
+/* Header music controls: play/pause, decorative dancer, next. */
 .music-button {
   display: inline-flex;
   align-items: center;
@@ -41,10 +39,209 @@
   display: block;
 }
 
+.music-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.music-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-hover);
+}
+
+.music-next:hover:not(:disabled),
+.music-next:focus-visible {
+  color: var(--color-accent);
+}
+
+.music-next:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Decorative dancer (src/music/dancer.ts). Idle = grey and still; the
+   sequencer adds .playing plus one move class at a time. The svg viewport is
+   wider than the figure so sideways moves stay inside a fixed box: no layout
+   shift, anything beyond it is clipped. */
+.dancer {
+  width: 2.4rem;
+  height: 1.6rem;
+  color: var(--color-text-muted);
+  filter: grayscale(1);
+  opacity: 0.4;
+  transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+.dancer.playing {
+  filter: none;
+  opacity: 1;
+  color: var(--color-accent);
+}
+
+.dancer g { transform-box: view-box; }
+.figure { transform-origin: 60px 90px; }
+.body   { transform-origin: 60px 95px; }
+.head   { transform-origin: 60px 40px; }
+.arm-l, .arm-r { transform-origin: 60px 46px; }
+.leg-l, .leg-r { transform-origin: 60px 95px; }
+
+/* ========== IDLE: liegt am Boden, wirkt wie "——— •" ========== */
+.idle .arm-l, .idle .arm-r, .idle .leg-l, .idle .leg-r { opacity: 0; }
+.idle .body { transform: translate(-30px, 22px) rotate(90deg); }
+
+/* ========== WAKE: springt federnd auf (Überraschung) ========== */
+.waking .body  { animation: wk-body 0.9s cubic-bezier(.34,1.56,.64,1) both; }
+.waking .arm-l { animation: wk-armL 0.9s cubic-bezier(.34,1.56,.64,1) both; }
+.waking .arm-r { animation: wk-armR 0.9s cubic-bezier(.34,1.56,.64,1) both; }
+.waking .leg-l { animation: wk-legL 0.9s cubic-bezier(.34,1.56,.64,1) both; }
+.waking .leg-r { animation: wk-legR 0.9s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes wk-body {
+  0%   { transform: translate(-30px,22px) rotate(90deg); }
+  55%  { transform: translate(0,-8px) rotate(-6deg); }
+  100% { transform: translate(0,0) rotate(0); }
+}
+@keyframes wk-armL { 0%{opacity:0; transform:rotate(70deg)}  45%{opacity:1} 100%{opacity:1; transform:rotate(0)} }
+@keyframes wk-armR { 0%{opacity:0; transform:rotate(-70deg)} 45%{opacity:1} 100%{opacity:1; transform:rotate(0)} }
+@keyframes wk-legL { 0%{opacity:0; transform:rotate(50deg)}  45%{opacity:1} 100%{opacity:1; transform:rotate(0)} }
+@keyframes wk-legR { 0%{opacity:0; transform:rotate(-50deg)} 45%{opacity:1} 100%{opacity:1; transform:rotate(0)} }
+
+/* ========== SLEEP: klappt wieder zu Boden zusammen ========== */
+.sleeping .body  { animation: sl-body 0.7s ease-in both; }
+.sleeping .arm-l, .sleeping .arm-r, .sleeping .leg-l, .sleeping .leg-r { animation: sl-fade 0.5s ease-in both; }
+@keyframes sl-body { 0%{transform:translate(0,0) rotate(0)} 100%{transform:translate(-30px,22px) rotate(90deg)} }
+@keyframes sl-fade { to { opacity: 0; } }
+
+/* ========== TRANSITION (läuft immer zwischen zwei Moves) ========== */
+/* Pirouette: hüpft hoch, dreht einmal über scaleX, landet neutral. */
+.t-active .figure { animation: tr-turn 0.7s ease-in-out both; }
+@keyframes tr-turn {
+  0%   { transform: translateY(0)     scaleX(1); }
+  25%  { transform: translateY(-11px) scaleX(0.3); }
+  50%  { transform: translateY(-15px) scaleX(-1); }
+  75%  { transform: translateY(-11px) scaleX(-0.3); }
+  100% { transform: translateY(0)     scaleX(1); }
+}
+
+/* ========== 1) MOONWALK ========== */
+.m-moonwalk .figure { animation: mw-slide 3.2s ease-in-out infinite; }
+.m-moonwalk .body   { animation: mw-lean  3.2s ease-in-out infinite; }
+.m-moonwalk .arm-l  { animation: mw-armL  1.6s ease-in-out infinite; }
+.m-moonwalk .arm-r  { animation: mw-armR  1.6s ease-in-out infinite; }
+.m-moonwalk .leg-l  { animation: mw-legL  0.8s ease-in-out infinite; }
+.m-moonwalk .leg-r  { animation: mw-legR  0.8s ease-in-out infinite; }
+@keyframes mw-slide { 0%{transform:translateX(42px)} 50%{transform:translateX(-42px)} 100%{transform:translateX(42px)} }
+@keyframes mw-lean  { 0%,100%{transform:rotate(9deg)} 50%{transform:rotate(-9deg)} }
+@keyframes mw-armL  { 0%,100%{transform:rotate(-16deg)} 50%{transform:rotate(6deg)} }
+@keyframes mw-armR  { 0%,100%{transform:rotate(16deg)} 50%{transform:rotate(-6deg)} }
+@keyframes mw-legL  { 0%{transform:rotate(-14deg)} 50%{transform:rotate(16deg)} 100%{transform:rotate(-14deg)} }
+@keyframes mw-legR  { 0%{transform:rotate(16deg)} 50%{transform:rotate(-14deg)} 100%{transform:rotate(16deg)} }
+
+/* ========== 2) SALTO / BACKFLIP ========== */
+.m-salto .figure { animation: sa-flip 2.4s cubic-bezier(.45,0,.55,1) infinite; }
+.m-salto .arm-l  { animation: sa-armL 2.4s ease-in-out infinite; }
+.m-salto .arm-r  { animation: sa-armR 2.4s ease-in-out infinite; }
+.m-salto .leg-l  { animation: sa-legL 2.4s ease-in-out infinite; }
+.m-salto .leg-r  { animation: sa-legR 2.4s ease-in-out infinite; }
+@keyframes sa-flip {
+  0%{transform:translateY(0) rotate(0)} 16%{transform:translateY(8px) rotate(0)}
+  28%{transform:translateY(-34px) rotate(-70deg)} 42%{transform:translateY(-56px) rotate(-190deg)}
+  56%{transform:translateY(-30px) rotate(-300deg)} 66%{transform:translateY(0) rotate(-360deg)}
+  72%{transform:translateY(7px) rotate(-360deg)} 80%,100%{transform:translateY(0) rotate(-360deg)}
+}
+@keyframes sa-legL { 0%,16%,80%,100%{transform:rotate(-8deg)} 42%{transform:rotate(-55deg)} }
+@keyframes sa-legR { 0%,16%,80%,100%{transform:rotate(9deg)}  42%{transform:rotate(55deg)} }
+@keyframes sa-armL { 0%,16%,80%,100%{transform:rotate(-30deg)} 42%{transform:rotate(-150deg)} }
+@keyframes sa-armR { 0%,16%,80%,100%{transform:rotate(35deg)}  42%{transform:rotate(150deg)} }
+
+/* ========== 3) TWIST ========== */
+.m-twist .figure { animation: tw-drop 1.6s ease-in-out infinite; }
+.m-twist .body   { animation: tw-body 1.6s ease-in-out infinite; }
+.m-twist .arm-l  { animation: tw-armL 1.6s ease-in-out infinite; }
+.m-twist .arm-r  { animation: tw-armR 1.6s ease-in-out infinite; }
+.m-twist .leg-l  { animation: tw-legL 1.6s ease-in-out infinite; }
+.m-twist .leg-r  { animation: tw-legR 1.6s ease-in-out infinite; }
+@keyframes tw-drop { 0%,100%{transform:translateY(0)} 25%,75%{transform:translateY(5px)} }
+@keyframes tw-body { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} }
+@keyframes tw-armL { 0%,100%{transform:rotate(34deg)} 50%{transform:rotate(-30deg)} }
+@keyframes tw-armR { 0%,100%{transform:rotate(-34deg)} 50%{transform:rotate(30deg)} }
+@keyframes tw-legL { 0%,100%{transform:rotate(12deg)} 50%{transform:rotate(-7deg)} }
+@keyframes tw-legR { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(7deg)} }
+
+/* ========== 4) BATUSI (Pulp Fiction) ========== */
+.m-batusi .figure { animation: ba-step 1.4s ease-in-out infinite; }
+.m-batusi .body   { animation: ba-sway 1.4s ease-in-out infinite; }
+.m-batusi .arm-l  { animation: ba-armL 0.7s ease-in-out infinite; }
+.m-batusi .arm-r  { animation: ba-armR 0.7s ease-in-out infinite; }
+.m-batusi .leg-l  { animation: ba-legL 1.4s ease-in-out infinite; }
+.m-batusi .leg-r  { animation: ba-legR 1.4s ease-in-out infinite; }
+@keyframes ba-step { 0%,100%{transform:translateX(-7px)} 50%{transform:translateX(7px)} }
+@keyframes ba-sway { 0%,100%{transform:rotate(-7deg)} 50%{transform:rotate(7deg)} }
+@keyframes ba-armL { 0%,100%{transform:rotate(-118deg)} 50%{transform:rotate(-82deg)} }
+@keyframes ba-armR { 0%,100%{transform:rotate(118deg)} 50%{transform:rotate(82deg)} }
+@keyframes ba-legL { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(8deg)} }
+@keyframes ba-legR { 0%,100%{transform:rotate(6deg)} 50%{transform:rotate(-8deg)} }
+
+/* ========== 5) RUNNING MAN ========== */
+.m-runman .figure { animation: rm-hop 0.5s ease-in-out infinite; }
+.m-runman .body   { animation: rm-lean 1s linear infinite; }
+.m-runman .arm-l  { animation: rm-armL 1s ease-in-out infinite; }
+.m-runman .arm-r  { animation: rm-armR 1s ease-in-out infinite; }
+.m-runman .leg-l  { animation: rm-legL 1s ease-in-out infinite; }
+.m-runman .leg-r  { animation: rm-legR 1s ease-in-out infinite; }
+@keyframes rm-hop  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes rm-lean { 0%,100%{transform:rotate(-7deg)} }
+@keyframes rm-armL { 0%{transform:rotate(45deg)} 50%{transform:rotate(-30deg)} 100%{transform:rotate(45deg)} }
+@keyframes rm-armR { 0%{transform:rotate(-30deg)} 50%{transform:rotate(45deg)} 100%{transform:rotate(-30deg)} }
+@keyframes rm-legL { 0%{transform:rotate(-45deg)} 50%{transform:rotate(22deg)} 100%{transform:rotate(-45deg)} }
+@keyframes rm-legR { 0%{transform:rotate(22deg)} 50%{transform:rotate(-45deg)} 100%{transform:rotate(22deg)} }
+
+/* ========== 6) DISCO POINT (Saturday Night Fever) ========== */
+.m-disco .figure { animation: di-bounce 0.6s ease-in-out infinite; }
+.m-disco .body   { animation: di-lean 1.2s ease-in-out infinite; }
+.m-disco .arm-r  { animation: di-pointR 1.2s ease-in-out infinite; }
+.m-disco .arm-l  { animation: di-pointL 1.2s ease-in-out infinite; }
+.m-disco .leg-l  { animation: di-legL 1.2s ease-in-out infinite; }
+.m-disco .leg-r  { animation: di-legR 1.2s ease-in-out infinite; }
+@keyframes di-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+@keyframes di-lean   { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+@keyframes di-pointR { 0%,100%{transform:rotate(-125deg)} 50%{transform:rotate(20deg)} }
+@keyframes di-pointL { 0%,100%{transform:rotate(95deg)} 50%{transform:rotate(-40deg)} }
+@keyframes di-legL   { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(10deg)} }
+@keyframes di-legR   { 0%,100%{transform:rotate(6deg)} 50%{transform:rotate(-10deg)} }
+
+/* ========== 7) CRIP WALK ========== */
+.m-cwalk .figure { animation: cw-move 1s ease-in-out infinite; }
+.m-cwalk .body   { animation: cw-lean 1s ease-in-out infinite; }
+.m-cwalk .arm-l  { animation: cw-armL 1s ease-in-out infinite; }
+.m-cwalk .arm-r  { animation: cw-armR 1s ease-in-out infinite; }
+.m-cwalk .leg-l  { animation: cw-legL 0.5s ease-in-out infinite; }
+.m-cwalk .leg-r  { animation: cw-legR 0.5s ease-in-out infinite; }
+@keyframes cw-move { 0%,100%{transform:translate(-8px,0)} 50%{transform:translate(8px,-3px)} }
+@keyframes cw-lean { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
+@keyframes cw-armL { 0%,100%{transform:rotate(12deg)} 50%{transform:rotate(-10deg)} }
+@keyframes cw-armR { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(10deg)} }
+@keyframes cw-legL { 0%,100%{transform:rotate(-24deg)} 50%{transform:rotate(8deg)} }
+@keyframes cw-legR { 0%,100%{transform:rotate(24deg)} 50%{transform:rotate(-8deg)} }
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .dancer g { animation: none !important; }
+}
+
+/* The player's video is never shown; it lives off-screen and only plays audio. */
 .music-panel {
   position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 140;
-  width: min(352px, calc(100vw - 2rem));
+  left: -10000px;
+  top: 0;
+  width: 200px;
+  height: 200px;
 }

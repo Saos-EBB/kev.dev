@@ -8,7 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Cloth } from "./hero/cloth";
 import { cvSections, trackElevatorPerspective } from "./about/elevator";
 import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
-import { initSpotifyButton } from "./music/spotify";
+import { initYoutubeButton } from "./music/youtube";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
 import { renderProjectCard, initProjectCards } from "./projects/project-cards";
@@ -61,15 +61,32 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
         <a href="#contact">Contact</a>
-        <button class="music-button" type="button" aria-label="Musik abspielen" aria-pressed="false">
-          <svg class="music-icon music-icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-          <svg class="music-icon music-icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
-        </button>
+        <span class="music-controls">
+          <button class="music-button" type="button" aria-label="Musik abspielen" aria-pressed="false">
+            <svg class="music-icon music-icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+            <svg class="music-icon music-icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+          </button>
+          <svg class="dancer idle" viewBox="0 0 120 160" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" aria-hidden="true">
+            <g class="figure">
+              <g class="body">
+                <line x1="60" y1="46" x2="60" y2="95" />
+                <g class="head"><circle cx="60" cy="28" r="12" fill="currentColor" stroke="none" /></g>
+                <g class="arm-l"><line x1="60" y1="48" x2="38" y2="72" /></g>
+                <g class="arm-r"><line x1="60" y1="48" x2="82" y2="72" /></g>
+                <g class="leg-l"><line x1="60" y1="95" x2="46" y2="135" /></g>
+                <g class="leg-r"><line x1="60" y1="95" x2="74" y2="135" /></g>
+              </g>
+            </g>
+          </svg>
+          <button class="music-next" type="button" aria-label="Nächster Song" disabled>
+            <svg class="music-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5v14l9-7zM16 5h2v14h-2z" /></svg>
+          </button>
+        </span>
       </nav>
     </div>
   </header>
 
-  <div class="music-panel" hidden><div class="music-mount"></div></div>
+  <div class="music-panel" aria-hidden="true"><div class="music-mount"></div></div>
 
   <section class="hero" id="hero">
     <div class="hero-frame">
@@ -402,7 +419,7 @@ document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link
 initScrollProgress(lenis);
 
 initEdgeNav(lenis);
-initSpotifyButton();
+initYoutubeButton();
 
 // Intro overlay: one word switches the style. Shown once per session; after
 // the first run (or on any return visit) the hero is simply there.
