@@ -16,14 +16,14 @@
 :root {
   --color-bg: #08070a; /* page + header background */
   --color-text: #f5f5f6; /* primary text */
-  --color-line: #c80032; /* grid / cloth / rule lines, hover color */
+  --color-line: #cd57ff; /* grid / cloth / rule lines, hover color */
   --color-text-muted: #8a8a93; /* secondary text */
-  --color-accent: #5f0027; /* focus outlines, highlights */
+  --color-accent: #cd57a6; /* focus outlines, highlights */
   --hero-bg: #08070a; /* hero section backdrop */
-  --grid-color: #c80032; /* shared grid line color, all scenes */
+  --grid-color: #cd57ff; /* shared grid line color, all scenes */
   --about-bg: #08070a; /* about section backdrop */
-  --color-room-line: #faebd7; /* about: room/desk/monitor/plant outlines + grid (was "antiquewhite") */
-  --color-room-accent: #9370db; /* about: monitor frame + LED (was "mediumpurple") */
+  --color-room-line: #cd57aa; /* about: room/desk/monitor/plant outlines + grid (was "antiquewhite") */
+  --color-room-accent: #faebd7; /* about: monitor frame + LED (was "mediumpurple") */
   --projects-bg: #08070a; /* projects section backdrop */
   --color-shadow: #000000; /* projects: card, text + terminal shadows */
   --color-canvas-bg: #000000; /* projects: 3D renderer canvas */
