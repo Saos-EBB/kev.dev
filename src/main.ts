@@ -66,18 +66,20 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <svg class="music-icon music-icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
             <svg class="music-icon music-icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
           </button>
-          <svg class="dancer idle" viewBox="0 0 120 160" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" aria-hidden="true">
-            <g class="figure">
-              <g class="body">
-                <line x1="60" y1="46" x2="60" y2="95" />
-                <g class="head"><circle cx="60" cy="28" r="12" fill="currentColor" stroke="none" /></g>
-                <g class="arm-l"><line x1="60" y1="48" x2="38" y2="72" /></g>
-                <g class="arm-r"><line x1="60" y1="48" x2="82" y2="72" /></g>
-                <g class="leg-l"><line x1="60" y1="95" x2="46" y2="135" /></g>
-                <g class="leg-r"><line x1="60" y1="95" x2="74" y2="135" /></g>
+          <a class="dancer-link" target="_blank" rel="noopener noreferrer" aria-label="Playlist auf YouTube öffnen">
+            <svg class="dancer idle" viewBox="0 0 120 160" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" aria-hidden="true">
+              <g class="figure">
+                <g class="body">
+                  <line x1="60" y1="46" x2="60" y2="95" />
+                  <g class="head"><circle cx="60" cy="28" r="12" fill="currentColor" stroke="none" /></g>
+                  <g class="arm-l"><line x1="60" y1="48" x2="38" y2="72" /></g>
+                  <g class="arm-r"><line x1="60" y1="48" x2="82" y2="72" /></g>
+                  <g class="leg-l"><line x1="60" y1="95" x2="46" y2="135" /></g>
+                  <g class="leg-r"><line x1="60" y1="95" x2="74" y2="135" /></g>
+                </g>
               </g>
-            </g>
-          </svg>
+            </svg>
+          </a>
           <button class="music-next" type="button" aria-label="Nächster Song" disabled>
             <svg class="music-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5v14l9-7zM16 5h2v14h-2z" /></svg>
           </button>
