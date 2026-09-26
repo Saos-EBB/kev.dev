@@ -1135,10 +1135,16 @@ button:focus-visible {
 .footer--floating.is-visible {
   opacity: 1;
   visibility: visible;
-  pointer-events: auto;
+  /* Click-through: the bar itself doesn't block what's behind it, only
+     the links inside catch clicks. */
+  pointer-events: none;
   transition:
     opacity var(--edge-nav-fade),
     visibility 0s linear;
+}
+
+.footer--floating.is-visible .footer-links a {
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
