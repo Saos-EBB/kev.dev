@@ -1,4 +1,4 @@
-// "Grundlagen" widget: nine notes, one shared terminal. Clicking a note shows
+// "Grundlagen" widget: nine projects as tabs (plus prev/next), one shared terminal. A tab shows
 // its info and a code excerpt and runs the original Java program in the
 // terminal (see java-runner.ts). The runtime starts loading when the card is
 // first expanded, never on page view.
@@ -33,9 +33,8 @@ interface Note {
   code?: { file: string; text: string };
   run?: string; // Launcher argument; no run = no console entry point
   files?: Record<string, string>; // written to the virtual /files/ before the run
-  x: number; // free placement on wide screens, in % of the note area
-  y: number;
-  rotate: number;
+  intro?: string; // short explanation shown under the title
+  concepts?: string[]; // what the project exercises, shown as small tags
 }
 
 // Hues stay within green → violet so the nine read as one family with the
@@ -43,6 +42,8 @@ interface Note {
 const NOTES: Note[] = [
   {
     id: "gameoflife",
+    intro: "Conways Spiel des Lebens als Konsolenprogramm: Zellen leben, sterben oder entstehen je nach Nachbarn. Ich wollte verstehen, wie man ein Gitter modelliert und aus einfachen Regeln ein Verhalten entstehen lässt.",
+    concepts: ["2D-Arrays", "Nachbar-Zählung", "Zykluserkennung"],
     label: "Game of Life",
     color: "var(--note-1)",
     bullets: [
@@ -51,10 +52,11 @@ const NOTES: Note[] = [
     ],
     code: { file: "GameOfLife.java", text: excerpt(gameOfLifeSrc, 85, 116) },
     run: "gameoflife",
-    x: 1, y: 4, rotate: -2,
   },
   {
     id: "pokemon",
+    intro: "Ein kleines Kampfsystem im Stil von Pokémon. Die Daten zu Pokémon, Attacken und Typ-Stärken werden aus Dateien eingelesen und der Schaden wird daraus berechnet. Hier habe ich Klassenhierarchien geübt.",
+    concepts: ["Vererbung", "Klassenhierarchie", "Kampfschleife", "Dateien einlesen"],
     label: "Pokémon",
     color: "var(--note-2)",
     bullets: [
@@ -68,19 +70,21 @@ const NOTES: Note[] = [
       "Pkmn/src/Persistierung/AttackRawData": attackRaw,
       "Pkmn/src/Persistierung/EffectivenessRawData": effectivenessRaw,
     },
-    x: 35, y: 0, rotate: 1.5,
   },
   {
     id: "mastermind",
+    intro: "Das Code-Rate-Spiel Mastermind in der Konsole: Du tippst eine Kombination, das Programm bewertet sie.",
+    concepts: ["Konsolen-Eingabe", "Spiellogik"],
     label: "Mastermind",
     color: "var(--note-3)",
     open: "Info-Text zu Mastermind fehlt",
     code: { file: "MasterMind.java", text: excerpt(masterMindSrc, 40, 69) },
     run: "mastermind",
-    x: 68, y: 8, rotate: -1,
   },
   {
     id: "rpn",
+    intro: "Ein Rechner für die umgekehrte polnische Notation (Operanden zuerst, dann der Operator). Die Datenstruktur dahinter, Liste und Stack, habe ich selbst gebaut statt eine fertige zu nutzen.",
+    concepts: ["Verkettete Liste", "Stack", "Ausdrücke auswerten"],
     label: "RPN-Rechner",
     color: "var(--note-4)",
     bullets: [
@@ -89,10 +93,11 @@ const NOTES: Note[] = [
     ],
     code: { file: "MyStack.java", text: excerpt(myStackSrc, 1, 32) },
     run: "rpn",
-    x: 6, y: 36, rotate: 1,
   },
   {
     id: "personal",
+    intro: "Eine kleine Verwaltung für Standorte und die Personen darin. Der Fokus lag auf sauberem Klassendesign, Enums und dem Abfangen falscher Eingaben. Es hat kein main, deshalb gibt es kein Terminal.",
+    concepts: ["Enum", "Überladene Methoden", "Fehlerbehandlung"],
     label: "Personalverwaltung",
     color: "var(--note-5)",
     bullets: [
@@ -101,10 +106,11 @@ const NOTES: Note[] = [
     ],
     code: { file: "PersonenVerwaltung/PM.java", text: excerpt(pmSrc, 5, 27) },
     run: "personal",
-    x: 38, y: 32, rotate: -1.5,
   },
   {
     id: "bibliothek",
+    intro: "Eine Mini-Bibliothek in der Konsole: Autoren, ihre Bücher und Zitate, durchsuchbar über ein Menü. Hier ging es um die Wahl passender Collections.",
+    concepts: ["HashMap", "HashSet", "Konsolen-Menü"],
     label: "Bibliothek",
     color: "var(--note-6)",
     bullets: [
@@ -113,10 +119,11 @@ const NOTES: Note[] = [
     ],
     code: { file: "Bibliothek.java", text: excerpt(bibliothekSrc, 10, 29) },
     run: "bibliothek",
-    x: 70, y: 40, rotate: 2,
   },
   {
     id: "minesweeper",
+    intro: "Minesweeper mit Twist: Du rätst, wo keine Mine liegt, und je nach Feldwert wird ein größerer Bereich aufgedeckt.",
+    concepts: ["2D-Arrays", "Koordinaten-Eingabe", "Felder aufdecken"],
     label: "Minesweeper",
     color: "var(--note-7)",
     bullets: [
@@ -125,10 +132,11 @@ const NOTES: Note[] = [
     ],
     code: { file: "MinesweaperV2.java", text: excerpt(minesweeperSrc, 49, 80) },
     run: "minesweeper",
-    x: 2, y: 68, rotate: 1.5,
   },
   {
     id: "zahlenraten",
+    intro: "Ein Zahlenraten-Duell zwischen Roboter und Mensch. Der Roboter rät nicht zufällig, sondern grenzt den Bereich mit jedem Hinweis systematisch ein.",
+    concepts: ["Bereichs-Suche", "Intervalle eingrenzen"],
     label: "Zahlenraten",
     color: "var(--note-8)",
     bullets: [
@@ -137,10 +145,11 @@ const NOTES: Note[] = [
     ],
     code: { file: "ZahlenRatenV2.java", text: excerpt(zahlenratenSrc, 30, 54) },
     run: "zahlenraten",
-    x: 36, y: 64, rotate: -1,
   },
   {
     id: "chiffre",
+    intro: "Eine Vigenère-artige Verschlüsselung in Java: Text wird mit einem Passwort verschoben und danach zur Kontrolle direkt wieder entschlüsselt.",
+    concepts: ["Strings", "Modulo-Verschiebung", "Ver-/Entschlüsselung"],
     label: "Chiffre",
     color: "var(--note-9)",
     bullets: [
@@ -149,7 +158,6 @@ const NOTES: Note[] = [
     ],
     code: { file: "ChiffrePOLY.java", text: excerpt(chiffreSrc, 62, 80) },
     run: "chiffre",
-    x: 66, y: 70, rotate: -2,
   },
 ];
 
@@ -159,13 +167,19 @@ const esc = (s: string) =>
 export function mount(host: HTMLElement) {
   host.classList.add("gwidget");
   host.innerHTML = `
-    <div class="gwidget-notes" role="group" aria-label="Projekte">
+    <div class="gwidget-tabs" role="tablist" aria-label="Projekte">
       ${NOTES.map(
-        (n) => `<button type="button" class="gwidget-note" data-note="${n.id}" aria-pressed="false"
-          style="--pc: ${n.color}; --x: ${n.x}%; --y: ${n.y}%; --r: ${n.rotate}deg">${esc(n.label)}</button>`,
+        (n) => `<button type="button" role="tab" class="gwidget-tab" data-note="${n.id}" aria-selected="false"
+          style="--pc: ${n.color}">${esc(n.label)}</button>`,
       ).join("")}
     </div>
-    <div class="gwidget-info" hidden></div>
+    <div class="gwidget-panel" role="tabpanel">
+      <div class="gwidget-info"></div>
+      <div class="gwidget-nav">
+        <button type="button" class="gwidget-prev">← Zurück</button>
+        <span class="gwidget-count" aria-live="polite"></span>
+        <button type="button" class="gwidget-next">Weiter →</button>
+      </div>
     <div class="gwidget-term" hidden>
       <div class="gwidget-term-bar">
         <span class="gwidget-term-title"></span>
@@ -179,6 +193,7 @@ export function mount(host: HTMLElement) {
         </label>
       </form>
       <p class="gwidget-status" aria-live="polite"></p>
+    </div>
     </div>
     <p class="gwidget-credit">
       Java im Browser, damit mein Code original so laufen kann, wie er ist.
@@ -195,7 +210,10 @@ export function mount(host: HTMLElement) {
   const input = q<HTMLInputElement>(".gwidget-in input");
   const status = q<HTMLElement>(".gwidget-status");
   const restart = q<HTMLButtonElement>(".gwidget-restart");
-  const buttons = [...host.querySelectorAll<HTMLButtonElement>(".gwidget-note")];
+  const buttons = [...host.querySelectorAll<HTMLButtonElement>(".gwidget-tab")];
+  const prev = q<HTMLButtonElement>(".gwidget-prev");
+  const next = q<HTMLButtonElement>(".gwidget-next");
+  const count = q<HTMLElement>(".gwidget-count");
   const term = new Terminal(out);
 
   let active: Note | null = null;
@@ -272,12 +290,20 @@ export function mount(host: HTMLElement) {
 
   function select(note: Note) {
     active = note;
-    buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.note === note.id)));
+    const i = NOTES.indexOf(note);
+    buttons.forEach((b) => {
+      const on = b.dataset.note === note.id;
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+      if (on) b.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
     host.style.setProperty("--pc", note.color);
+    count.textContent = `${i + 1} / ${NOTES.length}`;
 
-    info.hidden = false;
     info.innerHTML = `
       <h4>${esc(note.label)}</h4>
+      ${note.intro ? `<p class="gwidget-intro">${esc(note.intro)}</p>` : ""}
+      ${note.concepts ? `<ul class="gwidget-tags">${note.concepts.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
       ${note.bullets ? `<ul>${note.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
       ${note.open ? `<p class="gwidget-open">[OFFEN: ${esc(note.open)}]</p>` : ""}
       ${
@@ -294,6 +320,10 @@ export function mount(host: HTMLElement) {
   buttons.forEach((b) =>
     b.addEventListener("click", () => select(NOTES.find((n) => n.id === b.dataset.note)!)),
   );
+  const step = (d: number) =>
+    select(NOTES[(NOTES.indexOf(active!) + d + NOTES.length) % NOTES.length]);
+  prev.addEventListener("click", () => step(-1));
+  next.addEventListener("click", () => step(1));
   restart.addEventListener("click", () => active && start(active));
   form.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -303,6 +333,8 @@ export function mount(host: HTMLElement) {
     term.write(line + "\n");
     process.sendLine(line);
   });
+
+  select(NOTES[0]);
 
   // Start downloading the runtime now, so the first click is quicker.
   warmUp().catch(() => {});
