@@ -16,6 +16,7 @@ import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
+import { mountSaosIntro, type IntroMode } from "./intro/saos-intro";
 import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -402,3 +403,40 @@ initScrollProgress(lenis);
 
 initEdgeNav(lenis);
 initSpotifyButton();
+
+// Intro overlay: one word switches the style. Shown once per session; after
+// the first run (or on any return visit) the hero is simply there.
+const INTRO_MODE: IntroMode = "shatter";
+const INTRO_SEEN_KEY = "saos-intro-seen";
+
+function isFirstVisit(): boolean {
+  try {
+    return sessionStorage.getItem(INTRO_SEEN_KEY) === null;
+  } catch {
+    return false; // storage blocked: never trap the visitor behind the intro
+  }
+}
+
+const overlayEl = document.createElement("div");
+document.body.appendChild(overlayEl);
+
+if (isFirstVisit()) {
+  lenis.stop();
+  const destroy = mountSaosIntro(
+    overlayEl,
+    () => {
+      try {
+        sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      destroy();
+      overlayEl.remove();
+      lenis.start();
+    },
+    INTRO_MODE,
+  );
+} else {
+  overlayEl.remove();
+  lenis.start();
+}

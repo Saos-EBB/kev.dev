@@ -1,0 +1,31 @@
+/* Intro overlay — sits above the whole page; only catches clicks while
+   .is-active (i.e. before the shatter/slide starts). */
+.saos-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+  outline: none;
+}
+
+.saos-intro.is-active {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Before the shatter starts the overlay is opaque; the shards carry the
+   image themselves afterwards, so the container must not paint anything. */
+.saos-intro-still {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-bg);
+  background-size: 100% 100%;
+}
+
+.saos-intro-shard {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  will-change: transform, opacity;
+}
