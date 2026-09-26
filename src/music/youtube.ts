@@ -12,12 +12,15 @@ import { createDancer } from "./dancer";
 // Kevin fills this in: the playlist id (the `list=` value). Empty = button stays off.
 const PLAYLIST_ID = "PLZO2GLmkfiMg";
 
+const PLAYLIST_URL = `https://www.youtube.com/playlist?list=${PLAYLIST_ID}`;
+
 const API_SRC = "https://www.youtube.com/iframe_api";
 
 interface YTPlayer {
   playVideo(): void;
   pauseVideo(): void;
   nextVideo(): void;
+  getVideoData(): { video_id?: string };
 }
 
 interface YTPlayerEvent {
@@ -53,6 +56,7 @@ export function initYoutubeButton() {
   const button = document.querySelector<HTMLButtonElement>(".music-button");
   const next = document.querySelector<HTMLButtonElement>(".music-next");
   const mount = document.querySelector<HTMLElement>(".music-mount");
+  const dancerLink = document.querySelector<HTMLAnchorElement>(".dancer-link");
   const dancer = createDancer(document.querySelector<SVGElement>(".dancer"));
   if (!button || !next || !mount) return;
 
@@ -61,6 +65,15 @@ export function initYoutubeButton() {
     button.title = "[OFFEN: Playlist-ID fehlt]";
     return;
   }
+
+  // The dancer links to the playlist, or to the current song once one plays.
+  if (dancerLink) dancerLink.href = PLAYLIST_URL;
+  const updateDancerLink = () => {
+    const id = player?.getVideoData().video_id;
+    if (!dancerLink || !id) return;
+    dancerLink.href = `https://www.youtube.com/watch?v=${id}&list=${PLAYLIST_ID}`;
+    dancerLink.setAttribute("aria-label", "Aktuellen Song auf YouTube öffnen");
+  };
 
   let player: YTPlayer | null = null;
   let playing = false;
@@ -93,8 +106,10 @@ export function initYoutubeButton() {
             next!.disabled = false;
             player.playVideo();
           },
-          onStateChange: (e) =>
-            setPlaying(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING),
+          onStateChange: (e) => {
+            setPlaying(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING);
+            updateDancerLink();
+          },
         },
       });
     };
