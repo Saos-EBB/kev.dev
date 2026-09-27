@@ -11,7 +11,8 @@ import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
 import { initYoutubeButton } from "./music/youtube";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
-import { renderProjectCard, initProjectCards } from "./projects/project-cards";
+import { renderProjectCard } from "./projects/project-cards";
+import { initFacetOverlay } from "./projects/facet-overlay";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
@@ -427,7 +428,7 @@ trackElevatorPerspective(aboutSection);
 
 initBoxToGridTransition(aboutSection);
 
-initProjectCards(projectsSection, projectCards);
+initFacetOverlay(projectsSection, projectCards, lenis);
 
 initCarousel(projectsSection);
 

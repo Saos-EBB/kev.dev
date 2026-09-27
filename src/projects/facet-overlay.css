@@ -1,0 +1,217 @@
+/* Facet tiles: same visual language as .pcard-toggle (bordered, mono,
+   uppercase), one row that wraps. >=44px tap target per the handoff's
+   readability guardrail. */
+.facet-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.facet-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.facet-tile svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.facet-tile:hover,
+.facet-tile:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.facet-tile:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* Overlay: centered panel on desktop, full-screen sheet on mobile. One
+   instance for the whole page — content is swapped in per click. The
+   [hidden] rule is needed because an author `display` declaration would
+   otherwise beat the UA stylesheet's [hidden]{display:none} even though
+   both are equal specificity — same origin/order rule, just the other
+   way round here since this comes second. */
+.facet-overlay[hidden] {
+  display: none;
+}
+
+.facet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.facet-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--about-bg) 80%, transparent);
+}
+
+.facet-overlay-panel {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: min(80vh, 720px);
+  overflow-y: auto;
+  padding: 2rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 8px;
+  background: var(--projects-bg);
+  box-shadow: 0 20px 48px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+  font-family: var(--font-read);
+  --font-mono: var(--font-read);
+}
+
+.facet-overlay-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.facet-overlay-close:hover,
+.facet-overlay-close:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.facet-overlay-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.facet-overlay-title {
+  margin: 0 2.5rem 1rem 0;
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 1.4rem;
+  color: var(--color-text);
+}
+
+/* Body copy: >=16px (target 18px) per the handoff's readability
+   guardrail, not the smaller sizes the rest of the card uses. */
+.facet-overlay-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  font-size: 1.125rem;
+  line-height: 1.65;
+  color: var(--color-text);
+}
+
+.facet-overlay-body h4 {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-line);
+}
+
+.facet-overlay-body .pcard-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.facet-overlay-body .pcard-decisions li {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.facet-overlay-body .pcard-decisions li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.facet-overlay-body .pcard-shots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.facet-overlay-body .pcard-shots img {
+  display: block;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.facet-overlay-body .facet-link {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  transition: color var(--transition-hover);
+}
+
+.facet-overlay-body .facet-link:hover,
+.facet-overlay-body .facet-link:focus-visible {
+  color: var(--color-accent);
+}
+
+.facet-overlay-body .pcard-open {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-accent);
+}
+
+.facet-overlay-body .pcard-widget {
+  min-height: 320px;
+}
+
+@media (max-width: 640px) {
+  .facet-overlay {
+    padding: 0;
+  }
+
+  .facet-overlay-panel {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    padding: 1.5rem;
+    padding-top: 4rem;
+  }
+}
+
+/* Background is locked via lenis.stop()/start() (facet-overlay.ts), same
+   pattern as the SAOS intro overlay — no separate CSS scroll-lock needed. */

@@ -2,11 +2,13 @@
 // which optional fields they fill — a missing optional field means its
 // slot simply isn't rendered.
 //
-// The card is a container of parts (head, what, facts, links, more) plus
-// the click-to-expand "Details" panel (decisions, challenge, origin, and
-// optional widget / screenshots). A part with no data isn't rendered.
+// The card is an always-visible Intro (goal/title/claim/what, then
+// tags/meta/open) plus a row of facet tiles that each open the shared
+// overlay (facet-overlay.ts) for decisions/challenge/origin, screenshots,
+// code link, live demo, or (YourBrand only) the B2B site.
 
 import "./project-cards.css";
+import { renderFacetTiles } from "./facet-overlay";
 
 // A link without href renders as plain text (e.g. "Live-Demo auf Anfrage").
 export interface ProjectLink {
@@ -23,11 +25,10 @@ export interface ProjectWidget {
   mount: (el: HTMLElement) => Promise<void | (() => void)> | void | (() => void);
 }
 
-// Facet tiles: each opens the same overlay, populated from the card's
-// existing fields (Code -> links' GitHub entry, Screenshots -> screenshots,
-// Details -> decisions/challenge/origin, Live-Demo -> widget, B2B -> the
-// YourBrand accessible-site link). Built in A2; only the ordering per card
-// lives here for now.
+// Facet tiles: each opens the same shared overlay (facet-overlay.ts),
+// populated from the card's existing fields (Code -> links' GitHub entry,
+// Screenshots -> screenshots, Details -> decisions/challenge/origin,
+// Live-Demo -> widget, B2B -> the YourBrand accessible-site link).
 export type FacetKind = "code" | "screenshots" | "details" | "live-demo" | "b2b";
 
 export interface ProjectCard {
@@ -47,8 +48,7 @@ export interface ProjectCard {
   open?: string[];
   screenshots?: { src: string; alt: string }[];
   widget?: ProjectWidget;
-  // Which facet tiles this card shows, in display order. Rendered by A2;
-  // unused until then.
+  // Which facet tiles this card shows, in display order.
   facets?: FacetKind[];
 }
 
@@ -65,13 +65,6 @@ function esc(s: string): string {
 }
 
 export function renderProjectCard(card: ProjectCard): string {
-  const panelId = `details-${card.id}`;
-  const hasDetails =
-    card.decisions?.length ||
-    card.challenge ||
-    card.origin ||
-    card.screenshots?.length ||
-    card.widget;
   return `
     <article class="pcard" data-card="${esc(card.id)}">
       <div class="pcard-part pcard-part--intro-top">
@@ -95,70 +88,7 @@ export function renderProjectCard(card: ProjectCard): string {
       </div>`
           : ""
       }
-      ${
-        hasDetails
-          ? `<div class="pcard-part pcard-part--more">
-        <button class="pcard-toggle" type="button" aria-expanded="false" aria-controls="${panelId}">
-          Details
-        </button>
-      </div>
-      <div class="pcard-details" id="${panelId}">
-        <div class="pcard-details-inner">
-          ${
-            card.decisions?.length
-              ? `<div class="pcard-sec"><h4>Entscheidungen</h4>
-          <ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul></div>`
-              : ""
-          }
-          ${
-            card.challenge || card.origin
-              ? `<div class="pcard-sec">${card.challenge ? `<h4>Herausforderung</h4><p>${esc(card.challenge)}</p>` : ""}${card.origin ? `<h4>So entstanden</h4><p>${esc(card.origin)}</p>` : ""}</div>`
-              : ""
-          }
-          ${
-            card.screenshots?.length
-              ? `<div class="pcard-shots">${card.screenshots
-                  .map((s) => `<img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" />`)
-                  .join("")}</div>`
-              : ""
-          }
-          ${card.widget ? `<div class="pcard-widget" aria-label="${esc(card.widget.label)}"></div>` : ""}
-        </div>
-      </div>`
-          : ""
-      }
+      ${renderFacetTiles(card)}
     </article>
   `;
-}
-
-// Wires click-to-expand for every card inside `root`. Widgets mount once,
-// on first expand.
-export function initProjectCards(root: HTMLElement, cards: ProjectCard[]) {
-  const byId = new Map(cards.map((c) => [c.id, c]));
-
-  root.querySelectorAll<HTMLElement>(".pcard").forEach((el) => {
-    const data = byId.get(el.dataset.card ?? "");
-    const toggle = el.querySelector<HTMLButtonElement>(".pcard-toggle");
-    if (!data || !toggle) return;
-
-    let widgetMounted = false;
-
-    toggle.addEventListener("click", () => {
-      const open = toggle.getAttribute("aria-expanded") !== "true";
-      toggle.setAttribute("aria-expanded", String(open));
-      el.classList.toggle("is-open", open);
-      el.toggleAttribute("data-lenis-prevent", open);
-
-      if (open && data.widget && !widgetMounted) {
-        widgetMounted = true;
-        const host = el.querySelector<HTMLElement>(".pcard-widget");
-        if (host) {
-          Promise.resolve(data.widget.mount(host)).catch(() => {
-            widgetMounted = false;
-            host.textContent = "Widget konnte nicht geladen werden.";
-          });
-        }
-      }
-    });
-  });
 }
