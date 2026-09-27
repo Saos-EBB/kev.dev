@@ -97,147 +97,10 @@
   color: var(--color-text-muted);
 }
 
-.pcard-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-}
-
-.pcard-links a {
-  color: var(--color-text);
-  transition: color var(--transition-hover);
-}
-
-.pcard-links a:hover,
-.pcard-links a:focus-visible {
-  color: var(--color-accent);
-}
-
 .pcard-open {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--color-accent);
-}
-
-.pcard-toggle {
-  align-self: flex-start;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.4rem 0.8rem;
-  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-text);
-  cursor: pointer;
-  transition: color var(--transition-hover), border-color var(--transition-hover);
-}
-
-.pcard-toggle::after {
-  content: " +";
-}
-
-.pcard-toggle[aria-expanded="true"]::after {
-  content: " −";
-}
-
-.pcard-toggle:hover,
-.pcard-toggle:focus-visible {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
-}
-
-.pcard-toggle:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 3px;
-}
-
-/* Collapsed via grid-template-rows so the height animates without JS
-   measuring. */
-.pcard-details {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s ease;
-}
-
-.pcard.is-open .pcard-details {
-  grid-template-rows: 1fr;
-}
-
-.pcard-details-inner {
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* An open card is capped to the space below the fixed "PROJEKTE"
-   headline and scrolls internally (initProjectCards sets
-   data-lenis-prevent while open so the wheel scrolls the card, not the
-   page). Centered growth keeps it inside that region. */
-.pcard.is-open {
-  max-height: calc(100vh - var(--projects-title-h, 0px) - 2rem);
-  overflow-y: auto;
-}
-
-.pcard.is-open .pcard-details-inner {
-  padding-top: 0.5rem;
-}
-
-.pcard-details h4 {
-  margin-top: 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: normal;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-line);
-}
-
-.pcard-details p,
-.pcard-decisions li {
-  font-size: 0.84rem;
-  line-height: 1.65;
-  color: var(--color-text-muted);
-}
-
-.pcard-decisions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  list-style: none;
-}
-
-.pcard-decisions li {
-  position: relative;
-  padding-left: 0.85rem;
-}
-
-.pcard-decisions li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--color-accent);
-}
-
-.pcard-shots {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.pcard-shots img {
-  display: block;
-  width: 100%;
-  border-radius: 4px;
 }
 
 /* Desktop bento. 26 * --grid-cell (48px) = 1248px: 24 cells of card plus
@@ -277,111 +140,18 @@
   }
 
   /* Intro: goal/title/claim/what merges the old head+what boxes into one;
-     tags/meta/open merges the old facts+links boxes into one. Same grid
-     footprint as before, just two boxes instead of four. */
+     tags/meta/open merges the old facts+links boxes into one. Facets
+     replace the old single "more" toggle in the same footprint. Same
+     grid as before, three boxes instead of five. */
   .pcard-part--intro-top {
     grid-area: 1 / 1 / 6 / 25;
   }
-  .pcard-part--more {
+  .pcard-part--facets {
     grid-area: 7 / 1 / 11 / 10;
-    position: relative;
-    z-index: 2; /* stays clickable above the open details overlay */
     justify-content: center;
   }
   .pcard-part--intro-bottom {
     grid-area: 7 / 11 / 11 / 25;
-  }
-
-  /* Details open as an overlay over the whole bento, which stays as it
-     is underneath: faded in/out, own scroll (initProjectCards already
-     sets data-lenis-prevent while open). */
-  /* The overlay uses the free space below the headline instead of the
-     bento's own 480px: as tall as fits, in whole 2-cell steps so it stays
-     centered on the card with its edges on grid lines. */
-  .pcard {
-    --open-h: max(
-      calc(10 * var(--grid-cell)),
-      round(
-        down,
-        calc(100vh - var(--projects-title-h, 0px) - var(--grid-cell)),
-        calc(2 * var(--grid-cell))
-      )
-    );
-  }
-
-  .pcard-details {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: var(--open-h);
-    transform: translateY(-50%);
-    z-index: 1;
-    display: block;
-    padding: 1rem 1rem 3.5rem; /* bottom: room for the toggle button */
-    overflow-y: auto; /* fallback when a project's text still doesn't fit */
-    border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
-    border-radius: 8px;
-    background: var(--projects-bg);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0s 0.3s;
-  }
-
-  .pcard.is-open {
-    max-height: none;
-    overflow: visible;
-  }
-
-  .pcard.is-open .pcard-details {
-    opacity: 1;
-    visibility: visible;
-    transition-delay: 0s;
-  }
-
-  /* Open: the "more" part gives up its own frame and only its toggle
-     button stays, floating bottom-left above the overlay as the close
-     control. */
-  .pcard.is-open .pcard-part--more {
-    grid-area: auto;
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: calc(9 * var(--grid-cell));
-    height: var(--open-h);
-    transform: translateY(-50%);
-    justify-content: flex-end;
-    border-color: transparent;
-    background: none;
-    box-shadow: none;
-    pointer-events: none;
-  }
-
-  .pcard.is-open .pcard-toggle {
-    pointer-events: auto;
-    background: var(--projects-bg);
-  }
-
-  /* Sections side by side, one column each (decisions | challenge +
-     origin | screenshots/widget). */
-  .pcard-details-inner {
-    overflow: visible;
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    align-items: start;
-    gap: 1.5rem;
-    height: 100%;
-  }
-
-  .pcard-sec {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .pcard.is-open .pcard-details-inner {
-    padding-top: 0;
   }
 }
 
@@ -393,12 +163,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not(.force-motion) .pcard-details {
-    transition: none;
-  }
   /* No carousel: each project block just holds its card in normal flow. */
   :root:not(.force-motion) .pcard {
-    position: relative; /* anchor for the desktop details overlay */
+    position: relative;
     width: 100%;
     transform: none !important;
     opacity: 1 !important;
