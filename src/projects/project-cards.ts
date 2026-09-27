@@ -23,6 +23,13 @@ export interface ProjectWidget {
   mount: (el: HTMLElement) => Promise<void | (() => void)> | void | (() => void);
 }
 
+// Facet tiles: each opens the same overlay, populated from the card's
+// existing fields (Code -> links' GitHub entry, Screenshots -> screenshots,
+// Details -> decisions/challenge/origin, Live-Demo -> widget, B2B -> the
+// YourBrand accessible-site link). Built in A2; only the ordering per card
+// lives here for now.
+export type FacetKind = "code" | "screenshots" | "details" | "live-demo" | "b2b";
+
 export interface ProjectCard {
   id: string;
   learnGoal: string;
@@ -40,6 +47,9 @@ export interface ProjectCard {
   open?: string[];
   screenshots?: { src: string; alt: string }[];
   widget?: ProjectWidget;
+  // Which facet tiles this card shows, in display order. Rendered by A2;
+  // unused until then.
+  facets?: FacetKind[];
 }
 
 // Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt"),
@@ -64,39 +74,23 @@ export function renderProjectCard(card: ProjectCard): string {
     card.widget;
   return `
     <article class="pcard" data-card="${esc(card.id)}">
-      <div class="pcard-part pcard-part--head">
+      <div class="pcard-part pcard-part--intro-top">
         <p class="pcard-goal">${label("Ziel")}${esc(card.learnGoal)}</p>
+        <!-- Title stays here until Handoff B's scroll-synced heading ships; then it moves out. -->
         <h3 class="pcard-title">${esc(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
         <p class="pcard-claim">${label("Beweis")}${esc(card.claim)}</p>
+        ${card.what ? `<p class="pcard-what">${label("Projekt")}${esc(card.what)}</p>` : ""}
       </div>
-      ${card.what ? `<div class="pcard-part pcard-part--what"><p class="pcard-what">${label("Projekt")}${esc(card.what)}</p></div>` : ""}
       ${
-        card.tags?.length || card.meta
-          ? `<div class="pcard-part pcard-part--facts">
+        card.tags?.length || card.meta || card.open?.length
+          ? `<div class="pcard-part pcard-part--intro-bottom">
         ${
           card.tags?.length
             ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
             : ""
         }
         ${card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : ""}
-      </div>`
-          : ""
-      }
-      ${
-        card.links?.length || card.open?.length
-          ? `<div class="pcard-part pcard-part--links">
-        ${
-          card.links?.length
-            ? `<div class="pcard-links">${card.links
-                .map((l) =>
-                  l.href
-                    ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`
-                    : `<span>${esc(l.label)}</span>`,
-                )
-                .join("")}</div>`
-            : ""
-        }
         ${card.open?.map((o) => `<p class="pcard-open">[OFFEN: ${esc(o)}]</p>`).join("") ?? ""}
       </div>`
           : ""
