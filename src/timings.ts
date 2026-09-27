@@ -121,6 +121,27 @@ export const TIMINGS = {
       stagger: 0.1,
       startOffset: 0.2, // pulled back this far from the mail tween's end — overlapping
     },
+
+    // Once the user has scrolled this far into the pin (a little past the
+    // black hold — see `hold` above), the page finishes the rest of the
+    // scroll itself so the headline/mail/icons land without further manual
+    // scrolling — see the ScrollTrigger onUpdate in contact.ts.
+    autoScrollAt: 0.08,
+    autoScroll: {
+      duration: 1.2, // seconds, real scroll time (Lenis), not timeline units
+      easing: (t: number) => 1 - Math.pow(1 - t, 3), // ease-out cubic
+    },
+
+    // Ambient per-letter float once landed (progress 1) — killed the
+    // instant the user scrolls back out. Applied to `.letter-inner`, never
+    // the outer `.letter` the entrance tween drives, so the two can't fight.
+    idle: {
+      minDuration: 1.8,
+      maxDuration: 3.2,
+      maxDelay: 2, // random per-letter start offset, so they don't all bob in sync
+      yAmplitude: 5, // px, up/down
+      rotateAmplitude: 3, // deg
+    },
   },
 
   // ------------------------------------------------------------------
