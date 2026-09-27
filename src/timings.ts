@@ -142,6 +142,30 @@ export const TIMINGS = {
       yAmplitude: 5, // px, up/down
       rotateAmplitude: 3, // deg
     },
+
+    // Click-to-shatter — src/contact/contact-physics.ts. 3 clicks on the
+    // headline (not the mail link/icons, see contact.ts's isBreakTarget)
+    // build up a shake, the 3rd drops everything into gravity/collision
+    // physics; scrolling back away tweens it back to rest. Physics constants
+    // ported as-is from the old SAOS.ME site's SaosAnimation.js — tuned
+    // there for similarly letter-sized elements, so they carry over as
+    // reasonable starting values.
+    shake: {
+      limit: 3, // clicks until break — matches SaosAnimation.js's SHAKE_LIMIT
+      maxIntensity: 40, // px, jitter amplitude cap on the 3rd/strongest shake
+    },
+
+    break: {
+      gravity: 0.4,
+      restitution: 0.22, // energy kept per bounce — lower = settles faster
+      frictionAir: 0.018, // velocity drained per frame in-air
+      frictionFloorX: 0.9, // horizontal damping on each floor contact
+      frictionFloorAng: 0.85, // angular damping on each floor contact
+      mouseRadius: 60, // px, how close the pointer must be to push a fallen piece
+      floorPad: 20, // px, floor sits this far above the very bottom of the viewport
+      returnDuration: 0.8, // seconds — the animated "wander back" once scrolling away
+      returnEase: "power2.inOut",
+    },
   },
 
   // ------------------------------------------------------------------
