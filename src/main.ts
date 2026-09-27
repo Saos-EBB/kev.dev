@@ -431,7 +431,7 @@ initProjectCards(projectsSection, projectCards);
 
 initCarousel(projectsSection);
 
-initContact(document.querySelector<HTMLElement>("#contact")!);
+initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 
 // A plain "#contact" anchor jump lands at the top of the pin, where the
 // grid has just started dissolving — not what "go to Contact" means.
