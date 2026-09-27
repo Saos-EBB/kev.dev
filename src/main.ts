@@ -277,11 +277,27 @@ function fitBlockToWidth(el: HTMLElement, maxHeightFrac = 1) {
   el.style.fontSize = `${Math.min((targetWidth / naturalWidth) * probeSize, maxFont)}px`;
 }
 
-function longestHeroName(): string {
-  return HERO_NAMES.reduce(
-    (longest, name) => (name.length > longest.length ? name : longest),
-    HERO_NAMES[0] ?? "",
-  );
+// Which name needs the most *rendered* width, not the most characters:
+// Koeeya Trial (--font-display) is a hand-drawn display font with very
+// uneven glyph widths, so character count is not a reliable proxy — e.g.
+// "Kevin Schaberl" (14 chars) renders wider than "or just … kev ·" (15
+// chars). Measured on `el` itself (a fixed probe size, restored after),
+// so it automatically reflects this element's own font/transform.
+function widestHeroName(el: HTMLElement): string {
+  const probeSize = 100;
+  const prevFontSize = el.style.fontSize;
+  el.style.fontSize = `${probeSize}px`;
+  let widest = HERO_NAMES[0] ?? "";
+  let widestWidth = 0;
+  for (const name of HERO_NAMES) {
+    el.textContent = name;
+    if (el.scrollWidth > widestWidth) {
+      widestWidth = el.scrollWidth;
+      widest = name;
+    }
+  }
+  el.style.fontSize = prevFontSize;
+  return widest;
 }
 
 function fitHeroName() {
@@ -294,14 +310,14 @@ function fitHeroName() {
   const paddingX =
     parseFloat(parentStyle.paddingLeft) + parseFloat(parentStyle.paddingRight);
 
-  // Fit against the longest name in the rotation, not whatever's
+  // Fit against the widest-rendering name in the rotation, not whatever's
   // currently typed — the font-size (and the cloth's resting grid, built
   // from this box) must stay fixed while name-typewriter.ts swaps the
   // text in and out. Invisible either way (.hero-name is opacity:0; the
   // cloth paints the texture instead), so swapping the text to measure
   // it causes no flicker.
   const currentText = heroName.textContent;
-  heroName.textContent = longestHeroName();
+  heroName.textContent = widestHeroName(heroName);
   fitToWidth(heroName, parent.clientWidth - paddingX);
   heroName.textContent = currentText;
 }
