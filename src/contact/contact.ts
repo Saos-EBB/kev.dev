@@ -21,6 +21,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
+import { applyMouseForce, makeBody, stepPhysics, type PhysicsBody } from "./contact-physics";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -158,6 +159,14 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
   const outerLetters = headlineLetters.outer.concat(mailLetters.outer);
   const innerLetters = headlineLetters.inner.concat(mailLetters.inner);
 
+  // Click-to-shatter physics (see startBreak/returnHome below) targets these
+  // same "safe inner layer" elements the idle float already uses, plus each
+  // icon's own <a> — never the outer .letter/<li> the entrance tween drives,
+  // and never anything reparented out of its real link, so a scattered mail
+  // letter or icon keeps working as mailto/github/etc. the whole time.
+  const iconLinks = icons.map((li) => li.querySelector<HTMLElement>("a")!);
+  const physicsElements = innerLetters.concat(iconLinks);
+
   gsap.set(outerLetters, {
     opacity: 0,
     y: () => gsap.utils.random(-46, -26),
@@ -272,12 +281,147 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     gsap.set(innerLetters, { y: 0, rotate: 0 });
   }
 
+  // Click-to-shatter: 3 clicks on the headline (or empty space — never the
+  // mail link/icons themselves, see isBreakTarget) build up a shake, the
+  // 3rd drops everything into real gravity/collision physics
+  // (contact-physics.ts). Scrolling away tweens it back to rest instead of
+  // resetting instantly — see returnHome.
+  let isBroken = false;
+  let isReturning = false;
+  let shakeCount = 0;
+  let shakeRafId: number | null = null;
+  let physicsRafId: number | null = null;
+  let physicsBodies: PhysicsBody[] = [];
+  let mouseX = 0;
+  let mouseY = 0;
+  let prevMouseX = 0;
+  let prevMouseY = 0;
+
+  function handleMouseMove(e: MouseEvent) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  }
+
+  // Jitter grows with each click — same feel as SaosAnimation.js's shake
+  // (intensity = clickCount * 3.5, capped), just applied via GSAP instead of
+  // raw style writes.
+  function shakeStep() {
+    const intensity = Math.min(shakeCount * 3.5, TIMING.shake.maxIntensity);
+    gsap.set(physicsElements, {
+      x: () => (Math.random() - 0.5) * 2 * intensity,
+      y: () => (Math.random() - 0.5) * intensity * 0.5,
+      rotation: () => (Math.random() - 0.5) * intensity * 0.6,
+    });
+    shakeRafId = requestAnimationFrame(shakeStep);
+  }
+
+  function startShake() {
+    if (shakeRafId === null) shakeRafId = requestAnimationFrame(shakeStep);
+  }
+
+  function stopShake() {
+    if (shakeRafId === null) return;
+    cancelAnimationFrame(shakeRafId);
+    shakeRafId = null;
+  }
+
+  function teardownPhysics() {
+    if (physicsRafId !== null) {
+      cancelAnimationFrame(physicsRafId);
+      physicsRafId = null;
+    }
+    window.removeEventListener("mousemove", handleMouseMove);
+  }
+
+  function startBreak() {
+    stopShake();
+    stopIdle();
+    isBroken = true;
+
+    const floorY = window.innerHeight - TIMING.break.floorPad;
+    physicsBodies = physicsElements.map((el) =>
+      makeBody(el, floorY, window.innerWidth),
+    );
+    // A small impulse so the break reads as letting go, not a plain drop.
+    for (const body of physicsBodies) {
+      body.vx = (Math.random() - 0.5) * 6;
+      body.vy = 2 + Math.random() * 4;
+      body.angularVelocity = (Math.random() - 0.5) * 10;
+    }
+
+    prevMouseX = mouseX;
+    prevMouseY = mouseY;
+    window.addEventListener("mousemove", handleMouseMove);
+
+    const loop = () => {
+      stepPhysics(physicsBodies, TIMING.break);
+      applyMouseForce(
+        physicsBodies,
+        mouseX,
+        mouseY,
+        mouseX - prevMouseX,
+        mouseY - prevMouseY,
+        TIMING.break.mouseRadius,
+      );
+      prevMouseX = mouseX;
+      prevMouseY = mouseY;
+      for (const body of physicsBodies) {
+        gsap.set(body.el, { x: body.ox, y: body.oy, rotation: body.rotation });
+      }
+      physicsRafId = requestAnimationFrame(loop);
+    };
+    physicsRafId = requestAnimationFrame(loop);
+  }
+
+  function returnHome() {
+    if (!isBroken || isReturning) return;
+    isReturning = true;
+    teardownPhysics();
+    gsap.to(physicsElements, {
+      x: 0,
+      y: 0,
+      rotation: 0,
+      duration: TIMING.break.returnDuration,
+      ease: TIMING.break.returnEase,
+      onComplete: () => {
+        isBroken = false;
+        isReturning = false;
+      },
+    });
+  }
+
+  // The mail link and icons must always behave as real links, never get
+  // absorbed into the shake counter — mirrors SaosAnimation.js's
+  // isSocialTarget() exclusion for the same reason.
+  function isBreakTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof Element)) return true;
+    return !target.closest(".contact-mail, .contact-icons a");
+  }
+
+  function handleContactClick(e: MouseEvent) {
+    if (isBroken || isReturning) return;
+    if (!isBreakTarget(e.target)) return;
+    if (!pinTrigger || pinTrigger.progress < IDLE_PROGRESS) return;
+
+    shakeCount++;
+    startShake();
+    if (shakeCount >= TIMING.shake.limit) {
+      stopShake();
+      gsap.set(physicsElements, { x: 0, y: 0, rotation: 0 }); // clear jitter before measuring rest rects
+      shakeCount = 0;
+      startBreak();
+    }
+  }
+
+  section.addEventListener("click", handleContactClick);
+
   // One-shot per visit: once scrolled a little way into the pin (past the
   // black hold, see TIMING.autoScrollAt), finish the rest of the scroll —
   // and thus the fall-in — without further manual scrolling. Re-armed once
   // the user scrolls back out the top (progress <= 0), so re-entering the
   // section auto-plays it again.
   let hasAutoScrolled = false;
+  let lastProgress = 0;
 
   pinTrigger = ScrollTrigger.create({
     trigger: section,
@@ -287,6 +431,8 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     scrub: TIMING.scrub,
     animation: tl,
     onUpdate(self) {
+      if (isBroken && self.progress < lastProgress) returnHome();
+
       if (
         !hasAutoScrolled &&
         self.progress > TIMING.autoScrollAt &&
@@ -300,10 +446,13 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
         });
       }
 
-      if (self.progress >= IDLE_PROGRESS) startIdle();
-      else stopIdle();
+      if (!isBroken) {
+        if (self.progress >= IDLE_PROGRESS) startIdle();
+        else stopIdle();
+      }
 
       if (self.progress <= 0) hasAutoScrolled = false;
+      lastProgress = self.progress;
     },
   });
 }
