@@ -276,11 +276,11 @@
     box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
   }
 
-  .pcard-part--head {
-    grid-area: 1 / 1 / 6 / 10;
-  }
-  .pcard-part--what {
-    grid-area: 1 / 11 / 6 / 25;
+  /* Intro: goal/title/claim/what merges the old head+what boxes into one;
+     tags/meta/open merges the old facts+links boxes into one. Same grid
+     footprint as before, just two boxes instead of four. */
+  .pcard-part--intro-top {
+    grid-area: 1 / 1 / 6 / 25;
   }
   .pcard-part--more {
     grid-area: 7 / 1 / 11 / 10;
@@ -288,11 +288,8 @@
     z-index: 2; /* stays clickable above the open details overlay */
     justify-content: center;
   }
-  .pcard-part--facts {
-    grid-area: 7 / 11 / 11 / 18;
-  }
-  .pcard-part--links {
-    grid-area: 7 / 19 / 11 / 25;
+  .pcard-part--intro-bottom {
+    grid-area: 7 / 11 / 11 / 25;
   }
 
   /* Details open as an overlay over the whole bento, which stays as it
