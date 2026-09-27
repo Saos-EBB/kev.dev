@@ -42,6 +42,13 @@ let pinTrigger: ScrollTrigger | null = null;
 // features agree on what "landed" means instead of drifting apart.
 const LANDED_PROGRESS = 0.97;
 
+// The idle float's own gate is a hair below LANDED_PROGRESS: the auto-scroll
+// above targets an exact pixel scrollY for LANDED_PROGRESS, but converting
+// that pixel position back into a progress fraction lands a hair short of
+// 0.97 (sub-pixel rounding) — verified empirically (landed at 0.9696), so
+// gating idle on `>= LANDED_PROGRESS` exactly would never fire.
+const IDLE_PROGRESS = LANDED_PROGRESS - 0.005;
+
 // Exported for nav links: where to scroll so the section is landed on
 // "Let's talk now" (headline/mail/icons already settled) rather than at
 // the very start of the pin's black hold. Null under reduced motion (no
@@ -293,7 +300,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
         });
       }
 
-      if (self.progress >= LANDED_PROGRESS) startIdle();
+      if (self.progress >= IDLE_PROGRESS) startIdle();
       else stopIdle();
 
       if (self.progress <= 0) hasAutoScrolled = false;
