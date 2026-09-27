@@ -19,6 +19,7 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -48,27 +49,41 @@ export function getContactRevealScrollY(): number | null {
 }
 
 // Breaks an element's text into one <span class="letter"> per character
-// so each can fall in independently. The element keeps an aria-label
-// with the original text and the letters are aria-hidden — otherwise
-// screen readers would read (or the mail link would announce) the text
-// one character at a time instead of as a word/address.
-function splitLetters(el: HTMLElement): HTMLElement[] {
+// (each wrapping an inner <span class="letter-inner">) so each can fall in
+// independently. The element keeps an aria-label with the original text and
+// the letters are aria-hidden — otherwise screen readers would read (or
+// the mail link would announce) the text one character at a time instead of
+// as a word/address.
+//
+// Two layers, not one: the outer .letter is the entrance tween's target
+// (x/y/rotate/opacity, driven by the scrub below) and the inner .letter-inner
+// is the idle float's target (see startIdle/stopIdle). Splitting them keeps
+// the two animations off the same element/properties — the scrub re-renders
+// the outer span's transform on every scroll tick (including at rest, once
+// progress is pinned at 1), which would otherwise stomp the idle loop's
+// transform mid-wobble.
+function splitLetters(el: HTMLElement): { outer: HTMLElement[]; inner: HTMLElement[] } {
   const text = el.textContent ?? "";
   el.setAttribute("aria-label", text);
   el.textContent = "";
-  const letters: HTMLElement[] = [];
+  const outer: HTMLElement[] = [];
+  const inner: HTMLElement[] = [];
   for (const ch of text) {
     const span = document.createElement("span");
     span.className = "letter";
     span.setAttribute("aria-hidden", "true");
-    span.textContent = ch === " " ? " " : ch;
+    const innerSpan = document.createElement("span");
+    innerSpan.className = "letter-inner";
+    innerSpan.textContent = ch === " " ? " " : ch;
+    span.appendChild(innerSpan);
     el.appendChild(span);
-    letters.push(span);
+    outer.push(span);
+    inner.push(innerSpan);
   }
-  return letters;
+  return { outer, inner };
 }
 
-export function initContact(section: HTMLElement) {
+export function initContact(section: HTMLElement, lenis: Lenis) {
   const headline = section.querySelector<HTMLElement>(".contact-headline");
   const mail = section.querySelector<HTMLElement>(".contact-mail");
   const icons = Array.from(
@@ -127,8 +142,10 @@ export function initContact(section: HTMLElement) {
 
   const headlineLetters = splitLetters(headline);
   const mailLetters = splitLetters(mail);
+  const outerLetters = headlineLetters.outer.concat(mailLetters.outer);
+  const innerLetters = headlineLetters.inner.concat(mailLetters.inner);
 
-  gsap.set(headlineLetters.concat(mailLetters), {
+  gsap.set(outerLetters, {
     opacity: 0,
     y: () => gsap.utils.random(-46, -26),
     x: () => gsap.utils.random(-6, 6),
@@ -170,7 +187,7 @@ export function initContact(section: HTMLElement) {
     {},
     { duration: Math.max(0, TIMING.hold - (bgGrid ? TIMING.grid.duration : 0)) },
   ) // remaining pure black hold, nothing to animate
-    .to(headlineLetters, {
+    .to(headlineLetters.outer, {
       y: 0,
       x: 0,
       rotate: 0,
@@ -182,7 +199,7 @@ export function initContact(section: HTMLElement) {
       stagger: { each: TIMING.headline.staggerEach, from: "random" },
     })
     .to(
-      mailLetters,
+      mailLetters.outer,
       {
         y: 0,
         x: 0,
@@ -211,6 +228,44 @@ export function initContact(section: HTMLElement) {
       `-=${TIMING.icons.startOffset}`,
     );
 
+  // Ambient float once landed — independent per-letter GSAP loops on the
+  // *inner* spans (see splitLetters' comment for why not the outer ones).
+  // Built lazily on first startIdle() and reused after that; stopIdle()
+  // kills them and snaps back to rest so a subsequent reverse of the
+  // entrance tween never stacks on a leftover idle offset.
+  let idleTweens: gsap.core.Tween[] | null = null;
+
+  function startIdle() {
+    if (idleTweens) return;
+    const { minDuration, maxDuration, maxDelay, yAmplitude, rotateAmplitude } =
+      TIMING.idle;
+    idleTweens = innerLetters.map((letter) =>
+      gsap.to(letter, {
+        y: () => gsap.utils.random(-yAmplitude, yAmplitude),
+        rotate: () => gsap.utils.random(-rotateAmplitude, rotateAmplitude),
+        duration: () => gsap.utils.random(minDuration, maxDuration),
+        delay: () => gsap.utils.random(0, maxDelay),
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      }),
+    );
+  }
+
+  function stopIdle() {
+    if (!idleTweens) return;
+    idleTweens.forEach((tween) => tween.kill());
+    idleTweens = null;
+    gsap.set(innerLetters, { y: 0, rotate: 0 });
+  }
+
+  // One-shot per visit: once scrolled a little way into the pin (past the
+  // black hold, see TIMING.autoScrollAt), finish the rest of the scroll —
+  // and thus the fall-in — without further manual scrolling. Re-armed once
+  // the user scrolls back out the top (progress <= 0), so re-entering the
+  // section auto-plays it again.
+  let hasAutoScrolled = false;
+
   pinTrigger = ScrollTrigger.create({
     trigger: section,
     start: "top top",
@@ -218,5 +273,24 @@ export function initContact(section: HTMLElement) {
     pin: true,
     scrub: TIMING.scrub,
     animation: tl,
+    onUpdate(self) {
+      if (
+        !hasAutoScrolled &&
+        self.progress > TIMING.autoScrollAt &&
+        self.progress < 1
+      ) {
+        hasAutoScrolled = true;
+        lenis.scrollTo(getContactRevealScrollY()!, {
+          duration: TIMING.autoScroll.duration,
+          easing: TIMING.autoScroll.easing,
+          lock: true,
+        });
+      }
+
+      if (self.progress >= 1) startIdle();
+      else stopIdle();
+
+      if (self.progress <= 0) hasAutoScrolled = false;
+    },
   });
 }
