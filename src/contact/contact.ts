@@ -34,6 +34,14 @@ const TIMING = TIMINGS.contact;
 // where the fall-in has only just begun.
 let pinTrigger: ScrollTrigger | null = null;
 
+// 0.97, not 1 — the very end of the pin's scroll range is also where it
+// releases, so landing a hair before it keeps the section pinned with
+// everything already settled rather than right on that boundary. Shared
+// with the auto-scroll/idle-float onUpdate below: that's the same "landed"
+// point the auto-scroll targets and the idle float gates on, so the two
+// features agree on what "landed" means instead of drifting apart.
+const LANDED_PROGRESS = 0.97;
+
 // Exported for nav links: where to scroll so the section is landed on
 // "Let's talk now" (headline/mail/icons already settled) rather than at
 // the very start of the pin's black hold. Null under reduced motion (no
@@ -41,11 +49,9 @@ let pinTrigger: ScrollTrigger | null = null;
 // or before initContact has run.
 export function getContactRevealScrollY(): number | null {
   if (!pinTrigger) return null;
-  // 0.97, not 1 — the very end of the pin's scroll range is also where
-  // it releases, so landing a hair before it keeps the section pinned
-  // with everything already settled rather than right on that boundary.
-  const progress = 0.97;
-  return pinTrigger.start + (pinTrigger.end - pinTrigger.start) * progress;
+  return (
+    pinTrigger.start + (pinTrigger.end - pinTrigger.start) * LANDED_PROGRESS
+  );
 }
 
 // Breaks an element's text into one <span class="letter"> per character
@@ -277,7 +283,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
       if (
         !hasAutoScrolled &&
         self.progress > TIMING.autoScrollAt &&
-        self.progress < 1
+        self.progress < LANDED_PROGRESS
       ) {
         hasAutoScrolled = true;
         lenis.scrollTo(getContactRevealScrollY()!, {
@@ -287,7 +293,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
         });
       }
 
-      if (self.progress >= 1) startIdle();
+      if (self.progress >= LANDED_PROGRESS) startIdle();
       else stopIdle();
 
       if (self.progress <= 0) hasAutoScrolled = false;
