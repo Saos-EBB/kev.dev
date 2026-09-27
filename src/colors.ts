@@ -7,9 +7,8 @@ export const COLORS = {
   line: "#c80032",
 } as const;
 
-// "#rrggbb" -> "r, g, b" — for building rgba(${...}, alpha) strings.
+// "#rrggbb" -> [r, g, b]
 export const hexToRgb = (hex: string): [number, number, number] => {
   const n = parseInt(hex.trim().slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
-export const hexToRgbTriple = (hex: string): string => hexToRgb(hex).join(", ");

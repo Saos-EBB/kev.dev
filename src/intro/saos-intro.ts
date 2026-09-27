@@ -36,6 +36,13 @@ const SHARDS: [number, number][][] = [
 
 const IMPACT = { x: 50, y: 46 }; // percent, matches the pattern's center
 
+// Deliberately lighter than --color-bg (the hero underneath): the shards
+// carry this fill in their snapshot, so without the contrast the break is
+// invisible against the hero. Keep in sync with .saos-intro-still's
+// background-color in saos-intro.css (the fallback shown before the
+// snapshot image loads).
+const INTRO_BG = "#161616";
+
 // Same stable "random" per shard on every run — deterministic, no Math.random.
 function shardNoise(i: number, salt: number): number {
   const v = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -53,13 +60,12 @@ function drawStill(width: number, height: number): string {
   ctx.scale(dpr, dpr);
 
   const css = getComputedStyle(document.documentElement);
-  const bg = css.getPropertyValue("--color-bg").trim() || "#08070a";
   const accent = css.getPropertyValue("--color-accent").trim() || "#cd57a6";
   const muted = css.getPropertyValue("--color-text-muted").trim() || "#8a8a93";
   const cell = parseFloat(css.getPropertyValue("--grid-cell")) || 48;
   const display = css.getPropertyValue("--font-display").trim() || "sans-serif";
 
-  ctx.fillStyle = bg;
+  ctx.fillStyle = INTRO_BG;
   ctx.fillRect(0, 0, width, height);
 
   ctx.strokeStyle = accent;

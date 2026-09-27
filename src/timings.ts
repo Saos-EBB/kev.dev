@@ -31,6 +31,17 @@ export const TIMINGS = {
   },
 
   // ------------------------------------------------------------------
+  // Hero name rotation — src/hero/name-typewriter.ts. Types each name
+  // from hero-names.ts in, holds it, backspaces it out, moves to the next.
+  // ------------------------------------------------------------------
+  heroName: {
+    typeMs: 90, // per character while typing in
+    deleteMs: 45, // per character while backspacing — quicker than typing, reads as a deliberate erase
+    holdMs: 2200, // how long the finished name sits before it starts backspacing
+    pauseMs: 400, // blank pause after the last character is deleted, before the next name starts typing
+  },
+
+  // ------------------------------------------------------------------
   // About → Projects — src/scroll/transition.ts. #about pins once its
   // floor edge reaches the bottom of the viewport (the elevator halts),
   // holds on the office, zooms into the monitor, then releases into the projects.

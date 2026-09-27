@@ -133,8 +133,10 @@ const MOBILE_SPREAD_SCALE = 0.55;
 
 // From here the card is the flat desktop bento (project-cards.css, same
 // number — 26 * --grid-cell). Its edges sit on the background grid's
-// lines, so the preset's rotation must not tilt it.
-const BENTO_MIN_WIDTH_PX = 1248;
+// lines, so the preset's rotation must not tilt it. Exported: transition.ts
+// needs the same breakpoint to phase the elevator-zoom grid's handover to
+// .projects-bg-grid, which shifts at this same width (see style.css).
+export const BENTO_MIN_WIDTH_PX = 1248;
 
 // How far off-screen a group starts (entering) / ends up (clearing) — vw
 // units so it scales with viewport width, comfortably more than 100 so

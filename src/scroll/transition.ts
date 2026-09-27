@@ -32,6 +32,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { TIMINGS } from "../timings";
 import { viewportHeight } from "../viewport";
+import { BENTO_MIN_WIDTH_PX } from "../projects/carousel";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -104,15 +105,24 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     // that at full zoom the lines sit on multiples of --grid-cell from the
     // projects section's top-left — which, once the pin ends, is the
     // viewport's left edge and its bottom edge (the section follows #about).
+    // At the desktop bento breakpoint .projects-bg-grid itself shifts its
+    // background-position to center a line on the viewport (style.css) —
+    // mirror that same shift here (matched by shared breakpoint, not read
+    // off the element: getComputedStyle().backgroundPositionX comes back as
+    // an unresolved "calc(50% + Npx)" string for this multi-layer,
+    // var()-based position, not a usable pixel number) or the handover
+    // leaves a visible seam where the zoomed screen hands off to the grid.
     const root = getComputedStyle(document.documentElement);
     const cell = parseFloat(root.getPropertyValue("--grid-cell"));
     const line = parseFloat(root.getPropertyValue("--grid-line"));
+    const isBento = window.matchMedia(`(min-width: ${BENTO_MIN_WIDTH_PX}px)`).matches;
+    const gridOffsetX = isBento ? vw / 2 + cell / 2 : 0;
     const left = vw / 2 - (s.width * maxScale) / 2;
     const top = vh / 2 - (s.height * maxScale) / 2;
     const phase = (v: number) => ((v % cell) + cell) % cell;
     screen.style.setProperty("--screen-cell", `${cell / maxScale}px`);
     screen.style.setProperty("--screen-line", `${line / maxScale}px`);
-    screen.style.setProperty("--screen-ox", `${phase(-left) / maxScale}px`);
+    screen.style.setProperty("--screen-ox", `${phase(gridOffsetX - left) / maxScale}px`);
     screen.style.setProperty("--screen-oy", `${phase(vh - top) / maxScale}px`);
   };
   measure();
