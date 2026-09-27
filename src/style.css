@@ -1007,13 +1007,22 @@ button:focus-visible {
   border-color: currentColor;
 }
 
-/* contact.ts splits the headline/mail text into one span per character
-   for the letter-by-letter fall-in — inline-block so translate/rotate
-   apply per letter instead of to the text run as a whole. */
+/* contact.ts splits the headline/mail text into one <span class="letter">
+   per character, each wrapping an inner <span class="letter-inner"> — two
+   layers so the entrance fall-in (outer, scrub-driven) and the ambient
+   idle float once landed (inner, see startIdle/stopIdle in contact.ts)
+   never animate the same element's transform. Both inline-block so
+   translate/rotate apply per letter instead of to the text run as a whole. */
 .contact-headline .letter,
 .contact-mail .letter {
   display: inline-block;
   will-change: transform, opacity;
+}
+
+.contact-headline .letter-inner,
+.contact-mail .letter-inner {
+  display: inline-block;
+  will-change: transform;
 }
 
 .contact-icons {
