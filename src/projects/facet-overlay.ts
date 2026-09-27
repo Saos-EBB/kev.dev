@@ -5,10 +5,15 @@
 // challenge/origin, Live-Demo -> widget, B2B -> the YourBrand link) so
 // nothing is duplicated or reworded.
 //
-// Static content only for now: a Live-Demo facet with a widget shows its
-// mount point but doesn't call `widget.mount()` yet — that's wired up
-// once this lands (see the widget-facets follow-up), keeping the heavy
-// widget code out of the bundle until then.
+// A Live-Demo facet's widget (renderer canvas, CheerpJ terminal) is
+// mounted lazily, only on the first time that card's Live-Demo tile is
+// opened — the heavy widget code never loads on page view. Its host stays
+// permanently in a hidden, always-connected container (widgetHosts) and
+// is only ever moved (not recreated or removed) in and out of the
+// overlay body: since the overlay's other content is rebuilt via
+// innerHTML on every click, recreating the host each open would destroy
+// a running widget — restarting a 30-100s CheerpJ boot every time the
+// user closes and reopens the overlay.
 //
 // Accessibility (non-negotiable per the handoff): focus trap, ESC and
 // backdrop close it, background scroll is locked (lenis.stop/start, same
@@ -115,7 +120,9 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
     }
     case "live-demo": {
       if (card.widget) {
-        return { title: card.widget.label, bodyHtml: `<div class="pcard-widget"></div>`, widget: card.widget };
+        // bodyHtml unused here: the widget's persistent host is moved in
+        // by the caller instead (see widgetHosts below).
+        return { title: card.widget.label, bodyHtml: "", widget: card.widget };
       }
       const demo = findLink(card, /live-demo/i);
       return {
@@ -133,6 +140,43 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
         bodyHtml: `<p class="pcard-open">[OFFEN: URL der barrierefreien B2B-Seite fehlt — Kevin liefert]</p>`,
       };
   }
+}
+
+// Widget hosts: one persistent <div class="pcard-widget"> per card,
+// created on first mount and never removed — only ever reparented
+// between this hidden container and the overlay body, so the widget
+// itself (and its DOM/state) survives closing and reopening the overlay.
+let hostContainer: HTMLElement | null = null;
+const widgetHosts = new Map<string, HTMLElement>();
+const mountedWidgets = new Set<string>();
+let activeWidgetCardId: string | null = null;
+
+function ensureHostContainer(): HTMLElement {
+  if (hostContainer) return hostContainer;
+  hostContainer = document.createElement("div");
+  hostContainer.hidden = true;
+  document.body.appendChild(hostContainer);
+  return hostContainer;
+}
+
+function getWidgetHost(cardId: string): HTMLElement {
+  let host = widgetHosts.get(cardId);
+  if (!host) {
+    host = document.createElement("div");
+    host.className = "pcard-widget";
+    ensureHostContainer().appendChild(host);
+    widgetHosts.set(cardId, host);
+  }
+  return host;
+}
+
+// Moves the currently-shown widget host (if any) back to the hidden
+// container, so it keeps running out of view instead of being destroyed.
+function parkActiveWidget() {
+  if (!activeWidgetCardId) return;
+  const host = widgetHosts.get(activeWidgetCardId);
+  if (host) ensureHostContainer().appendChild(host);
+  activeWidgetCardId = null;
 }
 
 let overlayEl: HTMLElement | null = null;
@@ -208,8 +252,27 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
 
     const el = ensureOverlay(lenis);
     const content = resolveFacetContent(card, kind);
+    const body = el.querySelector<HTMLElement>(".facet-overlay-body")!;
+
+    parkActiveWidget();
     el.querySelector(".facet-overlay-title")!.textContent = content.title;
-    el.querySelector(".facet-overlay-body")!.innerHTML = content.bodyHtml;
+
+    if (content.widget) {
+      body.replaceChildren();
+      const host = getWidgetHost(card.id);
+      body.appendChild(host);
+      activeWidgetCardId = card.id;
+      if (!mountedWidgets.has(card.id)) {
+        mountedWidgets.add(card.id);
+        Promise.resolve(content.widget.mount(host)).catch(() => {
+          mountedWidgets.delete(card.id);
+          host.textContent = "Widget konnte nicht geladen werden.";
+        });
+      }
+    } else {
+      body.innerHTML = content.bodyHtml;
+    }
+
     el.hidden = false;
     lenis.stop();
     lastFocused = tile;
