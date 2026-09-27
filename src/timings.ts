@@ -136,9 +136,9 @@ export const TIMINGS = {
     // instant the user scrolls back out. Applied to `.letter-inner`, never
     // the outer `.letter` the entrance tween drives, so the two can't fight.
     idle: {
-      minDuration: 1.8,
-      maxDuration: 3.2,
-      maxDelay: 2, // random per-letter start offset, so they don't all bob in sync
+      minDuration: 0.9,
+      maxDuration: 1.6,
+      maxDelay: 1, // random per-letter start offset, so they don't all bob in sync
       yAmplitude: 5, // px, up/down
       rotateAmplitude: 3, // deg
     },
