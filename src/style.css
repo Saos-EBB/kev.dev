@@ -452,16 +452,32 @@ button:focus-visible {
 
 /* ---------------------------------------------------------------- */
 /* About — static CSS-3D corridor (one fixed vanishing point)        */
-/* No scroll-driven motion at all here — it's a tall (4x a normal     */
-/* viewport) graphic that simply scrolls past with the rest of the   */
-/* page, ceiling up top and floor down below, like any other section.*/
+/* No scroll-driven motion at all here — it's a tall graphic that    */
+/* simply scrolls past with the rest of the page, ceiling up top and */
+/* floor down below, like any other section.                        */
 /* ---------------------------------------------------------------- */
 
 .about {
   position: relative;
-  height: 400vh; /* vh, not svh: pinned scenes are sized in the unit ScrollTrigger measures (see src/viewport.ts) */
+  /* vh, not svh: pinned scenes are sized in the unit ScrollTrigger
+     measures (see src/viewport.ts). Tall enough that the about-overlay
+     text (about-blocks.css) never overflows into clipping: the overlay
+     column is a fixed 45.45% of viewport width (--elevator-overlay-scale,
+     the corridor's real back-wall projection, not a free design value),
+     so the same prose wraps into far more lines on a narrow phone than
+     on desktop — hence the much taller mobile figure below. */
+  height: 780vh;
   background: var(--about-bg);
   overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .about {
+    /* Same overlay column, same mono reading font, but at 16-18
+       characters per line on a phone the A2 story alone runs to
+       roughly 5500px — hence the much larger figure than desktop's. */
+    height: 1500vh;
+  }
 }
 
 /* The zoom wrapper: sits OUTSIDE .elevator's perspective context, so
