@@ -18,6 +18,8 @@ import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
 import { mountSaosIntro, type IntroMode } from "./intro/saos-intro";
 import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
+import { HERO_NAMES } from "./hero/hero-names";
+import { startNameTypewriter } from "./hero/name-typewriter";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -56,7 +58,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <header class="site-header">
     <div class="site-header-inner">
-      <span class="site-header-brand">Kevin Schaberl</span>
+      <span class="site-header-brand">Kevin Schaberl / <span class="brand-accent">SAOS</span></span>
       <nav class="site-header-links" aria-label="Primary">
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
@@ -227,7 +229,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <footer class="footer footer--floating">
     <div class="footer-inner">
-      <p class="footer-copy">© 2026 Kevin Schaberl</p>
+      <p class="footer-copy">© 2026 Kevin Schaberl / <span class="brand-accent">SAOS</span></p>
       <nav class="footer-links" aria-label="Rechtliches">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>
@@ -274,6 +276,13 @@ function fitBlockToWidth(el: HTMLElement, maxHeightFrac = 1) {
   el.style.fontSize = `${Math.min((targetWidth / naturalWidth) * probeSize, maxFont)}px`;
 }
 
+function longestHeroName(): string {
+  return HERO_NAMES.reduce(
+    (longest, name) => (name.length > longest.length ? name : longest),
+    HERO_NAMES[0] ?? "",
+  );
+}
+
 function fitHeroName() {
   const parent = heroName.parentElement;
   if (!parent) return;
@@ -283,7 +292,17 @@ function fitHeroName() {
   const parentStyle = getComputedStyle(parent);
   const paddingX =
     parseFloat(parentStyle.paddingLeft) + parseFloat(parentStyle.paddingRight);
+
+  // Fit against the longest name in the rotation, not whatever's
+  // currently typed — the font-size (and the cloth's resting grid, built
+  // from this box) must stay fixed while name-typewriter.ts swaps the
+  // text in and out. Invisible either way (.hero-name is opacity:0; the
+  // cloth paints the texture instead), so swapping the text to measure
+  // it causes no flicker.
+  const currentText = heroName.textContent;
+  heroName.textContent = longestHeroName();
   fitToWidth(heroName, parent.clientWidth - paddingX);
+  heroName.textContent = currentText;
 }
 
 // The floor's "PROJEKTE" (lies on the elevator floor, stands up as the
@@ -365,6 +384,18 @@ function refreshHeroName() {
 
 refreshHeroName();
 document.fonts.ready.then(refreshHeroName);
+
+// Reduced motion: leave the static name from the HTML/hero-names.ts in
+// place, unanimated — same convention as cloth.ts/contact.ts/carousel.ts.
+const heroNameForceMotion =
+  document.documentElement.classList.contains("force-motion");
+const heroNameReducedMotion =
+  !heroNameForceMotion &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (!heroNameReducedMotion && HERO_NAMES.length > 0) {
+  startNameTypewriter(heroName, updateNameTexture);
+}
+
 const heroResize = makeHeightOnlyResizeFilter();
 window.addEventListener(
   "resize",
@@ -423,12 +454,16 @@ initScrollProgress(lenis);
 initEdgeNav(lenis);
 initYoutubeButton();
 
-// Intro overlay: one word switches the style. Shown once per session; after
-// the first run (or on any return visit) the hero is simply there.
+// Intro overlay: one word switches the style. Shown once per session in
+// prod; after the first run (or on any return visit) the hero is simply
+// there. In dev, session memory is skipped entirely so every reload (F5)
+// replays it — otherwise iterating on the effect means clearing storage
+// by hand each time.
 const INTRO_MODE: IntroMode = "shatter";
 const INTRO_SEEN_KEY = "saos-intro-seen";
 
-function isFirstVisit(): boolean {
+function shouldPlayIntro(): boolean {
+  if (!import.meta.env.PROD) return true;
   try {
     return sessionStorage.getItem(INTRO_SEEN_KEY) === null;
   } catch {
@@ -439,15 +474,17 @@ function isFirstVisit(): boolean {
 const overlayEl = document.createElement("div");
 document.body.appendChild(overlayEl);
 
-if (isFirstVisit()) {
+if (shouldPlayIntro()) {
   lenis.stop();
   const destroy = mountSaosIntro(
     overlayEl,
     () => {
-      try {
-        sessionStorage.setItem(INTRO_SEEN_KEY, "1");
-      } catch {
-        /* ignore */
+      if (import.meta.env.PROD) {
+        try {
+          sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+        } catch {
+          /* ignore */
+        }
       }
       destroy();
       overlayEl.remove();

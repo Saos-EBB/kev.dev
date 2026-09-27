@@ -15,11 +15,13 @@
 }
 
 /* Before the shatter starts the overlay is opaque; the shards carry the
-   image themselves afterwards, so the container must not paint anything. */
+   image themselves afterwards, so the container must not paint anything.
+   #161616 matches INTRO_BG in saos-intro.ts (deliberately lighter than
+   --color-bg/hero, only a fallback shown before the snapshot loads). */
 .saos-intro-still {
   position: absolute;
   inset: 0;
-  background-color: var(--color-bg);
+  background-color: #161616;
   background-size: 100% 100%;
 }
 
@@ -27,5 +29,10 @@
   position: absolute;
   inset: 0;
   background-size: 100% 100%;
+  /* Traces the clip-path polygon itself (drop-shadow follows the element's
+     post-clip alpha, unlike border/box-shadow which sit on the div's full
+     bounding box) — reads as a glass edge separating shards from each
+     other and from the hero. */
+  filter: drop-shadow(0 0 1px rgba(250, 235, 215, 0.12));
   will-change: transform, opacity;
 }

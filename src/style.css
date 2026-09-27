@@ -222,6 +222,10 @@ a {
   color: var(--color-text-muted);
 }
 
+.brand-accent {
+  color: var(--color-accent);
+}
+
 .site-header-links {
   display: flex;
   align-items: center;
@@ -390,6 +394,16 @@ button:focus-visible {
      spanning the full container width for any text/font/viewport combo. */
   font-size: clamp(2.75rem, 11vw, 8rem);
   line-height: 1;
+  /* name-typewriter.ts briefly sets this element's text to "" between
+     names. With zero child nodes (not even an empty text node), a block
+     box's auto height collapses to 0 regardless of line-height — which
+     shrinks .hero-content's total height for that instant. main.ts's
+     updateNameTexture() re-measures that box live on every keystroke to
+     size the cloth's name texture, so the momentary collapse produced a
+     smaller texture that the (fixed-size) warp mesh then stretched to
+     fill — reading as the subtitle suddenly growing. Reserving the line's
+     height even when empty keeps .hero-content's height constant. */
+  min-height: 1em;
   white-space: nowrap;
   text-transform: uppercase;
   color: var(--color-accent);

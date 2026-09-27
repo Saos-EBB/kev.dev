@@ -7,7 +7,7 @@
 // is what makes constraint relaxation cheap and unconditionally stable.
 
 import { TIMINGS } from "../timings";
-import { COLORS, hexToRgbTriple } from "../colors";
+import { COLORS, hexToRgb } from "../colors";
 
 const SPACING = 23; // px between resting nodes
 const MAX_COLS = 220;
@@ -35,6 +35,18 @@ const HOVER_PULL = TIMINGS.hero.hoverPull; // gentle
 
 const GRAB_RADIUS = 140; // px, how close a pointer must start to grab a node
 const DRAG_LERP = TIMINGS.hero.dragLerp; // firm — how snappily the grabbed node follows
+
+// Cheap fake "light": no lighting model, just one additive radial falloff
+// centered on the pointer — brighter the closer (distance up, brightness
+// down), same direction as the tension highlight in draw() but keyed off
+// distance-to-pointer instead of stretch.
+// Parked off for now (kept, not deleted — the mouse-follow version reads
+// wrong and is getting reworked into the stretch-based light below instead
+// of removed outright).
+const GLOW_ENABLED = false;
+const GLOW_RADIUS = 260; // px, how far the falloff reaches
+const GLOW_ALPHA = 0.16; // while hovering
+const GLOW_ALPHA_DRAG = 0.3; // brighter while actively dragging a node
 
 // Touch has no hover, so a plain one-finger scroll already reads as
 // "hover" through pointermove (see handlePointerMove) — but a bare
@@ -148,12 +160,13 @@ export class Cloth {
       .getPropertyValue("--grid-color")
       .trim();
     if (lineColorToken) this.lineColor = lineColorToken;
+    this.buildLightSteps();
 
-    // ?motion in the URL force-enables the cloth for local testing when the
-    // OS/browser reports prefers-reduced-motion but you want to see it move
-    // anyway. Production behavior (respecting the OS setting) is unchanged.
-    const forceMotion = new URLSearchParams(window.location.search).has(
-      "motion",
+    // .force-motion (set in dev, or via ?motion in prod — see main.ts)
+    // overrides prefers-reduced-motion for local testing. Same check as
+    // dancer.ts/contact.ts/transition.ts/carousel.ts.
+    const forceMotion = document.documentElement.classList.contains(
+      "force-motion",
     );
     this.reducedMotion =
       !forceMotion &&
@@ -360,11 +373,16 @@ export class Cloth {
   };
 
   private handlePointerDown = (e: PointerEvent) => {
-    // Nav links and icons sit over the (pointer-events:none) canvas — let
-    // their own clicks through untouched rather than treating them as a
-    // cloth grab.
+    // Nav links/icons and the SAOS intro overlay all sit over the
+    // (pointer-events:none) canvas — let their own clicks through
+    // untouched rather than have the cloth capture the pointer first and
+    // swallow the click before it ever reaches them (this is what made
+    // the intro's "click to shatter" never fire: any pointerdown near a
+    // grid node — i.e. almost anywhere over the hero — grabbed the
+    // pointer here first).
     const target = e.target;
-    if (target instanceof Element && target.closest("a, button")) return;
+    if (target instanceof Element && target.closest("a, button, .saos-intro"))
+      return;
 
     this.setPointer(e);
 
@@ -503,13 +521,40 @@ export class Cloth {
   // only changes a handful of times per frame instead of once per line —
   // switching it thousands of times (once stretch varies per line, e.g.
   // while hovering) was the actual frame-time cost, not the line count.
-  private readonly ALPHA_BUCKETS = 14;
+  //
+  // Also doubles as the cheap fake "light": no lighting model, just a
+  // handful of discrete steps (not a smooth gradient — reads more like an
+  // old flat-shaded renderer) keyed off how stretched each line currently
+  // is. A line far from its resting length reads as "pulled closer to the
+  // screen", so it jumps to a lighter step — color mixed toward white, not
+  // just more opaque.
+  private readonly LIGHT_STEPS = 5;
+  private readonly LIGHT_STRETCH_CAP = 0.5; // stretch at/above which a line is fully lit
+  private readonly LIGHT_MIX_MAX = 0.65; // top step's mix-toward-white amount
   private readonly ALPHA_MIN = 0.12;
   private readonly ALPHA_MAX = 0.8;
+  private stepColors: string[] = [];
   private bucketed: number[][] = Array.from(
-    { length: this.ALPHA_BUCKETS },
+    { length: this.LIGHT_STEPS },
     () => [],
   );
+
+  // Precomputes one rgba string per light step by mixing this.lineColor
+  // toward white — called once lineColor is known (constructor) rather
+  // than mixed per line per frame.
+  private buildLightSteps() {
+    const [r, g, b] = hexToRgb(this.lineColor);
+    this.stepColors = [];
+    for (let i = 0; i < this.LIGHT_STEPS; i++) {
+      const t = i / (this.LIGHT_STEPS - 1);
+      const mix = t * this.LIGHT_MIX_MAX;
+      const mr = Math.round(r + (255 - r) * mix);
+      const mg = Math.round(g + (255 - g) * mix);
+      const mb = Math.round(b + (255 - b) * mix);
+      const alpha = this.ALPHA_MIN + t * (this.ALPHA_MAX - this.ALPHA_MIN);
+      this.stepColors.push(`rgba(${mr}, ${mg}, ${mb}, ${alpha.toFixed(2)})`);
+    }
+  }
 
   private draw() {
     const ctx = this.ctx;
@@ -518,26 +563,23 @@ export class Cloth {
 
     for (const bucket of this.bucketed) bucket.length = 0;
 
-    const span = this.ALPHA_MAX - this.ALPHA_MIN;
     for (let i = 0; i < this.constraints.length; i++) {
       const { a, b, restLength } = this.constraints[i];
       const nodeA = this.nodes[a];
       const nodeB = this.nodes[b];
       const dist = Math.hypot(nodeB.x - nodeA.x, nodeB.y - nodeA.y);
       const stretch = Math.abs(dist - restLength) / restLength;
-      const alpha = Math.min(this.ALPHA_MIN + stretch * 0.7, this.ALPHA_MAX);
-      const bucketIndex = Math.min(
-        Math.round(((alpha - this.ALPHA_MIN) / span) * (this.ALPHA_BUCKETS - 1)),
-        this.ALPHA_BUCKETS - 1,
+      const step = Math.min(
+        Math.floor((stretch / this.LIGHT_STRETCH_CAP) * this.LIGHT_STEPS),
+        this.LIGHT_STEPS - 1,
       );
-      this.bucketed[bucketIndex].push(i);
+      this.bucketed[step].push(i);
     }
 
-    for (let bi = 0; bi < this.ALPHA_BUCKETS; bi++) {
-      const indices = this.bucketed[bi];
+    for (let step = 0; step < this.LIGHT_STEPS; step++) {
+      const indices = this.bucketed[step];
       if (indices.length === 0) continue;
-      const alpha = this.ALPHA_MIN + (bi / (this.ALPHA_BUCKETS - 1)) * span;
-      ctx.strokeStyle = `rgba(${hexToRgbTriple(this.lineColor)}, ${alpha.toFixed(2)})`;
+      ctx.strokeStyle = this.stepColors[step];
       ctx.beginPath();
       for (const idx of indices) {
         const { a, b } = this.constraints[idx];
@@ -550,6 +592,37 @@ export class Cloth {
     }
 
     if (this.textTexture) this.drawWarpedText(ctx, this.textTexture);
+
+    this.drawGlow(ctx);
+  }
+
+  // The additive falloff described above — drawn last so it washes over
+  // both the lines and the warped name.
+  private drawGlow(ctx: CanvasRenderingContext2D) {
+    if (!GLOW_ENABLED || !this.pointerActive) return;
+
+    const alpha = this.pointerDown ? GLOW_ALPHA_DRAG : GLOW_ALPHA;
+    const gradient = ctx.createRadialGradient(
+      this.pointerX,
+      this.pointerY,
+      0,
+      this.pointerX,
+      this.pointerY,
+      GLOW_RADIUS,
+    );
+    gradient.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = gradient;
+    ctx.fillRect(
+      this.pointerX - GLOW_RADIUS,
+      this.pointerY - GLOW_RADIUS,
+      GLOW_RADIUS * 2,
+      GLOW_RADIUS * 2,
+    );
+    ctx.restore();
   }
 
   // Warps the name texture onto the mesh's *current* (possibly dragged)
@@ -644,20 +717,24 @@ function drawTriangle(
       dy2 * (sx0 * sy1 - sx1 * sy0)) /
     denom;
 
-  // Nudge the clip triangle outward from its centroid by ~0.75px so
-  // neighboring triangles overlap slightly instead of leaving a hairline
-  // gap — plain anti-aliased clip edges otherwise show as a faint seam
-  // along every shared edge (each side's edge blends toward transparent
-  // independently, and the two half-coverage edges don't sum to solid).
+  // Nudge the clip triangle outward from its centroid so neighboring
+  // triangles overlap slightly instead of leaving a hairline gap — plain
+  // anti-aliased clip edges otherwise show as a faint seam along every
+  // shared edge (each side's edge blends toward transparent independently,
+  // and the two half-coverage edges don't sum to solid).
+  // Proportional to the triangle's own size, not a fixed px amount: while
+  // the mesh is being stretched (hover/drag), neighboring cells stretch by
+  // different amounts, so a fixed nudge falls short on the more-stretched
+  // ones — the seam (and the near-black hero background behind the canvas)
+  // flickers through as the mesh keeps moving. Scaling with the triangle
+  // itself keeps the overlap sufficient at any stretch.
   const cx = (dx0 + dx1 + dx2) / 3;
   const cy = (dy0 + dy1 + dy2) / 3;
-  const grow = (x: number, y: number) => {
-    const vx = x - cx;
-    const vy = y - cy;
-    const len = Math.hypot(vx, vy) || 1;
-    const k = 0.75 / len;
-    return [x + vx * k, y + vy * k];
-  };
+  const GROW_FRACTION = 0.04;
+  const grow = (x: number, y: number) => [
+    x + (x - cx) * GROW_FRACTION,
+    y + (y - cy) * GROW_FRACTION,
+  ];
   const [gx0, gy0] = grow(dx0, dy0);
   const [gx1, gy1] = grow(dx1, dy1);
   const [gx2, gy2] = grow(dx2, dy2);
