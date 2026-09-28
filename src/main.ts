@@ -21,6 +21,7 @@ import { mountSaosIntro, type IntroMode } from "./intro/saos-intro";
 import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 import { HERO_NAMES } from "./hero/hero-names";
 import { startNameTypewriter } from "./hero/name-typewriter";
+import { hexToRgb } from "./colors";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -359,38 +360,115 @@ const cloth = new Cloth(canvas, clothBody, heroContent);
 // Renders the (now invisible, see .hero-name/.hero-subtitle{opacity:0} in
 // style.css) name + subtitle onto one offscreen texture, each at its own
 // position/size within their shared parent box, so the cloth can warp
-// the whole lockup onto the mesh instead of it sitting static.
+// the whole lockup onto the mesh instead of it sitting static. The name
+// gets the same look as the "PROJEKTE" headings — gradient, glow and a
+// periodic shine, all from style.css's --title-* tokens.
+const TEXTURE_SUPERSAMPLE = 2; // crisper edges once warped/stretched
+// Mirrors .projects-headline's shine keyframes: the band rests for the
+// first 55% of each period, then sweeps from -1x to +2x the text width.
+const SHINE_REST = 0.55;
+const SHINE_BAND = 0.25; // half-width of the band, in text widths
+const GLOW_BLUR_EM = 0.12;
+const GLOW_ALPHA = 0.45;
+
+type TextLine = {
+  isName: boolean;
+  text: string;
+  font: string;
+  color: string;
+  x: number;
+  y: number;
+  height: number;
+  fontSize: number;
+};
+
+let nameTexture: HTMLCanvasElement | null = null;
+let nameLines: TextLine[] = [];
+
+function readToken(name: string) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+}
+
+// shine: band center in text widths from the name's left edge, or null.
+function paintNameTexture(shine: number | null) {
+  if (!nameTexture) return;
+  const tctx = nameTexture.getContext("2d")!;
+  tctx.setTransform(TEXTURE_SUPERSAMPLE, 0, 0, TEXTURE_SUPERSAMPLE, 0, 0);
+  tctx.clearRect(0, 0, nameTexture.width, nameTexture.height);
+  tctx.textBaseline = "middle";
+
+  for (const line of nameLines) {
+    tctx.font = line.font;
+    const midY = line.y + line.height / 2;
+    if (!line.isName) {
+      tctx.fillStyle = line.color;
+      tctx.fillText(line.text, line.x, midY);
+      continue;
+    }
+
+    const textWidth = tctx.measureText(line.text).width;
+    const gradient = tctx.createLinearGradient(line.x, 0, line.x + textWidth, 0);
+    gradient.addColorStop(0, readToken("--title-grad-from"));
+    gradient.addColorStop(0.5, readToken("--title-grad-mid"));
+    gradient.addColorStop(1, readToken("--title-grad-to"));
+    const [r, g, b] = hexToRgb(readToken("--title-glow"));
+
+    tctx.save();
+    tctx.fillStyle = gradient;
+    tctx.shadowColor = `rgba(${r}, ${g}, ${b}, ${GLOW_ALPHA})`;
+    // shadowBlur ignores the transform, so scale it by hand.
+    tctx.shadowBlur = line.fontSize * GLOW_BLUR_EM * TEXTURE_SUPERSAMPLE;
+    tctx.fillText(line.text, line.x, midY);
+    tctx.restore();
+
+    if (shine !== null) {
+      const center = line.x + shine * textWidth;
+      const half = SHINE_BAND * textWidth;
+      const band = tctx.createLinearGradient(center - half, 0, center + half, 0);
+      band.addColorStop(0, "rgba(255, 255, 255, 0)");
+      band.addColorStop(0.5, "rgba(255, 255, 255, 0.75)");
+      band.addColorStop(1, "rgba(255, 255, 255, 0)");
+      tctx.save();
+      tctx.globalCompositeOperation = "source-atop"; // only onto the glyphs
+      tctx.fillStyle = band;
+      tctx.fillRect(center - half, line.y, half * 2, line.height);
+      tctx.restore();
+    }
+  }
+}
+
 function updateNameTexture() {
   const rect = heroContent.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return;
 
-  const supersample = 2; // crisper edges once warped/stretched
-  const tex = document.createElement("canvas");
-  tex.width = Math.round(rect.width * supersample);
-  tex.height = Math.round(rect.height * supersample);
-
-  const tctx = tex.getContext("2d")!;
-  tctx.scale(supersample, supersample);
-
+  nameLines = [];
   for (const el of [heroName, heroSubtitle]) {
     const elRect = el.getBoundingClientRect();
     if (elRect.width <= 0 || elRect.height <= 0) continue;
 
     const style = getComputedStyle(el);
-    const offsetX = elRect.left - rect.left;
-    const offsetY = elRect.top - rect.top;
-
-    tctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-    tctx.fillStyle = style.color;
-    tctx.textBaseline = "middle";
-    const text =
-      style.textTransform === "uppercase"
-        ? el.textContent!.toUpperCase()
-        : el.textContent!;
-    tctx.fillText(text, offsetX, offsetY + elRect.height / 2);
+    nameLines.push({
+      isName: el === heroName,
+      text:
+        style.textTransform === "uppercase"
+          ? el.textContent!.toUpperCase()
+          : el.textContent!,
+      font: `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`,
+      color: style.color,
+      x: elRect.left - rect.left,
+      y: elRect.top - rect.top,
+      height: elRect.height,
+      fontSize: parseFloat(style.fontSize),
+    });
   }
 
-  cloth.setTextTexture(tex);
+  nameTexture = document.createElement("canvas");
+  nameTexture.width = Math.round(rect.width * TEXTURE_SUPERSAMPLE);
+  nameTexture.height = Math.round(rect.height * TEXTURE_SUPERSAMPLE);
+  paintNameTexture(null);
+  cloth.setTextTexture(nameTexture);
 }
 
 function refreshHeroName() {
@@ -411,6 +489,30 @@ const heroNameReducedMotion =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (!heroNameReducedMotion && HERO_NAMES.length > 0) {
   startNameTypewriter(heroName, updateNameTexture);
+}
+
+// The name's shine, in step with the CSS one on "PROJEKTE". The cloth
+// warps the texture canvas live every frame, so repainting it in place is
+// enough; outside the sweep it's left alone.
+if (!heroNameReducedMotion) {
+  const period = readToken("--title-shine-period");
+  const periodMs =
+    parseFloat(period) * (period.endsWith("ms") ? 1 : 1000) || 6000;
+  const easeInOut = (t: number) => t * t * (3 - 2 * t);
+  let shining = false;
+  const shineLoop = (now: number) => {
+    const phase = (now % periodMs) / periodMs;
+    if (phase >= SHINE_REST) {
+      const t = easeInOut((phase - SHINE_REST) / (1 - SHINE_REST));
+      paintNameTexture(-1 + 3 * t);
+      shining = true;
+    } else if (shining) {
+      paintNameTexture(null);
+      shining = false;
+    }
+    requestAnimationFrame(shineLoop);
+  };
+  requestAnimationFrame(shineLoop);
 }
 
 const heroResize = makeHeightOnlyResizeFilter();
