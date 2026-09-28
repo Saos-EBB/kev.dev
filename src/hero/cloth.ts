@@ -8,6 +8,7 @@
 
 import { TIMINGS } from "../timings";
 import { COLORS, hexToRgb } from "../colors";
+import { DRIFT_ENABLED, driftOffset } from "./cloth-drift"; // cloth-drift
 
 const SPACING = 23; // px between resting nodes
 const MAX_COLS = 220;
@@ -436,7 +437,10 @@ export class Cloth {
     if (!e.relatedTarget) this.pointerActive = false;
   };
 
+  private drift = { x: 0, y: 0 }; // cloth-drift
+
   private update() {
+    const seconds = performance.now() / 1000; // cloth-drift
     for (const node of this.nodes) {
       const vx = (node.x - node.px) * DAMPING;
       const vy = (node.y - node.py) * DAMPING;
@@ -445,8 +449,9 @@ export class Cloth {
       node.x += vx;
       node.y += vy + GRAVITY;
       // Spring back toward the resting grid position.
-      node.x += (node.ox - node.x) * ANCHOR_K;
-      node.y += (node.oy - node.y) * ANCHOR_K;
+      if (DRIFT_ENABLED) driftOffset(node.ox, node.oy, seconds, this.drift); // cloth-drift
+      node.x += (node.ox + this.drift.x - node.x) * ANCHOR_K;
+      node.y += (node.oy + this.drift.y - node.y) * ANCHOR_K;
     }
 
     // Pick which single node the pointer currently affects: whatever's
