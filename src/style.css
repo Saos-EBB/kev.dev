@@ -29,6 +29,16 @@
   --color-canvas-bg: #000000; /* projects: 3D renderer canvas */
   --color-terminal-bg: #050507; /* projects: Java terminal */
 
+  /* Display-title look (hero name on the cloth + "PROJEKTE"): no colors
+     of their own, only references to the page colors above, so they
+     follow any change there. main.ts reads these same tokens for the
+     cloth's canvas texture. */
+  --title-grad-from: var(--color-accent);
+  --title-grad-mid: var(--color-line);
+  --title-grad-to: var(--note-3);
+  --title-glow: var(--color-line);
+  --title-shine-period: 6s;
+
   /* projects: Bootcamp project note colors + terminal tint (one per note) */
   --note-1: #57ff8f;
   --note-2: #57fff1;
@@ -811,7 +821,6 @@ button:focus-visible {
   line-height: 1;
   white-space: nowrap;
   text-transform: uppercase;
-  color: var(--color-accent);
   clip-path: inset(50%); /* visually hidden, still announced */
 }
 
@@ -843,10 +852,59 @@ button:focus-visible {
   white-space: nowrap;
   text-align: center;
   text-transform: uppercase;
-  color: var(--color-accent);
   /* --handover (0→1) is tweened in transition.ts's timeline, --fade (1→0) by carousel.ts */
   opacity: calc(var(--handover, 0) * var(--fade, 1));
   pointer-events: none;
+}
+
+/* Shared look of both "PROJEKTE" headings (the cloth's hero name gets
+   the same look painted into its canvas texture, see main.ts's
+   paintNameTexture): the --title-* gradient clipped to the glyphs, a
+   bright band sweeping across it now and then, and a soft glow. The glow is a drop-shadow filter, not text-shadow — with the fill
+   transparent, text-shadow would show through the letters. */
+.projects-title,
+.projects-headline {
+  background-image:
+    linear-gradient(
+      100deg,
+      transparent 40%,
+      rgb(255 255 255 / 0.75) 50%,
+      transparent 60%
+    ),
+    linear-gradient(
+      90deg,
+      var(--title-grad-from),
+      var(--title-grad-mid) 50%,
+      var(--title-grad-to)
+    );
+  background-size: 250% 100%, 100% 100%;
+  background-position: 150% 0, 0 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(
+    0 0 0.12em color-mix(in srgb, var(--title-glow) 45%, transparent)
+  );
+  animation: projects-title-shine var(--title-shine-period) ease-in-out
+    infinite;
+}
+
+@keyframes projects-title-shine {
+  0%,
+  55% {
+    background-position: 150% 0, 0 0;
+  }
+  100% {
+    background-position: -50% 0, 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .projects-title,
+  :root:not(.force-motion) .projects-headline {
+    animation: none;
+  }
 }
 
 .carousel-stage {
