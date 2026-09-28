@@ -459,25 +459,13 @@ button:focus-visible {
 
 .about {
   position: relative;
-  /* vh, not svh: pinned scenes are sized in the unit ScrollTrigger
-     measures (see src/viewport.ts). Tall enough that the about-overlay
-     text (about-blocks.css) never overflows into clipping: the overlay
-     column is a fixed 45.45% of viewport width (--elevator-overlay-scale,
-     the corridor's real back-wall projection, not a free design value),
-     so the same prose wraps into far more lines on a narrow phone than
-     on desktop — hence the much taller mobile figure below. */
-  height: 780vh;
+  /* No fixed height: the section is exactly as tall as .about-overlay
+     (the text column + its padding below), so the black shaft before and
+     after the text no longer depends on how the prose happens to wrap at
+     a given width. ScrollTrigger measures it on refresh like any other
+     height. */
   background: var(--about-bg);
   overflow: hidden;
-}
-
-@media (max-width: 640px) {
-  .about {
-    /* Same overlay column, same mono reading font, but at 16-18
-       characters per line on a phone the A2 story alone runs to
-       roughly 5500px — hence the much larger figure than desktop's. */
-    height: 1500vh;
-  }
 }
 
 /* The zoom wrapper: sits OUTSIDE .elevator's perspective context, so
@@ -699,24 +687,26 @@ button:focus-visible {
    never tilts/distorts with the box — sized/centered to match how big
    the back wall reads on screen, so it looks like it sits on it. */
 .about-overlay {
-  position: absolute;
-  inset: 0;
+  /* In flow — this is what gives .about its height. Almost no empty shaft
+     before the text; after it, enough ride for the office to rise into
+     view with the last stretch before #about pins (vh, not svh: see
+     src/viewport.ts). */
+  position: relative;
   z-index: 3;
+  padding-top: 8vh;
+  padding-bottom: 120vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 1.4em;
   pointer-events: none;
 }
 
-/* On a narrow screen the text wraps to a tall block whose end reaches into
-   the section's last viewport — the one the wall stands in, with the
-   "PROJEKTE" headline at its top. Keep that viewport free of overlay
-   text. (On desktop the block already ends well above it.) */
+/* On a narrow screen the "PROJEKTE" headline sits at the top of the
+   section's last viewport — keep that viewport free of overlay text too. */
 @media (max-width: 640px) {
   .about-overlay {
-    padding-bottom: 100vh;
+    padding-bottom: 165vh;
   }
 }
 
