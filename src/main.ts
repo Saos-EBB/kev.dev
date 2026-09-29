@@ -17,7 +17,7 @@ import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
-import { mountSaosIntro, type IntroMode } from "./intro/saos-intro";
+import { mountSaosLoader } from "./intro/saos-intro";
 import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 import { HERO_NAMES } from "./hero/hero-names";
 import { startNameTypewriter } from "./hero/name-typewriter";
@@ -527,9 +527,9 @@ window.addEventListener(
   { passive: true },
 );
 
-// Late-arriving images/fonts can change layout after ScrollTrigger measured
-// its starts/ends — re-measure once everything is in.
-window.addEventListener("load", () => ScrollTrigger.refresh());
+// ScrollTrigger.refresh() is called inside maybeStart() below, right before
+// lenis.start() — guaranteeing correct pin measurements on every device and
+// visit type. The old bare window.load listener is replaced by the gate logic.
 
 // Grid hairlines are one *device* pixel wide (see --grid-line in
 // style.css): on a 1.5x display a 1px CSS line covers 1.5 device pixels
@@ -576,12 +576,43 @@ initScrollProgress(lenis);
 initEdgeNav(lenis);
 initYoutubeButton();
 
-// Intro overlay: one word switches the style. Shown once per session in
-// prod; after the first run (or on any return visit) the hero is simply
-// there. In dev, session memory is skipped entirely so every reload (F5)
-// replays it — otherwise iterating on the effect means clearing storage
-// by hand each time.
-const INTRO_MODE: IntroMode = "shatter";
+// ─────────────────────────────────────────────────────────────────────────────
+// Start gate: lenis.start() runs exactly once, only after BOTH:
+//   A) pageLoaded  — window.load has fired → ScrollTrigger.refresh() is safe
+//   B) introDone   — the loader/shatter animation finished (or skipped)
+//
+// This fixes the mobile race condition where wrong ScrollTrigger measurements
+// caused carousel cards to stay off-screen: on any device, first or return
+// visit, the user cannot scroll until the page is genuinely ready.
+// ─────────────────────────────────────────────────────────────────────────────
+let pageLoaded = document.readyState === "complete";
+let introDone = false;
+let started = false;
+
+function maybeStart() {
+  if (started || !pageLoaded || !introDone) return;
+  started = true;
+  ScrollTrigger.refresh();
+  lenis.start();
+}
+
+// Gate A — window.load
+if (pageLoaded) {
+  // Already loaded (e.g. script is deferred and fires late) — just mark it.
+  // maybeStart() is called after gate B is set up below.
+} else {
+  window.addEventListener("load", () => {
+    pageLoaded = true;
+    if (loaderHandle) loaderHandle.setProgress(1.0);
+    maybeStart();
+  }, { once: true });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Loader / intro overlay.
+// First visit (dev: always; prod: first session): SAOS loader with color fill.
+// Return visit: no animation, gate B opens immediately, gate A still required.
+// ─────────────────────────────────────────────────────────────────────────────
 const INTRO_SEEN_KEY = "saos-intro-seen";
 
 function shouldPlayIntro(): boolean {
@@ -596,25 +627,35 @@ function shouldPlayIntro(): boolean {
 const overlayEl = document.createElement("div");
 document.body.appendChild(overlayEl);
 
+let loaderHandle: { setProgress: (p: number) => void } | null = null;
+
+lenis.stop(); // held in all cases until maybeStart()
+
 if (shouldPlayIntro()) {
-  lenis.stop();
-  const destroy = mountSaosIntro(
-    overlayEl,
-    () => {
-      if (import.meta.env.PROD) {
-        try {
-          sessionStorage.setItem(INTRO_SEEN_KEY, "1");
-        } catch {
-          /* ignore */
-        }
-      }
-      destroy();
-      overlayEl.remove();
-      lenis.start();
-    },
-    INTRO_MODE,
-  );
+  loaderHandle = mountSaosLoader(overlayEl, () => {
+    // Shatter animation done — mark intro complete and store the flag.
+    if (import.meta.env.PROD) {
+      try { sessionStorage.setItem(INTRO_SEEN_KEY, "1"); } catch { /* blocked */ }
+    }
+    overlayEl.remove();
+    introDone = true;
+    maybeStart();
+  });
+
+  // Progress milestones — monotone, always forward.
+  // 0.2 is already implied by the loader mounting.
+  // 0.5 comes right here: all init* calls above have run synchronously.
+  loaderHandle.setProgress(0.5);
+
+  // 0.75 when fonts settle (may fire before or after window.load).
+  document.fonts.ready.then(() => loaderHandle?.setProgress(0.75));
+
+  // 1.0 from the window.load listener above (sets gate A + triggers shatter).
+  // If window.load already fired (pageLoaded === true), push it now.
+  if (pageLoaded) loaderHandle.setProgress(1.0);
 } else {
+  // Return visit: skip animation, just wait for window.load via gate A.
   overlayEl.remove();
-  lenis.start();
+  introDone = true;
+  maybeStart(); // opens if pageLoaded is also true already
 }
