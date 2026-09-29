@@ -55,7 +55,7 @@
 .facet-overlay {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 200; /* above the fixed header/footer (150), below the SAOS intro (1000) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,8 +70,10 @@
 
 .facet-overlay-panel {
   position: relative;
-  width: min(640px, 100%);
-  max-height: min(80vh, 720px);
+  /* Big on purpose — this is where a box's full text, screenshots and
+     live demos are actually read/seen. */
+  width: min(1200px, 100%);
+  max-height: 90vh;
   overflow-y: auto;
   padding: 2rem;
   border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
@@ -116,7 +118,7 @@
   margin: 0 2.5rem 1rem 0;
   font-family: var(--font-display);
   font-weight: normal;
-  font-size: 1.4rem;
+  font-size: clamp(1.4rem, 3vw, 2.25rem);
   color: var(--color-text);
 }
 
@@ -140,50 +142,33 @@
   color: var(--color-line);
 }
 
+/* A box's copied content, at overlay size: bigger text, full-width shots. */
+.facet-overlay-body .pcard-goal,
+.facet-overlay-body .pcard-claim,
+.facet-overlay-body .pcard-what,
 .facet-overlay-body .pcard-decisions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  list-style: none;
-}
-
-.facet-overlay-body .pcard-decisions li {
-  position: relative;
-  padding-left: 1rem;
-}
-
-.facet-overlay-body .pcard-decisions li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.6em;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--color-accent);
+  font-size: 1.125rem;
+  line-height: 1.65;
 }
 
 .facet-overlay-body .pcard-shots {
-  display: flex;
   flex-direction: column;
-  gap: 0.6rem;
 }
 
 .facet-overlay-body .pcard-shots img {
-  display: block;
   width: 100%;
-  border-radius: 4px;
+  max-height: none;
 }
 
-.facet-overlay-body .facet-link {
+.facet-link {
   color: var(--color-text);
   text-decoration: underline;
   text-underline-offset: 0.2em;
   transition: color var(--transition-hover);
 }
 
-.facet-overlay-body .facet-link:hover,
-.facet-overlay-body .facet-link:focus-visible {
+.facet-link:hover,
+.facet-link:focus-visible {
   color: var(--color-accent);
 }
 
@@ -194,7 +179,7 @@
 }
 
 .facet-overlay-body .pcard-widget {
-  min-height: 320px;
+  min-height: 60vh;
 }
 
 @media (max-width: 640px) {

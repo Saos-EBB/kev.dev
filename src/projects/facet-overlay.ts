@@ -36,17 +36,11 @@ function esc(s: string): string {
 // Feather-style outline icons, matching the stroke weight already used
 // for the contact section's GitHub/mail/phone icons (main.ts).
 const ICONS: Record<FacetKind, string> = {
-  code: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-6-6 6-6M15 6l6 6-6 6" /></svg>`,
-  screenshots: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="11" r="2" /><path d="m21 16-4.5-4.5a2 2 0 0 0-2.8 0L7 18" /></svg>`,
-  details: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 16v-6M12 8h.01" /></svg>`,
   "live-demo": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4" /></svg>`,
   b2b: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V8l8-5 8 5v13" /><path d="M9 21v-6h6v6M9 12h.01M15 12h.01M9 16h.01M15 16h.01" /></svg>`,
 };
 
 const LABELS: Record<FacetKind, string> = {
-  code: "Code",
-  screenshots: "Screenshots",
-  details: "Details",
   "live-demo": "Live-Demo",
   b2b: "B2B-Seite",
 };
@@ -54,8 +48,7 @@ const LABELS: Record<FacetKind, string> = {
 export function renderFacetTiles(card: ProjectCard): string {
   if (!card.facets?.length) return "";
   return `
-    <div class="pcard-part pcard-part--facets">
-      <div class="facet-tiles" role="group" aria-label="Mehr zu ${esc(card.title)}">
+    <div class="facet-tiles" role="group" aria-label="Mehr zu ${esc(card.title)}">
         ${card.facets
           .map(
             (kind) => `
@@ -66,7 +59,6 @@ export function renderFacetTiles(card: ProjectCard): string {
         `,
           )
           .join("")}
-      </div>
     </div>
   `;
 }
@@ -81,43 +73,6 @@ const findLink = (card: ProjectCard, test: RegExp) => card.links?.find((l) => te
 
 function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
   switch (kind) {
-    case "code": {
-      const gh = findLink(card, /github/i);
-      return {
-        title: "Code",
-        bodyHtml:
-          gh?.href
-            ? `<p><a class="facet-link" href="${esc(gh.href)}" target="_blank" rel="noopener noreferrer">${esc(gh.label)} ↗</a></p>`
-            : `<p class="pcard-open">[OFFEN: GitHub-Link fehlt]</p>`,
-      };
-    }
-    case "screenshots":
-      return {
-        title: "Screenshots",
-        bodyHtml: card.screenshots?.length
-          ? `<div class="pcard-shots">${card.screenshots
-              .map((s) => `<img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" />`)
-              .join("")}</div>`
-          : `<p class="pcard-open">[OFFEN: Screenshots fehlen]</p>`,
-      };
-    case "details": {
-      const sections = [
-        card.decisions?.length
-          ? `<div class="pcard-sec"><h4>Entscheidungen</h4><ul class="pcard-decisions">${card.decisions
-              .map((d) => `<li>${esc(d)}</li>`)
-              .join("")}</ul></div>`
-          : "",
-        card.challenge || card.origin
-          ? `<div class="pcard-sec">${card.challenge ? `<h4>Herausforderung</h4><p>${esc(card.challenge)}</p>` : ""}${
-              card.origin ? `<h4>So entstanden</h4><p>${esc(card.origin)}</p>` : ""
-            }</div>`
-          : "",
-      ].join("");
-      return {
-        title: "Details",
-        bodyHtml: sections || `<p class="pcard-open">[OFFEN: Entscheidungen/Herausforderung fehlen noch]</p>`,
-      };
-    }
     case "live-demo": {
       if (card.widget) {
         // bodyHtml unused here: the widget's persistent host is moved in
@@ -211,7 +166,7 @@ function ensureOverlay(lenis: Lenis): HTMLElement {
   el.hidden = true;
   el.innerHTML = `
     <div class="facet-overlay-backdrop" data-close></div>
-    <div class="facet-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="facet-overlay-title">
+    <div class="facet-overlay-panel" data-lenis-prevent role="dialog" aria-modal="true" aria-labelledby="facet-overlay-title">
       <button class="facet-overlay-close" type="button" data-close aria-label="Schließen">✕</button>
       <h3 class="facet-overlay-title" id="facet-overlay-title"></h3>
       <div class="facet-overlay-body"></div>
@@ -243,9 +198,37 @@ function ensureOverlay(lenis: Lenis): HTMLElement {
 export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis: Lenis) {
   const byId = new Map(cards.map((c) => [c.id, c]));
 
+  // opener is null for a tile clicked inside the open overlay (Screens
+  // box): it swaps the content, focus still returns to the card's button.
+  const show = (el: HTMLElement, opener: HTMLElement | null) => {
+    el.hidden = false;
+    lenis.stop();
+    if (opener) lastFocused = opener;
+    el.querySelector<HTMLElement>(".facet-overlay-close")!.focus();
+  };
+
+  // A box's expand button: the overlay shows that box's full content,
+  // copied from the card itself — nothing rendered twice from the data.
   root.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".pcard-expand");
+    if (!btn) return;
+    const boxEl = btn.closest<HTMLElement>(".pcard-part")!;
+    const card = byId.get(btn.closest<HTMLElement>(".pcard")?.dataset.card ?? "");
+    const el = ensureOverlay(lenis);
+    parkActiveWidget();
+    el.querySelector(".facet-overlay-title")!.textContent =
+      `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`;
+    el.querySelector(".facet-overlay-body")!.innerHTML = boxEl.querySelector(".pcard-box-body")!.innerHTML;
+    show(el, btn);
+  });
+
+  // Facet tiles live in the Screens box, so also inside the overlay once
+  // that box is expanded — listen on document, not just the section.
+  document.addEventListener("click", (e) => {
     const tile = (e.target as HTMLElement).closest<HTMLButtonElement>(".facet-tile");
     if (!tile) return;
+    const inOverlay = !!overlayEl?.contains(tile);
+    if (!inOverlay && !root.contains(tile)) return;
     const card = byId.get(tile.dataset.card ?? "");
     const kind = tile.dataset.facet as FacetKind | undefined;
     if (!card || !kind) return;
@@ -273,9 +256,6 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
       body.innerHTML = content.bodyHtml;
     }
 
-    el.hidden = false;
-    lenis.stop();
-    lastFocused = tile;
-    el.querySelector<HTMLElement>(".facet-overlay-close")!.focus();
+    show(el, inOverlay ? null : tile);
   });
 }

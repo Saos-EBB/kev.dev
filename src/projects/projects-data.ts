@@ -46,7 +46,7 @@ export const projectCards: ProjectCard[] = [
       "Die eigentliche Herausforderung war der Umfang: kompletter Fullstack solo in zwei Monaten. Die Basis — DB, Security, API — ist sauber und bewusst gebaut. Der Business-Logic-Layer darüber ist der experimentelle Teil: hier habe ich Ideen ausprobiert, statt auf Nummer sicher zu gehen — und dabei am meisten gelernt.",
     origin:
       "2 Wochen DB-Brainstorm (Row-Level Security, PostGIS) → Backend drauf (Postman war Gold beim API-Bauen) → Frontend obendrauf, Layouts und Verhalten durchgespielt, bis es saß.",
-    facets: ["details", "b2b", "live-demo", "code"],
+    facets: ["live-demo", "b2b"],
     open: [
       "Multi-Tenancy „angelegt/gedacht“ vs. voll umgesetzt — Wortwahl von Kevin bestätigen lassen",
     ],
@@ -76,7 +76,6 @@ export const projectCards: ProjectCard[] = [
     origin:
       "Angefangen als reiner Scraper (karriere.at zuerst, weil am leichtesten), dann AMS und devjobs dazu. Erst alles CLI; UI und Maskottchen kamen später, nachdem Freunde Potenzial gesehen haben. Aus derselben Logik ist nebenbei ein kleines CLI-Tool entstanden — Release Watcher, das Manga-Seiten auf neue Kapitel prüft, weil ich zu oft gespoilert wurde. Gleiche Idee, kleiner Rahmen.",
     screenshots: [{ src: "/projects/jobbot.jpeg", alt: "Tschobbo, der lila Slime-Blob mit Sonnenbrille" }],
-    facets: ["screenshots", "details", "code"],
     open: ["Screenshot der Mail-Client-UI fehlt noch — Kevin liefert"],
   },
   {
@@ -104,7 +103,7 @@ export const projectCards: ProjectCard[] = [
       label: "3D-Modelle, mit der Maus drehbar",
       mount: (el) => import("./widgets/renderer").then((m) => m.mount(el)),
     },
-    facets: ["live-demo", "code", "details"],
+    facets: ["live-demo"],
     open: [
       "Baldur's-Gate-Modelle fehlen im Widget — welche zwei? (duoOG ist 41 MB und nicht im Renderer-Repo)",
       "Ist craniumCut01 das Schädel-CT aus DICOM? Modell-Reihenfolge bestätigen",
@@ -126,7 +125,6 @@ export const projectCards: ProjectCard[] = [
     ],
     challenge:
       "Lange ein Render-Bug mit Darstellungsfehlern — Ursache war nicht das Script, sondern der Userscript-Manager unter Braves Umstieg von Manifest V2 auf V3. Der Wechsel von Violentmonkey zu ScriptCat hat's behoben, das mit MV3 sauber zurechtkam.",
-    facets: ["code", "details"],
     open: [
       "GitHub-Link für AniScript fehlt",
       "Brave/MV2→V3-Detail final gegenchecken",
@@ -141,7 +139,7 @@ export const projectCards: ProjectCard[] = [
       label: "Bootcamp-Projekte, direkt im Browser ausführbar",
       mount: (el) => import("./widgets/grundlagen").then((m) => m.mount(el)),
     },
-    facets: ["live-demo", "code", "details"],
+    facets: ["live-demo"],
     open: [
       "Info-Texte zu Mastermind, Personalverwaltung und Bibliothek",
       "Bibliothek-Quelle fehlt; Personalverwaltung hat kein main (kein Terminal)",

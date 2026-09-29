@@ -2,10 +2,12 @@
 // which optional fields they fill — a missing optional field means its
 // slot simply isn't rendered.
 //
-// The card is an always-visible Intro (goal/title/claim/what, then
-// tags/meta/open) plus a row of facet tiles that each open the shared
-// overlay (facet-overlay.ts) for decisions/challenge/origin, screenshots,
-// code link, live demo, or (YourBrand only) the B2B site.
+// The card is the project's title as a large lettering (it slides in with
+// the card, right under the fixed "PROJEKTE" headline) over four boxes,
+// each a teaser that opens in full in the shared overlay: Why? (goal/claim/what), Learned!
+// (challenge/origin), Screens (screenshots, plus facet tiles that open the
+// shared overlay in facet-overlay.ts for a live demo or the B2B site) and
+// Code + Architektur (GitHub, tags, decisions, meta).
 
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
@@ -25,11 +27,10 @@ export interface ProjectWidget {
   mount: (el: HTMLElement) => Promise<void | (() => void)> | void | (() => void);
 }
 
-// Facet tiles: each opens the same shared overlay (facet-overlay.ts),
-// populated from the card's existing fields (Code -> links' GitHub entry,
-// Screenshots -> screenshots, Details -> decisions/challenge/origin,
-// Live-Demo -> widget, B2B -> the YourBrand accessible-site link).
-export type FacetKind = "code" | "screenshots" | "details" | "live-demo" | "b2b";
+// Facet tiles (in the Screens box): each opens the same shared overlay
+// (facet-overlay.ts) — Live-Demo -> widget or the demo link, B2B -> the
+// YourBrand accessible-site link. Everything else is shown in the boxes.
+export type FacetKind = "live-demo" | "b2b";
 
 export interface ProjectCard {
   id: string;
@@ -52,9 +53,10 @@ export interface ProjectCard {
   facets?: FacetKind[];
 }
 
-// Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt"),
-// inline so it costs no extra row in the fixed-size bento boxes.
+// Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt").
 const label = (text: string) => `<span class="pcard-label">${text}</span>`;
+
+const open = (text: string) => `<p class="pcard-open">[OFFEN: ${esc(text)}]</p>`;
 
 function esc(s: string): string {
   return s
@@ -64,31 +66,65 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// One of the four boxes under the title. Never scrolls: text past the
+// box's fixed height fades out, and the expand button opens the whole box
+// in the shared overlay (facet-overlay.ts copies .pcard-box-body over).
+const box = (kind: string, heading: string, body: string) => `
+  <section class="pcard-part pcard-part--${kind}">
+    <h4 class="pcard-box-heading">${heading}</h4>
+    <div class="pcard-box-body">${body}</div>
+    <button class="pcard-expand" type="button" aria-label="${heading} aufklappen">Aufklappen ↗</button>
+  </section>
+`;
+
 export function renderProjectCard(card: ProjectCard): string {
+  const gh = card.links?.find((l) => /github/i.test(l.label));
+
+  const why = [
+    `<p class="pcard-goal">${label("Ziel")}${esc(card.learnGoal)}</p>`,
+    `<p class="pcard-claim">${label("Beweis")}${esc(card.claim)}</p>`,
+    card.what ? `<p class="pcard-what">${label("Projekt")}${esc(card.what)}</p>` : "",
+  ].join("");
+
+  const learned =
+    card.challenge || card.origin
+      ? [
+          card.challenge ? `<p class="pcard-what">${label("Herausforderung")}${esc(card.challenge)}</p>` : "",
+          card.origin ? `<p class="pcard-what">${label("So entstanden")}${esc(card.origin)}</p>` : "",
+        ].join("")
+      : open("Herausforderung/Learnings fehlen noch");
+
+  const screens = [
+    card.screenshots?.length
+      ? `<div class="pcard-shots">${card.screenshots
+          .map((s) => `<img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" />`)
+          .join("")}</div>`
+      : card.facets?.length
+        ? ""
+        : open("Screenshots fehlen"),
+    renderFacetTiles(card),
+  ].join("");
+
+  const code = [
+    gh?.href
+      ? `<p><a class="facet-link" href="${esc(gh.href)}" target="_blank" rel="noopener noreferrer">${esc(gh.label)} ↗</a></p>`
+      : open("GitHub-Link fehlt"),
+    card.tags?.length ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : "",
+    card.decisions?.length
+      ? `<ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`
+      : open("Architektur-Entscheidungen fehlen noch"),
+    card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : "",
+    card.open?.map(open).join("") ?? "",
+  ].join("");
+
   return `
     <article class="pcard" data-card="${esc(card.id)}">
-      <div class="pcard-part pcard-part--intro-top">
-        <p class="pcard-goal">${label("Ziel")}${esc(card.learnGoal)}</p>
-        <!-- Title stays here until Handoff B's scroll-synced heading ships; then it moves out. -->
-        <h3 class="pcard-title">${esc(card.title)}</h3>
-        ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
-        <p class="pcard-claim">${label("Beweis")}${esc(card.claim)}</p>
-        ${card.what ? `<p class="pcard-what">${label("Projekt")}${esc(card.what)}</p>` : ""}
-      </div>
-      ${
-        card.tags?.length || card.meta || card.open?.length
-          ? `<div class="pcard-part pcard-part--intro-bottom">
-        ${
-          card.tags?.length
-            ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`
-            : ""
-        }
-        ${card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : ""}
-        ${card.open?.map((o) => `<p class="pcard-open">[OFFEN: ${esc(o)}]</p>`).join("") ?? ""}
-      </div>`
-          : ""
-      }
-      ${renderFacetTiles(card)}
+      <h3 class="pcard-title">${esc(card.title)}</h3>
+      ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
+      ${box("why", "Why?", why)}
+      ${box("learned", "Learned!", learned)}
+      ${box("screens", "Screens", screens)}
+      ${box("code", "Code + Architektur", code)}
     </article>
   `;
 }
