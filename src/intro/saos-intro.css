@@ -32,6 +32,9 @@
 .saos-intro-fill {
   position: absolute;
   inset: 0;
+  /* Fallback accent color ensures the fill reveal is visible even before the
+     canvas image arrives (e.g. on slow mobile connections). */
+  background-color: var(--color-accent, #cd57a6);
   background-size: 100% 100%;
   /* clip-path set inline by mountSaosLoader — inset(top 0 0 0) where
      top shrinks from 100% → 0% as progress rises. */

@@ -260,16 +260,21 @@ export function mountSaosLoader(
   fillEl.style.clipPath = "inset(100% 0 0 0)";
   overlayEl.appendChild(fillEl);
 
-  // Draw both canvases once the display font is in.
-  document.fonts.load("100px 'Koeeya Trial'").finally(() => {
+  // Draw both canvases immediately (font may fall back to sans-serif until it
+  // arrives — that's fine). Redraw once fonts settle for the best quality.
+  // NOT gated on font loading: on mobile the font often arrives after
+  // window.load + 220ms, which is when the shatter fires. Without a prior
+  // draw the shards get empty backgroundImage and the screen just vanishes.
+  function drawCanvases() {
     if (destroyed) return;
     grayStill.style.backgroundImage =
       `url(${drawStill(w, h, { gray: true, hint: "LADEN…" })})`;
     fillEl.style.backgroundImage =
       `url(${drawStill(w, h, { hint: "LADEN…" })})`;
-    // Show whatever progress was already set while fonts were loading.
     applyFill(currentProgress);
-  });
+  }
+  drawCanvases();
+  document.fonts.ready.then(drawCanvases);
 
   // Escape / Space = emergency skip in case loading hangs.
   function onKeyDown(e: KeyboardEvent) {
@@ -291,7 +296,9 @@ export function mountSaosLoader(
     shatterFired = true;
     document.removeEventListener("keydown", onKeyDown);
 
-    const image = fillEl.style.backgroundImage; // fully colored still
+    // Prefer the colored fill; fall back to the gray still in the rare case
+    // the fill canvas wasn't drawn yet (e.g. very early shatter trigger).
+    const image = fillEl.style.backgroundImage || grayStill.style.backgroundImage;
     const shards = SHARDS.map((poly, i) => {
       const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
       const cy = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;

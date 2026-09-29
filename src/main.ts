@@ -593,7 +593,9 @@ function maybeStart() {
   if (started || !pageLoaded || !introDone) return;
   started = true;
   ScrollTrigger.refresh();
-  lenis.start();
+  // Give ScrollTrigger one frame to complete layout measurements before
+  // Lenis starts processing scroll events (prevents stutter from stale pins).
+  requestAnimationFrame(() => lenis.start());
 }
 
 // Gate A — window.load
