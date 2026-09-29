@@ -25,6 +25,20 @@
   background-size: 100% 100%;
 }
 
+/* Loader mode: colored fill layer on top of the gray still. clip-path
+   reveals it bottom-to-top as progress rises from 0 → 1. The transition
+   gives the fill a smooth ease-out motion between milestones; at 100%
+   the fill is complete and shatter fires automatically. */
+.saos-intro-fill {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  /* clip-path set inline by mountSaosLoader — inset(top 0 0 0) where
+     top shrinks from 100% → 0% as progress rises. */
+  will-change: clip-path;
+  transition: clip-path 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 .saos-intro-shard {
   position: absolute;
   inset: 0;

@@ -49,9 +49,18 @@ function shardNoise(i: number, salt: number): number {
   return v - Math.floor(v); // 0..1
 }
 
+interface StillOptions {
+  /** Draw the wordmark in muted grey instead of accent (loader: not-yet-ready state). */
+  gray?: boolean;
+  /** Hint text below the wordmark. Default: "KLICKEN". */
+  hint?: string;
+}
+
 // The still: background, faint grid, wordmark and a hint, drawn on a canvas
-// so we can grab it as one image.
-function drawStill(width: number, height: number): string {
+// so we can grab it as one image. gray=true is used by the loader to draw
+// the "not yet loaded" version; the colored version is the same call without
+// the flag (same data-URL reused for both the classic intro and the fill layer).
+function drawStill(width: number, height: number, opts: StillOptions = {}): string {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * dpr);
@@ -69,7 +78,7 @@ function drawStill(width: number, height: number): string {
   ctx.fillRect(0, 0, width, height);
 
   ctx.strokeStyle = accent;
-  ctx.globalAlpha = 0.12;
+  ctx.globalAlpha = opts.gray ? 0.05 : 0.12;
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = 0; x <= width; x += cell) {
@@ -85,14 +94,15 @@ function drawStill(width: number, height: number): string {
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = accent;
+  // Gray mode: very dim wordmark so the colored fill layer reads clearly on top.
+  ctx.fillStyle = opts.gray ? "#2e2c36" : accent;
   const size = Math.min(width * 0.32, height * 0.4);
   ctx.font = `${size}px ${display}`;
   ctx.fillText("SAOS", width / 2, (height * IMPACT.y) / 100);
 
-  ctx.fillStyle = muted;
+  ctx.fillStyle = opts.gray ? "#1e1c24" : muted;
   ctx.font = `${Math.max(12, Math.min(width * 0.018, 16))}px ${display}`;
-  ctx.fillText("KLICKEN", width / 2, height * 0.86);
+  ctx.fillText(opts.hint ?? "KLICKEN", width / 2, height * 0.86);
 
   return canvas.toDataURL();
 }
@@ -119,7 +129,7 @@ export function mountSaosIntro(
   // The wordmark uses the display font — draw the still only once it's in.
   document.fonts.load("100px 'Koeeya Trial'").finally(() => {
     if (destroyed) return;
-    still.style.backgroundImage = `url(${drawStill(window.innerWidth, window.innerHeight)})`;
+    still.style.backgroundImage = `url(${drawStill(window.innerWidth, window.innerHeight, {})})`;
   });
 
   function finish() {
@@ -211,4 +221,121 @@ export function mountSaosIntro(
     overlayEl.removeAttribute("aria-label");
     overlayEl.style.transform = "";
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Loader mode: the intro stays until the page is genuinely ready, auto-shatters
+// at progress 1.0 instead of waiting for a click. Shows loading progress via a
+// bottom-to-top color fill over a gray wordmark.
+//
+// Usage:
+//   const { setProgress } = mountSaosLoader(overlayEl, onShatterDone);
+//   setProgress(0.35); // fonts ready
+//   setProgress(1.0);  // triggers auto-shatter after a short settle
+// ─────────────────────────────────────────────────────────────────────────────
+export function mountSaosLoader(
+  overlayEl: HTMLElement,
+  onShatterDone: () => void,
+): { setProgress: (p: number) => void } {
+  let destroyed = false;
+  let shatterFired = false;
+  let currentProgress = 0;
+  let settleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  overlayEl.classList.add("saos-intro");
+  // Not .is-active — loader is not interactive (no click to dismiss).
+
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  // Gray base layer — always visible.
+  const grayStill = document.createElement("div");
+  grayStill.className = "saos-intro-still";
+  overlayEl.appendChild(grayStill);
+
+  // Colored fill layer — revealed bottom-to-top as progress rises.
+  const fillEl = document.createElement("div");
+  fillEl.className = "saos-intro-fill";
+  // Start fully clipped (top inset = 100%): nothing visible yet.
+  fillEl.style.clipPath = "inset(100% 0 0 0)";
+  overlayEl.appendChild(fillEl);
+
+  // Draw both canvases once the display font is in.
+  document.fonts.load("100px 'Koeeya Trial'").finally(() => {
+    if (destroyed) return;
+    grayStill.style.backgroundImage =
+      `url(${drawStill(w, h, { gray: true, hint: "LADEN…" })})`;
+    fillEl.style.backgroundImage =
+      `url(${drawStill(w, h, { hint: "LADEN…" })})`;
+    // Show whatever progress was already set while fonts were loading.
+    applyFill(currentProgress);
+  });
+
+  // Escape / Space = emergency skip in case loading hangs.
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape" || e.key === " ") {
+      e.preventDefault();
+      triggerShatter();
+    }
+  }
+  document.addEventListener("keydown", onKeyDown);
+
+  function applyFill(p: number) {
+    // top inset shrinks from 100% → 0% as p rises from 0 → 1.
+    const top = Math.round((1 - p) * 100);
+    fillEl.style.clipPath = `inset(${top}% 0 0 0)`;
+  }
+
+  function triggerShatter() {
+    if (shatterFired || destroyed) return;
+    shatterFired = true;
+    document.removeEventListener("keydown", onKeyDown);
+
+    const image = fillEl.style.backgroundImage; // fully colored still
+    const shards = SHARDS.map((poly, i) => {
+      const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
+      const cy = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
+      const el = document.createElement("div");
+      el.className = "saos-intro-shard";
+      el.style.backgroundImage = image;
+      el.style.clipPath = `polygon(${poly.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
+      el.style.transformOrigin = `${cx}% ${cy}%`;
+      overlayEl.appendChild(el);
+      return { el, i, cx, cy };
+    });
+    // Remove still layers — shards carry the image now.
+    grayStill.remove();
+    fillEl.remove();
+
+    const tl = gsap.timeline({ onComplete: () => { if (!destroyed) onShatterDone(); } });
+
+    for (const { el, i, cx, cy } of shards) {
+      const dx = ((cx - IMPACT.x) / 100) * w;
+      const dy = ((cy - IMPACT.y) / 100) * h;
+      const dist = Math.hypot(cx - IMPACT.x, cy - IMPACT.y);
+      const start = dist * 0.006 + shardNoise(i, 1) * 0.08;
+      const duration = 1.1 + shardNoise(i, 2) * 0.5;
+      const spin = (shardNoise(i, 3) - 0.5) * 2;
+      tl.to(el, { y: h * (0.9 + shardNoise(i, 4) * 0.5) + dy * 0.3, duration, ease: "power2.in" }, start);
+      tl.to(el, { x: dx * 0.5 + spin * 60, duration, ease: "power1.out" }, start);
+      tl.to(el, { rotation: spin * 70, scale: 0.85, duration, ease: "power1.in" }, start);
+      tl.to(el, { opacity: 0, duration: duration * 0.5, ease: "power1.in" }, start + duration * 0.5);
+    }
+  }
+
+  function setProgress(p: number) {
+    if (destroyed || shatterFired) return;
+    // Monotone: progress only ever goes forward.
+    if (p <= currentProgress) return;
+    currentProgress = p;
+    applyFill(p);
+
+    if (p >= 1) {
+      // Brief settle so the fill transition completes visually before shatter.
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(triggerShatter, 220);
+    }
+  }
+
+  return { setProgress };
 }
