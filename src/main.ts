@@ -32,11 +32,14 @@ gsap.registerPlugin(ScrollTrigger);
 // driven and CSS-only. This class is what actually lets style.css's
 // reduced-motion fallback rules be switched off too (see the
 // `:root:not(.force-motion)` scoping there).
-// Always on in `npm run dev` (import.meta.env.DEV) so local testing
-// never needs the query param; production builds only force it via an
-// explicit `?motion` in the URL, so real visitors' OS setting is still
-// respected.
+// FORCE_MOTION_EVERYWHERE: on for now — every visitor gets the full
+// motion, the OS setting is ignored in production too. Set it to false to
+// go back to: always on in `npm run dev` (import.meta.env.DEV), and in
+// production only via an explicit `?motion` in the URL, so real
+// visitors' OS setting is respected.
+const FORCE_MOTION_EVERYWHERE = true;
 if (
+  FORCE_MOTION_EVERYWHERE ||
   import.meta.env.DEV ||
   new URLSearchParams(window.location.search).has("motion")
 ) {

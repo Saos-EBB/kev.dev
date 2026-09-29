@@ -5,25 +5,78 @@
   top: 0;
   left: 0;
   will-change: transform, opacity;
+  /* Title on top, then the four boxes as a 2 x 2 grid. The card itself
+     has no frame — each box is its own. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto repeat(2, clamp(10rem, 33vh, 18rem));
+  gap: 0.75rem;
+  width: min(92vw, 960px);
+  font-family: var(--font-read);
+  --font-mono: var(--font-read);
+}
+
+.pcard-part {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  width: clamp(320px, 42vw, 640px);
-  font-family: var(--font-read);
-  --font-mono: var(--font-read);
-  padding: 1.25rem;
+  min-height: 0;
+  padding: 1rem;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
   border-radius: 8px;
   background: var(--projects-bg);
   box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
 }
 
-/* The parts are layout hooks only: by default they don't generate a box,
-   so their children stay direct flex items of .pcard (one frame, one gap)
-   — the desktop bento gives them boxes of their own. */
-.pcard-part,
-.pcard-sec {
-  display: contents;
+/* The teaser: whatever doesn't fit fades out at the bottom edge — the
+   full text is one click away (.pcard-expand). */
+.pcard-box-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+
+.pcard-expand {
+  flex-shrink: 0;
+  align-self: flex-end;
+  min-height: 44px;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.pcard-expand:hover,
+.pcard-expand:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.pcard-expand:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.pcard-box-heading {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-line); /* --color-accent is too dark to read here */
 }
 
 .pcard-goal {
@@ -44,16 +97,22 @@
   color: var(--color-line); /* --color-accent is too dark to read here */
 }
 
+/* The project's name as lettering under the "PROJEKTE" headline — same
+   display font, smaller, spans both columns and slides in with the card. */
 .pcard-title {
+  grid-column: 1 / -1;
+  align-self: center;
   font-family: var(--font-display);
-  font-size: 1.5rem;
-  line-height: 1.15;
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  line-height: 1;
   font-weight: normal;
+  text-align: center;
   color: var(--color-text);
 }
 
 .pcard-status {
-  align-self: flex-start;
+  grid-column: 1 / -1;
+  justify-self: center;
   font-family: var(--font-mono);
   font-size: 0.65rem;
   padding: 0.15rem 0.5rem;
@@ -103,64 +162,87 @@
   color: var(--color-accent);
 }
 
+.pcard-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.pcard-decisions li {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.pcard-decisions li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.pcard-shots {
+  display: flex;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.pcard-shots img {
+  display: block;
+  max-width: 100%;
+  max-height: 10rem;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
 /* Desktop bento. 26 * --grid-cell (48px) = 1248px: 24 cells of card plus
    a cell of margin per side. Media queries can't read custom properties,
    so the number is spelled out — keep it in sync with --grid-cell and
    BENTO_MIN_WIDTH_PX in carousel.ts.
 
-   The card becomes a 24 x 10 grid of --grid-cell tracks; empty tracks
-   (col 10/18, row 6) are the gaps. Every size and position is a whole
-   number of cells, so with the background grid anchored on the viewport
-   center (style.css) the part edges sit on grid lines. */
+   The card becomes a 24 x 13 grid of --grid-cell tracks: title in rows
+   1-2, then two rows of boxes (5 cells high) with a one-cell gap row and
+   a two-cell gap column between them. Every size and position is a whole number of cells, so
+   with the background grid anchored on the viewport center (style.css)
+   the box edges sit on grid lines. */
 @media (min-width: 1248px) {
   .pcard {
-    display: grid;
     grid-template-columns: repeat(24, var(--grid-cell));
-    grid-template-rows: repeat(10, var(--grid-cell));
+    grid-template-rows: repeat(13, var(--grid-cell));
     gap: 0;
     width: calc(24 * var(--grid-cell));
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
   }
 
-  .pcard-part {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    min-height: 0;
-    padding: 1rem;
-    overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
-    border-radius: 8px;
-    background: var(--projects-bg);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-shadow) 35%, transparent);
+  .pcard-title {
+    grid-area: 1 / 1 / 3 / 25;
   }
-
-  /* Intro: goal/title/claim/what merges the old head+what boxes into one;
-     tags/meta/open merges the old facts+links boxes into one. Facets
-     replace the old single "more" toggle in the same footprint. Same
-     grid as before, three boxes instead of five. */
-  .pcard-part--intro-top {
-    grid-area: 1 / 1 / 6 / 25;
-    gap: 0.4rem;
-    padding: 0.85rem 1rem;
+  .pcard-part--why {
+    grid-area: 3 / 1 / 8 / 12;
   }
-  .pcard-part--facets {
-    grid-area: 7 / 1 / 11 / 10;
-    justify-content: center;
+  .pcard-part--learned {
+    grid-area: 3 / 14 / 8 / 25;
   }
-  .pcard-part--intro-bottom {
-    grid-area: 7 / 11 / 11 / 25;
+  .pcard-part--screens {
+    grid-area: 9 / 1 / 14 / 12;
+  }
+  .pcard-part--code {
+    grid-area: 9 / 14 / 14 / 25;
   }
 }
 
 @media (max-width: 640px) {
   .pcard {
-    width: min(92vw, 420px);
-    padding: 1rem;
+    gap: 0.5rem;
+  }
+  .pcard-part {
+    padding: 0.75rem;
   }
 }
 
@@ -171,6 +253,5 @@
     width: 100%;
     transform: none !important;
     opacity: 1 !important;
-    box-shadow: none;
   }
 }
