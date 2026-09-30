@@ -10,6 +10,7 @@ import { cvSections, trackElevatorPerspective } from "./about/elevator";
 import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
 import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
+import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
 import { renderProjectCard } from "./projects/project-cards";
@@ -211,6 +212,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div class="contact-bg-grid" aria-hidden="true"></div>
     <div class="contact-inner">
       <h2 class="contact-headline">Let's talk now</h2>
+      <div class="contact-raygun" hidden></div>
       <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
       <ul class="contact-icons">
         <li>
@@ -245,8 +247,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <nav class="footer-links" aria-label="Rechtliches">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>
-        <a href="/impressum.html">Impressum</a>
-        <a href="/datenschutz.html">Datenschutz</a>
+        <a href="#impressum">Impressum</a>
+        <a href="#datenschutz">Datenschutz</a>
       </nav>
     </div>
   </footer>
@@ -583,6 +585,7 @@ initScrollProgress(lenis);
 initEdgeNav(lenis);
 initYoutubeButton();
 initThemeToggle();
+initLegalOverlay(lenis);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Start gate: lenis.start() runs exactly once, only after BOTH:
@@ -649,6 +652,7 @@ if (shouldPlayIntro()) {
     }
     overlayEl.remove();
     introDone = true;
+    cloth.startAutoPulls();
     maybeStart();
   });
 
@@ -667,5 +671,6 @@ if (shouldPlayIntro()) {
   // Return visit: skip animation, just wait for window.load via gate A.
   overlayEl.remove();
   introDone = true;
+  cloth.startAutoPulls();
   maybeStart(); // opens if pageLoaded is also true already
 }
