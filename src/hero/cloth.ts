@@ -9,6 +9,25 @@
 import { TIMINGS } from "../timings";
 import { COLORS, hexToRgb } from "../colors";
 import { DRIFT_ENABLED, driftOffset } from "./cloth-drift"; // cloth-drift
+import {
+  PULLS_ENABLED,
+  INTRO_DELAY_MS,
+  INTRO_PULL_MS,
+  INTRO_HOLD_MS,
+  INTRO_STRENGTH,
+  IDLE_DELAY_MIN_MS,
+  IDLE_DELAY_MAX_MS,
+  IDLE_PULL_MS,
+  IDLE_HOLD_MS,
+  IDLE_STRENGTH,
+  IDLE_DISTANCE_MIN,
+  IDLE_DISTANCE_MAX,
+  rand,
+  easeOutCubic,
+} from "./cloth-pulls"; // cloth-pulls
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
 
 const SPACING = 23; // px between resting nodes
 const MAX_COLS = 220;
@@ -143,6 +162,21 @@ export class Cloth {
   // either the click-drag grab or the nearest node under a plain hover.
   private activeIndex = -1;
 
+  // Scripted grab-drag-release, timer-driven instead of pointer-driven —
+  // see cloth-pulls.ts. Takes priority over ambient hover in update()
+  // below, but a real click-drag (pointerDown) always wins over it.
+  private autoPull: {
+    nodeIndex: number;
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    startTime: number;
+    pullMs: number;
+    holdMs: number;
+    strength: number;
+  } | null = null; // cloth-pulls
+
   private readonly reducedMotion: boolean;
 
   constructor(
@@ -202,6 +236,111 @@ export class Cloth {
     document.addEventListener("pointerout", this.handlePointerOut);
 
     this.loop();
+  }
+
+  // Public: kicks off the scripted intro pull + the recurring idle pulls
+  // (see cloth-pulls.ts). Call once the screen above the hero is actually
+  // out of the way — the SAOS intro/loader overlay's shatter has finished
+  // (or was skipped on a return visit) — not from the constructor, since
+  // the cloth is built and starts looping well before that overlay clears
+  // and the gesture would otherwise play out hidden behind it. cloth-pulls
+  startAutoPulls() {
+    if (this.reducedMotion || !PULLS_ENABLED) return;
+    setTimeout(() => this.startIntroPull(), INTRO_DELAY_MS);
+    this.scheduleIdlePull(
+      INTRO_DELAY_MS +
+        INTRO_PULL_MS +
+        INTRO_HOLD_MS +
+        rand(IDLE_DELAY_MIN_MS, IDLE_DELAY_MAX_MS),
+    );
+  }
+
+  // Nearest node to (x, y) by its resting position, not its current
+  // (possibly mid-animation) one — used to pick where a scripted pull
+  // grabs from, same idea as the pointer grab search in
+  // handlePointerDown but keyed off rest position instead of live
+  // position, and with no radius cap since the caller already knows the
+  // point is meaningful. cloth-pulls
+  private nearestRestNodeIndex(x: number, y: number): number {
+    let nearest = -1;
+    let nearestDistSq = Infinity;
+    for (let i = 0; i < this.nodes.length; i++) {
+      const n = this.nodes[i];
+      const dx = n.ox - x;
+      const dy = n.oy - y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq;
+        nearest = i;
+      }
+    }
+    return nearest;
+  }
+
+  // The once-per-load intro gesture: grabs the point between the name's
+  // first letter and the "J" of the subtitle (both sit near the top-left
+  // of textRect, the shared box the two lines share) and hauls it up to
+  // the hero's opposite top-right corner. cloth-pulls
+  private startIntroPull() {
+    if (this.nodes.length === 0 || this.textRect.width <= 0) return;
+    const grabX = this.textRect.x + 8;
+    const grabY = this.textRect.y + this.textRect.height * 0.5;
+    const nodeIndex = this.nearestRestNodeIndex(grabX, grabY);
+    if (nodeIndex === -1) return;
+    const node = this.nodes[nodeIndex];
+
+    this.autoPull = {
+      nodeIndex,
+      fromX: node.x,
+      fromY: node.y,
+      toX: this.width * 0.88,
+      toY: this.height * 0.12,
+      startTime: performance.now(),
+      pullMs: INTRO_PULL_MS,
+      holdMs: INTRO_HOLD_MS,
+      strength: INTRO_STRENGTH,
+    };
+  }
+
+  // Repeating ambient gesture: grabs a node resting outside the visible
+  // card and yanks it hard in a random direction — the grab point itself
+  // never renders (canvas clips to its own box), only the tension it
+  // puts through the mesh at the edge of the frame. Reschedules itself
+  // after every pull, indefinitely. cloth-pulls
+  private scheduleIdlePull(delayMs: number) {
+    setTimeout(() => {
+      this.startIdlePull();
+      this.scheduleIdlePull(rand(IDLE_DELAY_MIN_MS, IDLE_DELAY_MAX_MS));
+    }, delayMs);
+  }
+
+  private startIdlePull() {
+    if (this.nodes.length === 0) return;
+    const offscreen: number[] = [];
+    for (let i = 0; i < this.nodes.length; i++) {
+      const n = this.nodes[i];
+      if (n.ox < 0 || n.ox > this.width || n.oy < 0 || n.oy > this.height) {
+        offscreen.push(i);
+      }
+    }
+    if (offscreen.length === 0) return;
+    const nodeIndex = offscreen[Math.floor(Math.random() * offscreen.length)];
+    const node = this.nodes[nodeIndex];
+
+    const angle = rand(0, Math.PI * 2);
+    const distance = rand(IDLE_DISTANCE_MIN, IDLE_DISTANCE_MAX);
+
+    this.autoPull = {
+      nodeIndex,
+      fromX: node.x,
+      fromY: node.y,
+      toX: node.x + Math.cos(angle) * distance,
+      toY: node.y + Math.sin(angle) * distance,
+      startTime: performance.now(),
+      pullMs: IDLE_PULL_MS,
+      holdMs: IDLE_HOLD_MS,
+      strength: IDLE_STRENGTH,
+    };
   }
 
   private handleResize = () => {
@@ -364,8 +503,12 @@ export class Cloth {
 
   private setPointer(e: PointerEvent) {
     const rect = this.canvas.getBoundingClientRect();
-    this.pointerX = e.clientX - rect.left;
-    this.pointerY = e.clientY - rect.top;
+    // Clamped to the canvas's own box (== the visible hero-frame card) so
+    // a node being hovered/dragged is never pulled toward a point outside
+    // it — the mesh can still bleed over the nav/name inside the card
+    // (see #cloth-canvas in style.css), just not past the card's own edge.
+    this.pointerX = clamp(e.clientX - rect.left, 0, this.width);
+    this.pointerY = clamp(e.clientY - rect.top, 0, this.height);
     this.pointerActive = true;
   }
 
@@ -383,6 +526,17 @@ export class Cloth {
     // pointer here first).
     const target = e.target;
     if (target instanceof Element && target.closest("a, button, .saos-intro"))
+      return;
+
+    // Only allow starting a grab when the press actually lands on the
+    // visible card — window-level listeners otherwise mean a click well
+    // outside the hero (in the page's own margin, say) could still yank
+    // the nearest node in just because it's within GRAB_RADIUS in raw
+    // pixel distance, even though nothing cloth-like is under the cursor.
+    const rect = this.canvas.getBoundingClientRect();
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
+    if (rawX < 0 || rawX > this.width || rawY < 0 || rawY > this.height)
       return;
 
     this.setPointer(e);
@@ -454,15 +608,28 @@ export class Cloth {
       node.y += (node.oy + this.drift.y - node.y) * ANCHOR_K;
     }
 
-    // Pick which single node the pointer currently affects: whatever's
-    // pinned by an active click-drag, or — if just hovering — the
-    // nearest node in reach, re-picked every frame so it trails the
-    // cursor instead of latching onto one spot.
+    // Pick which single node this frame pins/pulls, and toward what
+    // point: a real click-drag always wins, then a scripted auto-pull
+    // (see cloth-pulls.ts), then — if just hovering — the nearest node
+    // in reach, re-picked every frame so it trails the cursor instead of
+    // latching onto one spot.
     this.activeIndex = -1;
     let pullStrength = 0;
+    let targetX = 0;
+    let targetY = 0;
     if (this.pointerDown && this.grabbedIndex !== -1) {
       this.activeIndex = this.grabbedIndex;
       pullStrength = DRAG_LERP;
+      targetX = this.pointerX;
+      targetY = this.pointerY;
+    } else if (this.autoPull) { // cloth-pulls
+      const elapsed = performance.now() - this.autoPull.startTime;
+      const t = easeOutCubic(clamp(elapsed / this.autoPull.pullMs, 0, 1));
+      this.activeIndex = this.autoPull.nodeIndex;
+      pullStrength = this.autoPull.strength;
+      targetX = this.autoPull.fromX + (this.autoPull.toX - this.autoPull.fromX) * t;
+      targetY = this.autoPull.fromY + (this.autoPull.toY - this.autoPull.fromY) * t;
+      if (elapsed > this.autoPull.pullMs + this.autoPull.holdMs) this.autoPull = null;
     } else if (this.pointerActive) {
       let nearest = -1;
       let nearestDistSq = HOVER_RADIUS_SQ;
@@ -478,12 +645,14 @@ export class Cloth {
       }
       this.activeIndex = nearest;
       pullStrength = HOVER_PULL;
+      targetX = this.pointerX;
+      targetY = this.pointerY;
     }
 
     if (this.activeIndex !== -1) {
       const node = this.nodes[this.activeIndex];
-      node.x += (this.pointerX - node.x) * pullStrength;
-      node.y += (this.pointerY - node.y) * pullStrength;
+      node.x += (targetX - node.x) * pullStrength;
+      node.y += (targetY - node.y) * pullStrength;
     }
 
     for (let iter = 0; iter < ITERATIONS; iter++) {
