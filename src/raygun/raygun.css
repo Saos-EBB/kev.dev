@@ -1,0 +1,76 @@
+/* Reusable raygun contact button — see raygun.ts. The button itself is a
+   normal document-flow element (position depends on variant below); the
+   fan-out icons and beam canvas are always fixed-position overlays so
+   they can fan out over the whole viewport regardless of where the
+   button lives on the page. */
+
+.raygun-btn {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+  pointer-events: auto;
+}
+
+.raygun-btn img {
+  display: block;
+}
+
+.raygun-btn--fixed {
+  position: fixed;
+  /* --raygun-footer-clear: the legal pages' sticky .footer's live height,
+     set in raygun.ts via ResizeObserver — 0px wherever no .footer exists. */
+  bottom: calc(1.2rem + var(--raygun-footer-clear, 0px));
+  left: 1.2rem;
+  z-index: 500;
+}
+
+.raygun-btn--inline {
+  margin: 0 auto;
+}
+
+.raygun-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 400;
+  pointer-events: none;
+}
+
+.raygun-icon {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+  color: var(--color-text-muted);
+  opacity: 0;
+  z-index: 450;
+  transition: color var(--transition-hover);
+}
+
+.raygun-icon:hover,
+.raygun-icon:focus-visible {
+  color: var(--color-line);
+}
+
+.raygun-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .raygun-btn.raygun-charging {
+    animation: none !important;
+  }
+
+  :root:not(.force-motion) .raygun-icon {
+    transition: none !important;
+  }
+}

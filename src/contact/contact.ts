@@ -22,6 +22,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
 import { applyMouseForce, makeBody, stepPhysics, type PhysicsBody } from "./contact-physics";
+import { mountRaygunButton } from "../raygun/raygun";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -104,6 +105,24 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     section.querySelectorAll<HTMLElement>(".contact-icons li"),
   );
   if (!headline || !mail || icons.length === 0) return;
+
+  // Raygun button — hidden until the headline has shattered (startBreak),
+  // hidden again once it's tweened back to rest (returnHome). Mounted lazily
+  // on the first reveal so the audio/canvas overlay never loads for a
+  // visitor who never clicks the headline.
+  const raygunMount = section.querySelector<HTMLElement>(".contact-raygun");
+  let raygunMounted = false;
+  function revealRaygun() {
+    if (!raygunMount) return;
+    raygunMount.hidden = false;
+    if (!raygunMounted) {
+      raygunMounted = true;
+      mountRaygunButton(raygunMount, { variant: "inline" });
+    }
+  }
+  function hideRaygun() {
+    if (raygunMount) raygunMount.hidden = true;
+  }
 
   const forceMotion = document.documentElement.classList.contains(
     "force-motion",
@@ -337,6 +356,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     stopShake();
     stopIdle();
     isBroken = true;
+    revealRaygun();
 
     const floorY = window.innerHeight - TIMING.break.floorPad;
     physicsBodies = physicsElements.map((el) =>
@@ -386,6 +406,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
       onComplete: () => {
         isBroken = false;
         isReturning = false;
+        hideRaygun();
       },
     });
   }

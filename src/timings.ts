@@ -143,16 +143,18 @@ export const TIMINGS = {
       rotateAmplitude: 3, // deg
     },
 
-    // Click-to-shatter — src/contact/contact-physics.ts. 3 clicks on the
+    // Click-to-shatter — src/contact/contact-physics.ts. One click on the
     // headline (not the mail link/icons, see contact.ts's isBreakTarget)
-    // build up a shake, the 3rd drops everything into gravity/collision
-    // physics; scrolling back away tweens it back to rest. Physics constants
-    // ported as-is from the old SAOS.ME site's SaosAnimation.js — tuned
-    // there for similarly letter-sized elements, so they carry over as
-    // reasonable starting values.
+    // drops everything into gravity/collision physics; scrolling back away
+    // tweens it back to rest. Physics constants ported as-is from the old
+    // SAOS.ME site's SaosAnimation.js — tuned there for similarly
+    // letter-sized elements, so they carry over as reasonable starting
+    // values. The shatter is also what reveals the raygun button under the
+    // headline (see contact.ts's startBreak/returnHome) — limit stays at 1
+    // click so that reveal is immediate.
     shake: {
-      limit: 3, // clicks until break — matches SaosAnimation.js's SHAKE_LIMIT
-      maxIntensity: 40, // px, jitter amplitude cap on the 3rd/strongest shake
+      limit: 1, // clicks until break
+      maxIntensity: 40, // px, jitter amplitude cap on the strongest shake
     },
 
     break: {
