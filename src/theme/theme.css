@@ -1,0 +1,41 @@
+/* Header light/dark toggle — same circular-icon-button shape as
+   .music-button (src/music/music.css), just sun/moon instead of play/pause. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.theme-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+/* Dark mode (default): sun shows, offering to switch to light. */
+.theme-icon--moon {
+  display: none;
+}
+
+/* Light mode: moon shows, offering to switch back to dark. */
+:root[data-theme="light"] .theme-icon--sun {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-icon--moon {
+  display: block;
+}

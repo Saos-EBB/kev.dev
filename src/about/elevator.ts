@@ -7,6 +7,10 @@
 // geometry lines up, the browser's own perspective projection draws the
 // taper toward the vanishing point.
 
+import type Lenis from "lenis";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { viewportHeight } from "../viewport";
+
 // The CV facts — sourced from b2b-cv's lib/portfolio/career.ts (CAREER,
 // EDUCATION, SKILLS, LANGUAGES). Rendered as labeled sections after the
 // blocks A1–A4 (about-blocks.ts), on the same backwall overlay.
@@ -15,38 +19,42 @@ export interface CvSection {
   items: string[];
 }
 
+// A highlighted term per row, same accent treatment as the story/work text
+// (about-blocks.ts) — the role/category up front, details in plain text.
+const hl = (s: string) => `<span class="about-highlight">${s}</span>`;
+
 export const cvSections: CvSection[] = [
   {
     heading: "Werdegang",
     items: [
-      "Junior Developer — Full-Stack-Bootcamp · Talent Hub – IT Ibis Acam, Linz · Okt 2025 – Jun 2026",
-      "Sanierung Wohnhaus (Familienprojekt) · Linz-Ebelsberg · Jun 2023 – Okt 2025",
-      "Administrator · BBU GmbH, Linz · Jan 2022 – Jun 2023",
-      "Zivildiener · BBU GmbH, Linz · Mär 2021 – Dez 2021",
-      "Auslandsaufenthalt · Schwerpunkt Europa · Sep 2019 – Feb 2021",
-      "Sonnenschutztechniker · SUNSTAR, Leonding · Jul 2017 – Apr 2019",
-      "Bodenleger · Bodendesign Mittermayer, Linz · Sep 2012 – Mai 2017",
+      `${hl("Junior Developer")} — Full-Stack-Bootcamp · Talent Hub – IT Ibis Acam, Linz · Okt 2025 – Jun 2026`,
+      `${hl("Sanierung Wohnhaus")} (Familienprojekt) · Linz-Ebelsberg · Jun 2023 – Okt 2025`,
+      `${hl("Administrator")} · BBU GmbH, Linz · Jan 2022 – Jun 2023`,
+      `${hl("Zivildiener")} · BBU GmbH, Linz · Mär 2021 – Dez 2021`,
+      `${hl("Auslandsaufenthalt")} · Schwerpunkt Europa · Sep 2019 – Feb 2021`,
+      `${hl("Sonnenschutztechniker")} · SUNSTAR, Leonding · Jul 2017 – Apr 2019`,
+      `${hl("Bodenleger")} · Bodendesign Mittermayer, Linz · Sep 2012 – Mai 2017`,
     ],
   },
   {
     heading: "Ausbildung",
     items: [
-      "Pflichtschule, Gymnasium",
-      "Full-Stack-Bootcamp — Zertifikat Junior Developer (2026)",
+      `${hl("Pflichtschule, Gymnasium")}`,
+      `${hl("Full-Stack-Bootcamp")} — Zertifikat Junior Developer (2026)`,
     ],
   },
   {
     heading: "Skills",
     items: [
-      "Backend und Daten — TypeScript, NestJS, PostgreSQL, PostGIS, WebSockets, Stripe, Docker",
-      "Frontend — React, Next.js, Tailwind, Zustand, Canvas 2D",
-      "Werkzeuge und Automatisierung — Node.js, Python, Playwright, Ollama, Git",
-      "Grundlagen — Java, OOP, SQL, Datenstrukturen, 3D-Mathematik",
+      `${hl("Backend und Daten")} — TypeScript, NestJS, PostgreSQL, PostGIS, WebSockets, Stripe, Docker`,
+      `${hl("Frontend")} — React, Next.js, Tailwind, Zustand, Canvas 2D`,
+      `${hl("Werkzeuge und Automatisierung")} — Node.js, Python, Playwright, Ollama, Git`,
+      `${hl("Grundlagen")} — Java, OOP, SQL, Datenstrukturen, 3D-Mathematik`,
     ],
   },
   {
     heading: "Sprachen",
-    items: ["Deutsch — Muttersprache", "Englisch — siehe Lebenslauf"],
+    items: [`${hl("Deutsch")} — Muttersprache`, `${hl("Englisch")} — siehe Lebenslauf`],
   },
 ];
 
@@ -58,19 +66,48 @@ export const cvSections: CvSection[] = [
 // from one fixed spot, so they'd look wrong (over- or under-angled) for
 // most of the scroll instead of leveling out to a sliver exactly when
 // you're looking straight at them and opening up as you pass.
-export function trackElevatorPerspective(section: HTMLElement) {
+//
+// Driven off lenis's own "scroll" event (same cheap pattern as
+// scroll/progress.ts's initScrollProgress) instead of an own
+// requestAnimationFrame loop: recomputing this needs the section's
+// current top, which used to come from a fresh getBoundingClientRect()
+// every single frame — forced layout, run forever from page load,
+// whether or not the page was even scrolling. section top/height barely
+// change (only on resize/layout), so they're cached here and only that
+// arithmetic runs per scroll tick.
+export function trackElevatorPerspective(section: HTMLElement, lenis: Lenis) {
   const elevator = section.querySelector<HTMLElement>(".elevator");
   if (!elevator) return;
 
-  // Measured from the section's live rect, not from scrollY: transition.ts
-  // pins this section at its end, and scrollY keeps growing while it's
-  // held — the vanishing point has to stay at the *viewport's* center,
-  // wherever the section itself currently sits.
-  function update() {
+  // sectionTop: document-flow offset (rect.top + scrollY), not tied to
+  // scroll position. sectionHeight: unaffected by transition.ts's pin —
+  // GSAP pins via position, never resizes the trigger element.
+  let sectionTop = 0;
+  let sectionHeight = 1;
+  // The scroll position at which transition.ts's `start: "bottom bottom"`
+  // ScrollTrigger pins #about — from there on the section's rect.top is
+  // frozen (pinned), not "sectionTop - scroll" anymore.
+  let pinStartScroll = 0;
+
+  function measure() {
     const rect = section.getBoundingClientRect();
-    const originY = ((window.innerHeight / 2 - rect.top) / (rect.height || 1)) * 100;
-    elevator!.style.perspectiveOrigin = `50% ${originY}%`;
-    requestAnimationFrame(update);
+    sectionTop = rect.top + window.scrollY;
+    sectionHeight = rect.height || 1;
+    pinStartScroll = sectionTop + sectionHeight - viewportHeight();
   }
+  measure();
+  ScrollTrigger.addEventListener("refresh", measure);
+
+  // Same value transition.ts's pin freezes rect.top to once pinned
+  // ("bottom bottom": section bottom flush with viewport bottom).
+  const pinnedTop = () => viewportHeight() - sectionHeight;
+
+  function update() {
+    const top =
+      lenis.scroll < pinStartScroll ? sectionTop - lenis.scroll : pinnedTop();
+    const originY = ((viewportHeight() / 2 - top) / sectionHeight) * 100;
+    elevator!.style.perspectiveOrigin = `50% ${originY}%`;
+  }
+  lenis.on("scroll", update);
   update();
 }

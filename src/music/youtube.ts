@@ -5,9 +5,13 @@ import { createDancer } from "./dancer";
 // is in the DOM until the first click: that click loads the IFrame API,
 // creates one player and starts playback. After that the button just
 // toggles play/pause on that same player, so scrolling never restarts the
-// music. The video is kept off-screen: only the play button, a decorative
-// dancer and a next button show. The IFrame API exposes no audio data,
-// so the dancer is a CSS-only random dance (dancer.ts) while the player plays.
+// music. The video is kept off-screen: only the play button and a
+// decorative dancer show. The IFrame API exposes no audio data, so the
+// dancer is a CSS-only random dance (dancer.ts) while the player plays.
+//
+// Impressum/Datenschutz live as overlay panels on this same page (see
+// legal-overlay.ts) rather than separate routes, so this player is never
+// torn down when switching to them — no cross-page resume logic needed.
 
 // Kevin fills this in: the playlist id (the `list=` value). Empty = button stays off.
 const PLAYLIST_ID = "PLZO2GLmkfiMg";
@@ -54,11 +58,10 @@ declare global {
 
 export function initYoutubeButton() {
   const button = document.querySelector<HTMLButtonElement>(".music-button");
-  const next = document.querySelector<HTMLButtonElement>(".music-next");
   const mount = document.querySelector<HTMLElement>(".music-mount");
   const dancerLink = document.querySelector<HTMLAnchorElement>(".dancer-link");
   const dancer = createDancer(document.querySelector<SVGElement>(".dancer"));
-  if (!button || !next || !mount) return;
+  if (!button || !mount) return;
 
   if (!PLAYLIST_ID) {
     button.disabled = true;
@@ -103,7 +106,6 @@ export function initYoutubeButton() {
         events: {
           onReady: (e) => {
             player = e.target;
-            next!.disabled = false;
             player.playVideo();
           },
           onStateChange: (e) => {
@@ -125,6 +127,4 @@ export function initYoutubeButton() {
       else player.playVideo();
     } else if (!loading) load();
   });
-
-  next.addEventListener("click", () => player?.nextVideo());
 }

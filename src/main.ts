@@ -9,6 +9,7 @@ import { Cloth } from "./hero/cloth";
 import { cvSections, trackElevatorPerspective } from "./about/elevator";
 import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
 import { initYoutubeButton } from "./music/youtube";
+import { initThemeToggle } from "./theme/theme";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
 import { renderProjectCard } from "./projects/project-cards";
@@ -63,7 +64,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <header class="site-header">
     <div class="site-header-inner">
-      <span class="site-header-brand">Kevin Schaberl / <span class="brand-accent">SAOS</span></span>
+      <a class="site-header-brand" href="#hero">Kevin Schaberl / <span class="brand-accent">SAOS</span></a>
       <nav class="site-header-links" aria-label="Primary">
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
@@ -87,10 +88,16 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               </g>
             </svg>
           </a>
-          <button class="music-next" type="button" aria-label="Nächster Song" disabled>
-            <svg class="music-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5v14l9-7zM16 5h2v14h-2z" /></svg>
-          </button>
         </span>
+        <button class="theme-toggle" type="button" aria-label="Light Mode aktivieren" aria-pressed="false">
+          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -545,7 +552,7 @@ window.addEventListener("resize", syncGridLineWidth, { passive: true });
 const aboutSection = document.querySelector<HTMLElement>("#about")!;
 const projectsSection = document.querySelector<HTMLElement>("#projects")!;
 
-trackElevatorPerspective(aboutSection);
+trackElevatorPerspective(aboutSection, lenis);
 
 initBoxToGridTransition(aboutSection);
 
@@ -575,6 +582,7 @@ initScrollProgress(lenis);
 
 initEdgeNav(lenis);
 initYoutubeButton();
+initThemeToggle();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Start gate: lenis.start() runs exactly once, only after BOTH:

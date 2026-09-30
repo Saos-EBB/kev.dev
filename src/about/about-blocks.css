@@ -6,19 +6,16 @@
   max-width: 46rem;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 0.6em;
+  padding: 1.4em;
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  background: var(--about-bg);
   font-family: var(--font-read);
   --font-mono: var(--font-read);
   font-size: clamp(0.95rem, 1.2vw, 1.05rem);
   line-height: 1.7;
   color: var(--color-text);
-}
-
-.about-card {
-  align-items: flex-start;
-  padding: 1.4em;
-  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
-  background: color-mix(in srgb, var(--color-line) 3%, transparent);
 }
 
 .about-card-name {
@@ -47,6 +44,34 @@
   border-left: 2px solid var(--color-accent);
   font-size: clamp(1.05rem, 1.6vw, 1.3rem);
   line-height: 1.5;
+}
+
+/* One or two accented phrases per long prose paragraph (story, "wie ich
+   arbeite") — breaks up the otherwise uniform grey text wall. Color only,
+   no weight change: reads as a highlight, not a second heading level. */
+.about-highlight {
+  color: var(--color-line);
+}
+
+/* Inline text link inside prose (the "Projekte" mention in the story) —
+   .about-overlay disables pointer-events by default, so links opt back in
+   individually, same as .about-button. */
+.about-inline-link {
+  pointer-events: auto;
+  color: var(--color-line);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  transition: color var(--transition-hover);
+}
+
+.about-inline-link:hover,
+.about-inline-link:focus-visible {
+  color: var(--color-accent);
+}
+
+.about-inline-link:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .about-open {
@@ -92,9 +117,6 @@
 @media (max-width: 640px) {
   .about-block {
     gap: 0.4em;
-  }
-
-  .about-card {
     padding: 1em;
   }
 
@@ -104,10 +126,21 @@
   }
 }
 
-/* CV sections sit between the blocks, so they read in the same font.
-   (Two classes to win over the base rule in style.css without editing it.) */
+/* CV sections sit between the blocks, same boxed treatment so every part of
+   the about-me overlay reads as its own separated unit, not one long
+   scroll of text. (Two classes to win over the base rule in style.css
+   without editing it.) */
 .about-cv-section {
+  padding: 1.4em;
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  background: var(--about-bg);
   --font-mono: var(--font-read);
+}
+
+@media (max-width: 640px) {
+  .about-cv-section {
+    padding: 1em;
+  }
 }
 
 .about-cv-section .about-cv-list {
@@ -115,17 +148,10 @@
   line-height: 1.7;
 }
 
-/* Structure: a hairline above every block after the profile card, and a
-   short red bar in front of each heading. --color-line, not --color-accent:
-   the accent is too dark to read on this background. */
+/* Structure: a short red bar in front of each heading. --color-line, not
+   --color-accent: the accent is too dark to read on this background. */
 .about-overlay {
   gap: 1.1em;
-}
-
-.about-overlay > .about-block:not(:first-child),
-.about-overlay > .about-cv-section {
-  padding-top: 1.1em;
-  border-top: 1px solid color-mix(in srgb, var(--color-line) 25%, transparent);
 }
 
 .about-block {
