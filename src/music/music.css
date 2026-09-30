@@ -1,4 +1,4 @@
-/* Header music controls: play/pause, decorative dancer, next. */
+/* Header music controls: play/pause, decorative dancer. */
 .music-button {
   display: inline-flex;
   align-items: center;
@@ -43,30 +43,6 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.music-next {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: color var(--transition-hover);
-}
-
-.music-next:hover:not(:disabled),
-.music-next:focus-visible {
-  color: var(--color-accent);
-}
-
-.music-next:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 /* Decorative dancer (src/music/dancer.ts). Idle = grey and still; the

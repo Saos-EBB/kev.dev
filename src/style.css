@@ -154,6 +154,23 @@
   }
 }
 
+/* Light mode — toggled via .theme-toggle (src/theme/theme.ts), which sets
+   data-theme on <html> and remembers the choice in localStorage. First
+   pass: swap the base page chrome (backgrounds/text) to black-on-white and
+   keep the room screen/LED readable; the brand accent (--color-line /
+   --color-accent) and the self-contained dark widgets (3D renderer canvas,
+   Java terminal) are left as they are. */
+:root[data-theme="light"] {
+  --color-bg: #ffffff;
+  --color-text: #0d0d0f;
+  --color-text-muted: #55555c;
+  --hero-bg: #ffffff;
+  --about-bg: #ffffff;
+  --projects-bg: #ffffff;
+  --contact-bg: #ffffff;
+  --color-room-accent: #2a2a30;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -230,6 +247,12 @@ a {
 
 .site-header-brand {
   color: var(--color-text-muted);
+  transition: color var(--transition-hover);
+}
+
+.site-header-brand:hover,
+.site-header-brand:focus-visible {
+  color: var(--color-line);
 }
 
 .brand-accent {
@@ -515,16 +538,22 @@ button:focus-visible {
      patterns on steeply foreshortened 3D CSS planes. */
   backface-visibility: hidden;
   background-color: var(--about-bg);
+  /* Left/right/ceiling only (the floor keeps --grid-cell — it has to stay
+     phase-locked with .projects-bg-grid, see its own rule below). These
+     three recede into the perspective the most, so the plain --grid-cell
+     tile read as a dense, converging tangle of near-parallel lines instead
+     of a clean checker; a bigger local cell keeps it a calm square grid. */
+  --wall-cell: calc(var(--grid-cell) * 3);
   background-image:
     repeating-linear-gradient(
       to bottom,
       color-mix(in srgb, var(--grid-color) 28%, transparent) 0 var(--grid-line),
-      transparent var(--grid-line) var(--grid-cell)
+      transparent var(--grid-line) var(--wall-cell)
     ),
     repeating-linear-gradient(
       to right,
       color-mix(in srgb, var(--grid-color) 28%, transparent) 0 var(--grid-line),
-      transparent var(--grid-line) var(--grid-cell)
+      transparent var(--grid-line) var(--wall-cell)
     );
 }
 
@@ -538,6 +567,17 @@ button:focus-visible {
   height: 100%;
   transform-origin: left center;
   transform: rotateY(90deg);
+  /* The "clean karo" problem isn't cell size, it's perspective: a flat
+     square grid on a plane raked this steeply compresses toward the
+     vanishing point until dozens of cells land in a few screen pixels —
+     no CSS gradient renders that as anything but a shimmering triangle
+     mess, whatever the cell size. Masking the pattern out before it gets
+     there (keeping the near, still-square-looking stretch and fading the
+     rest to the plain background) is the actual fix. Direction follows
+     each wall's own local depth axis — see the transform-origin/hinge on
+     each variant for which edge is "near" (opaque) vs "far" (faded). */
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 30%, transparent 75%);
+  mask-image: linear-gradient(to right, black 0%, black 30%, transparent 75%);
 }
 
 .elevator-wall--right {
@@ -547,6 +587,9 @@ button:focus-visible {
   height: 100%;
   transform-origin: right center;
   transform: rotateY(-90deg);
+  /* Hinge (near/opaque edge) is this wall's own right edge, not its left. */
+  -webkit-mask-image: linear-gradient(to left, black 0%, black 30%, transparent 75%);
+  mask-image: linear-gradient(to left, black 0%, black 30%, transparent 75%);
 }
 
 .elevator-wall--ceiling {
@@ -556,6 +599,8 @@ button:focus-visible {
   height: var(--elevator-depth);
   transform-origin: top center;
   transform: rotateX(-90deg);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 75%);
+  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 75%);
 }
 
 .elevator-wall--floor {
@@ -665,11 +710,32 @@ button:focus-visible {
   background-position: var(--screen-ox, 0) var(--screen-oy, 0);
 }
 
+/* The far end of the shaft — a real wall, not the grid just thinning out
+   to nothing at the vanishing point: same tile as the side walls plus a
+   border, so the corridor reads as ending in a fixed box instead of
+   fading into the dark. Both are part of the same translateZ'd element,
+   so they get the exact same perspective foreshortening as everything
+   else in the shot — no separate scale math to keep in sync. */
 .elevator-backwall {
   position: absolute;
   inset: 0;
   transform: translateZ(calc(-1 * var(--elevator-depth)));
-  background: var(--about-bg);
+  background-color: var(--about-bg);
+  /* Same bigger local cell as the side walls (.elevator-wall) — one
+     consistent tile across the walls that actually meet at this box. */
+  --wall-cell: calc(var(--grid-cell) * 3);
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--grid-color) 28%, transparent) 0 var(--grid-line),
+      transparent var(--grid-line) var(--wall-cell)
+    ),
+    repeating-linear-gradient(
+      to right,
+      color-mix(in srgb, var(--grid-color) 28%, transparent) 0 var(--grid-line),
+      transparent var(--grid-line) var(--wall-cell)
+    );
+  border: calc(2 * var(--grid-line)) solid color-mix(in srgb, var(--grid-color) 60%, transparent);
 }
 
 /* Fades the shaft to black at the top/bottom edges — sells the "shaft"
@@ -684,7 +750,12 @@ button:focus-visible {
 }
 
 .elevator-vignette--top {
+  /* Fixed vh, not the base 20% — .elevator is as tall as the whole
+     multi-viewport shaft, so 20% of it would fade the ceiling to black
+     for nearly the first full scroll into the section instead of just
+     softening the hero/about seam. */
   top: 0;
+  height: 20vh;
   background: linear-gradient(to bottom, var(--about-bg), transparent);
 }
 
@@ -697,7 +768,7 @@ button:focus-visible {
    never tilts/distorts with the box — sized/centered to match how big
    the back wall reads on screen, so it looks like it sits on it. */
 .about-overlay {
-  /* In flow — this is what gives .about its height. Almost no empty shaft
+  /* In flow — this is what gives .about's height. Almost no empty shaft
      before the text; after it, enough ride for the office to rise into
      view with the last stretch before #about pins (vh, not svh: see
      src/viewport.ts). */
@@ -1115,6 +1186,35 @@ button:focus-visible {
   height: 22px;
 }
 
+/* Raygun button (src/raygun/raygun.ts) — revealed under the headline once
+   it's been shattered (contact.ts's startBreak/returnHome toggle the
+   [hidden] attribute this pop-in keys off). */
+.contact-raygun {
+  display: flex;
+  justify-content: center;
+}
+
+.contact-raygun:not([hidden]) {
+  animation: contact-raygun-in 0.4s ease-out;
+}
+
+@keyframes contact-raygun-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .contact-raygun:not([hidden]) {
+    animation: none;
+  }
+}
+
 /* ---------------------------------------------------------------- */
 /* Custom scroll-progress bar — stands in for the (now hidden) native */
 /* scrollbar. progress.ts only ever writes a translateY to the thumb  */
@@ -1160,9 +1260,10 @@ button:focus-visible {
 }
 
 /* ---------------------------------------------------------------- */
-/* Footer — shared markup (hand-kept in sync) across the main SPA    */
-/* page and the two standalone legal pages, impressum.html and       */
-/* datenschutz.html.                                                  */
+/* Footer — the one-pager's floating footer chrome. Impressum/        */
+/* Datenschutz used to be separate pages with their own copy of this  */
+/* markup; now they're overlay panels on this same page (see          */
+/* legal-overlay.ts) and just reuse this footer as-is.                */
 /* ---------------------------------------------------------------- */
 
 .footer {
@@ -1241,45 +1342,52 @@ button:focus-visible {
 }
 
 /* ---------------------------------------------------------------- */
-/* Legal pages (impressum.html, datenschutz.html) — plain, static,   */
-/* fully readable content pages outside the scroll-driven scenes.    */
-/* Classic sticky-header/sticky-footer layout: .legal-page (the body) */
-/* is a full-height flex column so a short article still fills the    */
-/* screen, .legal-main grows to push the footer to the bottom, and    */
-/* header/footer are `position: sticky` (not fixed/floating like the  */
-/* main SPA's edge-nav chrome) — pinned to the top/bottom edge of the */
-/* viewport as you scroll, never floating over content mid-page.      */
+/* Impressum/Datenschutz — hidden overlay panels on the one-pager     */
+/* (see legal-overlay.ts), not separate page loads: that's what lets  */
+/* the header's music player and theme keep running untouched while   */
+/* one is open. Sits below the fixed .site-header/.footer--floating   */
+/* (z-index 150) so that chrome stays usable on top of it, and         */
+/* `.legal-open` on <html> (toggled by the same script) forces the    */
+/* header visible even if edge-nav had it faded out from scroll        */
+/* position, and locks the page's own scroll while a panel is open.   */
 /* ---------------------------------------------------------------- */
 
-.legal-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100svh;
+.legal-open,
+.legal-open body {
+  overflow: hidden;
+}
+
+.legal-open .site-header {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.legal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  overflow-y: auto;
+  background: var(--color-bg);
+}
+
+.legal-overlay.is-open {
+  display: block;
 }
 
 .legal-main {
-  flex: 1 0 auto;
-}
-
-.legal-page .footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  background: var(--color-bg);
-}
-
-.legal-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--color-bg);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-line) 16%, transparent);
-  padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
+  /* Top padding clears the fixed .site-header (not in normal flow here,
+     unlike a sticky header, so it never pushes this content down on its
+     own); bottom padding just gives the last line room to breathe. */
+  padding-top: clamp(4.5rem, 11vw, 6rem);
 }
 
 .legal-back {
+  display: inline-block;
+  margin-top: 2.5rem;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 1.05rem;
   color: var(--color-text-muted);
   text-decoration: none;
   transition: color var(--transition-hover);
