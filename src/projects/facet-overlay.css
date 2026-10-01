@@ -372,3 +372,29 @@
     height: calc(100svh - 9rem);
   }
 }
+
+/* Screens facet: the card's screenshots, full width, captioned. */
+.facet-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.facet-gallery figure {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.facet-gallery img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--pc-soft);
+}
+
+.facet-gallery figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}

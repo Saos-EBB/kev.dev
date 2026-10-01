@@ -37,12 +37,14 @@ function esc(s: string): string {
 // for the contact section's GitHub/mail/phone icons (main.ts).
 const ICONS: Record<FacetKind, string> = {
   "live-demo": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4" /></svg>`,
+  screens: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="1" /><path d="M8 21h8M12 17v4" /></svg>`,
   b2b: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V8l8-5 8 5v13" /><path d="M9 21v-6h6v6M9 12h.01M15 12h.01M9 16h.01M15 16h.01" /></svg>`,
 };
 
 const LABELS: Record<FacetKind, string> = {
   "live-demo": "Live-Demo",
   b2b: "B2B-Seite",
+  screens: "Screens",
 };
 
 export function renderFacetTiles(card: ProjectCard): string {
@@ -101,6 +103,17 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
           : `<p class="pcard-open">[OFFEN: Live-Demo-Info fehlt]</p>`,
       };
     }
+    case "screens":
+      return {
+        title: `${card.title} — Screens`,
+        bodyHtml: card.screenshots?.length
+          ? `<div class="facet-gallery">${card.screenshots
+              .map(
+                (s) => `<figure><img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" /><figcaption>${esc(s.alt)}</figcaption></figure>`,
+              )
+              .join("")}</div>`
+          : `<p class="pcard-open">[OFFEN: Screenshots fehlen]</p>`,
+      };
     case "b2b":
       // The white-label sales page (yourbrand/, from the b2b-cv repo) —
       // its own React page, so it lives in an iframe: its styles stay out

@@ -83,8 +83,17 @@ export const projectCards: ProjectCard[] = [
       "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern.",
     origin:
       "Angefangen als reiner Scraper (karriere.at zuerst, weil am leichtesten), dann AMS und devjobs dazu. Erst alles CLI; UI und Maskottchen kamen später, nachdem Freunde Potenzial gesehen haben. Aus derselben Logik ist nebenbei ein kleines CLI-Tool entstanden — Release Watcher, das Manga-Seiten auf neue Kapitel prüft, weil ich zu oft gespoilert wurde. Gleiche Idee, kleiner Rahmen.",
-    screenshots: [{ src: "/projects/jobbot.jpeg", alt: "Tschobbo, der lila Slime-Blob mit Sonnenbrille" }],
-    open: ["Screenshot der Mail-Client-UI fehlt noch — Kevin liefert"],
+    // UI screenshots: the real JoBBoT UI, fed offline with the real
+    // postings from its own test fixtures (parsers + regex filter, no
+    // scraping, no Ollama — so no cover letters in them).
+    screenshots: [
+      { src: "/projects/jobbot/inbox.jpg", alt: "Posteingang: gefilterte Stellen nach Fit (Match/Offstack), Inserat geöffnet" },
+      { src: "/projects/jobbot/aussortiert.jpg", alt: "Aussortiert: was der Regex-Filter rausgeworfen hat" },
+      { src: "/projects/jobbot/suche.jpg", alt: "Einstellungsseite „Suche“: Portale und Suchbegriffe im Browser bearbeiten" },
+      { src: "/projects/jobbot/scrape.jpg", alt: "Scrape: Quellen wählen und den Lauf starten" },
+    ],
+    mascot: { src: "/projects/jobbot.jpeg", alt: "Tschobbo, der lila Slime-Blob mit Sonnenbrille" },
+    facets: ["screens"],
   },
   {
     id: "renderer",
