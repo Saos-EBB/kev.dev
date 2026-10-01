@@ -39,6 +39,12 @@ const MAX_ROWS = 140;
 // edge you can see.
 const REST_EXPANSE = 2.4;
 const ITERATIONS = 4; // constraint relaxation passes per frame
+// Phones/tablets: the off-card expanse is mostly invisible there anyway
+// (no cursor roams past the card edge), so it shrinks — less than half
+// the nodes — and one relaxation pass less. Same look on the card itself.
+const IS_LITE = window.matchMedia("(pointer: coarse), (max-width: 640px)").matches;
+const REST_EXPANSE_LITE = 1.6;
+const ITERATIONS_LITE = 3;
 const DAMPING = 0.98; // velocity retained per frame (energy loss)
 const ANCHOR_K = 0.02; // pull-back strength toward the resting grid point
 const GRAVITY = 0; // floating field, tunable
@@ -68,15 +74,14 @@ const GLOW_RADIUS = 260; // px, how far the falloff reaches
 const GLOW_ALPHA = 0.16; // while hovering
 const GLOW_ALPHA_DRAG = 0.3; // brighter while actively dragging a node
 
-// Touch has no hover, so a plain one-finger scroll already reads as
-// "hover" through pointermove (see handlePointerMove) — but a bare
-// touchdown can't also grab-and-pin the way a mouse click does, or every
-// scroll gesture that starts near a node would hijack the page instead of
-// scrolling it. A double-tap is the deliberate "no, I mean grab this"
-// gesture instead: the second tap (if close enough in time/space to the
-// first) is what grabs, exactly like a mouse pointerdown would.
-const DOUBLE_TAP_MS = TIMINGS.hero.doubleTapMs;
-const DOUBLE_TAP_RADIUS = 40; // px, how far apart two taps can land and still count as one
+// Touch: a vertical swipe must keep scrolling the page, so a finger only
+// grabs the cloth when the gesture says so — either it moves sideways
+// first (the hero is touch-action: pan-y, so the browser hands sideways
+// moves to us and keeps vertical ones for scrolling), or it rests still
+// for LONG_PRESS_MS. Once grabbed, touchmove is cancelled so the drag can
+// go in any direction without the page scrolling under it.
+const LONG_PRESS_MS = TIMINGS.hero.longPressMs;
+const TOUCH_SLOP = 8; // px a finger may wobble before it counts as a move
 
 // The text warp uses a coarser sub-sample of the grid (every Nth node in
 // each direction) — letters are big enough that this still looks smooth,
@@ -152,11 +157,15 @@ export class Cloth {
   private grabbedIndex = -1;
   private pointerDown = false;
 
-  // Last touch tap's time/position, to recognize the second tap of a
-  // double-tap-to-grab gesture (see DOUBLE_TAP_MS/RADIUS above).
-  private lastTapTime = 0;
-  private lastTapX = 0;
-  private lastTapY = 0;
+  // A finger that's down but hasn't grabbed yet (see LONG_PRESS_MS).
+  private touchPending: { id: number; x: number; y: number } | null = null;
+  private longPressTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // The loop only runs while the hero is on screen and the tab visible —
+  // nothing of it is seen otherwise, and on phones the canvas upload alone
+  // cost every frame of the rest of the page.
+  private onScreen = true;
+  private running = false;
 
   // Whichever node update() is currently pinning/pulling this frame —
   // either the click-drag grab or the nearest node under a plain hover.
@@ -234,8 +243,30 @@ export class Cloth {
     // Touch has no hover state, so treat leaving the window/tab as the
     // mouse equivalent of "not near the cloth anymore".
     document.addEventListener("pointerout", this.handlePointerOut);
+    // Non-passive: the one place a touch drag stops the page scrolling.
+    window.addEventListener("touchmove", this.handleTouchMove, {
+      passive: false,
+    });
 
-    this.loop();
+    new IntersectionObserver(([entry]) => {
+      this.onScreen = entry.isIntersecting;
+      this.syncRunning();
+    }).observe(this.canvas);
+    document.addEventListener("visibilitychange", () => this.syncRunning());
+    this.syncRunning();
+  }
+
+  private syncRunning() {
+    const shouldRun = this.onScreen && !document.hidden;
+    if (shouldRun === this.running) return;
+    this.running = shouldRun;
+    if (shouldRun) requestAnimationFrame(this.loop);
+  }
+
+  // Public: whether the hero is currently animating — main.ts's name
+  // shine piggybacks on it instead of running a loop of its own.
+  get isRunning() {
+    return this.running;
   }
 
   // Public: kicks off the scripted intro pull + the recurring idle pulls
@@ -360,7 +391,9 @@ export class Cloth {
   private resize() {
     // Capped: a full-frame canvas at 3x is 9x the pixels of 1x for a mesh
     // of hairlines that look the same at 2x — the mobile frame-time cost.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Lite devices cap lower still: the canvas is redrawn every frame, and
+    // at 1.5x the hairlines still look sharp on a phone.
+    const dpr = Math.min(window.devicePixelRatio || 1, IS_LITE ? 1.5 : 2);
     this.width = this.canvas.clientWidth || window.innerWidth;
     this.height = this.canvas.clientHeight || window.innerHeight;
     this.canvas.width = Math.round(this.width * dpr);
@@ -393,8 +426,9 @@ export class Cloth {
 
       const boxWidth = right - left;
       const boxHeight = bottom - top;
-      const width = boxWidth * REST_EXPANSE;
-      const height = boxHeight * REST_EXPANSE;
+      const expanse = IS_LITE ? REST_EXPANSE_LITE : REST_EXPANSE;
+      const width = boxWidth * expanse;
+      const height = boxHeight * expanse;
       this.restRect = {
         // Centered on the visible box, so it grows outward equally on
         // every side rather than just to the right/bottom.
@@ -513,8 +547,73 @@ export class Cloth {
   }
 
   private handlePointerMove = (e: PointerEvent) => {
-    this.setPointer(e);
+    if (e.pointerType !== "touch") {
+      this.setPointer(e);
+      return;
+    }
+    // Touch: only a finger that's down counts — no stale "hover" left at
+    // the spot where the last swipe began.
+    if (this.pointerDown) {
+      this.setPointer(e);
+      return;
+    }
+    const pending = this.touchPending;
+    if (!pending || pending.id !== e.pointerId) return;
+    // Wandered off vertically: that's a scroll, not a press — no
+    // long-press grab later either.
+    if (Math.abs(e.clientY - pending.y) > TOUCH_SLOP) {
+      this.clearTouchPending();
+      return;
+    }
+    // A sideways pull grabs. Vertical moves are the browser's (pan-y) —
+    // it cancels the pointer once it starts scrolling, but the first few
+    // moves can still reach us before that, so check the direction too.
+    const dx = Math.abs(e.clientX - pending.x);
+    const dy = Math.abs(e.clientY - pending.y);
+    if (dx > TOUCH_SLOP && dx > dy * 1.5) {
+      this.grabAt(pending.x, pending.y);
+      this.setPointer(e);
+    }
   };
+
+  // Whether a press at viewport (x, y) lands on the visible card.
+  private onCard(clientX: number, clientY: number) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    return x >= 0 && x <= this.width && y >= 0 && y <= this.height;
+  }
+
+  // Pins the node nearest viewport point (clientX, clientY). Returns
+  // whether one was in reach.
+  private grabAt(clientX: number, clientY: number) {
+    this.clearTouchPending();
+    const rect = this.canvas.getBoundingClientRect();
+    const px = clientX - rect.left;
+    const py = clientY - rect.top;
+    let nearest = -1;
+    let nearestDist = GRAB_RADIUS;
+    for (let i = 0; i < this.nodes.length; i++) {
+      const node = this.nodes[i];
+      const d = Math.hypot(node.x - px, node.y - py);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = i;
+      }
+    }
+    if (nearest === -1) return false;
+    this.grabbedIndex = nearest;
+    this.pointerDown = true;
+    this.pointerX = clamp(px, 0, this.width);
+    this.pointerY = clamp(py, 0, this.height);
+    this.pointerActive = true;
+    return true;
+  }
+
+  private clearTouchPending() {
+    this.touchPending = null;
+    clearTimeout(this.longPressTimer);
+  }
 
   private handlePointerDown = (e: PointerEvent) => {
     // Nav links/icons and the SAOS intro overlay all sit over the
@@ -533,58 +632,33 @@ export class Cloth {
     // outside the hero (in the page's own margin, say) could still yank
     // the nearest node in just because it's within GRAB_RADIUS in raw
     // pixel distance, even though nothing cloth-like is under the cursor.
-    const rect = this.canvas.getBoundingClientRect();
-    const rawX = e.clientX - rect.left;
-    const rawY = e.clientY - rect.top;
-    if (rawX < 0 || rawX > this.width || rawY < 0 || rawY > this.height)
-      return;
-
-    this.setPointer(e);
+    if (!this.onCard(e.clientX, e.clientY)) return;
 
     if (e.pointerType === "touch") {
-      const now = performance.now();
-      const dx = this.pointerX - this.lastTapX;
-      const dy = this.pointerY - this.lastTapY;
-      const isSecondTap =
-        now - this.lastTapTime < DOUBLE_TAP_MS &&
-        Math.hypot(dx, dy) < DOUBLE_TAP_RADIUS;
-
-      if (!isSecondTap) {
-        // First tap — remember it and otherwise let this touch behave
-        // like a normal scroll, not a grab.
-        this.lastTapTime = now;
-        this.lastTapX = this.pointerX;
-        this.lastTapY = this.pointerY;
-        return;
-      }
-      this.lastTapTime = 0;
+      // Not a grab yet — see LONG_PRESS_MS / handlePointerMove.
+      const pending = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      this.clearTouchPending();
+      this.touchPending = pending;
+      this.longPressTimer = setTimeout(() => {
+        if (this.touchPending !== pending) return;
+        if (this.grabAt(pending.x, pending.y)) navigator.vibrate?.(8);
+      }, LONG_PRESS_MS);
+      return;
     }
 
-    let nearest = -1;
-    let nearestDist = GRAB_RADIUS;
-    for (let i = 0; i < this.nodes.length; i++) {
-      const node = this.nodes[i];
-      const d = Math.hypot(node.x - this.pointerX, node.y - this.pointerY);
-      if (d < nearestDist) {
-        nearestDist = d;
-        nearest = i;
-      }
-    }
-    if (nearest === -1) return;
-
+    if (!this.grabAt(e.clientX, e.clientY)) return;
     e.preventDefault();
-    this.grabbedIndex = nearest;
-    this.pointerDown = true;
-    // Prevent the page from scrolling while a drag is in progress, but
-    // otherwise leave touch scrolling free (see #cloth-canvas in CSS).
-    this.canvas.style.touchAction = "none";
-    this.canvas.setPointerCapture(e.pointerId);
   };
 
-  private handlePointerUp = () => {
+  private handleTouchMove = (e: TouchEvent) => {
+    if (this.pointerDown && e.cancelable) e.preventDefault();
+  };
+
+  private handlePointerUp = (e: PointerEvent) => {
+    this.clearTouchPending();
     this.grabbedIndex = -1;
     this.pointerDown = false;
-    this.canvas.style.touchAction = "pan-y";
+    if (e.pointerType === "touch") this.pointerActive = false;
   };
 
   private handlePointerOut = (e: PointerEvent) => {
@@ -655,7 +729,8 @@ export class Cloth {
       node.y += (targetY - node.y) * pullStrength;
     }
 
-    for (let iter = 0; iter < ITERATIONS; iter++) {
+    const iterations = IS_LITE ? ITERATIONS_LITE : ITERATIONS;
+    for (let iter = 0; iter < iterations; iter++) {
       this.satisfyConstraints();
     }
   }
@@ -848,6 +923,7 @@ export class Cloth {
   }
 
   private loop = () => {
+    if (!this.running) return;
     this.update();
     this.draw();
     requestAnimationFrame(this.loop);
