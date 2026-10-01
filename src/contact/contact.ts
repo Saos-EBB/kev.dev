@@ -21,6 +21,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
+import { LITE } from "../viewport";
 import { applyMouseForce, makeBody, stepPhysics, type PhysicsBody } from "./contact-physics";
 import { mountRaygunButton } from "../raygun/raygun";
 
@@ -153,7 +154,13 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
         ),
       ) || 48;
 
-    for (let y = 0; y <= window.innerHeight; y += tileSize) {
+    // Lite page: the grid is painted on the page itself (style.css), so
+    // these lines start at its phase — the section's document offset — and
+    // carry it on line-for-line instead of jumping at the seam.
+    const phaseY = LITE
+      ? (tileSize - ((section.getBoundingClientRect().top + window.scrollY) % tileSize)) % tileSize
+      : 0;
+    for (let y = phaseY; y <= window.innerHeight; y += tileSize) {
       const line = document.createElement("div");
       line.className = "grid-line grid-line--h";
       line.style.top = `${y}px`;
@@ -162,6 +169,16 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
       line.style.transformOrigin = Math.random() < 0.5 ? "left" : "right";
       bgGrid.appendChild(line);
       hLines.push(line);
+    }
+    // The section's offset settles only after fonts/layout (About's
+    // height) — re-phase once ScrollTrigger has re-measured. Only the
+    // pinned spacer's start matters, which is the section's own top.
+    if (LITE) {
+      ScrollTrigger.addEventListener("refresh", () => {
+        const top = pinTrigger ? pinTrigger.start : section.getBoundingClientRect().top + window.scrollY;
+        const p = (tileSize - (top % tileSize)) % tileSize;
+        hLines.forEach((line, i) => (line.style.top = `${p + i * tileSize}px`));
+      });
     }
     for (let x = 0; x <= window.innerWidth; x += tileSize) {
       const line = document.createElement("div");

@@ -82,6 +82,10 @@
   box-shadow: 0 20px 48px color-mix(in srgb, var(--color-shadow) 45%, transparent);
   font-family: var(--font-read);
   --font-mono: var(--font-read);
+  /* The opening card's accent (facet-overlay.ts sets it inline). */
+  --pc: var(--color-line);
+  --pc-soft: color-mix(in srgb, var(--pc) 38%, transparent);
+  border-color: var(--pc-soft);
 }
 
 .facet-overlay-close {
