@@ -82,3 +82,30 @@
 .lang-menu button[aria-checked="true"] b {
   color: var(--color-line);
 }
+
+/* Menu open: the header stays visible and in place, whatever the scroll
+   position, pointer or scroll direction says (edge-nav.ts). */
+.lang-menu-open .site-header {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+/* Lite header is one slim line — the button shrinks to the other
+   controls' size, the menu never runs past the screen edge. */
+.lite .lang-button {
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  gap: 0.25rem;
+  font-size: 0.62rem;
+}
+
+.lite .lang-button svg {
+  width: 13px;
+  height: 13px;
+}
+
+.lite .lang-menu {
+  max-width: calc(100vw - 32px);
+}
