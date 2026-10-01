@@ -70,3 +70,7 @@
 
 ## 2026-10-01 — fix(about): Satz über die Seite stimmt wieder
 **Was:** In der Story stand, das Logo dieser Seite laufe durch 37 Schriften, fünf davon in Kevins Handschrift — das stammt aus b2b-cv und gilt für kev.dev nicht. Ersetzt (in allen fünf Sprachen) durch: die Überschriften stehen in Graffiti-Lettern und fast alles lässt sich anfassen. Sonst bezieht sich kein Satz im About-Text auf die Seite selbst.
+
+## 2026-10-01 — feat(about): Lebenslauf im Seiten-Design, dunkel und hell
+**Was:** Der Lebenslauf (Inhalt unverändert aus b2b-cv) ist jetzt eine HTML-Vorlage im Look der Seite — Koeeya-Name mit Verlauf, JetBrains Mono, Boxen mit Eckmarkern, Lila-Akzente — und wird per `scripts/build-cv.mjs` (Playwright/Chromium) als A4-PDF gedruckt, einmal dunkel, einmal hell. Die „Lebenslauf ↓“-Buttons liefern beim Klick die zum aktuellen Theme passende Fassung (Download-Name `lebenslauf-kevin-schaberl.pdf`). Das Skript bricht ab, wenn der Inhalt nicht mehr auf eine Seite passt.
+**Achtung:** Enthält Wohnadresse, Telefonnummer und Geburtsdatum — öffentlich downloadbar. Alte URL `saos-repo.vercel.app` steht noch drin.
