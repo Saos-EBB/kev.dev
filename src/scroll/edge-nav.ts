@@ -15,11 +15,17 @@
 
 import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
+import { LITE } from "../viewport";
 
 export function initEdgeNav(lenis: Lenis) {
   const header = document.querySelector<HTMLElement>(".site-header");
   const footer = document.querySelector<HTMLElement>(".footer--floating");
   if (!header || !footer) return;
+
+  if (LITE) {
+    initDirectionalNav(lenis, header, footer);
+    return;
+  }
 
   // -1 = no pointer seen yet (touch-only devices never set this), so the
   // hover checks below simply never fire and scroll position alone
@@ -57,5 +63,37 @@ export function initEdgeNav(lenis: Lenis) {
     }
   });
 
+  render();
+}
+
+// Lite page (phones / narrow tablets): no hover, and the bars are slim
+// one-liners, so they follow the scroll direction instead — scrolling
+// down slides both away to free the screen, scrolling up brings both back
+// (the usual mobile-browser pattern). The header is always there at the
+// very top, the footer at the very bottom. Direction only flips after
+// FLIP_PX of travel, so a finger's small wobble doesn't make them flicker.
+const FLIP_PX = 12;
+const TOP_PX = 60;
+
+function initDirectionalNav(lenis: Lenis, header: HTMLElement, footer: HTMLElement) {
+  let lastY = lenis.scroll;
+  let travel = 0; // px moved in the current direction (signed)
+  let up = true;
+
+  function render() {
+    const y = lenis.scroll;
+    const dy = y - lastY;
+    lastY = y;
+    if (dy !== 0) {
+      travel = Math.sign(dy) === Math.sign(travel) ? travel + dy : dy;
+      if (Math.abs(travel) >= FLIP_PX) up = travel < 0;
+    }
+    const atTop = y <= TOP_PX;
+    const atBottom = lenis.limit - y <= TOP_PX;
+    header.classList.toggle("is-visible", atTop || up);
+    footer.classList.toggle("is-visible", atBottom || (up && !atTop));
+  }
+
+  lenis.on("scroll", render);
   render();
 }
