@@ -38,7 +38,7 @@ nach Bereich sortiert. Alles Sichtbare mit `[OFFEN: …]` auf der Seite ist hier
 
 | Card | Was fehlt |
 |---|---|
-| YourBrand | Multi-Tenancy: „angelegt/gedacht“ oder „voll umgesetzt“? Wortwahl in Claim, Lernziel, Beschreibung bestätigen. |
+| YourBrand | **Screenshots der laufenden App** (wie bei TschoBBo als „Screens“-Galerie in die Card, `screenshots` + Facet `screens` in `projects-data.ts`) — sobald YourBrand auf Railway läuft: Kevin schickt 3–4 Screens oder die URL. Lokal bräuchte es Postgres/PostGIS, Redis, MinIO, Backend, Worker, Frontend. Außerdem: Multi-Tenancy: „angelegt/gedacht“ oder „voll umgesetzt“? Wortwahl in Claim, Lernziel, Beschreibung bestätigen. |
 | TschoBBo | Screenshot der Mail-Client-UI. `public/projects/jobbot.jpeg` ist nur das Maskottchen. |
 | Renderer | Welche zwei Baldur's-Gate-Modelle? (`duoOG` ist 41 MB und nie committet, also unbrauchbar.) Dateinamen nennen oder dezimierte Fassung liefern. Ist `craniumCut01` das Schädel-CT? Modell-Reihenfolge bestätigen (aktuell Ducky, Auto, Pochita, Schädel-CT). |
 | AniScript | GitHub-Link fehlt komplett. Detail Brave MV2→V3 / Violentmonkey→ScriptCat final gegenchecken. |

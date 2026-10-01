@@ -1367,7 +1367,20 @@ button:focus-visible {
 /* painted on the page itself, so it runs through every section       */
 /* without a seam. Hero and contact keep their own scenes.            */
 /* ---------------------------------------------------------------- */
+/* The grid is painted on <body> only, which is as tall as the content —
+   <html> stays plain, so rubber-band overscroll and anything past the end
+   of the page are dark, not grid. */
+.lite,
 .lite body {
+  height: auto;
+}
+
+.lite {
+  background: var(--color-bg);
+}
+
+.lite body {
+  min-height: 100%;
   background-color: var(--color-bg);
   background-image:
     linear-gradient(to bottom, var(--grid-ink) 0 var(--grid-line), transparent var(--grid-line)),
@@ -1378,6 +1391,18 @@ button:focus-visible {
 .lite .about,
 .lite .projects {
   background: transparent;
+}
+
+/* Kontakt hides the page grid for good. vh, not svh: on a phone the
+   pinned section otherwise falls short of the viewport once the address
+   bar slides away, and the grid behind its pin spacer shows through the
+   strip at the bottom. The spacer itself is made solid for the same reason. */
+.lite .contact {
+  min-height: 100vh;
+}
+
+.lite .pin-spacer:has(> .contact) {
+  background: var(--contact-bg);
 }
 
 .lite .about-zoom,
@@ -1524,5 +1549,65 @@ button:focus-visible {
   }
   .site-header-links a {
     letter-spacing: 0.04em;
+  }
+}
+
+/* ---------------------------------------------------------------- */
+/* Lite header + footer: slim, one line each, frosted, and they slide  */
+/* in/out with the scroll direction (edge-nav.ts initDirectionalNav)   */
+/* instead of fading at the page edges.                               */
+/* ---------------------------------------------------------------- */
+.lite .site-header,
+.lite .footer--floating {
+  padding: 0.55rem 16px;
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+  transition:
+    transform 0.38s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.38s ease,
+    visibility 0s linear 0.38s;
+}
+
+.lite .site-header {
+  transform: translateY(-100%);
+}
+
+.lite .footer--floating {
+  transform: translateY(100%);
+  border-top: 1px solid color-mix(in srgb, var(--color-line) 16%, transparent);
+}
+
+.lite .site-header.is-visible,
+.lite .footer--floating.is-visible {
+  transform: none;
+  transition:
+    transform 0.38s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.38s ease,
+    visibility 0s linear;
+}
+
+.lite .site-header-inner,
+.lite .footer-inner {
+  flex-wrap: nowrap;
+  gap: 0.75rem;
+  font-size: 0.66rem;
+}
+
+.lite .footer-links {
+  gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .footer-copy-name {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion).lite .site-header,
+  :root:not(.force-motion).lite .footer--floating {
+    transition: none;
   }
 }
