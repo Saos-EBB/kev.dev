@@ -32,7 +32,8 @@ export interface ProjectWidget {
 // Facet buttons (in the card head, and on some signature visuals): each
 // opens the same shared overlay (facet-overlay.ts) — Live-Demo -> widget
 // or the demo link, B2B -> the YourBrand accessible-site link.
-export type FacetKind = "live-demo" | "b2b";
+// Screens -> the card's screenshots as a gallery.
+export type FacetKind = "live-demo" | "b2b" | "screens";
 
 // Which arrangement + signature visual a card uses (see the file header).
 export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard";
@@ -58,6 +59,8 @@ export interface ProjectCard {
   // Unresolved content questions, shown visibly on the card until answered.
   open?: string[];
   screenshots?: { src: string; alt: string }[];
+  // A character to put on the card's visual (TschoBBo's mascot).
+  mascot?: { src: string; alt: string };
   widget?: ProjectWidget;
   // Which facet buttons this card shows, in display order.
   facets?: FacetKind[];
@@ -146,7 +149,7 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${renderFacetTiles(card)}
       </header>
-      <div class="pcard-visual" aria-hidden="${card.layout === "viewport" || card.layout === "pinboard" ? "false" : "true"}">
+      <div class="pcard-visual" aria-hidden="${card.layout === "blueprint" || card.layout === "editor" ? "true" : "false"}">
         ${renderVisual(card)}
       </div>
       ${boxes.map((b) => parts[b]).join("")}
