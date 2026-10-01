@@ -229,7 +229,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <footer class="footer footer--floating">
     <div class="footer-inner">
-      <p class="footer-copy">© 2026 Kevin Schaberl / <span class="brand-accent">SAOS</span></p>
+      <p class="footer-copy">© 2026 <span class="footer-copy-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span></p>
       <nav class="footer-links" aria-label="Rechtliches">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>
