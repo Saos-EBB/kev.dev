@@ -1,0 +1,183 @@
+/* ── Konstruktionszeichnung ───────────────────────────────────────────────────
+   Die Farbwelt der drei Landings: technische Struktur auf Schiefer. Sie trifft
+   beide Hälften der Biografie — den Handwerker, der vor dem Schnitt misst, und
+   den Entwickler, der seine eigene Projektion schreibt.
+
+   Bewusst als eigener Satz Tokens unter .kz und nicht als Ersatz für die
+   Material-Palette weiter unten in globals.css: die gehört /whitelabel, und
+   diese Seite bleibt unangetastet.
+
+   Der Satz ist Thema 11 aus dem Reglerbrett (lib/dev/SiteDevPanel.tsx), hier
+   festgeschrieben — das Brett überschreibt zur Laufzeit und schreibt nichts
+   zurück. Wer eine andere Fassung behalten will, kopiert deren Block dorthin,
+   wo dieser steht.
+
+   Vorher stand hier ein Papierton mit Ockerstich, und darunter der Satz, die
+   Seite sei ein Dokument und Dokumente seien hell. Der Grund ist jetzt dunkel,
+   also ist auch das Gegenteil weg: ein heller Modus fehlt, weggelassen und
+   nicht vergessen. Falls er kommt, reicht ein zweiter Block hier.
+   ------------------------------------------------------------------------- */
+
+.kz {
+  --kz-paper:   #353941;   /* Schiefer */
+  /* Eingesenkte Fläche. Nur mit --kz-ink beschriften: --kz-muted käme
+     darauf auf 4,32:1 und fiele durch WCAG AA. */
+  --kz-paper-2: #42454D;
+  --kz-ink:     #DEDFE1;   /* Kreide, 8,69:1 auf dem Grund */
+  /* Gedämpft, und zugleich der zweite Blauton des Satzes: 5,22:1 auf dem
+     Grund. Der Farbton bleibt, nur die Helligkeit ist so weit gewandert, bis
+     der Nebentext lesbar war. */
+  --kz-muted:   #94AEE7;
+  --kz-line:    #575A61;   /* Linien */
+  --kz-line-2:  #464A51;   /* Hilfslinien, feiner */
+
+  /* Ein Akzent. Himmelblau, ausschließlich für Schnittebene, CTA und Signal —
+     nicht für Dekoration, sonst verliert er seine Bedeutung. 5,74:1 auf dem
+     Grund, und derselbe Wert nochmal umgekehrt für die Schrift im CTA. */
+  --kz-accent:  #90B8F8;
+  --kz-accent-soft: #A4C5F9;
+
+  --kz-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --kz-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Feste Seitenränder, damit Kopf, Inhalt und Fuß auf einer Kante sitzen. */
+  --kz-pad: 80px;
+
+  background: var(--kz-paper);
+  color: var(--kz-ink);
+  font-family: var(--kz-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Der Grund muss am body hängen, sonst blitzt zwischen den Abschnitten und
+   unter dem Fuß das Weiß des Browsers durch. */
+body { background: #353941; }
+
+@media (max-width: 1023px) { .kz { --kz-pad: 40px; } }
+@media (max-width: 767px)  { .kz { --kz-pad: 20px; } }
+
+/* ── Vier weitere Faerbungen ──────────────────────────────────────────────────
+   Umschaltbar ueber den Knopf im Kopf (lib/site/ThemeButton.tsx).
+
+   Sie haengen an einem Attribut am <html> und nicht an einer Klasse, damit das
+   Inline-Skript in app/layout.tsx sie setzen kann, bevor das erste Bild steht.
+   Ohne das blitzt bei jedem Laden Schiefer auf, und zwar auf jeder Seite.
+
+   Warum hier und nicht im Reglerbrett: das Brett ist die Werkbank mit allen
+   Kandidaten, diese Datei ist das, was ausgeliefert wird — sein eigener Text
+   sagt genau das. Die Nummern sind die aus dem Brett, damit man beides
+   nebeneinanderlegen kann.
+
+   Schiefer (11) braucht keinen Block: das ist der Satz oben, also der Zustand
+   ohne Attribut.
+
+   Die Zuordnung folgt derselben Regel wie dort: groesste Flaeche wird Grund,
+   Text und Nebentext werden auf Kontrast gezogen, die kleinste Flaeche wird
+   Akzent. Alle vier halten Tinte und Nebentext ueber 4,5:1 auf ihrem Grund.
+
+   Eine Ausnahme steht bewusst drin: bei 13 kommt der Akzent auf nur 1,89:1.
+   Weiss auf Signalgruen ist als Flaeche stark und als Schrift schwach, und der
+   Akzent traegt hier beides — die Mono-Labels und die Beschriftung im CTA.
+   Wer 13 waehlt, waehlt das mit; die Zahl steht hier, damit sie niemanden
+   spaeter ueberrascht.
+   ------------------------------------------------------------------------- */
+
+html[data-kz-thema="05"] .kz {
+  --kz-paper: #191825; --kz-paper-2: #272535;
+  --kz-ink: #D3C4FF;   /* 10,94:1 */
+  --kz-muted: #D649FF; /*  5,22:1 */
+  --kz-line: #3E3A51;  --kz-line-2: #2C293B;
+  --kz-accent: #FFA3FD; --kz-accent-soft: #FFB4FD;
+}
+html[data-kz-thema="05"] body { background: #191825; }
+
+html[data-kz-thema="13"] .kz {
+  --kz-paper: #08CB00; --kz-paper-2: #09BF00;
+  --kz-ink: #192700;   /* 7,17:1 */
+  --kz-muted: #3A3A3A; /* 5,17:1 */
+  --kz-line: #0BAA00;  --kz-line-2: #0ABB00;
+  --kz-accent: #EEEEEE; --kz-accent-soft: #CDCDCD;   /* 1,89:1 — siehe oben */
+}
+html[data-kz-thema="13"] body { background: #08CB00; }
+
+html[data-kz-thema="13b"] .kz {
+  --kz-paper: #000000; --kz-paper-2: #010F00;
+  --kz-ink: #08CB00;   /*  9,55:1 */
+  --kz-muted: #5B8C00; /*  5,20:1 */
+  --kz-line: #022900;  --kz-line-2: #011400;
+  --kz-accent: #EEEEEE; --kz-accent-soft: #CDCDCD;   /* 18,10:1 */
+}
+html[data-kz-thema="13b"] body { background: #000000; }
+
+html[data-kz-thema="14"] .kz {
+  --kz-paper: #2E0249; --kz-paper-2: #3D1056;
+  --kz-ink: #F7BBF7;   /* 10,98:1 */
+  --kz-muted: #EE4BBB; /*  5,21:1 */
+  --kz-line: #56276C;  --kz-line-2: #42155A;
+  --kz-accent: #F806CC; --kz-accent-soft: #F933D5;   /* 4,82:1 */
+}
+html[data-kz-thema="14"] body { background: #2E0249; }
+
+/* ── Wiederkehrende Bausteine ─────────────────────────────────────────────── */
+
+/* Beschriftung einer technischen Zeichnung: Mono, klein, gesperrt. */
+.kz-label {
+  font-family: var(--kz-mono);
+  font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--kz-accent);
+  margin: 0 0 14px;
+}
+
+.kz-h2 {
+  font-size: clamp(22px, 3vw, 30px);
+  letter-spacing: -0.015em; text-wrap: balance;
+  margin: 0 0 20px; font-weight: 600;
+}
+
+.kz-section {
+  padding: 72px var(--kz-pad);
+  border-top: 1px solid var(--kz-line);
+}
+
+.kz-prose { max-width: 68ch; line-height: 1.65; }
+.kz-prose p { margin: 0 0 14px; }
+
+/* Der eine Knopf, auf den alles zuläuft. */
+.kz-cta {
+  display: inline-block;
+  font-family: var(--kz-mono); font-size: 14px; letter-spacing: .02em;
+  padding: 13px 24px; border-radius: 2px;
+  background: var(--kz-accent); color: var(--kz-paper);
+  text-decoration: none; border: 1px solid var(--kz-accent);
+}
+.kz-cta:hover { background: var(--kz-accent-soft); border-color: var(--kz-accent-soft); }
+
+.kz-quiet {
+  font-family: var(--kz-mono); font-size: 14px;
+  color: var(--kz-muted); text-decoration: none;
+  border-bottom: 1px solid var(--kz-line);
+}
+.kz-quiet:hover { color: var(--kz-ink); border-bottom-color: var(--kz-accent); }
+
+.kz a:focus-visible, .kz button:focus-visible {
+  outline: 2px solid var(--kz-accent); outline-offset: 3px;
+}
+
+/* Abschnitte blenden ein, sobald sie in den Blick kommen (lib/site/useReveal). */
+.kz-reveal {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.kz-reveal-vis { opacity: 1; transform: translateY(0); }
+
+/* Eine einzige Bewegung auf dieser Seite — das Gitter im Kopf. Alles andere
+   steht still, und auch das Gitter hält an, wenn es niemand sehen will. */
+@media (prefers-reduced-motion: reduce) {
+  .kz *, .kz *::before, .kz *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+  /* Sonst blieben Abschnitte unsichtbar, deren Einblendung nie laeuft. */
+  .kz .kz-reveal { opacity: 1; transform: none; }
+}
