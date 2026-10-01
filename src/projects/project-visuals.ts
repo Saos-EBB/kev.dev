@@ -55,37 +55,21 @@ function blueprint(card: ProjectCard): string {
   `;
 }
 
-// TschoBBo: its own mail-client UI, as a mock — the boards it scrapes in
-// the list, manual sending in the folders, Tschobbo himself in the corner.
+// TschoBBo: its real mail-client UI (first screenshot) in a window frame,
+// Tschobbo himself as a sticker on the corner. The whole window opens the
+// screenshot gallery (the "screens" facet).
 function inbox(card: ProjectCard): string {
   const shot = card.screenshots?.[0];
-  const mails = [
-    ["karriere.at", "Stelle gespeichert · Anschreiben lokal generiert", "Ollama"],
-    ["AMS", "Treffer aus dem Regex-Filter", "Regex"],
-    ["devjobs", "Entwurf fertig — Versand bleibt manuell", "Entwurf"],
-  ];
+  const mascot = card.mascot;
+  const gallery = card.facets?.includes("screens")
+    ? `data-card="${esc(card.id)}" data-facet="screens"`
+    : "disabled";
   return `
-    <div class="viz-inbox">
-      <div class="viz-window-bar"><i></i><i></i><i></i><span>${esc(card.title)} — Posteingang</span></div>
-      <div class="viz-inbox-body">
-        <ul class="viz-folders">
-          <li class="is-active">Gescrapt</li>
-          <li>Entwürfe</li>
-          <li>Gesendet <em>manuell</em></li>
-        </ul>
-        <ul class="viz-mails">
-          ${mails
-            .map(
-              ([from, subject, tag], i) => `
-            <li class="${i === 0 ? "is-unread" : ""}">
-              <b>${from}</b><span>${subject}</span><i>${tag}</i>
-            </li>`,
-            )
-            .join("")}
-        </ul>
-      </div>
-      ${shot ? `<img class="viz-mascot" src="${esc(shot.src)}" alt="${esc(shot.alt)}" loading="lazy" decoding="async" />` : ""}
-    </div>
+    <button class="viz-inbox" type="button" ${gallery} aria-label="Screenshots von ${esc(card.title)} ansehen">
+      <span class="viz-window-bar"><i></i><i></i><i></i><span>jobbot :// Posteingang</span><b>${card.screenshots?.length ?? 0} Screens ↗</b></span>
+      ${shot ? `<img class="viz-inbox-shot" src="${esc(shot.src)}" alt="${esc(shot.alt)}" loading="lazy" decoding="async" />` : ""}
+      ${mascot ? `<img class="viz-mascot" src="${esc(mascot.src)}" alt="${esc(mascot.alt)}" loading="lazy" decoding="async" />` : ""}
+    </button>
   `;
 }
 

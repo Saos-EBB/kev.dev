@@ -455,13 +455,30 @@
 
 .viz-inbox {
   position: relative;
-  height: 100%;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
   border: 1px solid var(--pc-soft);
   border-radius: 12px;
   background: color-mix(in srgb, var(--projects-bg) 88%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
   overflow: hidden;
+  cursor: zoom-in;
+  transition: border-color var(--transition-hover);
+}
+
+.viz-inbox:hover,
+.viz-inbox:focus-visible {
+  border-color: var(--pc);
+}
+
+.viz-inbox:focus-visible {
+  outline: 2px solid var(--pc);
+  outline-offset: 3px;
 }
 
 .viz-window-bar {
@@ -490,92 +507,20 @@
   margin-left: 0.5rem;
 }
 
-.viz-inbox-body {
+.viz-window-bar b {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--pc);
+}
+
+/* The real UI, cropped from its top-left: sidebar and inbox list. */
+.viz-inbox-shot {
+  display: block;
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(7rem, 28%) 1fr;
-}
-
-.viz-folders {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.75rem 0.5rem;
-  border-right: 1px solid var(--pc-soft);
-  list-style: none;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--color-text-muted);
-}
-
-.viz-folders li {
-  padding: 0.35rem 0.55rem;
-  border-radius: 6px;
-}
-
-.viz-folders li.is-active {
-  background: color-mix(in srgb, var(--pc) 22%, transparent);
-  color: var(--color-text);
-}
-
-.viz-folders em {
-  display: block;
-  font-style: normal;
-  font-size: 0.6rem;
-  color: var(--pc);
-}
-
-.viz-mails {
-  list-style: none;
-  min-width: 0;
-}
-
-.viz-mails li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.15rem 0.75rem;
-  padding: 0.7rem 0.9rem 0.7rem 1.6rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--pc) 16%, transparent);
-  font-size: 0.78rem;
-}
-
-.viz-mails li.is-unread::before {
-  content: "";
-  position: absolute;
-  left: 0.7rem;
-  top: 1.05rem;
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 50%;
-  background: var(--pc);
-}
-
-.viz-mails b {
-  color: var(--color-text);
-}
-
-.viz-mails span {
-  grid-column: 1;
-  color: var(--color-text-muted);
-  font-size: 0.7rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.viz-mails i {
-  grid-column: 2;
-  grid-row: 1 / 3;
-  align-self: center;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--pc) 18%, transparent);
-  font-style: normal;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--pc);
+  width: 100%;
+  object-fit: cover;
+  object-position: left top;
 }
 
 /* Tschobbo peeks in at the corner, working. */
@@ -1006,6 +951,17 @@
   align-items: center;
 }
 
+/* The mid-size row layout gives the claim a 22rem flex-basis — in this
+   column that would be its height. */
+.lite .pcard-head .pcard-claim {
+  flex: none;
+}
+
+/* Tschobbo's sticker sits where the bar's "Screens" label would be. */
+.lite .viz-window-bar b {
+  display: none;
+}
+
 .lite .pcard-title {
   font-size: clamp(2rem, 10vw, 2.75rem);
 }
@@ -1015,7 +971,7 @@
 }
 
 .lite .pcard--inbox .pcard-visual {
-  height: 17rem;
+  height: 15rem;
 }
 
 .lite .pcard--blueprint .pcard-visual {
@@ -1051,21 +1007,6 @@
 .lite .viz-note {
   font-size: 0.95rem;
   padding: 0.5rem;
-}
-
-.lite .viz-mails span {
-  white-space: normal;
-}
-
-.lite .viz-inbox-body {
-  grid-template-columns: 1fr;
-}
-
-.lite .viz-folders {
-  flex-direction: row;
-  flex-wrap: wrap;
-  border-right: 0;
-  border-bottom: 1px solid var(--pc-soft);
 }
 
 /* On a phone Tschobbo sits on the window's corner like a sticker,
