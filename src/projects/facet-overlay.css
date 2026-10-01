@@ -202,5 +202,153 @@
   }
 }
 
+/* ---------------------------------------------------------------- */
+/* Workspace: a live widget (renderer, Java terminal) gets the whole  */
+/* screen instead of a scrolling panel — title row on top, the widget */
+/* fills the rest and lays its own cards out around its terminal or  */
+/* canvas (widgets/*.css). The panel carries the page grid, so the    */
+/* workspace reads as a zoomed-in piece of the projects wall.         */
+/* ---------------------------------------------------------------- */
+.facet-overlay--workspace {
+  padding: 1.25rem;
+}
+
+.facet-overlay--workspace .facet-overlay-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: end;
+  column-gap: 1.25rem;
+  row-gap: 1.25rem;
+  width: min(1680px, 100%);
+  height: 100%;
+  max-height: none;
+  padding: 1.25rem 1.5rem 1.5rem;
+  border-color: var(--pc-soft);
+  border-radius: 0;
+  background-color: var(--projects-bg);
+  background-image:
+    linear-gradient(to bottom, var(--grid-ink) 0 var(--grid-line), transparent var(--grid-line)),
+    linear-gradient(to right, var(--grid-ink) 0 var(--grid-line), transparent var(--grid-line));
+  background-size: var(--grid-cell) var(--grid-cell);
+}
+
+.facet-overlay--workspace .facet-overlay-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 1;
+  text-shadow: 0 0 0.35em color-mix(in srgb, var(--pc) 45%, transparent);
+}
+
+.facet-overlay--workspace .facet-overlay-close {
+  border-color: var(--pc-soft);
+  color: var(--color-text);
+}
+
+.facet-overlay--workspace .facet-overlay-close:hover,
+.facet-overlay--workspace .facet-overlay-close:focus-visible {
+  border-color: var(--pc);
+  color: var(--pc);
+  outline-color: var(--pc);
+}
+
+.facet-overlay-sub:empty {
+  display: none;
+}
+
+.facet-overlay-sub {
+  margin: 0 3.5rem 0.2rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pc);
+}
+
+.facet-overlay--workspace .facet-overlay-body {
+  grid-column: 1 / -1;
+  align-self: stretch;
+  min-height: 0;
+  font-size: 1rem;
+}
+
+.facet-overlay--workspace .facet-overlay-body .pcard-widget {
+  min-height: 0;
+}
+
+/* Below the desktop workspace the panel just scrolls, parts stacked. */
+@media (max-width: 999px) {
+  .facet-overlay--workspace .facet-overlay-panel {
+    display: block;
+    overflow-y: auto;
+  }
+  .facet-overlay--workspace .facet-overlay-title {
+    margin-right: 3.5rem;
+  }
+  .facet-overlay--workspace .facet-overlay-sub {
+    margin: 0.5rem 0 1.25rem;
+  }
+}
+
+@media (min-width: 1000px) {
+  .facet-overlay--workspace .facet-overlay-panel {
+    overflow: hidden;
+  }
+  .facet-overlay--workspace .facet-overlay-body,
+  .facet-overlay--workspace .facet-overlay-body .pcard-widget {
+    height: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .facet-overlay--workspace {
+    padding: 0;
+  }
+  .facet-overlay--workspace .facet-overlay-panel {
+    padding: 1.25rem 16px;
+    padding-top: 4rem;
+  }
+}
+
+/* Workspace card: the same see-through box with accent corner brackets
+   as the project cards, in the widget's --pc. */
+.ws-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--pc) 38%, transparent);
+  background: color-mix(in srgb, var(--projects-bg) 84%, transparent);
+}
+
+.ws-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  --t: 12px;
+  --w: 2px;
+  background:
+    linear-gradient(var(--pc), var(--pc)) top left / var(--t) var(--w),
+    linear-gradient(var(--pc), var(--pc)) top left / var(--w) var(--t),
+    linear-gradient(var(--pc), var(--pc)) top right / var(--t) var(--w),
+    linear-gradient(var(--pc), var(--pc)) top right / var(--w) var(--t),
+    linear-gradient(var(--pc), var(--pc)) bottom left / var(--t) var(--w),
+    linear-gradient(var(--pc), var(--pc)) bottom left / var(--w) var(--t),
+    linear-gradient(var(--pc), var(--pc)) bottom right / var(--t) var(--w),
+    linear-gradient(var(--pc), var(--pc)) bottom right / var(--w) var(--t);
+  background-repeat: no-repeat;
+}
+
+.ws-card-heading {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--pc);
+}
+
 /* Background is locked via lenis.stop()/start() (facet-overlay.ts), same
    pattern as the SAOS intro overlay — no separate CSS scroll-lock needed. */
