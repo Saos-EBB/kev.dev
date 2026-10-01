@@ -21,6 +21,7 @@ import {
   rotationAngleDeg,
   socialCirclePositions,
 } from "./raygun-geometry";
+import { UI } from "../i18n/ui";
 
 export interface RaygunItem {
   href: string;
@@ -115,7 +116,7 @@ export function mountRaygunButton(
   const button = document.createElement("button");
   button.type = "button";
   button.className = variant === "inline" ? "raygun-btn raygun-btn--inline" : "raygun-btn raygun-btn--fixed";
-  button.setAttribute("aria-label", "Kontakt öffnen");
+  button.setAttribute("aria-label", UI.contactOpen);
   const img = document.createElement("img");
   img.src = ICON_PATH;
   img.alt = "";

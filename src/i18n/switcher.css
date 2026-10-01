@@ -1,0 +1,84 @@
+/* Language menu in the header — same outline-button look as the music
+   and theme buttons next to it. */
+.lang-switch {
+  position: relative;
+}
+
+.lang-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 32px;
+  padding: 0 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.lang-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.lang-button:hover,
+.lang-button:focus-visible,
+.lang-button[aria-expanded="true"] {
+  color: var(--color-line);
+  border-color: var(--color-line);
+}
+
+.lang-menu[hidden] {
+  display: none;
+}
+
+.lang-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  inset-inline-end: 0;
+  z-index: 10;
+  min-width: 11rem;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  background: var(--color-bg);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-shadow) 50%, transparent);
+}
+
+.lang-menu button {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  text-align: start;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.lang-menu button b {
+  min-width: 1.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.lang-menu button:hover,
+.lang-menu button:focus-visible {
+  background: color-mix(in srgb, var(--color-line) 12%, transparent);
+  outline: none;
+}
+
+.lang-menu button[aria-checked="true"] b {
+  color: var(--color-line);
+}

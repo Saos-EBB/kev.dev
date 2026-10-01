@@ -13,6 +13,7 @@
 //
 // Free for personal projects under the CheerpJ Community License; the
 // widget shows the required credit.
+import { UI } from "../../i18n/ui";
 
 const LOADER_URL = "https://cjrtnc.leaningtech.com/4.3/loader.js";
 const JAR = "/app/java/grundlagen.jar";
@@ -104,7 +105,7 @@ function loadScript(src: string): Promise<void> {
     const el = document.createElement("script");
     el.src = src;
     el.onload = () => resolve();
-    el.onerror = () => reject(new Error("CheerpJ konnte nicht geladen werden."));
+    el.onerror = () => reject(new Error(UI.gCheerpError));
     document.head.appendChild(el);
   });
 }
