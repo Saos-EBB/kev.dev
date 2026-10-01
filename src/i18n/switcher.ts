@@ -34,19 +34,31 @@ export function initLangSwitch() {
   const setOpen = (open: boolean) => {
     menu.hidden = !open;
     button.setAttribute("aria-expanded", String(open));
+    // While the menu is open the header must stay put (edge-nav.ts would
+    // otherwise fade or slide it away under the pointer/finger) — see
+    // .lang-menu-open in switcher.css.
+    document.documentElement.classList.toggle("lang-menu-open", open);
     if (open) menu.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
   };
+  const isOpen = () => !menu.hidden;
 
-  button.addEventListener("click", () => setOpen(menu.hidden === true));
+  button.addEventListener("click", () => setOpen(!isOpen()));
   menu.addEventListener("click", (e) => {
     const item = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-lang]");
     if (item) setLang(item.dataset.lang as Lang);
   });
-  document.addEventListener("click", (e) => {
-    if (!root.contains(e.target as Node)) setOpen(false);
-  });
+  // A click outside only closes the menu — it must not also open the
+  // project card (or anything else) that happens to sit under it.
+  // Capture phase, so it's stopped before any other handler sees it.
+  const closeOutside = (e: Event) => {
+    if (!isOpen() || root.contains(e.target as Node)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(false);
+  };
+  document.addEventListener("click", closeOutside, true);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !menu.hidden) {
+    if (e.key === "Escape" && isOpen()) {
       setOpen(false);
       button.focus();
     }

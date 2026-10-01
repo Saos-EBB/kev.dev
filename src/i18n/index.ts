@@ -1,5 +1,5 @@
 // The page language. Picked once at load — from the visitor's earlier
-// choice, else German — because the scroll scenes measure text at start-up
+// choice, else the browser's language (see readLang) — because the scroll scenes measure text at start-up
 // (hero name, "PROJEKTE", contact letters); switching therefore stores the
 // choice and reloads, the same way LITE (viewport.ts) is decided once.
 //
@@ -21,18 +21,40 @@ const STORE_KEY = "kev-lang";
 // in this zustand-persisted key — written too, so it opens in the same one.
 const B2B_STORE_KEY = "xxx-language";
 
+// The visitor's own choice wins. Without one (first visit), the browser's
+// language list decides: the first entry we support, by its primary tag
+// ("de-AT" → de). A browser in none of our five languages gets English —
+// the most widely read of them. The detected language is not stored, so
+// it keeps following the browser until the visitor picks one.
 function readLang(): Lang {
   try {
     const stored = localStorage.getItem(STORE_KEY);
-    if (stored && LANGS.some((l) => l.code === stored)) return stored as Lang;
+    if (stored && isLang(stored)) return stored;
   } catch {
-    // storage blocked — German
+    // storage blocked — fall through to the browser's language
   }
-  return "de";
+  const wanted = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const tag of wanted) {
+    const primary = tag?.toLowerCase().split("-")[0];
+    if (primary && isLang(primary)) return primary;
+  }
+  return "en";
+}
+
+function isLang(code: string): code is Lang {
+  return LANGS.some((l) => l.code === code);
 }
 
 export const LANG: Lang = readLang();
 export const RTL = LANG === "ar";
+
+// The YourBrand page (iframe) keeps its own language store — always start
+// it in the portfolio's language, so the two never disagree.
+try {
+  localStorage.setItem(B2B_STORE_KEY, JSON.stringify({ state: { uiLang: LANG }, version: 0 }));
+} catch {
+  // storage blocked
+}
 
 document.documentElement.lang = LANG;
 document.documentElement.dir = RTL ? "rtl" : "ltr";
@@ -40,8 +62,7 @@ document.documentElement.dir = RTL ? "rtl" : "ltr";
 export function setLang(lang: Lang) {
   if (lang === LANG) return;
   try {
-    localStorage.setItem(STORE_KEY, lang);
-    localStorage.setItem(B2B_STORE_KEY, JSON.stringify({ state: { uiLang: lang }, version: 0 }));
+    localStorage.setItem(STORE_KEY, lang); // the YourBrand store follows on load
   } catch {
     // storage blocked — the reload below then just stays German
   }

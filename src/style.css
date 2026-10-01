@@ -1621,3 +1621,17 @@ button:focus-visible {
   background: color-mix(in srgb, var(--color-line) 8%, transparent);
   color: var(--color-text) !important;
 }
+
+/* Narrow phones: the decorative dancer makes room for the language
+   button; the play button stays. */
+@media (max-width: 480px) {
+  .lite .dancer-link {
+    display: none;
+  }
+  .lite .site-header-links {
+    gap: 0.55rem;
+  }
+  .lite .music-controls {
+    gap: 0.35rem;
+  }
+}
