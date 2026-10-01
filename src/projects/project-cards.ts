@@ -8,6 +8,7 @@
 // Learned! (challenge/origin) and Code + Architektur (GitHub, tags,
 // decisions, meta) — each opening in full in the shared overlay.
 
+import { UI } from "../i18n/ui";
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
 import { renderVisual } from "./project-visuals";
@@ -93,7 +94,7 @@ const box = (kind: string, heading: string, body: string) => `
   <section class="pcard-part pcard-part--${kind}">
     <h4 class="pcard-box-heading">${heading}</h4>
     <div class="pcard-box-body">${body}</div>
-    <button class="pcard-expand" type="button" aria-label="${heading} aufklappen">Aufklappen ↗</button>
+    <button class="pcard-expand" type="button" aria-label="${UI.expandAria(heading)}">${UI.expand}</button>
   </section>
 `;
 
@@ -117,16 +118,16 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
   const opens = card.open?.map(open).join("") ?? "";
 
   const why = [
-    `<p class="pcard-goal">${label("Ziel")}${esc(card.learnGoal)}</p>`,
-    card.what ? `<p class="pcard-what">${label("Projekt")}${esc(card.what)}</p>` : "",
+    `<p class="pcard-goal">${label(UI.lblGoal)}${esc(card.learnGoal)}</p>`,
+    card.what ? `<p class="pcard-what">${label(UI.lblWhat)}${esc(card.what)}</p>` : "",
     boxes.includes("code") ? "" : opens,
   ].join("");
 
   const learned =
     card.challenge || card.origin
       ? [
-          card.challenge ? `<p class="pcard-what">${label("Herausforderung")}${esc(card.challenge)}</p>` : "",
-          card.origin ? `<p class="pcard-what">${label("So entstanden")}${esc(card.origin)}</p>` : "",
+          card.challenge ? `<p class="pcard-what">${label(UI.lblChallenge)}${esc(card.challenge)}</p>` : "",
+          card.origin ? `<p class="pcard-what">${label(UI.lblOrigin)}${esc(card.origin)}</p>` : "",
         ].join("")
       : open("Herausforderung/Learnings fehlen noch");
 
@@ -143,9 +144,9 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
   ].join("");
 
   const parts = {
-    why: box("why", "Why?", why),
-    learned: box("learned", "Learned!", learned),
-    code: box("code", "Code + Architektur", code),
+    why: box("why", UI.boxWhy, why),
+    learned: box("learned", UI.boxLearned, learned),
+    code: box("code", UI.boxCode, code),
   };
 
   return `

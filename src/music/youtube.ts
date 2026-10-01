@@ -1,5 +1,6 @@
 import "./music.css";
 import { createDancer } from "./dancer";
+import { UI } from "../i18n/ui";
 
 // Header play button for the "beim Bauen" playlist. Nothing from YouTube
 // is in the DOM until the first click: that click loads the IFrame API,
@@ -75,7 +76,7 @@ export function initYoutubeButton() {
     const id = player?.getVideoData().video_id;
     if (!dancerLink || !id) return;
     dancerLink.href = `https://www.youtube.com/watch?v=${id}&list=${PLAYLIST_ID}`;
-    dancerLink.setAttribute("aria-label", "Aktuellen Song auf YouTube öffnen");
+    dancerLink.setAttribute("aria-label", UI.songOpen);
   };
 
   let player: YTPlayer | null = null;
@@ -88,7 +89,7 @@ export function initYoutubeButton() {
     else dancer.stop();
     button.classList.toggle("is-playing", value);
     button.parentElement?.classList.toggle("is-playing", value);
-    button.setAttribute("aria-label", value ? "Musik pausieren" : "Musik abspielen");
+    button.setAttribute("aria-label", value ? UI.musicPause : UI.musicPlay);
     button.setAttribute("aria-pressed", String(value));
   };
 

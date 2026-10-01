@@ -262,7 +262,7 @@
 
 .pcard-label {
   display: inline-block;
-  margin-right: 0.6em;
+  margin-inline-end: 0.6em;
   font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 600;
@@ -316,13 +316,13 @@
 
 .pcard-decisions li {
   position: relative;
-  padding-left: 1rem;
+  padding-inline-start: 1rem;
 }
 
 .pcard-decisions li::before {
   content: "";
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0.6em;
   width: 5px;
   height: 5px;
@@ -383,7 +383,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  margin-left: calc(var(--i) * 1.1rem);
+  margin-inline-start: calc(var(--i) * 1.1rem);
   padding: 0.5rem 0.8rem;
   border: 1px solid var(--pc-soft);
   background: color-mix(in srgb, var(--pc) calc(4% + var(--i) * 4%), transparent);
@@ -405,7 +405,7 @@
 .viz-stack span {
   color: var(--color-text-muted);
   font-size: 0.7rem;
-  text-align: right;
+  text-align: end;
 }
 
 .viz-tenants {
@@ -418,7 +418,7 @@
 .viz-tenants th {
   padding: 0.2rem 0.5rem 0.2rem 0;
   font-weight: normal;
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
 }
 
@@ -482,7 +482,7 @@
   background: color-mix(in srgb, var(--projects-bg) 88%, transparent);
   color: inherit;
   font: inherit;
-  text-align: left;
+  text-align: start;
   overflow: hidden;
   cursor: zoom-in;
   transition: border-color var(--transition-hover);
@@ -521,11 +521,11 @@
 }
 
 .viz-window-bar span {
-  margin-left: 0.5rem;
+  margin-inline-start: 0.5rem;
 }
 
 .viz-window-bar b {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-weight: 600;
   color: var(--pc);
 }
@@ -706,7 +706,7 @@
   display: inline-block;
   width: 3ch;
   margin: 0 1.2ch 0 1ch;
-  text-align: right;
+  text-align: end;
   color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
   user-select: none;
 }
@@ -747,7 +747,7 @@
   display: inline-block;
   width: 0.55em;
   height: 1.1em;
-  margin-left: 4.2ch;
+  margin-inline-start: 4.2ch;
   vertical-align: text-bottom;
   background: var(--pc);
   animation: viz-blink 1.1s steps(1) infinite;
@@ -781,7 +781,7 @@
   font-family: var(--font-display);
   font-size: clamp(0.95rem, 1.6vw, 1.35rem);
   line-height: 1;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transform: rotate(var(--r));
   box-shadow: 0 8px 18px color-mix(in srgb, var(--color-shadow) 45%, transparent);
@@ -805,7 +805,7 @@
   font-family: var(--font-mono);
   font-size: 0.85rem;
   color: var(--color-text);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 

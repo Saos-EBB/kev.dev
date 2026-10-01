@@ -22,6 +22,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
 import { LITE } from "../viewport";
+import { LANG } from "../i18n";
 import { applyMouseForce, makeBody, stepPhysics, type PhysicsBody } from "./contact-physics";
 import { mountRaygunButton } from "../raygun/raygun";
 
@@ -78,13 +79,18 @@ export function getContactRevealScrollY(): number | null {
 // the outer span's transform on every scroll tick (including at rest, once
 // progress is pinned at 1), which would otherwise stomp the idle loop's
 // transform mid-wobble.
+//
+// Arabic letters change shape by their neighbours and must stay joined —
+// one span per letter would print them all in their isolated form. There
+// the pieces are whole words (spaces kept as their own piece).
 function splitLetters(el: HTMLElement): { outer: HTMLElement[]; inner: HTMLElement[] } {
   const text = el.textContent ?? "";
   el.setAttribute("aria-label", text);
   el.textContent = "";
   const outer: HTMLElement[] = [];
   const inner: HTMLElement[] = [];
-  for (const ch of text) {
+  const pieces = LANG === "ar" ? text.split(/( )/).filter(Boolean) : Array.from(text);
+  for (const ch of pieces) {
     const span = document.createElement("span");
     span.className = "letter";
     span.setAttribute("aria-hidden", "true");

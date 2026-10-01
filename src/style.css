@@ -1611,3 +1611,13 @@ button:focus-visible {
     transition: none;
   }
 }
+
+/* Non-German visitors: the legal texts stay German (legally binding), with
+   a note in their language above them. */
+.legal-lang-note {
+  margin-bottom: 2rem;
+  padding: 0.8rem 1rem;
+  border-inline-start: 2px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-line) 8%, transparent);
+  color: var(--color-text) !important;
+}
