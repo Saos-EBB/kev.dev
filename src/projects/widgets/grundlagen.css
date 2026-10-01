@@ -235,13 +235,17 @@
 
 .gwidget-out {
   height: 16rem;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 0.75rem;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   line-height: 1.3;
   color: var(--color-text);
-  white-space: pre;
+  /* Never sideways: terminal.ts shrinks the font to fit the widest line,
+     and only lines too wide even at its minimum size wrap. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .gwidget-in {
@@ -372,13 +376,31 @@
 }
 
 @media (max-width: 999px) {
+  /* All nine notes visible, wrapped into rows — no sideways strip. */
+  .gwidget-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  /* Code wraps instead of scrolling sideways on narrow screens. */
+  .gwidget-code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow-x: hidden;
+  }
+
   /* Stacked: notes, terminal, then the cards and the code. */
   .gwidget-term {
     order: 1;
   }
   .gwidget-bar {
     order: 0;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .gwidget-nav {
+    justify-content: flex-end;
   }
   .gwidget-info {
     order: 2;
