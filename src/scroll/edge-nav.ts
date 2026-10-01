@@ -39,7 +39,10 @@ export function initEdgeNav(lenis: Lenis) {
     const nearTop = pointerY >= 0 && pointerY <= zone;
     const nearBottom = pointerY >= 0 && pointerY >= window.innerHeight - zone;
 
-    header!.classList.toggle("is-visible", progress <= edge || nearTop);
+    // Also while the pointer or keyboard focus is in the header itself —
+    // the language menu hangs below the hover zone.
+    const inHeader = header!.matches(":hover, :focus-within");
+    header!.classList.toggle("is-visible", progress <= edge || nearTop || inHeader);
     footer!.classList.toggle("is-visible", progress >= 1 - edge || nearBottom);
   }
 
