@@ -1,5 +1,6 @@
 import gsap from "gsap";
 import "./saos-intro.css";
+import { UI } from "../i18n/ui";
 
 // Intro overlay: a "SAOS" still that shatters like glass (or slides away)
 // and reveals the hero underneath. Faked physics — the shard pattern is
@@ -102,7 +103,7 @@ function drawStill(width: number, height: number, opts: StillOptions = {}): stri
 
   ctx.fillStyle = opts.gray ? "#1e1c24" : muted;
   ctx.font = `${Math.max(12, Math.min(width * 0.018, 16))}px ${display}`;
-  ctx.fillText(opts.hint ?? "KLICKEN", width / 2, height * 0.86);
+  ctx.fillText(opts.hint ?? UI.introClick, width / 2, height * 0.86);
 
   return canvas.toDataURL();
 }
@@ -120,7 +121,7 @@ export function mountSaosIntro(
   overlayEl.classList.add("is-active");
   overlayEl.setAttribute("role", "button");
   overlayEl.setAttribute("tabindex", "0");
-  overlayEl.setAttribute("aria-label", "Intro überspringen und Seite öffnen");
+  overlayEl.setAttribute("aria-label", UI.introSkip);
 
   const still = document.createElement("div");
   still.className = "saos-intro-still";
@@ -268,9 +269,9 @@ export function mountSaosLoader(
   function drawCanvases() {
     if (destroyed) return;
     grayStill.style.backgroundImage =
-      `url(${drawStill(w, h, { gray: true, hint: "LADEN…" })})`;
+      `url(${drawStill(w, h, { gray: true, hint: UI.introLoading })})`;
     fillEl.style.backgroundImage =
-      `url(${drawStill(w, h, { hint: "LADEN…" })})`;
+      `url(${drawStill(w, h, { hint: UI.introLoading })})`;
     applyFill(currentProgress);
   }
   drawCanvases();

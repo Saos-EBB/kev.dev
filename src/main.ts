@@ -1,7 +1,12 @@
+// First: sets <html lang/dir> from the stored language before anything renders.
+import { RTL } from "./i18n";
+import { UI } from "./i18n/ui";
+import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
 import "@fontsource-variable/jetbrains-mono";
 import "./style.css";
 import "./reading.css";
+import "./i18n/i18n.css";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -73,16 +78,16 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <header class="site-header">
     <div class="site-header-inner">
       <a class="site-header-brand" href="#hero"><span class="site-header-brand-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span></a>
-      <nav class="site-header-links" aria-label="Primary">
-        <a href="#about">About</a>
-        <a href="#projects">Projects</a>
-        <a href="#contact">Contact</a>
+      <nav class="site-header-links" aria-label="${UI.navAria}">
+        <a href="#about">${UI.navAbout}</a>
+        <a href="#projects">${UI.navProjects}</a>
+        <a href="#contact">${UI.navContact}</a>
         <span class="music-controls">
-          <button class="music-button" type="button" aria-label="Musik abspielen" aria-pressed="false">
+          <button class="music-button" type="button" aria-label="${UI.musicPlay}" aria-pressed="false">
             <svg class="music-icon music-icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
             <svg class="music-icon music-icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
           </button>
-          <a class="dancer-link" target="_blank" rel="noopener noreferrer" aria-label="Playlist auf YouTube öffnen">
+          <a class="dancer-link" target="_blank" rel="noopener noreferrer" aria-label="${UI.playlistOpen}">
             <svg class="dancer idle" viewBox="0 0 120 160" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" aria-hidden="true">
               <g class="figure">
                 <g class="body">
@@ -97,7 +102,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             </svg>
           </a>
         </span>
-        <button class="theme-toggle" type="button" aria-label="Light Mode aktivieren" aria-pressed="false">
+        <button class="theme-toggle" type="button" aria-label="${UI.themeToLight}" aria-pressed="false">
           <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
@@ -106,6 +111,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
         </button>
+        ${renderLangSwitch()}
       </nav>
     </div>
   </header>
@@ -118,7 +124,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div class="cloth-body">
         <div class="hero-content">
           <h1 class="hero-name">Kevin Schaberl</h1>
-          <p class="hero-subtitle">Junior Developer</p>
+          <p class="hero-subtitle">${UI.heroSubtitle}</p>
         </div>
       </div>
       <div class="hero-rule"></div>
@@ -164,12 +170,12 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
   </section>
 
-  <div class="projects-headline" aria-hidden="true">Projekte</div>
+  <div class="projects-headline" aria-hidden="true">${UI.projects}</div>
 
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
     <div class="projects-saos" aria-hidden="true"></div>
-    <h2 class="projects-title">Projekte</h2>
+    <h2 class="projects-title">${UI.projects}</h2>
     <div class="carousel-stage">
       ${projectCards
         .map(
@@ -181,8 +187,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         )
         .join("")}
     </div>
-    <nav class="swiper-nav" aria-label="Projekte durchblättern">
-      <button class="swiper-arrow" type="button" data-dir="-1" aria-label="Vorheriges Projekt">←</button>
+    <nav class="swiper-nav" aria-label="${UI.swiperAria}">
+      <button class="swiper-arrow" type="button" data-dir="-1" aria-label="${UI.swiperPrev}">${RTL ? "→" : "←"}</button>
       <ol class="swiper-dots">
         ${projectCards
           .map(
@@ -190,14 +196,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           )
           .join("")}
       </ol>
-      <button class="swiper-arrow" type="button" data-dir="1" aria-label="Nächstes Projekt">→</button>
+      <button class="swiper-arrow" type="button" data-dir="1" aria-label="${UI.swiperNext}">${RTL ? "←" : "→"}</button>
     </nav>
   </section>
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
     <div class="contact-inner">
-      <h2 class="contact-headline">Let's talk now</h2>
+      <h2 class="contact-headline">${UI.contactHeadline}</h2>
       <div class="contact-raygun" hidden></div>
       <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
       <ul class="contact-icons">
@@ -209,7 +215,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </a>
         </li>
         <li>
-          <a href="mailto:kevin.schaberl.work@gmail.com" aria-label="Email">
+          <a href="mailto:kevin.schaberl.work@gmail.com" aria-label="${UI.email}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 5h18v14H3z" />
               <path d="m3 6 9 7 9-7" />
@@ -217,7 +223,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </a>
         </li>
         <li>
-          <a href="#contact" aria-label="Phone">
+          <a href="#contact" aria-label="${UI.phone}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
@@ -230,11 +236,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <footer class="footer footer--floating">
     <div class="footer-inner">
       <p class="footer-copy">© 2026 <span class="footer-copy-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span></p>
-      <nav class="footer-links" aria-label="Rechtliches">
+      <nav class="footer-links" aria-label="${UI.legalAria}">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>
-        <a href="#impressum">Impressum</a>
-        <a href="#datenschutz">Datenschutz</a>
+        <a href="#impressum">${UI.impressum}</a>
+        <a href="#datenschutz">${UI.datenschutz}</a>
       </nav>
     </div>
   </footer>
@@ -396,6 +402,10 @@ function paintNameTexture(shine: number | null) {
   tctx.setTransform(TEXTURE_SUPERSAMPLE, 0, 0, TEXTURE_SUPERSAMPLE, 0, 0);
   tctx.clearRect(0, 0, nameTexture.width, nameTexture.height);
   tctx.textBaseline = "middle";
+  // Positions below are left edges (measured boxes) — keep that meaning
+  // even on the RTL page; the text itself still shapes/orders correctly.
+  tctx.direction = "ltr";
+  tctx.textAlign = "left";
 
   for (const line of nameLines) {
     tctx.font = line.font;
@@ -600,6 +610,7 @@ initScrollProgress(lenis);
 initEdgeNav(lenis);
 initYoutubeButton();
 initThemeToggle();
+initLangSwitch();
 initLegalOverlay(lenis);
 
 // ─────────────────────────────────────────────────────────────────────────────

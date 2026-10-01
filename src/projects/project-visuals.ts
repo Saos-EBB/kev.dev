@@ -9,17 +9,15 @@
 // so the viewport and the pinboard notes double as "start the live demo".
 
 import { esc, type ProjectCard } from "./project-cards";
+import { UI } from "../i18n/ui";
+import { RTL } from "../i18n";
+import { NOTE_IDS, noteLabel } from "./widgets/grundlagen-i18n";
 
 // YourBrand: the four layers named in its copy (DB → Security → API, and
 // the experimental business logic on top), plus the per-tenant modules.
 function blueprint(card: ProjectCard): string {
-  const layers = [
-    ["Business-Logic", "der experimentelle Teil"],
-    ["API", "NestJS · WebSockets · Stripe"],
-    ["Security", "Row-Level Security"],
-    ["Datenbank", "PostgreSQL · PostGIS"],
-  ];
-  const modules = ["Moderation", "Barrierefrei", "Geo", "Payments"];
+  const layers = UI.vizLayers;
+  const modules = UI.vizModules;
   // Which modules each example tenant has booked — illustrates "jeder
   // Tenant bekommt nur die Module, die er bucht", not real customers.
   const tenants: [string, boolean[]][] = [
@@ -29,7 +27,7 @@ function blueprint(card: ProjectCard): string {
   ];
   return `
     <div class="viz-blueprint">
-      <p class="viz-caption">fig. 1 — Layer, von unten gebaut</p>
+      <p class="viz-caption">${UI.vizFig1}</p>
       <ol class="viz-stack">
         ${layers
           .map(
@@ -38,7 +36,7 @@ function blueprint(card: ProjectCard): string {
           )
           .join("")}
       </ol>
-      <p class="viz-caption">fig. 2 — Module pro Tenant</p>
+      <p class="viz-caption">${UI.vizFig2}</p>
       <table class="viz-tenants">
         <thead><tr><th></th>${modules.map((m) => `<th>${m}</th>`).join("")}</tr></thead>
         <tbody>
@@ -65,8 +63,8 @@ function inbox(card: ProjectCard): string {
     ? `data-card="${esc(card.id)}" data-facet="screens"`
     : "disabled";
   return `
-    <button class="viz-inbox" type="button" ${gallery} aria-label="Screenshots von ${esc(card.title)} ansehen">
-      <span class="viz-window-bar"><i></i><i></i><i></i><span>jobbot :// Posteingang</span><b>${card.screenshots?.length ?? 0} Screens ↗</b></span>
+    <button class="viz-inbox" type="button" ${gallery} aria-label="${esc(UI.vizScreensAria(card.title))}">
+      <span class="viz-window-bar"><i></i><i></i><i></i><span>jobbot :// ${UI.vizInbox}</span><b>${UI.vizScreensCount(card.screenshots?.length ?? 0)}</b></span>
       ${shot ? `<img class="viz-inbox-shot" src="${esc(shot.src)}" alt="${esc(shot.alt)}" loading="lazy" decoding="async" />` : ""}
       ${mascot ? `<img class="viz-mascot" src="${esc(mascot.src)}" alt="${esc(mascot.alt)}" loading="lazy" decoding="async" />` : ""}
     </button>
@@ -83,7 +81,7 @@ function viewport(card: ProjectCard): string {
     ? `data-card="${esc(card.id)}" data-facet="live-demo"`
     : "disabled";
   return `
-    <button class="viz-viewport" type="button" ${demo} aria-label="${esc(card.widget?.label ?? "Live-Demo")} öffnen">
+    <button class="viz-viewport" type="button" ${demo} aria-label="${esc(UI.vizOpen(card.widget?.label ?? UI.facetLiveDemo))}">
       <span class="viz-scene" aria-hidden="true">
         <span class="viz-cube">${faces}</span>
         <span class="viz-cube viz-cube--inner">${faces}</span>
@@ -91,7 +89,7 @@ function viewport(card: ProjectCard): string {
       <span class="viz-hud viz-hud--tl">canvas 2d · 0 libs</span>
       <span class="viz-hud viz-hud--tr">OBJ · STL · DICOM</span>
       <span class="viz-hud viz-hud--bl">x 0.00 · y 0.00 · z −4.00</span>
-      <span class="viz-hud viz-hud--br">▶ Live drehen</span>
+      <span class="viz-hud viz-hud--br">${UI.vizSpin}</span>
     </button>
   `;
 }
@@ -105,10 +103,7 @@ function editor(card: ProjectCard): string {
     ["c", "// @match       https://aniworld.to/*"],
     ["c", "// ==/UserScript=="],
     ["", ""],
-    ["add", "+ Hoster-Handling (Voe/Filemoon)"],
-    ["add", "+ Ad-Skipping"],
-    ["add", "+ Auto-Play"],
-    ["del", "- bs.to-Adaption (verworfen)"],
+    ...UI.vizEditorFeatures,
     ["", ""],
     ["c", "// Fix: Violentmonkey → ScriptCat (MV3)"],
   ];
@@ -121,27 +116,17 @@ function editor(card: ProjectCard): string {
             `<span class="ln">${String(i + 1).padStart(2, " ")}</span><span class="${kind}">${esc(text)}</span>`,
         )
         .join("\n")}<span class="viz-caret"></span></code></pre>
-      <div class="viz-status"><span><b>●</b> aktiv auf aniworld.to</span><span>JavaScript · UTF-8</span></div>
+      <div class="viz-status"><span><b>●</b> ${UI.vizEditorStatus}</span><span>JavaScript · UTF-8</span></div>
     </div>
   `;
 }
 
 // Grundlagen: the nine Bootcamp programs as sticky notes in their own
 // colors (same --note-N each one has in the widget), each one starts the
-// in-browser Java terminal. Labels mirror NOTES in widgets/grundlagen.ts —
-// not imported, that module pulls in all the Java sources.
+// in-browser Java terminal. Labels come from widgets/grundlagen-i18n.ts,
+// not grundlagen.ts — that module pulls in all the Java sources.
 function pinboard(card: ProjectCard): string {
-  const notes = [
-    "Game of Life",
-    "Pokémon",
-    "Mastermind",
-    "RPN-Rechner",
-    "Personalverwaltung",
-    "Bibliothek",
-    "Minesweeper",
-    "Zahlenraten",
-    "Chiffre",
-  ];
+  const notes = NOTE_IDS.map(noteLabel);
   const demo = card.facets?.includes("live-demo")
     ? `data-card="${esc(card.id)}" data-facet="live-demo"`
     : "disabled";
@@ -162,13 +147,14 @@ function pinboard(card: ProjectCard): string {
 // tiny drawing of itself and the reason it exists. Every frame is a real
 // link to that section, so the card navigates the page it's part of.
 function storyboard(_card: ProjectCard): string {
-  const frames: [string, string, string, string][] = [
-    ["#hero", "cloth", "Hero", "Das Tuch ist so groß, dass man es anfassen muss."],
-    ["#about", "elevator", "About", "Ein Aufzug, an dem mein Leben vorbeizieht."],
-    ["#projects", "bench", "Projekte", "Eine Werkbank — jedes Projekt mit Why und Learned."],
-    ["#contact", "contact", "Kontakt", "Ein Übergang — und ein verstecktes Wow für Neugierige."],
-    ["#impressum", "legal", "Impressum", "Overlay statt neuer Seite: die Musik läuft weiter."],
+  const targets: [string, string][] = [
+    ["#hero", "cloth"],
+    ["#about", "elevator"],
+    ["#projects", "bench"],
+    ["#contact", "contact"],
+    ["#impressum", "legal"],
   ];
+  const frames = targets.map(([href, thumb], i) => [href, thumb, ...UI.vizStory[i]]);
   return `
     <ol class="viz-story">
       ${frames
@@ -181,7 +167,7 @@ function storyboard(_card: ProjectCard): string {
               <b><i>${String(i + 1).padStart(2, "0")}</i> ${name}</b>
               <span>${why}</span>
             </span>
-            <span class="viz-frame-go" aria-hidden="true">↗</span>
+            <span class="viz-frame-go" aria-hidden="true">${RTL ? "↖" : "↗"}</span>
           </a>
         </li>`,
         )

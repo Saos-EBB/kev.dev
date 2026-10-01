@@ -21,6 +21,7 @@
 // tile that opened it. Mobile (<=640px) is a full-screen sheet, not a
 // small popup (facet-overlay.css).
 
+import { UI } from "../i18n/ui";
 import "./facet-overlay.css";
 import type Lenis from "lenis";
 import { displayText, type ProjectCard, type ProjectWidget, type FacetKind } from "./project-cards";
@@ -43,16 +44,16 @@ const ICONS: Record<FacetKind, string> = {
 };
 
 const LABELS: Record<FacetKind, string> = {
-  "live-demo": "Live-Demo",
-  b2b: "B2B-Seite",
-  screens: "Screens",
-  self: "Du bist schon drin",
+  "live-demo": UI.facetLiveDemo,
+  b2b: UI.facetB2b,
+  screens: UI.facetScreens,
+  self: UI.facetSelf,
 };
 
 export function renderFacetTiles(card: ProjectCard): string {
   if (!card.facets?.length) return "";
   return `
-    <div class="facet-tiles" role="group" aria-label="Mehr zu ${esc(card.title)}">
+    <div class="facet-tiles" role="group" aria-label="${esc(UI.moreAbout(card.title))}">
         ${card.facets
           .map(
             (kind) => `
@@ -74,13 +75,13 @@ interface FacetContent {
 }
 
 const B2B_PAGE: ProjectWidget = {
-  label: "White-Label-Verkaufsseite",
+  label: UI.b2bTitle,
   mount: (el) => {
     el.classList.add("b2b-frame-host");
     const frame = document.createElement("iframe");
     frame.className = "b2b-frame";
     frame.src = "/yourbrand/";
-    frame.title = "YourBrand — White-Label-Verkaufsseite";
+    frame.title = `YourBrand — ${UI.b2bTitle}`;
     el.appendChild(frame);
   },
 };
@@ -97,7 +98,7 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
       }
       const demo = findLink(card, /live-demo/i);
       return {
-        title: "Live-Demo",
+        title: UI.facetLiveDemo,
         bodyHtml: demo
           ? demo.href
             ? `<p><a class="facet-link" href="${esc(demo.href)}" target="_blank" rel="noopener noreferrer">${esc(demo.label)} ↗</a></p>`
@@ -109,7 +110,7 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
       return { title: card.title, bodyHtml: "" };
     case "screens":
       return {
-        title: `${card.title} — Screens`,
+        title: UI.screensTitle(card.title),
         bodyHtml: card.screenshots?.length
           ? `<div class="facet-gallery">${card.screenshots
               .map(
@@ -124,7 +125,7 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
       // of the portfolio. Handled like a widget, so the workspace shows it
       // full-screen and the frame is only created on the first open (moving
       // it in and out of the overlay reloads it, which is fine here).
-      return { title: "White-Label-Verkaufsseite", bodyHtml: "", widget: B2B_PAGE };
+      return { title: UI.b2bTitle, bodyHtml: "", widget: B2B_PAGE };
   }
 }
 
@@ -198,7 +199,7 @@ function ensureOverlay(lenis: Lenis): HTMLElement {
   el.innerHTML = `
     <div class="facet-overlay-backdrop" data-close></div>
     <div class="facet-overlay-panel" data-lenis-prevent role="dialog" aria-modal="true" aria-labelledby="facet-overlay-title">
-      <button class="facet-overlay-close" type="button" data-close aria-label="Schließen">✕</button>
+      <button class="facet-overlay-close" type="button" data-close aria-label="${UI.close}">✕</button>
       <h3 class="facet-overlay-title" id="facet-overlay-title"></h3>
       <p class="facet-overlay-sub"></p>
       <div class="facet-overlay-body"></div>
@@ -298,7 +299,7 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
         mountedWidgets.add(hostId);
         Promise.resolve(content.widget.mount(host, card)).catch(() => {
           mountedWidgets.delete(hostId);
-          host.textContent = "Widget konnte nicht geladen werden.";
+          host.textContent = UI.widgetError;
         });
       }
     } else {
