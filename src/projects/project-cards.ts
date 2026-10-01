@@ -32,11 +32,12 @@ export interface ProjectWidget {
 // Facet buttons (in the card head, and on some signature visuals): each
 // opens the same shared overlay (facet-overlay.ts) — Live-Demo -> widget
 // or the demo link, B2B -> the YourBrand accessible-site link.
-// Screens -> the card's screenshots as a gallery.
-export type FacetKind = "live-demo" | "b2b" | "screens";
+// Screens -> the card's screenshots as a gallery. Self -> no overlay: the
+// portfolio's own card, its "demo" is the page you're on (main.ts).
+export type FacetKind = "live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
-export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard";
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard" | "storyboard";
 
 export interface ProjectCard {
   id: string;
@@ -65,6 +66,12 @@ export interface ProjectCard {
   // Which facet buttons this card shows, in display order.
   facets?: FacetKind[];
 }
+
+// Koeeya Trial (--font-display) has no real punctuation — its "." and ","
+// render as a "pdt." trial mark. In display titles they're set in the
+// reading font instead (.pcard-title-punct).
+export const displayText = (s: string) =>
+  esc(s).replace(/[.,:;!?]/g, (c) => `<span class="pcard-title-punct">${c}</span>`);
 
 // Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt").
 const label = (text: string) => `<span class="pcard-label">${text}</span>`;
@@ -98,6 +105,7 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
   viewport: ["why", "learned", "code"],
   editor: ["why", "learned", "code"],
   pinboard: ["why"],
+  storyboard: ["why", "learned", "code"],
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -144,7 +152,7 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
     <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       <header class="pcard-head">
         <p class="pcard-index"><span>${pad(index + 1)}</span> / ${pad(total)} · ${esc(card.kind)}</p>
-        <h3 class="pcard-title">${esc(card.title)}</h3>
+        <h3 class="pcard-title" aria-label="${esc(card.title)}">${displayText(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${renderFacetTiles(card)}

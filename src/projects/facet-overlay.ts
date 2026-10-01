@@ -23,7 +23,7 @@
 
 import "./facet-overlay.css";
 import type Lenis from "lenis";
-import type { ProjectCard, ProjectWidget, FacetKind } from "./project-cards";
+import { displayText, type ProjectCard, type ProjectWidget, type FacetKind } from "./project-cards";
 
 function esc(s: string): string {
   return s
@@ -38,6 +38,7 @@ function esc(s: string): string {
 const ICONS: Record<FacetKind, string> = {
   "live-demo": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4" /></svg>`,
   screens: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="1" /><path d="M8 21h8M12 17v4" /></svg>`,
+  self: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>`,
   b2b: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V8l8-5 8 5v13" /><path d="M9 21v-6h6v6M9 12h.01M15 12h.01M9 16h.01M15 16h.01" /></svg>`,
 };
 
@@ -45,6 +46,7 @@ const LABELS: Record<FacetKind, string> = {
   "live-demo": "Live-Demo",
   b2b: "B2B-Seite",
   screens: "Screens",
+  self: "Du bist schon drin",
 };
 
 export function renderFacetTiles(card: ProjectCard): string {
@@ -103,6 +105,8 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
           : `<p class="pcard-open">[OFFEN: Live-Demo-Info fehlt]</p>`,
       };
     }
+    case "self":
+      return { title: card.title, bodyHtml: "" };
     case "screens":
       return {
         title: `${card.title} — Screens`,
@@ -253,8 +257,9 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     parkActiveWidget();
     el.classList.remove("facet-overlay--workspace");
     el.querySelector(".facet-overlay-sub")!.textContent = "";
-    el.querySelector(".facet-overlay-title")!.textContent =
-      `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`;
+    el.querySelector(".facet-overlay-title")!.innerHTML = displayText(
+      `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`,
+    );
     el.querySelector(".facet-overlay-body")!.innerHTML = boxEl.querySelector(".pcard-box-body")!.innerHTML;
     show(el, btn, card);
   });
@@ -270,6 +275,7 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     const card = byId.get(tile.dataset.card ?? "");
     const kind = tile.dataset.facet as FacetKind | undefined;
     if (!card || !kind) return;
+    if (kind === "self") return; // handled in main.ts — it's this page, not an overlay
 
     const el = ensureOverlay(lenis);
     const content = resolveFacetContent(card, kind);
@@ -279,7 +285,7 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     // A live widget gets the workspace: the whole screen, the project's
     // name as the title and the widget's own label under it.
     el.classList.toggle("facet-overlay--workspace", !!content.widget);
-    el.querySelector(".facet-overlay-title")!.textContent = content.widget ? card.title : content.title;
+    el.querySelector(".facet-overlay-title")!.innerHTML = displayText(content.widget ? card.title : content.title);
     el.querySelector(".facet-overlay-sub")!.textContent = content.widget ? content.title : "";
 
     if (content.widget) {

@@ -585,6 +585,16 @@ document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link
   });
 });
 
+// The kev.dev card's own "demo" is this page: jump to the hero and give the
+// cloth one tug, so it's obvious what "Du bist schon drin" means.
+document.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest('[data-facet="self"]');
+  if (!btn) return;
+  e.preventDefault();
+  lenis.scrollTo(0, { immediate: true });
+  setTimeout(() => cloth.pull(), 350);
+});
+
 initScrollProgress(lenis);
 
 initEdgeNav(lenis);

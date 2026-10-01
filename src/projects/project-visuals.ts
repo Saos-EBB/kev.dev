@@ -158,6 +158,38 @@ function pinboard(card: ProjectCard): string {
   `;
 }
 
+// kev.dev: this page as a storyboard, top to bottom — each section with a
+// tiny drawing of itself and the reason it exists. Every frame is a real
+// link to that section, so the card navigates the page it's part of.
+function storyboard(_card: ProjectCard): string {
+  const frames: [string, string, string, string][] = [
+    ["#hero", "cloth", "Hero", "Das Tuch ist so groß, dass man es anfassen muss."],
+    ["#about", "elevator", "About", "Ein Aufzug, an dem mein Leben vorbeizieht."],
+    ["#projects", "bench", "Projekte", "Eine Werkbank — jedes Projekt mit Why und Learned."],
+    ["#contact", "contact", "Kontakt", "Ein Übergang — und ein verstecktes Wow für Neugierige."],
+    ["#impressum", "legal", "Impressum", "Overlay statt neuer Seite: die Musik läuft weiter."],
+  ];
+  return `
+    <ol class="viz-story">
+      ${frames
+        .map(
+          ([href, thumb, name, why], i) => `
+        <li>
+          <a class="viz-frame" href="${href}">
+            <span class="viz-thumb viz-thumb--${thumb}" aria-hidden="true"></span>
+            <span class="viz-frame-text">
+              <b><i>${String(i + 1).padStart(2, "0")}</i> ${name}</b>
+              <span>${why}</span>
+            </span>
+            <span class="viz-frame-go" aria-hidden="true">↗</span>
+          </a>
+        </li>`,
+        )
+        .join("")}
+    </ol>
+  `;
+}
+
 export function renderVisual(card: ProjectCard): string {
   switch (card.layout) {
     case "blueprint":
@@ -170,5 +202,7 @@ export function renderVisual(card: ProjectCard): string {
       return editor(card);
     case "pinboard":
       return pinboard(card);
+    case "storyboard":
+      return storyboard(card);
   }
 }

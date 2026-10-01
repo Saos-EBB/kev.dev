@@ -286,6 +286,13 @@ export class Cloth {
     );
   }
 
+  // Public: one scripted pull on demand — the kev.dev card's "Du bist schon
+  // drin" button jumps to the hero and tugs the cloth once. cloth-pulls
+  pull() {
+    if (this.reducedMotion) return;
+    this.startIntroPull();
+  }
+
   // Nearest node to (x, y) by its resting position, not its current
   // (possibly mid-animation) one — used to pick where a scripted pull
   // grabs from, same idea as the pointer grab search in

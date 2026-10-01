@@ -62,6 +62,18 @@
 .pcard--pinboard .pcard-visual {
   grid-area: 2 / 5 / 4 / 13;
 }
+.pcard--storyboard .pcard-visual {
+  grid-area: 2 / 7 / 4 / 13;
+}
+.pcard--storyboard .pcard-part--why {
+  grid-area: 2 / 1 / 3 / 7;
+}
+.pcard--storyboard .pcard-part--learned {
+  grid-area: 3 / 1 / 4 / 4;
+}
+.pcard--storyboard .pcard-part--code {
+  grid-area: 3 / 4 / 4 / 7;
+}
 .pcard--pinboard .pcard-part--why {
   grid-area: 2 / 1 / 4 / 5;
 }
@@ -81,7 +93,12 @@
   min-width: 0;
 }
 
-.pcard-head .pcard-index {
+.pcard-head .pcard-title-punct {
+  font-family: var(--font-read);
+  font-weight: 700;
+}
+
+.pcard-index {
   width: 100%;
 }
 
@@ -838,6 +855,203 @@
   }
 }
 
+/* --- storyboard (kev.dev) ----------------------------------------- */
+
+/* The page as a strip of frames, connected by a line like a storyboard's
+   cut marks. Each frame links to its section. */
+.viz-story {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.viz-story::before {
+  content: "";
+  position: absolute;
+  left: calc(1rem + 32px);
+  top: 1rem;
+  bottom: 1rem;
+  width: 1px;
+  background: repeating-linear-gradient(to bottom, var(--pc) 0 4px, transparent 4px 9px);
+  opacity: 0.6;
+}
+
+.viz-story li {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.viz-frame {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+  color: var(--color-text);
+  transition: border-color var(--transition-hover), background-color var(--transition-hover);
+}
+
+.viz-frame:hover,
+.viz-frame:focus-visible {
+  border-color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 8%, var(--box-bg));
+}
+
+.viz-frame:focus-visible {
+  outline: 2px solid var(--pc);
+  outline-offset: 2px;
+}
+
+.viz-frame-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.viz-frame-text b {
+  font-family: var(--font-display);
+  font-weight: normal;
+  font-size: 1.15rem;
+  line-height: 1.1;
+}
+
+.viz-frame-text b i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  vertical-align: middle;
+  color: var(--pc);
+}
+
+.viz-frame-text span {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.viz-frame-go {
+  font-family: var(--font-mono);
+  color: var(--pc);
+  opacity: 0.6;
+}
+
+.viz-frame:hover .viz-frame-go {
+  opacity: 1;
+}
+
+/* Tiny drawings of each section — plain gradients, no images. */
+.viz-thumb {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: 64px;
+  height: 44px;
+  border: 1px solid var(--pc);
+  background-color: var(--projects-bg);
+  overflow: hidden;
+}
+
+.viz-thumb--cloth {
+  background-image:
+    radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--pc) 45%, transparent), transparent 45%),
+    linear-gradient(to bottom, color-mix(in srgb, var(--pc) 55%, transparent) 0 1px, transparent 1px),
+    linear-gradient(to right, color-mix(in srgb, var(--pc) 55%, transparent) 0 1px, transparent 1px);
+  background-size: 100% 100%, 7px 7px, 7px 7px;
+}
+
+.viz-thumb--cloth::after {
+  content: "Kevin";
+  position: absolute;
+  left: 4px;
+  bottom: 2px;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--color-text);
+}
+
+/* A corridor: the back wall, and the four edges running to it. */
+.viz-thumb--elevator {
+  background-image:
+    linear-gradient(to bottom right, transparent calc(50% - 0.5px), var(--pc) 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom left, transparent calc(50% - 0.5px), var(--pc) 50%, transparent calc(50% + 0.5px));
+}
+
+.viz-thumb--elevator::after {
+  content: "";
+  position: absolute;
+  inset: 13px 20px;
+  border: 1px solid var(--pc);
+  background: var(--projects-bg);
+}
+
+.viz-thumb--bench {
+  background-image:
+    linear-gradient(to bottom, color-mix(in srgb, var(--pc) 35%, transparent) 0 1px, transparent 1px),
+    linear-gradient(to right, color-mix(in srgb, var(--pc) 35%, transparent) 0 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.viz-thumb--bench::before,
+.viz-thumb--bench::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  height: 27px;
+  border: 1px solid var(--color-text);
+  background: color-mix(in srgb, var(--projects-bg) 70%, transparent);
+}
+
+.viz-thumb--bench::before {
+  left: 8px;
+  width: 24px;
+}
+
+.viz-thumb--bench::after {
+  left: 40px;
+  width: 16px;
+}
+
+.viz-thumb--contact::after {
+  content: "Hi!";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--color-text);
+  transform: rotate(-6deg);
+}
+
+/* A sheet laid over the page. */
+.viz-thumb--legal {
+  background-image: linear-gradient(to bottom, color-mix(in srgb, var(--pc) 30%, transparent) 0 1px, transparent 1px);
+  background-size: 100% 6px;
+}
+
+.viz-thumb--legal::after {
+  content: "";
+  position: absolute;
+  inset: 6px 12px 0;
+  border: 1px solid var(--color-text);
+  border-bottom: 0;
+  background:
+    linear-gradient(var(--color-text-muted), var(--color-text-muted)) 5px 7px / 60% 1px no-repeat,
+    linear-gradient(var(--color-text-muted), var(--color-text-muted)) 5px 13px / 75% 1px no-repeat,
+    linear-gradient(var(--color-text-muted), var(--color-text-muted)) 5px 19px / 50% 1px no-repeat,
+    var(--projects-bg);
+}
+
 /* ---------------------------------------------------------------- */
 /* Desktop bento. 26 * --grid-cell (48px) = 1248px: 24 cells of card  */
 /* plus a cell of margin per side. Media queries can't read custom    */
@@ -920,6 +1134,13 @@
   .pcard--editor .pcard-part--learned { grid-area: 10 / 13 / 14 / 18; }
   .pcard--editor .pcard-part--code { grid-area: 10 / 19 / 14 / 25; }
 
+  /* storyboard: story left, the page's frames down the right */
+  .pcard--storyboard .pcard-head { grid-area: 1 / 1 / 5 / 12; }
+  .pcard--storyboard .pcard-part--why { grid-area: 6 / 1 / 9 / 12; }
+  .pcard--storyboard .pcard-part--learned { grid-area: 10 / 1 / 14 / 6; }
+  .pcard--storyboard .pcard-part--code { grid-area: 10 / 7 / 14 / 12; }
+  .pcard--storyboard .pcard-visual { grid-area: 1 / 13 / 14 / 25; }
+
   /* pinboard: centered title, notes take the stage */
   .pcard--pinboard .pcard-head { grid-area: 1 / 1 / 4 / 25; }
   .pcard--pinboard .pcard-part--why { grid-area: 5 / 1 / 14 / 9; }
@@ -998,6 +1219,10 @@
   font-size: 0.68rem;
   line-height: 1.7;
   white-space: pre-wrap;
+}
+
+.lite .viz-story {
+  gap: 0.6rem;
 }
 
 .lite .pcard--pinboard .pcard-visual {
