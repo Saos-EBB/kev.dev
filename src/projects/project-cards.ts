@@ -22,9 +22,11 @@ export interface ProjectLink {
 // card is expanded, so heavy code (renderer canvas, CheerpJ) is never
 // loaded on page view. Typically `(el) => import("./widgets/x").then(m => m.mount(el))`.
 // It may return a cleanup function.
+// It gets the card too, so its workspace cards (Why?, decisions …) can use
+// the card's own copy instead of repeating it.
 export interface ProjectWidget {
   label: string;
-  mount: (el: HTMLElement) => Promise<void | (() => void)> | void | (() => void);
+  mount: (el: HTMLElement, card: ProjectCard) => Promise<void | (() => void)> | void | (() => void);
 }
 
 // Facet buttons (in the card head, and on some signature visuals): each

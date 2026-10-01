@@ -1,11 +1,15 @@
-// "Grundlagen" widget: nine projects as tabs (plus prev/next), one shared terminal. A tab shows
-// its info and a code excerpt and runs the original Java program in the
-// terminal (see java-runner.ts). The runtime starts loading when the card is
-// first expanded, never on page view.
+// "Grundlagen" widget: a workspace for the nine Bootcamp programs. Along
+// the top they sit as sticky notes (plus prev/next); the picked one fills
+// the rest — its Why?, concepts and what it does as cards on the left, the
+// shared terminal running the original Java program in the middle (see
+// java-runner.ts), its code excerpt on the right. All of it takes the
+// note's own color. The runtime starts loading when the card is first
+// expanded, never on page view.
 
 import "./grundlagen.css";
 import { runJava, warmUp, writeFiles, type JavaProcess } from "./java-runner";
 import { Terminal } from "./terminal";
+import type { ProjectCard } from "../project-cards";
 
 import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
 import masterMindSrc from "../../../java/MasterMind.java?raw";
@@ -164,24 +168,26 @@ const NOTES: Note[] = [
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export function mount(host: HTMLElement) {
+export function mount(host: HTMLElement, _card?: ProjectCard) {
   host.classList.add("gwidget");
   host.innerHTML = `
-    <div class="gwidget-tabs" role="tablist" aria-label="Projekte">
-      ${NOTES.map(
-        (n) => `<button type="button" role="tab" class="gwidget-tab" data-note="${n.id}" aria-selected="false"
-          style="--pc: ${n.color}">${esc(n.label)}</button>`,
-      ).join("")}
-    </div>
-    <div class="gwidget-panel" role="tabpanel">
-      <div class="gwidget-info"></div>
-      <div class="gwidget-nav">
-        <button type="button" class="gwidget-prev">← Zurück</button>
-        <span class="gwidget-count" aria-live="polite"></span>
-        <button type="button" class="gwidget-next">Weiter →</button>
+    <div class="gwidget-bar">
+      <div class="gwidget-tabs" role="tablist" aria-label="Programme">
+        ${NOTES.map(
+          (n, i) => `<button type="button" role="tab" class="gwidget-tab" data-note="${n.id}" aria-selected="false"
+            style="--pc: ${n.color}; --r: ${((i * 37) % 7) - 3}deg">${esc(n.label)}</button>`,
+        ).join("")}
       </div>
-    <div class="gwidget-term" hidden>
+      <div class="gwidget-nav">
+        <button type="button" class="gwidget-prev" aria-label="Vorheriges Programm">←</button>
+        <span class="gwidget-count" aria-live="polite"></span>
+        <button type="button" class="gwidget-next" aria-label="Nächstes Programm">→</button>
+      </div>
+    </div>
+    <div class="gwidget-info" role="tabpanel"></div>
+    <div class="gwidget-term">
       <div class="gwidget-term-bar">
+        <span class="gwidget-term-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="gwidget-term-title"></span>
         <button type="button" class="gwidget-restart">Neu starten</button>
       </div>
@@ -194,16 +200,23 @@ export function mount(host: HTMLElement) {
       </form>
       <p class="gwidget-status" aria-live="polite"></p>
     </div>
-    </div>
-    <p class="gwidget-credit">
-      Java im Browser, damit mein Code original so laufen kann, wie er ist.
-      Läuft mit <a href="https://cheerpj.com" target="_blank" rel="noopener noreferrer">CheerpJ</a>.
-    </p>
+    <aside class="gwidget-codecol">
+      <section class="ws-card gwidget-codecard">
+        <h5 class="ws-card-heading">Code <span class="gwidget-file"></span></h5>
+        <pre class="gwidget-code"><code></code></pre>
+      </section>
+      <p class="gwidget-credit">
+        Java im Browser, damit mein Code original so laufen kann, wie er ist.
+        Läuft mit <a href="https://cheerpj.com" target="_blank" rel="noopener noreferrer">CheerpJ</a>.
+      </p>
+    </aside>
   `;
 
   const q = <T extends HTMLElement>(sel: string) => host.querySelector<T>(sel)!;
   const info = q<HTMLElement>(".gwidget-info");
   const termBox = q<HTMLElement>(".gwidget-term");
+  const codeFile = q<HTMLElement>(".gwidget-file");
+  const codeBody = q<HTMLElement>(".gwidget-code code");
   const title = q<HTMLElement>(".gwidget-term-title");
   const out = q<HTMLElement>(".gwidget-out");
   const form = q<HTMLFormElement>(".gwidget-in");
@@ -300,20 +313,23 @@ export function mount(host: HTMLElement) {
     host.style.setProperty("--pc", note.color);
     count.textContent = `${i + 1} / ${NOTES.length}`;
 
-    info.innerHTML = `
-      <h4>${esc(note.label)}</h4>
-      ${note.intro ? `<p class="gwidget-intro">${esc(note.intro)}</p>` : ""}
-      ${note.concepts ? `<ul class="gwidget-tags">${note.concepts.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}
-      ${note.bullets ? `<ul>${note.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
-      ${note.open ? `<p class="gwidget-open">[OFFEN: ${esc(note.open)}]</p>` : ""}
-      ${
-        note.code
-          ? `<p class="gwidget-file">${esc(note.code.file)}</p><pre class="gwidget-code"><code>${esc(note.code.text)}</code></pre>`
-          : ""
-      }
-    `;
+    const card = (heading: string, body: string, extra = "") =>
+      `<section class="ws-card ${extra}"><h5 class="ws-card-heading">${heading}</h5>${body}</section>`;
+    info.innerHTML = [
+      `<h4 class="gwidget-name">${esc(note.label)}</h4>`,
+      note.intro ? card("Why?", `<p class="gwidget-intro">${esc(note.intro)}</p>`) : "",
+      note.concepts
+        ? card("Konzepte", `<ul class="gwidget-tags">${note.concepts.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`)
+        : "",
+      note.bullets
+        ? card("Was es macht", `<ul class="gwidget-bullets">${note.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`)
+        : "",
+      note.open ? `<p class="gwidget-open">[OFFEN: ${esc(note.open)}]</p>` : "",
+    ].join("");
+    codeFile.textContent = note.code ? note.code.file : "";
+    codeBody.textContent = note.code ? note.code.text : "Kein Code-Auszug.";
     termBox.hidden = false;
-    title.textContent = note.run ? `$ java ${note.label}` : `$ ${note.label}`;
+    title.textContent = note.run ? `java Launcher ${note.run}` : note.label;
     start(note);
   }
 

@@ -1,10 +1,43 @@
+/* Renderer workspace (see renderer.ts). Desktop: cards / canvas / cards,
+   filling the overlay's workspace. Narrow: canvas first, cards below.
+   --pc comes from the overlay panel (the card's accent). */
 .rwidget {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
+}
+
+.rwidget-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.rwidget-side p {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+/* --- center: canvas with HUD ---------------------------------------- */
+
+.rwidget-stage {
+  position: relative;
+  order: -1;
+  min-height: 0;
+  border: 1px solid var(--pc);
+  background:
+    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--pc) 10%, transparent), transparent 65%),
+    var(--color-canvas-bg);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--color-shadow) 50%, transparent);
 }
 
 .rwidget-tabs {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
@@ -12,30 +45,32 @@
 
 .rwidget-tabs button {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  padding: 0.3rem 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
-  border-radius: 4px;
-  background: transparent;
+  font-size: 0.7rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--pc) 40%, transparent);
+  background: color-mix(in srgb, var(--color-canvas-bg) 70%, transparent);
   color: var(--color-text-muted);
   cursor: pointer;
-  transition: color var(--transition-hover), border-color var(--transition-hover);
+  transition: color var(--transition-hover), border-color var(--transition-hover),
+    background-color var(--transition-hover);
 }
 
 .rwidget-tabs button:hover,
-.rwidget-tabs button:focus-visible,
+.rwidget-tabs button:focus-visible {
+  color: var(--color-text);
+  border-color: var(--pc);
+}
+
 .rwidget-tabs button[aria-pressed="true"] {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--pc);
+  border-color: var(--pc);
+  color: var(--color-canvas-bg);
 }
 
 .rwidget-canvas {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border: 1px solid color-mix(in srgb, var(--color-line) 20%, transparent);
-  border-radius: 4px;
-  background: var(--color-canvas-bg);
   cursor: grab;
   touch-action: none;
 }
@@ -45,13 +80,165 @@
 }
 
 .rwidget-canvas:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--pc);
+  outline-offset: -2px;
+}
+
+.rwidget-hud {
+  position: absolute;
+  bottom: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.rwidget-hud--stats {
+  left: 0.9rem;
+  color: var(--pc);
+}
+
+.rwidget-hud--hint {
+  right: 0.9rem;
+  color: var(--color-text-muted);
 }
 
 .rwidget-status {
-  min-height: 1em;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* --- side cards ----------------------------------------------------- */
+
+.rwidget-steps,
+.rwidget-keys,
+.rwidget-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  list-style: none;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.rwidget-steps b {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pc);
+}
+
+.rwidget-shades {
+  display: flex;
+  height: 0.6rem;
+  margin-top: 0.45rem;
+}
+
+.rwidget-shades i {
+  flex: 1;
+}
+
+.rwidget-side .rwidget-model-name {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--pc);
+}
+
+.rwidget-model-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.rwidget-model-stats div {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent);
+}
+
+.rwidget-model-stats dt {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.rwidget-model-stats dd {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--color-text);
+}
+
+.rwidget-keys kbd {
+  display: inline-block;
+  min-width: 1.6rem;
+  margin-right: 0.25rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+  border-bottom-width: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.rwidget-decisions li {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.rwidget-decisions li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  background: var(--pc);
+}
+
+/* --- desktop workspace ---------------------------------------------- */
+
+@media (min-width: 1000px) {
+  .facet-overlay--workspace .rwidget {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.9fr) minmax(0, 2.2fr) minmax(15rem, 0.9fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 1.25rem;
+    height: 100%;
+  }
+
+  .facet-overlay--workspace .rwidget-stage {
+    order: 0;
+  }
+
+  .facet-overlay--workspace .rwidget-side {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .facet-overlay--workspace .rwidget-canvas {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  /* No room for both HUD lines on a phone — the stats win. */
+  .rwidget-hud--hint {
+    display: none;
+  }
 }
