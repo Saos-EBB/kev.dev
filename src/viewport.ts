@@ -29,3 +29,14 @@ export function makeHeightOnlyResizeFilter() {
     return heightOnly;
   };
 }
+
+// Phones and narrow tablets get the "lite" page: no 3D elevator ride, no
+// monitor zoom and no pinned project carousel — those scenes cost every
+// frame on a phone GPU (the elevator's walls alone are layers as tall as
+// the whole About section). Instead About → Projekte → Kontakt sit on one
+// continuous flat grid, and the projects are a native swipe gallery.
+// Decided once at load (the scroll scenes are built for one mode), so
+// crossing the breakpoint later reloads the page — see main.ts. Keep in
+// sync with the `html.lite` rules in style.css / project-cards.css.
+export const LITE_QUERY = "(max-width: 900px)";
+export const LITE = window.matchMedia(LITE_QUERY).matches;

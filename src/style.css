@@ -107,6 +107,11 @@
      background texture calling for different contrast isn't "scene-
      specific hardcoding", the color and cell size they share are. */
   --grid-cell: 48px; /* fixed px, not vw — density should look the same everywhere regardless of viewport width ("real space"), not scale with it; see the mobile override below for the one place that changes */
+  /* The flat grid's line ink — one value for every place that has to
+     match line-for-line (elevator floor, monitor screen, projects grid,
+     contact lines, the lite page grid). Was 12%; at 18% the grid reads
+     as a crisp structure instead of a haze. */
+  --grid-ink: color-mix(in srgb, var(--grid-color) 18%, transparent);
   --grid-line: 1px; /* one *device* pixel, not one CSS pixel: main.ts overrides this with 1 / devicePixelRatio (e.g. 0.667px at 150%) so hairlines land on whole device pixels instead of blurring/shimmering across two; 1px is just the fallback before that runs */
 
   --font-sans:
@@ -289,6 +294,9 @@ a {
 .hero {
   width: 100%;
   height: 100svh;
+  /* Vertical swipes scroll the page; sideways ones (and a long press)
+     are the cloth's to grab — see the touch notes in cloth.ts. */
+  touch-action: pan-y pinch-zoom;
   padding: clamp(0.5rem, 1.5vw, 1rem);
   background: var(--hero-bg);
 }
@@ -536,12 +544,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
+      var(--grid-ink) 0 var(--grid-line),
       transparent var(--grid-line)
     ),
     linear-gradient(
       to right,
-      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
+      var(--grid-ink) 0 var(--grid-line),
       transparent var(--grid-line)
     );
   background-size: var(--grid-cell) var(--grid-cell);
@@ -615,12 +623,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--screen-line, var(--grid-line)),
+      var(--grid-ink) 0 var(--screen-line, var(--grid-line)),
       transparent var(--screen-line, var(--grid-line))
     ),
     linear-gradient(
       to right,
-      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--screen-line, var(--grid-line)),
+      var(--grid-ink) 0 var(--screen-line, var(--grid-line)),
       transparent var(--screen-line, var(--grid-line))
     );
   background-size: var(--screen-cell, calc(var(--grid-cell) / 8)) var(--screen-cell, calc(var(--grid-cell) / 8));
@@ -775,12 +783,12 @@ button:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
+      var(--grid-ink) 0 var(--grid-line),
       transparent var(--grid-line)
     ),
     linear-gradient(
       to right,
-      color-mix(in srgb, var(--grid-color) 12%, transparent) 0 var(--grid-line),
+      var(--grid-ink) 0 var(--grid-line),
       transparent var(--grid-line)
     );
   background-size: var(--grid-cell) var(--grid-cell);
@@ -1003,7 +1011,7 @@ button:focus-visible {
 
 .grid-line {
   position: absolute;
-  background: color-mix(in srgb, var(--grid-color) 12%, transparent);
+  background: var(--grid-ink);
 }
 
 .grid-line--h {
@@ -1350,4 +1358,171 @@ button:focus-visible {
 .legal-note {
   font-size: 0.85rem;
   opacity: 0.8;
+}
+
+/* ---------------------------------------------------------------- */
+/* Lite page (html.lite — phones / narrow tablets, see LITE in        */
+/* viewport.ts). No elevator ride, no monitor zoom, no pinned          */
+/* carousel: About, Projekte and Kontakt scroll natively over ONE grid */
+/* painted on the page itself, so it runs through every section       */
+/* without a seam. Hero and contact keep their own scenes.            */
+/* ---------------------------------------------------------------- */
+.lite body {
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(to bottom, var(--grid-ink) 0 var(--grid-line), transparent var(--grid-line)),
+    linear-gradient(to right, var(--grid-ink) 0 var(--grid-line), transparent var(--grid-line));
+  background-size: var(--grid-cell) var(--grid-cell);
+}
+
+.lite .about,
+.lite .projects {
+  background: transparent;
+}
+
+.lite .about-zoom,
+.lite .projects-bg-grid,
+.lite .projects-headline {
+  display: none;
+}
+
+.lite .about-overlay {
+  padding: 5.5rem 16px 4rem;
+  gap: 1rem;
+}
+
+.lite .about-block,
+.lite .about-cv-section {
+  width: 100%;
+  max-width: 40rem;
+  background: color-mix(in srgb, var(--about-bg) 86%, transparent);
+}
+
+.lite .about-block {
+  font-size: 0.95rem;
+}
+
+/* The real heading is the visible one here (as under reduced motion). */
+.lite .projects-title {
+  position: relative;
+  clip-path: none;
+  padding: 1rem 16px 0.5rem;
+  text-align: center;
+}
+
+/* The swipe gallery: native horizontal scroll with snapping — the
+   browser does the moving, swiper.ts only syncs the dots. Each slide is
+   a bit narrower than the screen so the next card peeks in. */
+.lite .carousel-stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  height: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  padding: 0.5rem 16px 1rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lite .carousel-stage::-webkit-scrollbar {
+  display: none;
+}
+
+.lite .carousel-project {
+  position: relative;
+  top: auto;
+  left: auto;
+  flex: 0 0 min(86vw, 34rem);
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+.swiper-nav {
+  display: none;
+}
+
+.lite .swiper-nav {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: max-content;
+  margin: 0 auto 3rem;
+  padding: 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+}
+
+.swiper-arrow {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.swiper-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.swiper-dots {
+  display: flex;
+  gap: 0.15rem;
+  list-style: none;
+}
+
+.swiper-dots button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.swiper-dots button::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--color-line);
+  transition: background-color var(--transition-hover), transform var(--transition-hover);
+}
+
+.swiper-dots button[aria-current]::before {
+  background: var(--color-line);
+  transform: rotate(45deg);
+}
+
+/* ---------------------------------------------------------------- */
+/* Header on phones: brand shortened to the mark, links tightened so   */
+/* the bar stays one line at 360px.                                   */
+/* ---------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .site-header {
+    padding: 0.9rem 16px;
+  }
+  .site-header-inner {
+    font-size: 0.68rem;
+  }
+  .site-header-brand-name {
+    display: none;
+  }
+  .site-header-links {
+    gap: 0.7rem;
+  }
+  .site-header-links a {
+    letter-spacing: 0.04em;
+  }
 }

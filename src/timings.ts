@@ -27,7 +27,7 @@ export const TIMINGS = {
     // duration but the same idea: higher = catches up faster/tighter.
     hoverPull: 0.75, // ambient hover, always gentle
     dragLerp: 0.35, // active click-drag, firm — the grabbed node should feel held, not chased
-    doubleTapMs: 300, // touch only: max gap between two taps to count as one double-tap-to-grab gesture
+    longPressMs: 260, // touch only: how long a finger rests still before it grabs the cloth (a sideways swipe grabs at once)
   },
 
   // ------------------------------------------------------------------

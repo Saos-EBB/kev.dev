@@ -200,7 +200,10 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
 
   // opener is null for a tile clicked inside the open overlay (Screens
   // box): it swaps the content, focus still returns to the card's button.
-  const show = (el: HTMLElement, opener: HTMLElement | null) => {
+  const show = (el: HTMLElement, opener: HTMLElement | null, card?: ProjectCard) => {
+    const panel = el.querySelector<HTMLElement>(".facet-overlay-panel")!;
+    if (card) panel.style.setProperty("--pc", card.accent);
+    else panel.style.removeProperty("--pc");
     el.hidden = false;
     lenis.stop();
     if (opener) lastFocused = opener;
@@ -219,13 +222,14 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     el.querySelector(".facet-overlay-title")!.textContent =
       `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`;
     el.querySelector(".facet-overlay-body")!.innerHTML = boxEl.querySelector(".pcard-box-body")!.innerHTML;
-    show(el, btn);
+    show(el, btn, card);
   });
 
-  // Facet tiles live in the Screens box, so also inside the overlay once
-  // that box is expanded — listen on document, not just the section.
+  // Anything with data-facet opens it: the head's facet buttons and the
+  // signature visuals' own buttons (project-visuals.ts). Listened for on
+  // document, not just the section, so it also works inside the overlay.
   document.addEventListener("click", (e) => {
-    const tile = (e.target as HTMLElement).closest<HTMLButtonElement>(".facet-tile");
+    const tile = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-facet]");
     if (!tile) return;
     const inOverlay = !!overlayEl?.contains(tile);
     if (!inOverlay && !root.contains(tile)) return;
@@ -256,6 +260,6 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
       body.innerHTML = content.bodyHtml;
     }
 
-    show(el, inOverlay ? null : tile);
+    show(el, inOverlay ? null : tile, card);
   });
 }

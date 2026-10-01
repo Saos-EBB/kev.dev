@@ -1,13 +1,18 @@
 // The five project cards. Copy is taken verbatim from the handoff — do
 // not reword. Order: the strongest three first, then AniScript, then
 // Grundlagen last. `open` entries are unresolved questions that stay
-// visible on the card until Kevin answers them.
+// visible on the card until Kevin answers them. `layout` picks the card's
+// own arrangement and signature visual (project-visuals.ts), `accent` its
+// color — every project looks like itself, on the same grid.
 
 import type { ProjectCard } from "./project-cards";
 
 export const projectCards: ProjectCard[] = [
   {
     id: "yourbrand",
+    layout: "blueprint",
+    kind: "White-Label-SaaS",
+    accent: "var(--note-2)",
     learnGoal:
       "Wollte lernen, wie man Software modular baut und ein echtes Produkt mit Businesslogik auf die Beine stellt.",
     title: "YourBrand",
@@ -53,6 +58,9 @@ export const projectCards: ProjectCard[] = [
   },
   {
     id: "tschobbo",
+    layout: "inbox",
+    kind: "Bewerbungs-Bot",
+    accent: "var(--note-5)",
     learnGoal:
       "Keine Lust auf repetitive Bewerbungssuche — und dabei Scraping, LLM und Regex lernen.",
     title: "TschoBBo",
@@ -80,6 +88,9 @@ export const projectCards: ProjectCard[] = [
   },
   {
     id: "renderer",
+    layout: "viewport",
+    kind: "3D ohne Bibliothek",
+    accent: "var(--note-3)",
     learnGoal: "Wollte wissen, wie weit man einen simplen 2D-Canvas treiben kann.",
     title: "3D-Wireframe-Renderer",
     claim:
@@ -111,6 +122,9 @@ export const projectCards: ProjectCard[] = [
   },
   {
     id: "aniscript",
+    layout: "editor",
+    kind: "Userscript",
+    accent: "var(--note-1)",
     learnGoal:
       "Userscripts/Tampermonkey und DOM-Manipulation lernen — und üben, fremden Code zu verstehen und zu erweitern.",
     title: "AniScript",
@@ -132,6 +146,9 @@ export const projectCards: ProjectCard[] = [
   },
   {
     id: "grundlagen",
+    layout: "pinboard",
+    kind: "Bootcamp · Java",
+    accent: "var(--note-6)",
     learnGoal: "Die Basics — von Hand, im Bootcamp gelernt (Java, OOP, SQL, Datenstrukturen).",
     title: "Grundlagen",
     claim: "Die Handwerks-Grundlagen — alles von Hand getippt, im Bootcamp gelernt.",
