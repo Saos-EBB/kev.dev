@@ -12,7 +12,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Cloth } from "./hero/cloth";
 import { cvSections, trackElevatorPerspective } from "./about/elevator";
-import { renderAboutBlocks, renderAboutFooter } from "./about/about-blocks";
+import { renderAboutBlocks, renderAboutFooter, initCvLinks } from "./about/about-blocks";
 import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
@@ -611,6 +611,7 @@ initEdgeNav(lenis);
 initYoutubeButton();
 initThemeToggle();
 initLangSwitch();
+initCvLinks();
 initLegalOverlay(lenis);
 
 // ─────────────────────────────────────────────────────────────────────────────
