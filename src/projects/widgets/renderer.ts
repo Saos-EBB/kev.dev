@@ -17,6 +17,7 @@
 
 import "./renderer.css";
 import type { ProjectCard } from "../project-cards";
+import { UI } from "../../i18n/ui";
 
 const escHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -28,10 +29,10 @@ interface Model {
 
 // Order matters: something simple first, the CT last as the highlight.
 const MODELS = [
-  { id: "ducky", label: "Ducky" },
-  { id: "car", label: "Auto" },
-  { id: "pochita30", label: "Pochita" },
-  { id: "craniumCut01", label: "Schädel-CT" },
+  { id: "ducky", label: UI.rModels.ducky },
+  { id: "car", label: UI.rModels.car },
+  { id: "pochita30", label: UI.rModels.pochita30 },
+  { id: "craniumCut01", label: UI.rModels.craniumCut01 },
 ] as const;
 
 const loaders = import.meta.glob("./renderer-models/*.js") as Record<
@@ -103,45 +104,45 @@ export function mount(host: HTMLElement, card?: ProjectCard) {
   const shades = Array.from({ length: 16 }, (_, i) => `<i style="background: var(--shade-${i})"></i>`).join("");
   host.innerHTML = `
     <aside class="rwidget-side rwidget-side--left">
-      ${card ? wsCard("Why?", `<p>${escHtml(card.learnGoal)}</p>`) : ""}
+      ${card ? wsCard(UI.boxWhy, `<p>${escHtml(card.learnGoal)}</p>`) : ""}
       ${wsCard(
-        "So funktioniert's",
+        UI.rHow,
         `<ul class="rwidget-steps">
-          <li><b>Perspektive</b> x / z und y / z — was weiter weg ist, wird kleiner</li>
-          <li><b>Rotation</b> in der Ebene, je Achse ein Sinus/Kosinus-Paar</li>
-          <li><b>Tiefe</b> 16 Blau-Stufen, nah hell, fern dunkel
+          <li><b>${UI.rPerspective}</b> ${UI.rPerspectiveText}</li>
+          <li><b>${UI.rRotation}</b> ${UI.rRotationText}</li>
+          <li><b>${UI.rDepth}</b> ${UI.rDepthText}
             <span class="rwidget-shades" aria-hidden="true">${shades}</span></li>
         </ul>`,
       )}
     </aside>
     <div class="rwidget-stage">
-      <div class="rwidget-tabs" role="group" aria-label="Modell wählen">
+      <div class="rwidget-tabs" role="group" aria-label="${UI.rPick}">
         ${MODELS.map((m) => `<button type="button" data-model="${m.id}" aria-pressed="false">${m.label}</button>`).join("")}
       </div>
       <canvas class="rwidget-canvas" tabindex="0" role="img"
-        aria-label="3D-Modell als Drahtgitter. Mit Maus ziehen oder Pfeiltasten drehen."></canvas>
+        aria-label="${UI.rCanvas}"></canvas>
       <p class="rwidget-hud rwidget-hud--stats" aria-live="polite"></p>
-      <p class="rwidget-hud rwidget-hud--hint">ziehen ↻ · Pfeiltasten</p>
+      <p class="rwidget-hud rwidget-hud--hint">${UI.rHint}</p>
       <p class="rwidget-status" aria-live="polite"></p>
     </div>
     <aside class="rwidget-side rwidget-side--right">
       ${wsCard(
-        "Modell",
+        UI.rModel,
         `<p class="rwidget-model-name"></p><dl class="rwidget-model-stats">
-          <div><dt>Ecken</dt><dd data-stat="verts">–</dd></div>
-          <div><dt>Kanten</dt><dd data-stat="edges">–</dd></div>
+          <div><dt>${UI.rVerts}</dt><dd data-stat="verts">–</dd></div>
+          <div><dt>${UI.rEdges}</dt><dd data-stat="edges">–</dd></div>
         </dl>`,
       )}
       ${wsCard(
-        "Steuerung",
+        UI.rControls,
         `<ul class="rwidget-keys">
-          <li><kbd>Maus</kbd> ziehen zum Drehen</li>
-          <li><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> drehen, Canvas fokussiert</li>
+          <li><kbd>${UI.rMouse}</kbd> ${UI.rDrag}</li>
+          <li><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> ${UI.rKeys}</li>
         </ul>`,
       )}
       ${
         card?.decisions?.length
-          ? wsCard("Entscheidungen", `<ul class="rwidget-decisions">${card.decisions.map((d) => `<li>${escHtml(d)}</li>`).join("")}</ul>`)
+          ? wsCard(UI.rDecisions, `<ul class="rwidget-decisions">${card.decisions.map((d) => `<li>${escHtml(d)}</li>`).join("")}</ul>`)
           : ""
       }
     </aside>
@@ -152,7 +153,7 @@ export function mount(host: HTMLElement, card?: ProjectCard) {
   const modelName = host.querySelector<HTMLElement>(".rwidget-model-name")!;
   const statVerts = host.querySelector<HTMLElement>('[data-stat="verts"]')!;
   const statEdges = host.querySelector<HTMLElement>('[data-stat="edges"]')!;
-  const fmt = new Intl.NumberFormat("de-DE");
+  const fmt = new Intl.NumberFormat(UI.numberLocale);
   const tabs = [...host.querySelectorAll<HTMLButtonElement>("[data-model]")];
   const ctx = canvas.getContext("2d")!;
 
@@ -239,13 +240,13 @@ export function mount(host: HTMLElement, card?: ProjectCard) {
     tabs.forEach((t) => t.setAttribute("aria-pressed", String(t.dataset.model === id)));
     let next = cache.get(id);
     if (!next) {
-      status.textContent = "Lädt …";
+      status.textContent = UI.rLoading;
       try {
         const mod = await loaders[`./renderer-models/${id}.js`]();
         next = buildMesh(mod.default);
         cache.set(id, next);
       } catch {
-        if (requested === id) status.textContent = "Modell konnte nicht geladen werden.";
+        if (requested === id) status.textContent = UI.rError;
         return;
       }
     }
@@ -257,7 +258,7 @@ export function mount(host: HTMLElement, card?: ProjectCard) {
     modelName.textContent = MODELS.find((m) => m.id === id)?.label ?? id;
     statVerts.textContent = verts;
     statEdges.textContent = edges;
-    hudStats.textContent = `${verts} Ecken · ${edges} Kanten`;
+    hudStats.textContent = UI.rStats(verts, edges);
     schedule();
   }
 

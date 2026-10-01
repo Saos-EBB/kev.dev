@@ -1,4 +1,5 @@
 import "./theme.css";
+import { UI } from "../i18n/ui";
 
 // Light/dark toggle for the header icon (markup in main.ts, colors in the
 // `:root[data-theme="light"]` override in style.css). Dark is the site's
@@ -39,7 +40,7 @@ export function initThemeToggle() {
     button.setAttribute("aria-pressed", String(theme === "light"));
     button.setAttribute(
       "aria-label",
-      theme === "light" ? "Dark Mode aktivieren" : "Light Mode aktivieren",
+      theme === "light" ? UI.themeToDark : UI.themeToLight,
     );
   };
 

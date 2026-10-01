@@ -10,6 +10,8 @@ import "./grundlagen.css";
 import { runJava, warmUp, writeFiles, type JavaProcess } from "./java-runner";
 import { Terminal } from "./terminal";
 import type { ProjectCard } from "../project-cards";
+import { UI } from "../../i18n/ui";
+import { RTL } from "../../i18n";
 
 import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
 import masterMindSrc from "../../../java/MasterMind.java?raw";
@@ -172,16 +174,16 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   host.classList.add("gwidget");
   host.innerHTML = `
     <div class="gwidget-bar">
-      <div class="gwidget-tabs" role="tablist" aria-label="Programme">
+      <div class="gwidget-tabs" role="tablist" aria-label="${UI.gPrograms}">
         ${NOTES.map(
           (n, i) => `<button type="button" role="tab" class="gwidget-tab" data-note="${n.id}" aria-selected="false"
             style="--pc: ${n.color}; --r: ${((i * 37) % 7) - 3}deg">${esc(n.label)}</button>`,
         ).join("")}
       </div>
       <div class="gwidget-nav">
-        <button type="button" class="gwidget-prev" aria-label="Vorheriges Programm">←</button>
+        <button type="button" class="gwidget-prev" aria-label="${UI.gPrev}">${RTL ? "→" : "←"}</button>
         <span class="gwidget-count" aria-live="polite"></span>
-        <button type="button" class="gwidget-next" aria-label="Nächstes Programm">→</button>
+        <button type="button" class="gwidget-next" aria-label="${UI.gNext}">${RTL ? "←" : "→"}</button>
       </div>
     </div>
     <div class="gwidget-info" role="tabpanel"></div>
@@ -189,25 +191,24 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
       <div class="gwidget-term-bar">
         <span class="gwidget-term-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="gwidget-term-title"></span>
-        <button type="button" class="gwidget-restart">Neu starten</button>
+        <button type="button" class="gwidget-restart">${UI.gRestart}</button>
       </div>
-      <pre class="gwidget-out" role="log" aria-live="off" aria-label="Programmausgabe" tabindex="0"></pre>
+      <pre class="gwidget-out" role="log" aria-live="off" aria-label="${UI.gOutput}" tabindex="0"></pre>
       <form class="gwidget-in">
         <label class="gwidget-prompt">
           <span aria-hidden="true">›</span>
-          <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Eingabe an das Programm" disabled />
+          <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${UI.gInput}" disabled />
         </label>
       </form>
       <p class="gwidget-status" aria-live="polite"></p>
     </div>
     <aside class="gwidget-codecol">
       <section class="ws-card gwidget-codecard">
-        <h5 class="ws-card-heading">Code <span class="gwidget-file"></span></h5>
+        <h5 class="ws-card-heading">${UI.gCode} <span class="gwidget-file"></span></h5>
         <pre class="gwidget-code"><code></code></pre>
       </section>
       <p class="gwidget-credit">
-        Java im Browser, damit mein Code original so laufen kann, wie er ist.
-        Läuft mit <a href="https://cheerpj.com" target="_blank" rel="noopener noreferrer">CheerpJ</a>.
+        ${UI.gCredit} <a href="https://cheerpj.com" target="_blank" rel="noopener noreferrer">CheerpJ</a>.
       </p>
     </aside>
   `;
@@ -247,7 +248,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     restart.disabled = true;
 
     if (!note.run) {
-      status.textContent = "Für dieses Projekt gibt es keinen Konsolen-Einstieg.";
+      status.textContent = UI.gNoConsole;
       return;
     }
     // The runtime (and then the JVM) can take a while on a cold cache; a
@@ -258,7 +259,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     const showLoading = () => {
       if (id !== runId) return stopLoading();
       const seconds = Math.round((Date.now() - t0) / 1000);
-      status.textContent = `Java lädt … ${seconds} s. Das kann bis zu einer Minute oder länger dauern.`;
+      status.textContent = UI.gLoading(seconds);
     };
     const ticker = setInterval(showLoading, 1000);
     function stopLoading() {
@@ -279,7 +280,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
         onExit: (code) => {
           if (id !== runId) return;
           stopLoading();
-          term.write(`\n[Programm beendet, Code ${code}]\n`);
+          term.write(`\n${UI.gExit(code)}\n`);
           process = null;
           setInputEnabled(false);
           restart.disabled = false;
@@ -296,7 +297,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     } catch (e) {
       stopLoading();
       if (id !== runId) return;
-      status.textContent = e instanceof Error ? e.message : "Java konnte nicht gestartet werden.";
+      status.textContent = e instanceof Error ? e.message : UI.gStartError;
       restart.disabled = false;
     }
   }
@@ -317,17 +318,17 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
       `<section class="ws-card ${extra}"><h5 class="ws-card-heading">${heading}</h5>${body}</section>`;
     info.innerHTML = [
       `<h4 class="gwidget-name">${esc(note.label)}</h4>`,
-      note.intro ? card("Why?", `<p class="gwidget-intro">${esc(note.intro)}</p>`) : "",
+      note.intro ? card(UI.boxWhy, `<p class="gwidget-intro">${esc(note.intro)}</p>`) : "",
       note.concepts
-        ? card("Konzepte", `<ul class="gwidget-tags">${note.concepts.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`)
+        ? card(UI.gConcepts, `<ul class="gwidget-tags">${note.concepts.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`)
         : "",
       note.bullets
-        ? card("Was es macht", `<ul class="gwidget-bullets">${note.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`)
+        ? card(UI.gDoes, `<ul class="gwidget-bullets">${note.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`)
         : "",
       note.open ? `<p class="gwidget-open">[OFFEN: ${esc(note.open)}]</p>` : "",
     ].join("");
     codeFile.textContent = note.code ? note.code.file : "";
-    codeBody.textContent = note.code ? note.code.text : "Kein Code-Auszug.";
+    codeBody.textContent = note.code ? note.code.text : UI.gNoCode;
     termBox.hidden = false;
     title.textContent = note.run ? `java Launcher ${note.run}` : note.label;
     start(note);

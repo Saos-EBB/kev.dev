@@ -13,6 +13,8 @@
 // its own), closing clears it. That keeps deep links and back/forward
 // working without pulling in a router.
 import type Lenis from "lenis";
+import { UI } from "../i18n/ui";
+import { LANG, RTL } from "../i18n";
 
 interface LegalRoute {
   hash: string;
@@ -139,8 +141,9 @@ export function initLegalOverlay(lenis: Lenis) {
     panel.innerHTML = `
       <main class="legal-main">
         <article class="legal">
-          ${route.html}
-          <a class="legal-back" href="#">&larr; Zurück</a>
+          ${UI.legalNote ? `<p class="legal-lang-note" lang="${LANG}">${UI.legalNote}</p>` : ""}
+          <div lang="de" dir="ltr">${route.html}</div>
+          <a class="legal-back" href="#">${RTL ? "&rarr;" : "&larr;"} ${UI.legalBack}</a>
         </article>
       </main>
     `;
