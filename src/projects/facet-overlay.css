@@ -91,7 +91,7 @@
 .facet-overlay-close {
   position: absolute;
   top: 1rem;
-  right: 1rem;
+  inset-inline-end: 1rem;
   width: 44px;
   height: 44px;
   display: flex;
@@ -119,7 +119,8 @@
 }
 
 .facet-overlay-title {
-  margin: 0 2.5rem 1rem 0;
+  margin: 0 0 1rem;
+  margin-inline-end: 2.5rem;
   font-family: var(--font-display);
   font-weight: normal;
   font-size: clamp(1.4rem, 3vw, 2.25rem);
@@ -257,7 +258,8 @@
 }
 
 .facet-overlay-sub {
-  margin: 0 3.5rem 0.2rem 0;
+  margin: 0 0 0.2rem;
+  margin-inline-end: 3.5rem;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -283,7 +285,7 @@
     overflow-y: auto;
   }
   .facet-overlay--workspace .facet-overlay-title {
-    margin-right: 3.5rem;
+    margin-inline-end: 3.5rem;
   }
   .facet-overlay--workspace .facet-overlay-sub {
     margin: 0.5rem 0 1.25rem;

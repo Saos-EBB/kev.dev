@@ -184,7 +184,7 @@
 .rwidget-keys kbd {
   display: inline-block;
   min-width: 1.6rem;
-  margin-right: 0.25rem;
+  margin-inline-end: 0.25rem;
   padding: 0.1rem 0.35rem;
   border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
   border-bottom-width: 2px;
@@ -196,13 +196,13 @@
 
 .rwidget-decisions li {
   position: relative;
-  padding-left: 1rem;
+  padding-inline-start: 1rem;
 }
 
 .rwidget-decisions li::before {
   content: "";
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 0.6em;
   width: 5px;
   height: 5px;

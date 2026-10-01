@@ -10,53 +10,14 @@
 import type Lenis from "lenis";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { viewportHeight } from "../viewport";
+import { ABOUT } from "./about-content";
 
 // The CV facts — sourced from b2b-cv's lib/portfolio/career.ts (CAREER,
-// EDUCATION, SKILLS, LANGUAGES). Rendered as labeled sections after the
-// blocks A1–A4 (about-blocks.ts), on the same backwall overlay.
-export interface CvSection {
-  heading: string;
-  items: string[];
-}
-
-// A highlighted term per row, same accent treatment as the story/work text
-// (about-blocks.ts) — the role/category up front, details in plain text.
-const hl = (s: string) => `<span class="about-highlight">${s}</span>`;
-
-export const cvSections: CvSection[] = [
-  {
-    heading: "Werdegang",
-    items: [
-      `${hl("Junior Developer")} — Full-Stack-Bootcamp · Talent Hub – IT Ibis Acam, Linz · Okt 2025 – Jun 2026`,
-      `${hl("Sanierung Wohnhaus")} (Familienprojekt) · Linz-Ebelsberg · Jun 2023 – Okt 2025`,
-      `${hl("Administrator")} · BBU GmbH, Linz · Jan 2022 – Jun 2023`,
-      `${hl("Zivildiener")} · BBU GmbH, Linz · Mär 2021 – Dez 2021`,
-      `${hl("Auslandsaufenthalt")} · Schwerpunkt Europa · Sep 2019 – Feb 2021`,
-      `${hl("Sonnenschutztechniker")} · SUNSTAR, Leonding · Jul 2017 – Apr 2019`,
-      `${hl("Bodenleger")} · Bodendesign Mittermayer, Linz · Sep 2012 – Mai 2017`,
-    ],
-  },
-  {
-    heading: "Ausbildung",
-    items: [
-      `${hl("Pflichtschule, Gymnasium")}`,
-      `${hl("Full-Stack-Bootcamp")} — Zertifikat Junior Developer (2026)`,
-    ],
-  },
-  {
-    heading: "Skills",
-    items: [
-      `${hl("Backend und Daten")} — TypeScript, NestJS, PostgreSQL, PostGIS, WebSockets, Stripe, Docker`,
-      `${hl("Frontend")} — React, Next.js, Tailwind, Zustand, Canvas 2D`,
-      `${hl("Werkzeuge und Automatisierung")} — Node.js, Python, Playwright, Ollama, Git`,
-      `${hl("Grundlagen")} — Java, OOP, SQL, Datenstrukturen, 3D-Mathematik`,
-    ],
-  },
-  {
-    heading: "Sprachen",
-    items: [`${hl("Deutsch")} — Muttersprache`, `${hl("Englisch")} — siehe Lebenslauf`],
-  },
-];
+// EDUCATION, SKILLS, LANGUAGES), in every language in about-content.ts.
+// Rendered as labeled sections after the blocks A1–A4 (about-blocks.ts),
+// on the same backwall overlay.
+export type { CvSection } from "./about-content";
+export const cvSections = ABOUT.cv;
 
 // The one thing that isn't static: the vanishing point has to track the
 // *viewport's* current center as you scroll, not sit fixed at the

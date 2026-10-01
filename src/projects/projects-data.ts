@@ -6,8 +6,9 @@
 // color — every project looks like itself, on the same grid.
 
 import type { ProjectCard } from "./project-cards";
+import { localizeCard } from "./projects-i18n";
 
-export const projectCards: ProjectCard[] = [
+const cards: ProjectCard[] = [
   {
     id: "yourbrand",
     layout: "blueprint",
@@ -200,3 +201,6 @@ export const projectCards: ProjectCard[] = [
     ],
   },
 ];
+
+// In the visitor's language (projects-i18n.ts).
+export const projectCards: ProjectCard[] = cards.map(localizeCard);
