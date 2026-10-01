@@ -125,8 +125,6 @@
      editing a selector below directly. */
   --transition-hover: 0.2s ease; /* every plain color/border hover-state fade on the page (nav links/icons, card borders, footer/legal links, the scrollbar thumb) shares this one duration */
   --edge-nav-fade: 0.25s ease; /* how long .site-header / .footer--floating take to fade in/out at the top/bottom 10% of scroll — see scroll/edge-nav.ts's EDGE threshold in timings.ts */
-  --hero-nav-fade-duration: 0.45s; /* .hero-nav's own entrance on page load, see the fade-up keyframes below */
-  --hero-nav-fade-delay: 0.55s;
 
   /* Elevator shaft geometry — tune depth/perspective together until the
      wall angles look right, everything else derives from these.
@@ -204,8 +202,8 @@ a {
 }
 
 /* ---------------------------------------------------------------- */
-/* Site header — a slim fixed bar, separate from .hero-nav (which     */
-/* stays part of the hero card itself). edge-nav.ts toggles           */
+/* Site header — the only nav bar now (the hero used to carry its own */
+/* .hero-nav; removed, this fixed bar is it). edge-nav.ts toggles     */
 /* .is-visible from scroll progress, only shown near the top of the   */
 /* page — hidden the rest of the way through the scroll-driven scenes.*/
 /* ---------------------------------------------------------------- */
@@ -295,9 +293,9 @@ a {
   background: var(--hero-bg);
 }
 
-/* Bordered "card" holding the whole hero — nav, cloth box, name. The
-   cloth mesh is the only grid now; a second CSS background grid behind
-   it used to double up and look messy. */
+/* Bordered "card" holding the whole hero — cloth box, name. The cloth
+   mesh is the only grid now; a second CSS background grid behind it
+   used to double up and look messy. */
 .hero-frame {
   position: relative;
   height: 100%;
@@ -309,62 +307,6 @@ a {
   background-color: var(--hero-bg);
 }
 
-.hero-nav {
-  position: relative;
-  /* Above the canvas (z-index: 5) so its solid background actually
-     masks the cloth when a dragged node bleeds up underneath it. */
-  z-index: 10;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: clamp(1.15rem, 2.6vw, 1.6rem) var(--hero-pad-inline);
-  background: var(--hero-bg);
-  font-family: var(--font-mono);
-  animation: fade-up var(--hero-nav-fade-duration) ease-out
-    var(--hero-nav-fade-delay) both;
-}
-
-.nav-links,
-.nav-icons {
-  display: flex;
-  align-items: center;
-  list-style: none;
-  gap: clamp(1.1rem, 3vw, 2.25rem);
-}
-
-.nav-links a {
-  font-size: clamp(0.85rem, 1.1vw, 1rem);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-  transition: color var(--transition-hover);
-}
-
-/* Same rgb(--color-line) as the cloth mesh, the hero rule lines and the
-   elevator grid — one line color used consistently everywhere. */
-.nav-links a:hover,
-.nav-links a:focus-visible {
-  color: var(--color-line);
-}
-
-.nav-icons a {
-  display: inline-flex;
-  color: var(--color-text-muted);
-  transition: color var(--transition-hover);
-}
-
-.nav-icons a:hover,
-.nav-icons a:focus-visible {
-  color: var(--color-line);
-}
-
-.nav-icons svg {
-  width: 21px;
-  height: 21px;
-}
-
 a:focus-visible,
 button:focus-visible {
   outline: 2px solid var(--color-accent);
@@ -373,12 +315,11 @@ button:focus-visible {
 }
 
 /* Cloth body: fills all remaining space between the two .hero-rule
-   lines below — its own bounded section, distinct from the header. Its
-   size/position is read via getBoundingClientRect in cloth.ts to build
-   the resting grid. The name/subtitle sit at its bottom edge, flush
-   against the lower rule. The canvas itself is bigger still — see
-   #cloth-canvas below — so a dragged node can bleed out over the nav
-   instead of clipping here. */
+   lines below — its own bounded section. Its size/position is read via
+   getBoundingClientRect in cloth.ts to build the resting grid. The
+   name/subtitle sit at its bottom edge, flush against the lower rule.
+   The canvas itself is bigger still — see #cloth-canvas below — so a
+   dragged node can bleed out past it instead of clipping here. */
 .cloth-body {
   flex: 1 1 auto;
   min-height: 200px;
@@ -395,9 +336,9 @@ button:focus-visible {
   background: color-mix(in srgb, var(--color-line) 70%, transparent);
 }
 
-/* Sized to the whole card (not just .cloth-container) and painted above
-   the nav/name via z-index, so the mesh stays visible for as long as
-   it's dragged, clipped only at the card's own edge. */
+/* Sized to the whole card (not just .cloth-container), so the mesh
+   stays visible for as long as it's dragged, clipped only at the
+   card's own edge. */
 #cloth-canvas {
   position: absolute;
   inset: 0;
@@ -405,10 +346,11 @@ button:focus-visible {
   width: 100%;
   height: 100%;
   display: block;
-  /* The canvas spans the whole card so the mesh can bleed over the
-     nav/name — pointer-events stay off so those stay clickable, and
-     cloth.ts grabs nodes via a window-level listener + setPointerCapture
-     instead of relying on this element being hit-testable. */
+  /* The canvas spans the whole card so the mesh can bleed out past
+     .cloth-body — pointer-events stay off so content underneath stays
+     clickable, and cloth.ts grabs nodes via a window-level listener +
+     setPointerCapture instead of relying on this element being
+     hit-testable. */
   pointer-events: none;
   touch-action: pan-y;
 }
@@ -456,31 +398,6 @@ button:focus-visible {
   /* Warped onto the cloth alongside the name — see updateNameTexture()
      in main.ts — kept in the DOM for layout, SEO and screen readers. */
   opacity: 0;
-}
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root:not(.force-motion) .hero-nav {
-    animation: none !important;
-    transform: none !important;
-    opacity: 1 !important;
-  }
-}
-
-@media (max-width: 640px) {
-  .nav-links {
-    gap: 1rem;
-  }
 }
 
 /* ---------------------------------------------------------------- */

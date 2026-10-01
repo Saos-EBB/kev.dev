@@ -1,8 +1,8 @@
 // Header/footer "peek" overlays for the long one-page scroll: a slim
-// fixed bar at the very top (.site-header — separate from .hero-nav,
-// which stays untouched as part of the hero card itself) and the
-// floating footer (.footer--floating) at the very bottom. Visible two
-// ways, either is enough:
+// fixed bar at the very top (.site-header — the page's only nav bar;
+// the hero no longer carries its own) and the floating footer
+// (.footer--floating) at the very bottom. Visible two ways, either is
+// enough:
 //  - scroll position within 10% of that edge (top/bottom of the whole
 //    page) — the "just there" case right where you'd expect it.
 //  - the pointer sitting near the top/bottom edge of the *viewport* —
