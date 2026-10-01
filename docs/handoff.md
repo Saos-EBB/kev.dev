@@ -59,7 +59,13 @@ Nach jeder Antwort: Text eintragen und das `open`-Feld der Card löschen.
 - CheerpJ-Loader ist auf 4.3 gepinnt. Vor einem Upgrade Ein- und Ausgabe an RPN und MasterMind neu testen.
 - Renderer-Widget: Zoom und Schnittebene (Cutaway) aus dem Original sind nicht portiert.
 
-## 6. Allgemein
+## 6. Mehrsprachigkeit (DE/EN/RU/JA/AR)
+
+- **Texte doppelt pflegen:** Deutsch ist die Quelle. Ändert sich ein deutscher Text, die vier Übersetzungen mitziehen: UI in `src/i18n/ui.ts`, About/Lebenslauf in `src/about/about-content.ts`, Projekt-Cards in `src/projects/projects-i18n.ts`, Grundlagen-Programme in `src/projects/widgets/grundlagen-i18n.ts`.
+- **Übersetzungen prüfen lassen:** EN/RU/JA/AR sind maschinennah von Claude übersetzt — vor allem JA und AR von Muttersprachlern gegenlesen lassen.
+- **Bewusst deutsch:** Impressum/Datenschutz (rechtlich verbindlich, mit Hinweis in der jeweiligen Sprache), `[OFFEN]`-Marker, die Konsolenausgabe der Java-Programme, Tech-Tags.
+
+## 7. Allgemein
 
 - **Kontrast:** `--color-accent` (`#5f0027`) auf `#08070a` hat etwa 1,4:1 (WCAG verlangt 4,5:1 für Text). Betrifft
   `[OFFEN]`-Zeilen, Rolle in der Profilkarte, Card-Überschriften, Terminal-Prompt und jetzt auch die Equalizer-Balken.

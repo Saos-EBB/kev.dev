@@ -1,0 +1,53 @@
+/* ---------------------------------------------------------------- */
+/* Per-language type and right-to-left support (html[lang], html[dir], */
+/* set by i18n/index.ts). Koeeya (display) and JetBrains Mono (reading) */
+/* only cover Latin, Mono also Cyrillic — Japanese and Arabic fall     */
+/* back to the system's fonts for their scripts, named here so the     */
+/* fallback is a good one instead of the browser's first guess.        */
+/* ---------------------------------------------------------------- */
+
+html[lang="ja"] {
+  --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", system-ui, sans-serif;
+  --font-read: "JetBrains Mono Variable", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", monospace;
+  --font-display: "Koeeya Trial", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+}
+
+html[lang="ar"] {
+  --font-sans: "Noto Sans Arabic", "Segoe UI", "Geeza Pro", Tahoma, system-ui, sans-serif;
+  /* Arabic in a monospace fallback reads badly — prose gets a sans. */
+  --font-read: "Noto Sans Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
+  --font-display: "Koeeya Trial", "Noto Kufi Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
+}
+
+/* Display headings in scripts Koeeya doesn't have: the fallback is a
+   plain sans, so give it the weight Koeeya's brush strokes have. */
+html[lang="ru"] :is(.projects-headline, .projects-title, .pcard-title, .contact-headline, .facet-overlay-title, .about-card-name, .gwidget-name, .viz-frame-text b),
+html[lang="ja"] :is(.projects-headline, .projects-title, .pcard-title, .contact-headline, .facet-overlay-title, .about-card-name, .gwidget-name, .viz-frame-text b, .viz-note),
+html[lang="ar"] :is(.projects-headline, .projects-title, .pcard-title, .contact-headline, .facet-overlay-title, .about-card-name, .gwidget-name, .viz-frame-text b, .viz-note) {
+  font-weight: 800;
+}
+
+/* Arabic has no letter case and its letters join — tracking would tear
+   the words apart. */
+html[lang="ar"] * {
+  letter-spacing: 0 !important;
+}
+
+/* Code, terminal output and file names read left to right in every
+   language. */
+html[dir="rtl"] :is(.viz-code, .viz-tabs, .viz-status, .gwidget-out, .gwidget-code, .gwidget-prompt, .gwidget-term-bar, .contact-mail, .pcard-tags, .rwidget-hud) {
+  direction: ltr;
+  text-align: left;
+}
+
+/* The scrollbar thumb track and the edge glyphs that point "forward". */
+html[dir="rtl"] .scrollbar {
+  right: auto;
+  left: 0;
+}
+
+/* Arabic and Japanese glyphs reach further below the baseline than the
+   Latin display font; line-height 1 clipped the hero subtitle's texture. */
+html:is([lang="ar"], [lang="ja"]) .hero-subtitle {
+  line-height: 1.45;
+}

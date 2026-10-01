@@ -6,6 +6,7 @@ import roomSvg from "./assets/room.svg?raw";
 import "@fontsource-variable/jetbrains-mono";
 import "./style.css";
 import "./reading.css";
+import "./i18n/i18n.css";
 import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -401,6 +402,10 @@ function paintNameTexture(shine: number | null) {
   tctx.setTransform(TEXTURE_SUPERSAMPLE, 0, 0, TEXTURE_SUPERSAMPLE, 0, 0);
   tctx.clearRect(0, 0, nameTexture.width, nameTexture.height);
   tctx.textBaseline = "middle";
+  // Positions below are left edges (measured boxes) — keep that meaning
+  // even on the RTL page; the text itself still shapes/orders correctly.
+  tctx.direction = "ltr";
+  tctx.textAlign = "left";
 
   for (const line of nameLines) {
     tctx.font = line.font;

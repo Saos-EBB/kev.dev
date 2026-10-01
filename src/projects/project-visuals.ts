@@ -11,6 +11,7 @@
 import { esc, type ProjectCard } from "./project-cards";
 import { UI } from "../i18n/ui";
 import { RTL } from "../i18n";
+import { NOTE_IDS, noteLabel } from "./widgets/grundlagen-i18n";
 
 // YourBrand: the four layers named in its copy (DB → Security → API, and
 // the experimental business logic on top), plus the per-tenant modules.
@@ -122,20 +123,10 @@ function editor(card: ProjectCard): string {
 
 // Grundlagen: the nine Bootcamp programs as sticky notes in their own
 // colors (same --note-N each one has in the widget), each one starts the
-// in-browser Java terminal. Labels mirror NOTES in widgets/grundlagen.ts —
-// not imported, that module pulls in all the Java sources.
+// in-browser Java terminal. Labels come from widgets/grundlagen-i18n.ts,
+// not grundlagen.ts — that module pulls in all the Java sources.
 function pinboard(card: ProjectCard): string {
-  const notes = [
-    "Game of Life",
-    "Pokémon",
-    "Mastermind",
-    "RPN-Rechner",
-    "Personalverwaltung",
-    "Bibliothek",
-    "Minesweeper",
-    "Zahlenraten",
-    "Chiffre",
-  ];
+  const notes = NOTE_IDS.map(noteLabel);
   const demo = card.facets?.includes("live-demo")
     ? `data-card="${esc(card.id)}" data-facet="live-demo"`
     : "disabled";

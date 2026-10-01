@@ -12,6 +12,7 @@ import { Terminal } from "./terminal";
 import type { ProjectCard } from "../project-cards";
 import { UI } from "../../i18n/ui";
 import { RTL } from "../../i18n";
+import { localizeNote } from "./grundlagen-i18n";
 
 import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
 import masterMindSrc from "../../../java/MasterMind.java?raw";
@@ -165,7 +166,7 @@ const NOTES: Note[] = [
     code: { file: "ChiffrePOLY.java", text: excerpt(chiffreSrc, 62, 80) },
     run: "chiffre",
   },
-];
+].map(localizeNote); // texts in the visitor's language (grundlagen-i18n.ts)
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

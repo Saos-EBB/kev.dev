@@ -48,9 +48,9 @@ export function initProjectSwiper(section: HTMLElement) {
 
   const goTo = (i: number) => {
     const slide = slides[Math.max(0, Math.min(slides.length - 1, i))];
-    // The stage is the slides' offsetParent (position: relative).
-    const left = slide.offsetLeft - (stage.clientWidth - slide.offsetWidth) / 2;
-    stage.scrollTo({ left, behavior: "smooth" });
+    // scrollIntoView rather than computing scrollLeft: on the RTL (Arabic)
+    // page scrollLeft runs negative, this handles both directions.
+    slide.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   };
 
   dots.forEach((dot) =>
