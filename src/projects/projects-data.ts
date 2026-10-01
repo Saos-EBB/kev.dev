@@ -154,6 +154,34 @@ export const projectCards: ProjectCard[] = [
     ],
   },
   {
+    id: "kevdev",
+    layout: "storyboard",
+    kind: "Dieses Portfolio",
+    accent: "var(--note-9)",
+    learnGoal:
+      "Ein Portfolio, das man erlebt statt liest — und in dem jedes Element einen Grund hat.",
+    title: "kev.dev",
+    claim: "Beweist Gestaltungs-Denken — jede Animation erzählt etwas, nichts ist Deko.",
+    what: "Viele Portfolio-Seiten angesehen, dann jedes Element mit einem Sinn gebaut: Das Tuch im Hero ist so groß, dass man es anfassen muss. About ist ein Aufzug, an dem mein Leben vorbeizieht. Die Projekte liegen wie auf einer Werkbank, jedes mit Why und Learned. Kontakt kommt mit einem Übergang, und wer klickt, findet ein verstecktes Wow. Impressum und Datenschutz liegen als Overlay auf dem One-Pager, damit die Musik ohne Schnitt weiterläuft.",
+    tags: ["TypeScript", "Vite", "GSAP / ScrollTrigger", "Lenis", "Canvas 2D", "CheerpJ"],
+    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
+    decisions: [
+      "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",
+      "Tuch als eigene Verlet-Physik auf Canvas, der Name wird als Textur mitverzerrt",
+      "Aufzug aus CSS-3D-Wänden, Zoom in den Monitor als Übergang ins Projekte-Grid",
+      "Ein durchgehendes Grid als roter Faden von About bis Kontakt",
+      "Impressum/Datenschutz als Overlay statt eigener Seite — die Musik läuft weiter",
+      "Eigene Lite-Variante fürs Handy statt Kompromisse für beide",
+    ],
+    challenge:
+      "Mobile ist eine eigene Welt: Was am Desktop flüssig lief, ruckelte am Handy. Messen statt raten — die Aufzugswände waren Layer so hoch wie die ganze Section. Am Ende eine eigene Lite-Variante statt Kompromisse für beide.",
+    facets: ["self"],
+    open: [
+      "Zeitraum und Umfang (Stunden, solo, Anteil CC als Implementierungs-Agent) — Kevin bestätigt",
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
     id: "grundlagen",
     layout: "pinboard",
     kind: "Bootcamp · Java",

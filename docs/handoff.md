@@ -42,6 +42,7 @@ nach Bereich sortiert. Alles Sichtbare mit `[OFFEN: …]` auf der Seite ist hier
 | TschoBBo | Screenshot der Mail-Client-UI. `public/projects/jobbot.jpeg` ist nur das Maskottchen. |
 | Renderer | Welche zwei Baldur's-Gate-Modelle? (`duoOG` ist 41 MB und nie committet, also unbrauchbar.) Dateinamen nennen oder dezimierte Fassung liefern. Ist `craniumCut01` das Schädel-CT? Modell-Reihenfolge bestätigen (aktuell Ducky, Auto, Pochita, Schädel-CT). |
 | AniScript | GitHub-Link fehlt komplett. Detail Brave MV2→V3 / Violentmonkey→ScriptCat final gegenchecken. |
+| kev.dev | Neue Card „Dieses Portfolio“ (Storyboard). Texte sind aus Kevins Chat-Beschreibung formuliert — in eigenen Worten nachschärfen. Zeitraum/Umfang (Stunden, solo, CC-Anteil) fehlt. |
 | Grundlagen | Info-Text für Mastermind (auch als `open` in `widgets/grundlagen.ts:77` sichtbar). |
 
 Nach jeder Antwort: Text eintragen und das `open`-Feld der Card löschen.
