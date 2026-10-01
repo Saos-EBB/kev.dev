@@ -169,6 +169,7 @@ function ensureOverlay(lenis: Lenis): HTMLElement {
     <div class="facet-overlay-panel" data-lenis-prevent role="dialog" aria-modal="true" aria-labelledby="facet-overlay-title">
       <button class="facet-overlay-close" type="button" data-close aria-label="Schließen">✕</button>
       <h3 class="facet-overlay-title" id="facet-overlay-title"></h3>
+      <p class="facet-overlay-sub"></p>
       <div class="facet-overlay-body"></div>
     </div>
   `;
@@ -219,6 +220,8 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     const card = byId.get(btn.closest<HTMLElement>(".pcard")?.dataset.card ?? "");
     const el = ensureOverlay(lenis);
     parkActiveWidget();
+    el.classList.remove("facet-overlay--workspace");
+    el.querySelector(".facet-overlay-sub")!.textContent = "";
     el.querySelector(".facet-overlay-title")!.textContent =
       `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`;
     el.querySelector(".facet-overlay-body")!.innerHTML = boxEl.querySelector(".pcard-box-body")!.innerHTML;
@@ -242,7 +245,11 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     const body = el.querySelector<HTMLElement>(".facet-overlay-body")!;
 
     parkActiveWidget();
-    el.querySelector(".facet-overlay-title")!.textContent = content.title;
+    // A live widget gets the workspace: the whole screen, the project's
+    // name as the title and the widget's own label under it.
+    el.classList.toggle("facet-overlay--workspace", !!content.widget);
+    el.querySelector(".facet-overlay-title")!.textContent = content.widget ? card.title : content.title;
+    el.querySelector(".facet-overlay-sub")!.textContent = content.widget ? content.title : "";
 
     if (content.widget) {
       body.replaceChildren();
@@ -251,7 +258,7 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
       activeWidgetCardId = card.id;
       if (!mountedWidgets.has(card.id)) {
         mountedWidgets.add(card.id);
-        Promise.resolve(content.widget.mount(host)).catch(() => {
+        Promise.resolve(content.widget.mount(host, card)).catch(() => {
           mountedWidgets.delete(card.id);
           host.textContent = "Widget konnte nicht geladen werden.";
         });

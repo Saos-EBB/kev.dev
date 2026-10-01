@@ -9,8 +9,17 @@
 //
 // Loaded lazily: this file and every model are separate chunks that only
 // download when the card is first expanded.
+//
+// Shown as a workspace: the canvas big in the middle with a HUD (model
+// tabs, live vertex/edge count), cards around it — Why? and how it works
+// on the left, the picked model, controls and the card's decisions on the
+// right.
 
 import "./renderer.css";
+import type { ProjectCard } from "../project-cards";
+
+const escHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 interface Model {
   vs: { x: number; y: number; z: number }[];
@@ -87,18 +96,63 @@ function rotate(verts: Float32Array, aroundY: number, aroundX: number) {
   }
 }
 
-export function mount(host: HTMLElement) {
+export function mount(host: HTMLElement, card?: ProjectCard) {
   host.classList.add("rwidget");
+  const wsCard = (heading: string, body: string, extra = "") =>
+    `<section class="ws-card ${extra}"><h5 class="ws-card-heading">${heading}</h5>${body}</section>`;
+  const shades = Array.from({ length: 16 }, (_, i) => `<i style="background: var(--shade-${i})"></i>`).join("");
   host.innerHTML = `
-    <div class="rwidget-tabs" role="group" aria-label="Modell wählen">
-      ${MODELS.map((m) => `<button type="button" data-model="${m.id}" aria-pressed="false">${m.label}</button>`).join("")}
+    <aside class="rwidget-side rwidget-side--left">
+      ${card ? wsCard("Why?", `<p>${escHtml(card.learnGoal)}</p>`) : ""}
+      ${wsCard(
+        "So funktioniert's",
+        `<ul class="rwidget-steps">
+          <li><b>Perspektive</b> x / z und y / z — was weiter weg ist, wird kleiner</li>
+          <li><b>Rotation</b> in der Ebene, je Achse ein Sinus/Kosinus-Paar</li>
+          <li><b>Tiefe</b> 16 Blau-Stufen, nah hell, fern dunkel
+            <span class="rwidget-shades" aria-hidden="true">${shades}</span></li>
+        </ul>`,
+      )}
+    </aside>
+    <div class="rwidget-stage">
+      <div class="rwidget-tabs" role="group" aria-label="Modell wählen">
+        ${MODELS.map((m) => `<button type="button" data-model="${m.id}" aria-pressed="false">${m.label}</button>`).join("")}
+      </div>
+      <canvas class="rwidget-canvas" tabindex="0" role="img"
+        aria-label="3D-Modell als Drahtgitter. Mit Maus ziehen oder Pfeiltasten drehen."></canvas>
+      <p class="rwidget-hud rwidget-hud--stats" aria-live="polite"></p>
+      <p class="rwidget-hud rwidget-hud--hint">ziehen ↻ · Pfeiltasten</p>
+      <p class="rwidget-status" aria-live="polite"></p>
     </div>
-    <canvas class="rwidget-canvas" tabindex="0" role="img"
-      aria-label="3D-Modell als Drahtgitter. Mit Maus ziehen oder Pfeiltasten drehen."></canvas>
-    <p class="rwidget-status" aria-live="polite"></p>
+    <aside class="rwidget-side rwidget-side--right">
+      ${wsCard(
+        "Modell",
+        `<p class="rwidget-model-name"></p><dl class="rwidget-model-stats">
+          <div><dt>Ecken</dt><dd data-stat="verts">–</dd></div>
+          <div><dt>Kanten</dt><dd data-stat="edges">–</dd></div>
+        </dl>`,
+      )}
+      ${wsCard(
+        "Steuerung",
+        `<ul class="rwidget-keys">
+          <li><kbd>Maus</kbd> ziehen zum Drehen</li>
+          <li><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> drehen, Canvas fokussiert</li>
+        </ul>`,
+      )}
+      ${
+        card?.decisions?.length
+          ? wsCard("Entscheidungen", `<ul class="rwidget-decisions">${card.decisions.map((d) => `<li>${escHtml(d)}</li>`).join("")}</ul>`)
+          : ""
+      }
+    </aside>
   `;
   const canvas = host.querySelector<HTMLCanvasElement>(".rwidget-canvas")!;
   const status = host.querySelector<HTMLElement>(".rwidget-status")!;
+  const hudStats = host.querySelector<HTMLElement>(".rwidget-hud--stats")!;
+  const modelName = host.querySelector<HTMLElement>(".rwidget-model-name")!;
+  const statVerts = host.querySelector<HTMLElement>('[data-stat="verts"]')!;
+  const statEdges = host.querySelector<HTMLElement>('[data-stat="edges"]')!;
+  const fmt = new Intl.NumberFormat("de-DE");
   const tabs = [...host.querySelectorAll<HTMLButtonElement>("[data-model]")];
   const ctx = canvas.getContext("2d")!;
 
@@ -198,6 +252,12 @@ export function mount(host: HTMLElement) {
     if (requested !== id) return; // user already picked another model
     status.textContent = "";
     mesh = next;
+    const verts = fmt.format(next.verts.length / 3);
+    const edges = fmt.format(next.edges.length / 2);
+    modelName.textContent = MODELS.find((m) => m.id === id)?.label ?? id;
+    statVerts.textContent = verts;
+    statEdges.textContent = edges;
+    hudStats.textContent = `${verts} Ecken · ${edges} Kanten`;
     schedule();
   }
 

@@ -112,7 +112,7 @@ export const projectCards: ProjectCard[] = [
       "Es war durchgehend Neuland — Projektion, Rotation, das Einlesen von OBJ und STL, überall Probleme, die ich mir vorher nie gestellt hatte. Der Reiz war der Aufstieg: vom simplen Wireframe bis dahin, ein komplettes Schädel-CT aus DICOM-Daten auf einem 2D-Canvas zu rendern.",
     widget: {
       label: "3D-Modelle, mit der Maus drehbar",
-      mount: (el) => import("./widgets/renderer").then((m) => m.mount(el)),
+      mount: (el, card) => import("./widgets/renderer").then((m) => m.mount(el, card)),
     },
     facets: ["live-demo"],
     open: [
@@ -154,7 +154,7 @@ export const projectCards: ProjectCard[] = [
     claim: "Die Handwerks-Grundlagen — alles von Hand getippt, im Bootcamp gelernt.",
     widget: {
       label: "Bootcamp-Projekte, direkt im Browser ausführbar",
-      mount: (el) => import("./widgets/grundlagen").then((m) => m.mount(el)),
+      mount: (el, card) => import("./widgets/grundlagen").then((m) => m.mount(el, card)),
     },
     facets: ["live-demo"],
     open: [
