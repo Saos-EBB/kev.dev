@@ -1,0 +1,160 @@
+/* Only this sub-app is scanned for classes, not the rest of kev.dev. */
+@import "tailwindcss" source("../");
+@import "./fonts.css";
+@import "./theme.css";
+
+/* The 37 SAOS logo-carousel @font-face rules of b2b-cv are left out: the
+   white-label page never uses them (kev.dev has its own SAOS intro). */
+
+/* ── Color tokens (Material You – purple) ────────────────────────── */
+/* @theme registers these with Tailwind so it generates bg-*, text-*, border-* utilities */
+
+@theme {
+  --color-background:               #e4d8d8;
+  --color-surface-container-lowest: #e4d8d8;
+  --color-surface-container-low:    #b29dbe;
+  --color-surface-container:        #e5dcea;
+  --color-surface-container-high:   #9973b0;
+  --color-surface-container-highest:#E6E0E9;
+
+  --color-on-surface:               #4d4a55;
+  --color-on-surface-variant:       #171618;
+
+  --color-primary-fixed-dim:        #826dba;
+  --color-primary-container:        #EADDFF;
+  --color-on-primary-container:     #ece9f1;
+
+  --color-secondary-container:      #d8dfd9;
+  --color-tertiary-fixed-dim:       #1f1e1e;
+
+  --color-outline:                  #79747E;
+  --color-outline-variant:          #CAC4D0;
+
+  --color-error:                    #B3261E;
+  --color-error-container:          #F9DEDC;
+}
+
+/* Explicit :root block so CSS vars exist in ALL build modes (dev + prod).
+   Tailwind v4 dev server doesn't emit @theme vars to :root, this fills the gap. */
+:root {
+  --color-background:               #e4d8d8;
+  --color-surface-container-lowest: #e4d8d8;
+  --color-surface-container-low:    #b29dbe;
+  --color-surface-container:        #e5dcea;
+  --color-surface-container-high:   #9973b0;
+  --color-surface-container-highest:#E6E0E9;
+
+  --color-on-surface:               #4d4a55;
+  --color-on-surface-variant:       #171618;
+
+  --color-primary-fixed-dim:        #826dba;
+  --color-primary-container:        #EADDFF;
+  --color-on-primary-container:     #ece9f1;
+
+  --color-secondary-container:      #d8dfd9;
+  --color-tertiary-fixed-dim:       #1f1e1e;
+
+  --color-outline:                  #79747E;
+  --color-outline-variant:          #CAC4D0;
+
+  --color-error:                    #B3261E;
+  --color-error-container:          #F9DEDC;
+}
+
+/* ── Dark mode overrides ─────────────────────────────────────────── */
+
+.dark {
+  --color-background:               #141218;
+  --color-surface-container-lowest: #0f0d13;
+  --color-surface-container-low:    #1d1b20;
+  --color-surface-container:        #211f26;
+  --color-surface-container-high:   #2b2930;
+  --color-surface-container-highest:#36343b;
+
+  --color-on-surface:               #cb20a9;
+  --color-on-surface-variant:       #d67fe1;
+
+  --color-primary-fixed-dim:        #9d429e;
+  --color-primary-container:        #4f378b;
+  --color-on-primary-container:     #c8c5ce;
+
+  --color-secondary-container:      #976c9d;
+  --color-tertiary-fixed-dim:       #b83d60;
+
+  --color-outline:                  #cb20b4;
+  --color-outline-variant:          #4f454f;
+
+  --color-error:                    #b5ebf2;
+  --color-error-container:          #b8aead;
+}
+
+/* ── Kopf der Projekte-Landing ────────────────────────────────────────────────
+   Dieselbe Konstruktionszeichnung wie überall, nur lauter: Papier und Tinte,
+   aber mit laufendem Schrift-Karussell und der Klicksequenz, die Doom startet.
+   Der frühere Aufbau war eine Röhrenbildschirm-Anmutung mit Rauschen und
+   Bildzeilen auf Schwarz — eine andere Bildwelt, mit dem Videohintergrund
+   entfallen. Geblieben ist nur die Abdunklung, weil sie den Übergang ins
+   Doom-Egg schneidet. */
+
+.op-hero {
+  position: relative; height: 82vh; min-height: 460px;
+  background: var(--kz-paper);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--kz-line);
+}
+
+/* Millimeterpapier — derselbe Grund wie auf der Vorschaukarte. */
+.op-hero::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--kz-line-2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--kz-line-2) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Die Reißschnur quer durch den Kopf: das eine rote Element. */
+.op-hero::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%;
+  height: 1px; pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg, var(--kz-accent) 0 6px, transparent 6px 11px
+  );
+  opacity: .55;
+}
+
+.op-logo-wrap {
+  position: relative; z-index: 2;
+  text-align: center; transition: opacity .05s linear;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.op-blackout {
+  position: absolute; inset: 0; background: #000;
+  z-index: 9; pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.op-scroll-cue {
+  position: absolute; bottom: 58px; left: 50%; transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--kz-muted); letter-spacing: .1em;
+  animation: op-bob 1.8s ease-in-out infinite; z-index: 2;
+}
+@keyframes op-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%       { transform: translate(-50%, 6px); }
+}
+.saos-logo    { font-size: clamp(180px, 19.6vw, 246px); }
+.saos-subtitle { font-size: clamp(20px, 4vw, 26px); }
+@media (min-width: 1440px) {
+  .saos-logo    { font-size: clamp(246px, 19.6vw, 314px); }
+  .saos-subtitle { font-size: 28px; }
+}
+@media (max-width: 1023px) and (min-width: 640px) {
+  .saos-logo    { font-size: clamp(134px, 22.4vw, 202px); }
+  .saos-subtitle { font-size: clamp(20px, 4vw, 22px); }
+}
+@media (max-width: 639px) {
+  .saos-logo    { font-size: clamp(106px, 28vw, 146px); }
+  .saos-subtitle { font-size: clamp(18px, 4vw, 20px); }
+  .op-scroll-cue { bottom: 32px; }
+}

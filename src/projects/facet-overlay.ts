@@ -69,6 +69,18 @@ interface FacetContent {
   widget?: ProjectWidget;
 }
 
+const B2B_PAGE: ProjectWidget = {
+  label: "White-Label-Verkaufsseite",
+  mount: (el) => {
+    el.classList.add("b2b-frame-host");
+    const frame = document.createElement("iframe");
+    frame.className = "b2b-frame";
+    frame.src = "/yourbrand/";
+    frame.title = "YourBrand — White-Label-Verkaufsseite";
+    el.appendChild(frame);
+  },
+};
+
 const findLink = (card: ProjectCard, test: RegExp) => card.links?.find((l) => test.test(l.label));
 
 function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
@@ -90,10 +102,12 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
       };
     }
     case "b2b":
-      return {
-        title: "B2B-Seite",
-        bodyHtml: `<p class="pcard-open">[OFFEN: URL der barrierefreien B2B-Seite fehlt — Kevin liefert]</p>`,
-      };
+      // The white-label sales page (yourbrand/, from the b2b-cv repo) —
+      // its own React page, so it lives in an iframe: its styles stay out
+      // of the portfolio. Handled like a widget, so the workspace shows it
+      // full-screen and the frame is only created on the first open (moving
+      // it in and out of the overlay reloads it, which is fine here).
+      return { title: "White-Label-Verkaufsseite", bodyHtml: "", widget: B2B_PAGE };
   }
 }
 
@@ -187,6 +201,10 @@ function ensureOverlay(lenis: Lenis): HTMLElement {
   el.addEventListener("click", (e) => {
     if ((e.target as HTMLElement).closest("[data-close]")) close();
   });
+  // The embedded B2B page's "Portfolio" link asks to be closed.
+  window.addEventListener("message", (e) => {
+    if (e.origin === window.location.origin && e.data === "yourbrand:close") close();
+  });
   document.addEventListener("keydown", (e) => {
     if (!isOpen()) return;
     if (e.key === "Escape") close();
@@ -253,13 +271,14 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
 
     if (content.widget) {
       body.replaceChildren();
-      const host = getWidgetHost(card.id);
+      const hostId = `${card.id}:${kind}`;
+      const host = getWidgetHost(hostId);
       body.appendChild(host);
-      activeWidgetCardId = card.id;
-      if (!mountedWidgets.has(card.id)) {
-        mountedWidgets.add(card.id);
+      activeWidgetCardId = hostId;
+      if (!mountedWidgets.has(hostId)) {
+        mountedWidgets.add(hostId);
         Promise.resolve(content.widget.mount(host, card)).catch(() => {
-          mountedWidgets.delete(card.id);
+          mountedWidgets.delete(hostId);
           host.textContent = "Widget konnte nicht geladen werden.";
         });
       }
