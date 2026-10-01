@@ -20,7 +20,8 @@ import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
 import { mountSaosLoader } from "./intro/saos-intro";
-import { makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
+import { LITE, LITE_QUERY, makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
+import { initProjectSwiper } from "./projects/swiper";
 import { HERO_NAMES } from "./hero/hero-names";
 import { startNameTypewriter } from "./hero/name-typewriter";
 import { hexToRgb } from "./colors";
@@ -48,6 +49,12 @@ if (
   document.documentElement.classList.add("force-motion");
 }
 
+if (LITE) document.documentElement.classList.add("lite");
+// The scroll scenes are built for one mode at load (see LITE in
+// viewport.ts) — crossing the breakpoint (rotating a tablet, dragging a
+// desktop window narrow) rebuilds the page in the other one.
+window.matchMedia(LITE_QUERY).addEventListener("change", () => location.reload());
+
 // Smooth-scroll base for the whole page, wired to GSAP's ticker so Lenis
 // and ScrollTrigger (used by the project carousel) share one scroll
 // instead of running two competing rAF loops.
@@ -65,7 +72,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <header class="site-header">
     <div class="site-header-inner">
-      <a class="site-header-brand" href="#hero">Kevin Schaberl / <span class="brand-accent">SAOS</span></a>
+      <a class="site-header-brand" href="#hero"><span class="site-header-brand-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span></a>
       <nav class="site-header-links" aria-label="Primary">
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
@@ -168,12 +175,23 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         .map(
           (card, i) => `
         <div class="carousel-project" data-project="${i}" data-count="1">
-          ${renderProjectCard(card)}
+          ${renderProjectCard(card, i, projectCards.length)}
         </div>
       `,
         )
         .join("")}
     </div>
+    <nav class="swiper-nav" aria-label="Projekte durchblättern">
+      <button class="swiper-arrow" type="button" data-dir="-1" aria-label="Vorheriges Projekt">←</button>
+      <ol class="swiper-dots">
+        ${projectCards
+          .map(
+            (card, i) => `<li><button type="button" data-goto="${i}" aria-label="${card.title}"></button></li>`,
+          )
+          .join("")}
+      </ol>
+      <button class="swiper-arrow" type="button" data-dir="1" aria-label="Nächstes Projekt">→</button>
+    </nav>
   </section>
 
   <section class="contact" id="contact">
@@ -467,8 +485,15 @@ const heroNameForceMotion =
 const heroNameReducedMotion =
   !heroNameForceMotion &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// The typewriter only flags the texture dirty; the frame loop below
+// re-rasterizes it at most once per frame, and only while the cloth is
+// actually running (on screen) — off screen the typing goes on in the DOM
+// for free and the texture catches up on the first frame back.
+let nameTextureDirty = false;
 if (!heroNameReducedMotion && HERO_NAMES.length > 0) {
-  startNameTypewriter(heroName, updateNameTexture);
+  startNameTypewriter(heroName, () => {
+    nameTextureDirty = true;
+  });
 }
 
 // The name's shine, in step with the CSS one on "PROJEKTE". The cloth
@@ -481,6 +506,13 @@ if (!heroNameReducedMotion) {
   const easeInOut = (t: number) => t * t * (3 - 2 * t);
   let shining = false;
   const shineLoop = (now: number) => {
+    requestAnimationFrame(shineLoop);
+    if (!cloth.isRunning) return;
+    if (nameTextureDirty) {
+      nameTextureDirty = false;
+      updateNameTexture();
+      shining = false;
+    }
     const phase = (now % periodMs) / periodMs;
     if (phase >= SHINE_REST) {
       const t = easeInOut((phase - SHINE_REST) / (1 - SHINE_REST));
@@ -490,7 +522,6 @@ if (!heroNameReducedMotion) {
       paintNameTexture(null);
       shining = false;
     }
-    requestAnimationFrame(shineLoop);
   };
   requestAnimationFrame(shineLoop);
 }
@@ -512,9 +543,13 @@ window.addEventListener(
 // style.css): on a 1.5x display a 1px CSS line covers 1.5 device pixels
 // and shimmers as it's resampled. Browser zoom changes devicePixelRatio
 // and fires resize, so this one listener covers that too.
+// On 3x phones a single device pixel at the grid's alpha all but
+// vanishes, so from 2.25x up the line is two device pixels — still whole
+// device pixels (crisp), just enough ink to read as a grid.
 function syncGridLineWidth() {
   const dpr = window.devicePixelRatio || 1;
-  document.documentElement.style.setProperty("--grid-line", `${1 / dpr}px`);
+  const devicePx = dpr >= 2.25 ? 2 : 1;
+  document.documentElement.style.setProperty("--grid-line", `${devicePx / dpr}px`);
 }
 syncGridLineWidth();
 window.addEventListener("resize", syncGridLineWidth, { passive: true });
@@ -522,13 +557,15 @@ window.addEventListener("resize", syncGridLineWidth, { passive: true });
 const aboutSection = document.querySelector<HTMLElement>("#about")!;
 const projectsSection = document.querySelector<HTMLElement>("#projects")!;
 
-trackElevatorPerspective(aboutSection, lenis);
-
-initBoxToGridTransition(aboutSection);
+if (!LITE) {
+  trackElevatorPerspective(aboutSection, lenis);
+  initBoxToGridTransition(aboutSection);
+}
 
 initFacetOverlay(projectsSection, projectCards, lenis);
 
-initCarousel(projectsSection);
+if (LITE) initProjectSwiper(projectsSection);
+else initCarousel(projectsSection);
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 

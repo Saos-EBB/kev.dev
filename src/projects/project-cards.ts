@@ -1,16 +1,16 @@
-// One card template for every project. Cards differ only in data and in
-// which optional fields they fill — a missing optional field means its
-// slot simply isn't rendered.
-//
-// The card is the project's title as a large lettering (it slides in with
-// the card, right under the fixed "PROJEKTE" headline) over four boxes,
-// each a teaser that opens in full in the shared overlay: Why? (goal/claim/what), Learned!
-// (challenge/origin), Screens (screenshots, plus facet tiles that open the
-// shared overlay in facet-overlay.ts for a live demo or the B2B site) and
-// Code + Architektur (GitHub, tags, decisions, meta).
+// One card renderer for every project, but each project brings its own
+// `layout`: a different arrangement on the grid (project-cards.css) and its
+// own signature visual (project-visuals.ts) — a blueprint layer stack for
+// the SaaS, a mail inbox for the job bot, a 3D viewport for the renderer,
+// a script editor for the userscript, a pinboard for the Bootcamp basics.
+// The parts every card shares stay the same: the head (index, kind,
+// title, claim, facet buttons) and the teaser boxes — Why? (goal/what),
+// Learned! (challenge/origin) and Code + Architektur (GitHub, tags,
+// decisions, meta) — each opening in full in the shared overlay.
 
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
+import { renderVisual } from "./project-visuals";
 
 // A link without href renders as plain text (e.g. "Live-Demo auf Anfrage").
 export interface ProjectLink {
@@ -27,13 +27,21 @@ export interface ProjectWidget {
   mount: (el: HTMLElement) => Promise<void | (() => void)> | void | (() => void);
 }
 
-// Facet tiles (in the Screens box): each opens the same shared overlay
-// (facet-overlay.ts) — Live-Demo -> widget or the demo link, B2B -> the
-// YourBrand accessible-site link. Everything else is shown in the boxes.
+// Facet buttons (in the card head, and on some signature visuals): each
+// opens the same shared overlay (facet-overlay.ts) — Live-Demo -> widget
+// or the demo link, B2B -> the YourBrand accessible-site link.
 export type FacetKind = "live-demo" | "b2b";
+
+// Which arrangement + signature visual a card uses (see the file header).
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard";
 
 export interface ProjectCard {
   id: string;
+  layout: CardLayout;
+  // Short genre label in the card head ("White-Label-SaaS").
+  kind: string;
+  // The card's own color, any CSS color (usually one of the --note-N tokens).
+  accent: string;
   learnGoal: string;
   title: string;
   claim: string;
@@ -49,7 +57,7 @@ export interface ProjectCard {
   open?: string[];
   screenshots?: { src: string; alt: string }[];
   widget?: ProjectWidget;
-  // Which facet tiles this card shows, in display order.
+  // Which facet buttons this card shows, in display order.
   facets?: FacetKind[];
 }
 
@@ -58,7 +66,7 @@ const label = (text: string) => `<span class="pcard-label">${text}</span>`;
 
 const open = (text: string) => `<p class="pcard-open">[OFFEN: ${esc(text)}]</p>`;
 
-function esc(s: string): string {
+export function esc(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -66,7 +74,7 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// One of the four boxes under the title. Never scrolls: text past the
+// One of the teaser boxes. Never scrolls: text past the
 // box's fixed height fades out, and the expand button opens the whole box
 // in the shared overlay (facet-overlay.ts copies .pcard-box-body over).
 const box = (kind: string, heading: string, body: string) => `
@@ -77,13 +85,28 @@ const box = (kind: string, heading: string, body: string) => `
   </section>
 `;
 
-export function renderProjectCard(card: ProjectCard): string {
+// Which boxes each layout shows. The Bootcamp basics have no story or
+// architecture of their own — the pinboard is the content there.
+const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
+  blueprint: ["why", "learned", "code"],
+  inbox: ["why", "learned", "code"],
+  viewport: ["why", "learned", "code"],
+  editor: ["why", "learned", "code"],
+  pinboard: ["why"],
+};
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+export function renderProjectCard(card: ProjectCard, index = 0, total = 1): string {
   const gh = card.links?.find((l) => /github/i.test(l.label));
+  const boxes = BOXES[card.layout];
+  // Open questions sit with the code facts, or in Why? if a card has none.
+  const opens = card.open?.map(open).join("") ?? "";
 
   const why = [
     `<p class="pcard-goal">${label("Ziel")}${esc(card.learnGoal)}</p>`,
-    `<p class="pcard-claim">${label("Beweis")}${esc(card.claim)}</p>`,
     card.what ? `<p class="pcard-what">${label("Projekt")}${esc(card.what)}</p>` : "",
+    boxes.includes("code") ? "" : opens,
   ].join("");
 
   const learned =
@@ -94,17 +117,6 @@ export function renderProjectCard(card: ProjectCard): string {
         ].join("")
       : open("Herausforderung/Learnings fehlen noch");
 
-  const screens = [
-    card.screenshots?.length
-      ? `<div class="pcard-shots">${card.screenshots
-          .map((s) => `<img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" />`)
-          .join("")}</div>`
-      : card.facets?.length
-        ? ""
-        : open("Screenshots fehlen"),
-    renderFacetTiles(card),
-  ].join("");
-
   const code = [
     gh?.href
       ? `<p><a class="facet-link" href="${esc(gh.href)}" target="_blank" rel="noopener noreferrer">${esc(gh.label)} ↗</a></p>`
@@ -114,17 +126,28 @@ export function renderProjectCard(card: ProjectCard): string {
       ? `<ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`
       : open("Architektur-Entscheidungen fehlen noch"),
     card.meta ? `<p class="pcard-meta">${esc(card.meta)}</p>` : "",
-    card.open?.map(open).join("") ?? "",
+    opens,
   ].join("");
 
+  const parts = {
+    why: box("why", "Why?", why),
+    learned: box("learned", "Learned!", learned),
+    code: box("code", "Code + Architektur", code),
+  };
+
   return `
-    <article class="pcard" data-card="${esc(card.id)}">
-      <h3 class="pcard-title">${esc(card.title)}</h3>
-      ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
-      ${box("why", "Why?", why)}
-      ${box("learned", "Learned!", learned)}
-      ${box("screens", "Screens", screens)}
-      ${box("code", "Code + Architektur", code)}
+    <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      <header class="pcard-head">
+        <p class="pcard-index"><span>${pad(index + 1)}</span> / ${pad(total)} · ${esc(card.kind)}</p>
+        <h3 class="pcard-title">${esc(card.title)}</h3>
+        ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
+        <p class="pcard-claim">${esc(card.claim)}</p>
+        ${renderFacetTiles(card)}
+      </header>
+      <div class="pcard-visual" aria-hidden="${card.layout === "viewport" || card.layout === "pinboard" ? "false" : "true"}">
+        ${renderVisual(card)}
+      </div>
+      ${boxes.map((b) => parts[b]).join("")}
     </article>
   `;
 }
