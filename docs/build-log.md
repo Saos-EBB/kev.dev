@@ -94,3 +94,6 @@
 - **Mindestdauer:** Der Füllstand folgt dem echten Ladefortschritt, steigt aber nie schneller als „voll in 2 s“. Gemessen (Headless): Splittern startet ~2,4 s nach Erscheinen des Loaders, Desktop wie Handy, obwohl die Seite nach ~0,2–0,3 s geladen ist.
 - **Tuch, erster Zug auf Touch/schmal (`IS_LITE`):** 1150 ms statt 650 ms, Stärke 0,22 statt 0,4, ease-in-out statt abruptem Ankommen, Halten 280 ms. Desktop unverändert.
 **Bug unterwegs:** Der erste rAF-Zeitstempel kann älter sein als der Mount des Loaders (negatives dt → Füllstand schoss sofort auf voll). Zeit kommt jetzt aus `performance.now()`, dt ≥ 0.
+
+## 2026-10-03 — fix(contact): Auto-Scroll ins Kontakt-Finale sanfter
+**Was:** Der automatische Rest-Scroll (startet kurz nach dem Eintauchen in den Kontakt-Pin) lief 1,2 s mit ease-out cubic — schoss mit voller Geschwindigkeit los und wirkte gehetzt. Jetzt 2,4 s mit ease-in-out sine: läuft weich an, gleitet, setzt weich auf (`TIMING.contact.autoScroll` in `timings.ts`). Gemessen (Headless, 1280×800): gleichmäßige S-Kurve über ~2,3 s, landet am selben Punkt wie vorher.
