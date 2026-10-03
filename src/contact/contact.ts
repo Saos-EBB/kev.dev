@@ -22,6 +22,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
 import { LITE } from "../viewport";
+import { BENTO_MIN_WIDTH_PX } from "../projects/carousel";
 import { LANG } from "../i18n";
 import { applyMouseForce, makeBody, stepPhysics, type PhysicsBody } from "./contact-physics";
 import { mountRaygunButton } from "../raygun/raygun";
@@ -159,41 +160,69 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
           "--grid-cell",
         ),
       ) || 48;
+    const phase = (v: number) => ((v % tileSize) + tileSize) % tileSize;
 
-    // Lite page: the grid is painted on the page itself (style.css), so
-    // these lines start at its phase — the section's document offset — and
-    // carry it on line-for-line instead of jumping at the seam.
-    const phaseY = LITE
-      ? (tileSize - ((section.getBoundingClientRect().top + window.scrollY) % tileSize)) % tileSize
-      : 0;
-    for (let y = phaseY; y <= window.innerHeight; y += tileSize) {
+    // The lines carry on the grid of whatever sits right above, line for
+    // line, instead of starting their own at the section's edge (which
+    // read as the grid jumping at the seam):
+    //  - lite page: the grid painted on the page itself (style.css), so
+    //    rows are phased by the section's document offset — the pinned
+    //    spacer's start, which settles only after fonts/layout;
+    //  - desktop: .projects-bg-grid, whose rows start at #projects' top —
+    //    one section height above this one once its pin has run out — and
+    //    whose columns run through the centre from the bento breakpoint
+    //    on (style.css: half the width), else from the left edge.
+    const projects = document.querySelector<HTMLElement>("#projects");
+    const layout = () => {
+      let px = 0;
+      let py = 0;
+      if (LITE) {
+        const top = pinTrigger
+          ? pinTrigger.start
+          : section.getBoundingClientRect().top + window.scrollY;
+        py = phase(-top);
+      } else if (projects) {
+        py = phase(-projects.offsetHeight);
+        if (window.matchMedia(`(min-width: ${BENTO_MIN_WIDTH_PX}px)`).matches) {
+          px = phase(projects.clientWidth / 2);
+        }
+      }
+      const w = section.clientWidth;
+      const h = window.innerHeight;
+      hLines.forEach((line, i) => {
+        const y = py + i * tileSize;
+        line.style.top = `${y}px`;
+        line.style.display = y <= h ? "" : "none";
+      });
+      vLines.forEach((line, i) => {
+        const x = px + i * tileSize;
+        line.style.left = `${x}px`;
+        line.style.display = x <= w ? "" : "none";
+      });
+    };
+
+    // One spare line each way, so a phase shift never leaves a gap; the
+    // tweens below hold on to these elements, so refresh only moves them.
+    const rows = Math.ceil(window.innerHeight / tileSize) + 1;
+    const cols = Math.ceil(window.innerWidth / tileSize) + 1;
+    for (let i = 0; i < rows; i++) {
       const line = document.createElement("div");
       line.className = "grid-line grid-line--h";
-      line.style.top = `${y}px`;
       // Each line picks which of its two ends it retreats toward — mixed
       // per line so the wipe reads as scattered, not a uniform sweep.
       line.style.transformOrigin = Math.random() < 0.5 ? "left" : "right";
       bgGrid.appendChild(line);
       hLines.push(line);
     }
-    // The section's offset settles only after fonts/layout (About's
-    // height) — re-phase once ScrollTrigger has re-measured. Only the
-    // pinned spacer's start matters, which is the section's own top.
-    if (LITE) {
-      ScrollTrigger.addEventListener("refresh", () => {
-        const top = pinTrigger ? pinTrigger.start : section.getBoundingClientRect().top + window.scrollY;
-        const p = (tileSize - (top % tileSize)) % tileSize;
-        hLines.forEach((line, i) => (line.style.top = `${p + i * tileSize}px`));
-      });
-    }
-    for (let x = 0; x <= window.innerWidth; x += tileSize) {
+    for (let i = 0; i < cols; i++) {
       const line = document.createElement("div");
       line.className = "grid-line grid-line--v";
-      line.style.left = `${x}px`;
       line.style.transformOrigin = Math.random() < 0.5 ? "top" : "bottom";
       bgGrid.appendChild(line);
       vLines.push(line);
     }
+    layout();
+    ScrollTrigger.addEventListener("refresh", layout);
   }
 
   const headlineLetters = splitLetters(headline);
