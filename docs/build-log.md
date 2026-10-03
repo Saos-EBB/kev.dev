@@ -97,3 +97,8 @@
 
 ## 2026-10-03 — fix(contact): Auto-Scroll ins Kontakt-Finale sanfter
 **Was:** Der automatische Rest-Scroll (startet kurz nach dem Eintauchen in den Kontakt-Pin) lief 1,2 s mit ease-out cubic — schoss mit voller Geschwindigkeit los und wirkte gehetzt. Jetzt 2,4 s mit ease-in-out sine: läuft weich an, gleitet, setzt weich auf (`TIMING.contact.autoScroll` in `timings.ts`). Gemessen (Headless, 1280×800): gleichmäßige S-Kurve über ~2,3 s, landet am selben Punkt wie vorher.
+
+## 2026-10-03 — fix(legal): Impressum/Datenschutz scrollbar und ohne Abschneiden
+**Was:**
+- **Nicht scrollbar:** Während ein Panel offen ist, ist Lenis gestoppt — und ein gestopptes Lenis schluckt Mausrad-Events auf der ganzen Seite. Das Panel hat jetzt `data-lenis-prevent` (wie das Projekt-Overlay), dazu `overscroll-behavior: contain`. Gemessen: Mausrad vorher 0 px, jetzt 600 px gescrollt, Desktop wie 390px-Breite; Touch-Wischen scrollt ebenfalls.
+- **Abgeschnitten:** „DATENSCHUTZERKLÄRUNG“ ist ein einziges langes Wort und lief bei 390px Breite ~22px über den Rand (seitliches Scrollen). Titelgröße jetzt `clamp(1.4rem, 7vw, 3rem)` mit Silbentrennung als Reserve; Panel `overflow-x: hidden`.

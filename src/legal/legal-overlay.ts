@@ -138,6 +138,9 @@ export function initLegalOverlay(lenis: Lenis) {
     const panel = document.createElement("div");
     panel.className = "legal-overlay";
     panel.dataset.route = route.hash;
+    // Lenis is stopped while a panel is open, and a stopped Lenis swallows
+    // wheel/touch everywhere — this opts the panel's own scroll out of it.
+    panel.setAttribute("data-lenis-prevent", "");
     panel.innerHTML = `
       <main class="legal-main">
         <article class="legal">
