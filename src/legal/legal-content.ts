@@ -216,11 +216,12 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>Was diese Seite nicht tut</h2>
       <p>
-        Keine Cookies. Keine Analyse- oder Trackingwerkzeuge. Keine
-        Einbindung von Ressourcen Dritter — Schriftart, Bilder und
-        Skripte liegen alle auf diesem Server. Beim Besuch dieser
-        Seite geht keine Anfrage an einen anderen Anbieter außer dem
-        Hoster selbst.
+        Keine Cookies. Keine Analyse- oder Trackingwerkzeuge.
+        Schriftart, Bilder und Skripte liegen alle auf diesem Server.
+        Beim bloßen Besuch dieser Seite geht keine Anfrage an einen
+        anderen Anbieter außer dem Hoster selbst. Zwei Funktionen laden
+        Inhalte Dritter — aber erst, wenn Sie sie selbst anklicken (siehe
+        „Musikplayer“ und „Java-Programme im Browser“).
       </p>
 
       <h2>Hosting und Serverprotokolle</h2>
@@ -241,6 +242,39 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         die Standardvertragsklauseln der EU-Kommission. Trotz dieser
         Grundlagen kann ein Zugriff US-amerikanischer Behörden nicht
         vollständig ausgeschlossen werden.
+      </p>
+
+      <h2>Musikplayer (YouTube)</h2>
+      <p>
+        Der Play-Button im Kopfbereich spielt eine YouTube-Playlist ab.
+        Bis zum ersten Klick wird nichts von YouTube geladen. Erst der
+        Klick lädt den Player von <strong>Google Ireland Limited</strong>
+        (Gordon House, Barrow Street, Dublin 4, Irland) im erweiterten
+        Datenschutzmodus (youtube-nocookie.com). Dabei erhält Google
+        mindestens Ihre IP-Adresse und technische Browserdaten; während
+        der Wiedergabe kann YouTube Daten auf Ihrem Gerät speichern
+        (z. B. im lokalen Speicher). Daten können an Google LLC in die
+        USA übermittelt werden; Google ist nach dem EU-US Data Privacy
+        Framework zertifiziert. Rechtsgrundlage ist Ihre Einwilligung,
+        die Sie mit dem Klick erteilen (Art. 6 Abs. 1 lit. a DSGVO,
+        § 165 Abs. 3 TKG 2021). Ohne Klick findet keine Verbindung
+        statt. Mehr dazu:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
+      <h2>Java-Programme im Browser (CheerpJ)</h2>
+      <p>
+        Die Live-Demo „Grundlagen“ führt Java-Programme direkt im Browser
+        aus. Dafür wird beim Öffnen der Demo die Laufzeitumgebung
+        CheerpJ von <strong>Leaning Technologies Ltd.</strong>
+        (Vereinigtes Königreich) geladen (cjrtnc.leaningtech.com). Dabei
+        erhält der Anbieter Ihre IP-Adresse und technische Browserdaten;
+        CheerpJ kann Dateien im Browser-Speicher (IndexedDB)
+        zwischenspeichern. Für das Vereinigte Königreich besteht ein
+        Angemessenheitsbeschluss der EU-Kommission. Rechtsgrundlage ist
+        Ihre Einwilligung durch das Öffnen der Demo (Art. 6 Abs. 1 lit. a
+        DSGVO, § 165 Abs. 3 TKG 2021). Ohne Öffnen der Demo wird nichts
+        geladen.
       </p>
 
       <h2>Kontaktaufnahme</h2>
@@ -280,10 +314,12 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>What this site does not do</h2>
       <p>
-        No cookies. No analytics or tracking tools. No third-party
-        resources — font, images and scripts are all served from this
-        server. Visiting this site sends no request to any provider
-        other than the host itself.
+        No cookies. No analytics or tracking tools. Font, images and
+        scripts are all served from this server. Merely visiting this
+        site sends no request to any provider other than the host
+        itself. Two features load third-party content — but only once
+        you click them yourself (see "Music player" and "Java programs
+        in the browser").
       </p>
 
       <h2>Hosting and server logs</h2>
@@ -302,6 +338,35 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         European Commission's standard contractual clauses apply in
         addition. Despite these safeguards, access by US authorities
         cannot be ruled out entirely.
+      </p>
+
+      <h2>Music player (YouTube)</h2>
+      <p>
+        The play button in the header plays a YouTube playlist. Nothing
+        is loaded from YouTube until the first click. Only that click
+        loads the player from <strong>Google Ireland Limited</strong>
+        (Gordon House, Barrow Street, Dublin 4, Ireland) in privacy-enhanced
+        mode (youtube-nocookie.com). Google then receives at least your
+        IP address and technical browser data; during playback YouTube
+        may store data on your device (e.g. in local storage). Data may
+        be transferred to Google LLC in the USA; Google is certified
+        under the EU-US Data Privacy Framework. The legal basis is the
+        consent you give by clicking (Art. 6(1)(a) GDPR, § 165 (3) TKG
+        2021). Without a click, no connection is made. More:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
+      <h2>Java programs in the browser (CheerpJ)</h2>
+      <p>
+        The "Grundlagen" live demo runs Java programs directly in the
+        browser. When you open the demo, the CheerpJ runtime by
+        <strong>Leaning Technologies Ltd.</strong> (United Kingdom) is
+        loaded (cjrtnc.leaningtech.com). The provider then receives your
+        IP address and technical browser data; CheerpJ may cache files in
+        browser storage (IndexedDB). The European Commission has issued
+        an adequacy decision for the United Kingdom. The legal basis is
+        the consent you give by opening the demo (Art. 6(1)(a) GDPR,
+        § 165 (3) TKG 2021). Nothing is loaded unless you open the demo.
       </p>
 
       <h2>Contacting me</h2>
@@ -342,9 +407,11 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
       <h2>Чего этот сайт не делает</h2>
       <p>
         Никаких cookie. Никаких инструментов аналитики или отслеживания.
-        Никаких ресурсов третьих лиц — шрифт, изображения и скрипты
-        находятся на этом сервере. При посещении сайта запросы не
-        отправляются никакому другому поставщику, кроме самого хостинга.
+        Шрифт, изображения и скрипты находятся на этом сервере. При
+        простом посещении сайта запросы не отправляются никакому другому
+        поставщику, кроме самого хостинга. Две функции загружают контент
+        третьих лиц — но только после того, как вы сами на них нажмёте
+        (см. «Музыкальный плеер» и «Java-программы в браузере»).
       </p>
 
       <h2>Хостинг и серверные журналы</h2>
@@ -363,6 +430,37 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         дополнительно применяются стандартные договорные условия
         Европейской комиссии. Несмотря на это, доступ американских
         органов власти нельзя полностью исключить.
+      </p>
+
+      <h2>Музыкальный плеер (YouTube)</h2>
+      <p>
+        Кнопка воспроизведения в шапке запускает плейлист YouTube. До
+        первого нажатия с YouTube ничего не загружается. Только нажатие
+        загружает плеер компании <strong>Google Ireland Limited</strong>
+        (Gordon House, Barrow Street, Dublin 4, Ирландия) в режиме
+        повышенной конфиденциальности (youtube-nocookie.com). При этом
+        Google получает как минимум ваш IP-адрес и технические данные
+        браузера; во время воспроизведения YouTube может сохранять данные
+        на вашем устройстве (например, в локальном хранилище). Данные
+        могут передаваться Google LLC в США; Google сертифицирован по
+        EU-US Data Privacy Framework. Правовое основание — ваше согласие,
+        которое вы даёте нажатием (ст. 6 п. 1 лит. a GDPR, § 165 абз. 3
+        TKG 2021). Без нажатия соединение не устанавливается. Подробнее:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
+      <h2>Java-программы в браузере (CheerpJ)</h2>
+      <p>
+        Live-демо «Grundlagen» выполняет Java-программы прямо в браузере.
+        Для этого при открытии демо загружается среда выполнения CheerpJ
+        компании <strong>Leaning Technologies Ltd.</strong>
+        (Великобритания) (cjrtnc.leaningtech.com). При этом поставщик
+        получает ваш IP-адрес и технические данные браузера; CheerpJ
+        может кэшировать файлы в хранилище браузера (IndexedDB). Для
+        Великобритании действует решение Европейской комиссии об
+        адекватности защиты данных. Правовое основание — ваше согласие,
+        выраженное открытием демо (ст. 6 п. 1 лит. a GDPR, § 165 абз. 3
+        TKG 2021). Без открытия демо ничего не загружается.
       </p>
 
       <h2>Обращение ко мне</h2>
@@ -402,9 +500,11 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
       <h2>本サイトが行わないこと</h2>
       <p>
         Cookie は使用しません。アクセス解析やトラッキングのツールも使用しません。
-        第三者のリソースも読み込みません — フォント、画像、スクリプトはすべて
-        このサーバー上にあります。本サイトを閲覧しても、ホスティング事業者以外の
-        事業者へリクエストが送られることはありません。
+        フォント、画像、スクリプトはすべてこのサーバー上にあります。本サイトを
+        閲覧するだけでは、ホスティング事業者以外の事業者へリクエストが送られる
+        ことはありません。第三者のコンテンツを読み込む機能が2つありますが、
+        ご自身でクリックした場合に限られます（「音楽プレーヤー」と
+        「ブラウザ上の Java プログラム」を参照）。
       </p>
 
       <h2>ホスティングとサーバーログ</h2>
@@ -421,6 +521,35 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Framework の認証を受けており、さらに欧州委員会の標準契約条項が適用
         されます。それでも、米国当局によるアクセスを完全に排除することは
         できません。
+      </p>
+
+      <h2>音楽プレーヤー（YouTube）</h2>
+      <p>
+        ヘッダーの再生ボタンで YouTube のプレイリストを再生します。最初に
+        クリックするまで、YouTube からは何も読み込まれません。クリックして
+        はじめて、<strong>Google Ireland Limited</strong>（Gordon House,
+        Barrow Street, Dublin 4, Ireland）のプレーヤーがプライバシー強化
+        モード（youtube-nocookie.com）で読み込まれます。その際、Google は
+        少なくとも IP アドレスと技術的なブラウザ情報を受け取り、再生中は
+        YouTube がお使いの端末にデータ（ローカルストレージなど）を保存する
+        ことがあります。データは米国の Google LLC に移転される場合があり、
+        Google は EU-US Data Privacy Framework の認証を受けています。
+        法的根拠は、クリックによって与えられる同意（GDPR 第6条第1項(a)、
+        TKG 2021 第165条第3項）です。クリックしない限り接続は行われません。
+        詳細：
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
+      <h2>ブラウザ上の Java プログラム（CheerpJ）</h2>
+      <p>
+        ライブデモ「Grundlagen」は Java プログラムをブラウザ上で直接実行
+        します。そのため、デモを開くと <strong>Leaning Technologies Ltd.</strong>
+        （英国）の実行環境 CheerpJ が読み込まれます（cjrtnc.leaningtech.com）。
+        その際、提供者は IP アドレスと技術的なブラウザ情報を受け取り、
+        CheerpJ はブラウザのストレージ（IndexedDB）にファイルをキャッシュする
+        ことがあります。英国については欧州委員会の十分性認定があります。
+        法的根拠は、デモを開くことによる同意（GDPR 第6条第1項(a)、
+        TKG 2021 第165条第3項）です。デモを開かない限り何も読み込まれません。
       </p>
 
       <h2>お問い合わせ</h2>
@@ -457,10 +586,11 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>ما لا يفعله هذا الموقع</h2>
       <p>
-        لا ملفات تعريف ارتباط (Cookies). لا أدوات تحليل أو تتبّع. لا موارد
-        من أطراف ثالثة — الخط والصور والبرامج النصية كلها موجودة على هذا
-        الخادم. عند زيارة هذا الموقع لا يُرسل أي طلب إلى أي مزوّد آخر غير
-        مزوّد الاستضافة نفسه.
+        لا ملفات تعريف ارتباط (Cookies). لا أدوات تحليل أو تتبّع. الخط
+        والصور والبرامج النصية كلها موجودة على هذا الخادم. مجرد زيارة هذا
+        الموقع لا يُرسل أي طلب إلى أي مزوّد آخر غير مزوّد الاستضافة نفسه.
+        هناك ميزتان تحمّلان محتوى من أطراف ثالثة — لكن فقط عندما تنقر
+        عليهما بنفسك (انظر «مشغّل الموسيقى» و«برامج Java في المتصفح»).
       </p>
 
       <h2>الاستضافة وسجلات الخادم</h2>
@@ -479,6 +609,35 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         والولايات المتحدة (EU-US Data Privacy Framework)، وتُطبَّق إضافةً
         إلى ذلك البنود التعاقدية القياسية للمفوضية الأوروبية. ورغم ذلك لا
         يمكن استبعاد وصول السلطات الأمريكية بشكل كامل.
+      </p>
+
+      <h2>مشغّل الموسيقى (YouTube)</h2>
+      <p>
+        يشغّل زر التشغيل في رأس الصفحة قائمة تشغيل على YouTube. لا يُحمَّل
+        أي شيء من YouTube قبل النقرة الأولى. النقرة وحدها تحمّل المشغّل من
+        <strong>Google Ireland Limited</strong> (Gordon House, Barrow
+        Street, Dublin 4، أيرلندا) في وضع الخصوصية المحسّن
+        (youtube-nocookie.com). عندها تتلقى Google على الأقل عنوان IP
+        الخاص بك وبيانات تقنية عن المتصفح، وقد يخزّن YouTube بيانات على
+        جهازك أثناء التشغيل (مثلًا في التخزين المحلي). قد تُنقل البيانات إلى
+        Google LLC في الولايات المتحدة؛ وGoogle معتمدة وفق إطار EU-US Data
+        Privacy Framework. الأساس القانوني هو موافقتك التي تمنحها بالنقر
+        (المادة 6 الفقرة 1 البند (a) من GDPR، والمادة 165 الفقرة 3 من
+        TKG 2021). بدون نقر لا يتم أي اتصال. المزيد:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
+      <h2>برامج Java في المتصفح (CheerpJ)</h2>
+      <p>
+        يشغّل العرض الحي «Grundlagen» برامج Java مباشرة في المتصفح. لذلك
+        تُحمَّل عند فتح العرض بيئة التشغيل CheerpJ من
+        <strong>Leaning Technologies Ltd.</strong> (المملكة المتحدة)
+        (cjrtnc.leaningtech.com). عندها يتلقى المزوّد عنوان IP الخاص بك
+        وبيانات تقنية عن المتصفح، وقد يخزّن CheerpJ ملفات مؤقتًا في تخزين
+        المتصفح (IndexedDB). صدر بشأن المملكة المتحدة قرار كفاية من
+        المفوضية الأوروبية. الأساس القانوني هو موافقتك بفتح العرض (المادة 6
+        الفقرة 1 البند (a) من GDPR، والمادة 165 الفقرة 3 من TKG 2021). لا
+        يُحمَّل شيء ما لم تفتح العرض.
       </p>
 
       <h2>التواصل معي</h2>
