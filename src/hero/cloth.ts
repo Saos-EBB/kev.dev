@@ -15,6 +15,9 @@ import {
   INTRO_PULL_MS,
   INTRO_HOLD_MS,
   INTRO_STRENGTH,
+  INTRO_LITE_PULL_MS,
+  INTRO_LITE_HOLD_MS,
+  INTRO_LITE_STRENGTH,
   IDLE_DELAY_MIN_MS,
   IDLE_DELAY_MAX_MS,
   IDLE_PULL_MS,
@@ -24,6 +27,7 @@ import {
   IDLE_DISTANCE_MAX,
   rand,
   easeOutCubic,
+  easeInOutSine,
 } from "./cloth-pulls"; // cloth-pulls
 
 const clamp = (value: number, min: number, max: number) =>
@@ -184,6 +188,7 @@ export class Cloth {
     pullMs: number;
     holdMs: number;
     strength: number;
+    ease: (t: number) => number;
   } | null = null; // cloth-pulls
 
   private readonly reducedMotion: boolean;
@@ -280,8 +285,7 @@ export class Cloth {
     setTimeout(() => this.startIntroPull(), INTRO_DELAY_MS);
     this.scheduleIdlePull(
       INTRO_DELAY_MS +
-        INTRO_PULL_MS +
-        INTRO_HOLD_MS +
+        (IS_LITE ? INTRO_LITE_PULL_MS + INTRO_LITE_HOLD_MS : INTRO_PULL_MS + INTRO_HOLD_MS) +
         rand(IDLE_DELAY_MIN_MS, IDLE_DELAY_MAX_MS),
     );
   }
@@ -334,9 +338,10 @@ export class Cloth {
       toX: this.width * 0.88,
       toY: this.height * 0.12,
       startTime: performance.now(),
-      pullMs: INTRO_PULL_MS,
-      holdMs: INTRO_HOLD_MS,
-      strength: INTRO_STRENGTH,
+      pullMs: IS_LITE ? INTRO_LITE_PULL_MS : INTRO_PULL_MS,
+      holdMs: IS_LITE ? INTRO_LITE_HOLD_MS : INTRO_HOLD_MS,
+      strength: IS_LITE ? INTRO_LITE_STRENGTH : INTRO_STRENGTH,
+      ease: IS_LITE ? easeInOutSine : easeOutCubic,
     };
   }
 
@@ -378,6 +383,7 @@ export class Cloth {
       pullMs: IDLE_PULL_MS,
       holdMs: IDLE_HOLD_MS,
       strength: IDLE_STRENGTH,
+      ease: easeOutCubic,
     };
   }
 
@@ -705,7 +711,7 @@ export class Cloth {
       targetY = this.pointerY;
     } else if (this.autoPull) { // cloth-pulls
       const elapsed = performance.now() - this.autoPull.startTime;
-      const t = easeOutCubic(clamp(elapsed / this.autoPull.pullMs, 0, 1));
+      const t = this.autoPull.ease(clamp(elapsed / this.autoPull.pullMs, 0, 1));
       this.activeIndex = this.autoPull.nodeIndex;
       pullStrength = this.autoPull.strength;
       targetX = this.autoPull.fromX + (this.autoPull.toX - this.autoPull.fromX) * t;

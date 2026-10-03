@@ -24,6 +24,13 @@ export const INTRO_PULL_MS = 650; // time spent hauling the point to its target
 export const INTRO_HOLD_MS = 150; // brief hold at full stretch before letting go — together with the two above, releases ~1s after load
 export const INTRO_STRENGTH = 0.4; // lerp/frame while pulled — firmer than ambient hover, softer than a real hard grab
 
+// Phones/touch (cloth.ts IS_LITE): the cloth spans the whole small screen,
+// so the desktop haul reads as a jolt there. Slower, softer, eased in and
+// out instead of arriving briskly.
+export const INTRO_LITE_PULL_MS = 1150;
+export const INTRO_LITE_HOLD_MS = 280;
+export const INTRO_LITE_STRENGTH = 0.22;
+
 export const IDLE_DELAY_MIN_MS = 3500; // gap between one idle pull ending and the next starting
 export const IDLE_DELAY_MAX_MS = 7000;
 export const IDLE_PULL_MS = 500;
@@ -38,4 +45,9 @@ export const rand = (min: number, max: number) => min + Math.random() * (max - m
 // shape as the rest of the site's GSAP "power2.out"/"power1.in" tweens.
 export function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3);
+}
+
+// Gentle start and end — the phone intro pull, see INTRO_LITE_*.
+export function easeInOutSine(t: number) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
 }
