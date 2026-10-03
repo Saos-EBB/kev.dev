@@ -25,21 +25,12 @@
   background-size: 100% 100%;
 }
 
-/* Loader mode: colored fill layer on top of the gray still. clip-path
-   reveals it bottom-to-top as progress rises from 0 → 1. The transition
-   gives the fill a smooth ease-out motion between milestones; at 100%
-   the fill is complete and shatter fires automatically. */
-.saos-intro-fill {
-  position: absolute;
-  inset: 0;
-  /* Fallback accent color ensures the fill reveal is visible even before the
-     canvas image arrives (e.g. on slow mobile connections). */
-  background-color: var(--color-accent, #cd57a6);
-  background-size: 100% 100%;
-  /* clip-path set inline by mountSaosLoader — inset(top 0 0 0) where
-     top shrinks from 100% → 0% as progress rises. */
-  will-change: clip-path;
-  transition: clip-path 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* Loader mode: one canvas (gray wordmark + the poured liquid), drawn by
+   mountSaosLoader every frame; shares .saos-intro-still's fallback colour. */
+.saos-intro-pour {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .saos-intro-shard {

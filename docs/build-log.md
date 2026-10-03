@@ -87,3 +87,10 @@
 
 ## 2026-10-03 — fix(cv): Webadresse aktualisiert
 **Was:** Im Lebenslauf (beide Fassungen) steht statt `saos-repo.vercel.app` jetzt `kev-dev-gamma.vercel.app`; PDFs neu gebaut.
+
+## 2026-10-03 — feat(intro): Farbe wird in SAOS eingegossen, Loader mind. 2 s, sanfterer Tuch-Zug am Handy
+**Was:**
+- **Loader:** Statt der Farbebene, die von unten nach oben aufgedeckt wurde, steigt jetzt eine Flüssigkeit im Verlauf der Seite (Pink → Lila → Blau) in den grauen SAOS-Buchstaben hoch — wellige Oberfläche mit heller Kante, die ruhiger wird, je voller es ist, leichter Glow. Alles auf einem Canvas pro Frame; die Splitter beim Zerspringen nehmen genau dieses Bild. Ein Gieß-Strahl war im Mockup, ist bewusst raus.
+- **Mindestdauer:** Der Füllstand folgt dem echten Ladefortschritt, steigt aber nie schneller als „voll in 2 s“. Gemessen (Headless): Splittern startet ~2,4 s nach Erscheinen des Loaders, Desktop wie Handy, obwohl die Seite nach ~0,2–0,3 s geladen ist.
+- **Tuch, erster Zug auf Touch/schmal (`IS_LITE`):** 1150 ms statt 650 ms, Stärke 0,22 statt 0,4, ease-in-out statt abruptem Ankommen, Halten 280 ms. Desktop unverändert.
+**Bug unterwegs:** Der erste rAF-Zeitstempel kann älter sein als der Mount des Loaders (negatives dt → Füllstand schoss sofort auf voll). Zeit kommt jetzt aus `performance.now()`, dt ≥ 0.
