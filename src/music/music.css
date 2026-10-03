@@ -231,3 +231,64 @@
   width: 200px;
   height: 200px;
 }
+
+/* Consent notice under the play button (youtube.ts): nothing from YouTube
+   loads until "Play" here. Positioned by JS (fixed, clamped to the screen). */
+.yt-consent {
+  position: fixed;
+  z-index: 200;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 35%, transparent);
+  background: var(--color-bg);
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--color-shadow) 50%, transparent);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.yt-consent[hidden] {
+  display: none;
+}
+
+.yt-consent a {
+  color: var(--color-accent);
+}
+
+.yt-consent-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.yt-consent-actions button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 40%, transparent);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover),
+    background-color var(--transition-hover);
+}
+
+.yt-consent-actions .yt-consent-play {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.yt-consent-actions button:hover,
+.yt-consent-actions button:focus-visible {
+  border-color: var(--color-line);
+}
+
+/* Notice open: the header stays visible and in place (edge-nav.ts), the
+   same as with the language menu open. */
+.yt-consent-open .site-header {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}

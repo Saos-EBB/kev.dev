@@ -247,17 +247,20 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
       <h2>Musikplayer (YouTube)</h2>
       <p>
         Der Play-Button im Kopfbereich spielt eine YouTube-Playlist ab.
-        Bis zum ersten Klick wird nichts von YouTube geladen. Erst der
-        Klick lädt den Player von <strong>Google Ireland Limited</strong>
+        Beim ersten Klick erscheint zunächst ein Hinweis; erst wenn Sie
+        dort „Abspielen“ wählen, wird der Player von <strong>Google Ireland Limited</strong>
         (Gordon House, Barrow Street, Dublin 4, Irland) im erweiterten
-        Datenschutzmodus (youtube-nocookie.com). Dabei erhält Google
+        Datenschutzmodus (youtube-nocookie.com) geladen. Dabei erhält Google
         mindestens Ihre IP-Adresse und technische Browserdaten; während
         der Wiedergabe kann YouTube Daten auf Ihrem Gerät speichern
         (z. B. im lokalen Speicher). Daten können an Google LLC in die
         USA übermittelt werden; Google ist nach dem EU-US Data Privacy
         Framework zertifiziert. Rechtsgrundlage ist Ihre Einwilligung,
-        die Sie mit dem Klick erteilen (Art. 6 Abs. 1 lit. a DSGVO,
-        § 165 Abs. 3 TKG 2021). Ohne Klick findet keine Verbindung
+        die Sie mit „Abspielen“ erteilen (Art. 6 Abs. 1 lit. a DSGVO,
+        § 165 Abs. 3 TKG 2021). Ihr Browser merkt sich diese Wahl
+        (localStorage), damit der Hinweis nicht bei jedem Besuch
+        erscheint; Sie widerrufen sie, indem Sie die Website-Daten in
+        Ihrem Browser löschen. Ohne Einwilligung findet keine Verbindung
         statt. Mehr dazu:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
@@ -342,17 +345,20 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>Music player (YouTube)</h2>
       <p>
-        The play button in the header plays a YouTube playlist. Nothing
-        is loaded from YouTube until the first click. Only that click
-        loads the player from <strong>Google Ireland Limited</strong>
+        The play button in the header plays a YouTube playlist. The first
+        click only shows a notice; the player is loaded only once you
+        choose "Play" there — from <strong>Google Ireland Limited</strong>
         (Gordon House, Barrow Street, Dublin 4, Ireland) in privacy-enhanced
         mode (youtube-nocookie.com). Google then receives at least your
         IP address and technical browser data; during playback YouTube
         may store data on your device (e.g. in local storage). Data may
         be transferred to Google LLC in the USA; Google is certified
         under the EU-US Data Privacy Framework. The legal basis is the
-        consent you give by clicking (Art. 6(1)(a) GDPR, § 165 (3) TKG
-        2021). Without a click, no connection is made. More:
+        consent you give with "Play" (Art. 6(1)(a) GDPR, § 165 (3) TKG
+        2021). Your browser remembers this choice (localStorage) so the
+        notice doesn't appear on every visit; you withdraw it by clearing
+        this site's data in your browser. Without consent, no connection
+        is made. More:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
@@ -434,9 +440,9 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>Музыкальный плеер (YouTube)</h2>
       <p>
-        Кнопка воспроизведения в шапке запускает плейлист YouTube. До
-        первого нажатия с YouTube ничего не загружается. Только нажатие
-        загружает плеер компании <strong>Google Ireland Limited</strong>
+        Кнопка воспроизведения в шапке запускает плейлист YouTube. Первое
+        нажатие лишь показывает уведомление; плеер загружается только
+        после того, как вы выберете в нём «Воспроизвести», — плеер компании <strong>Google Ireland Limited</strong>
         (Gordon House, Barrow Street, Dublin 4, Ирландия) в режиме
         повышенной конфиденциальности (youtube-nocookie.com). При этом
         Google получает как минимум ваш IP-адрес и технические данные
@@ -444,8 +450,11 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         на вашем устройстве (например, в локальном хранилище). Данные
         могут передаваться Google LLC в США; Google сертифицирован по
         EU-US Data Privacy Framework. Правовое основание — ваше согласие,
-        которое вы даёте нажатием (ст. 6 п. 1 лит. a GDPR, § 165 абз. 3
-        TKG 2021). Без нажатия соединение не устанавливается. Подробнее:
+        которое вы даёте кнопкой «Воспроизвести» (ст. 6 п. 1 лит. a GDPR,
+        § 165 абз. 3 TKG 2021). Браузер запоминает этот выбор
+        (localStorage), чтобы уведомление не появлялось при каждом
+        посещении; вы отзываете согласие, удалив данные этого сайта в
+        браузере. Без согласия соединение не устанавливается. Подробнее:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
@@ -525,8 +534,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>音楽プレーヤー（YouTube）</h2>
       <p>
-        ヘッダーの再生ボタンで YouTube のプレイリストを再生します。最初に
-        クリックするまで、YouTube からは何も読み込まれません。クリックして
+        ヘッダーの再生ボタンで YouTube のプレイリストを再生します。最初の
+        クリックではお知らせが表示されるだけで、そこで「再生」を選んだ場合に
         はじめて、<strong>Google Ireland Limited</strong>（Gordon House,
         Barrow Street, Dublin 4, Ireland）のプレーヤーがプライバシー強化
         モード（youtube-nocookie.com）で読み込まれます。その際、Google は
@@ -534,8 +543,10 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         YouTube がお使いの端末にデータ（ローカルストレージなど）を保存する
         ことがあります。データは米国の Google LLC に移転される場合があり、
         Google は EU-US Data Privacy Framework の認証を受けています。
-        法的根拠は、クリックによって与えられる同意（GDPR 第6条第1項(a)、
-        TKG 2021 第165条第3項）です。クリックしない限り接続は行われません。
+        法的根拠は、「再生」によって与えられる同意（GDPR 第6条第1項(a)、
+        TKG 2021 第165条第3項）です。毎回お知らせが表示されないよう、
+        ブラウザがこの選択を記憶します（localStorage）。ブラウザで本サイトの
+        データを削除すると同意は撤回されます。同意がない限り接続は行われません。
         詳細：
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
@@ -613,17 +624,19 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>مشغّل الموسيقى (YouTube)</h2>
       <p>
-        يشغّل زر التشغيل في رأس الصفحة قائمة تشغيل على YouTube. لا يُحمَّل
-        أي شيء من YouTube قبل النقرة الأولى. النقرة وحدها تحمّل المشغّل من
+        يشغّل زر التشغيل في رأس الصفحة قائمة تشغيل على YouTube. النقرة الأولى
+        تعرض إشعارًا فقط؛ ولا يُحمَّل المشغّل إلا عندما تختار فيه «تشغيل» — من
         <strong>Google Ireland Limited</strong> (Gordon House, Barrow
         Street, Dublin 4، أيرلندا) في وضع الخصوصية المحسّن
         (youtube-nocookie.com). عندها تتلقى Google على الأقل عنوان IP
         الخاص بك وبيانات تقنية عن المتصفح، وقد يخزّن YouTube بيانات على
         جهازك أثناء التشغيل (مثلًا في التخزين المحلي). قد تُنقل البيانات إلى
         Google LLC في الولايات المتحدة؛ وGoogle معتمدة وفق إطار EU-US Data
-        Privacy Framework. الأساس القانوني هو موافقتك التي تمنحها بالنقر
+        Privacy Framework. الأساس القانوني هو موافقتك التي تمنحها بزر «تشغيل»
         (المادة 6 الفقرة 1 البند (a) من GDPR، والمادة 165 الفقرة 3 من
-        TKG 2021). بدون نقر لا يتم أي اتصال. المزيد:
+        TKG 2021). يتذكّر متصفحك هذا الاختيار (localStorage) حتى لا يظهر
+        الإشعار في كل زيارة؛ ويمكنك سحب الموافقة بحذف بيانات هذا الموقع من
+        متصفحك. بدون موافقة لا يتم أي اتصال. المزيد:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
