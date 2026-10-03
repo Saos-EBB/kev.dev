@@ -15,6 +15,7 @@
 import type Lenis from "lenis";
 import { UI } from "../i18n/ui";
 import { LANG, RTL } from "../i18n";
+import { DATENSCHUTZ, IMPRESSUM } from "./legal-content";
 
 interface LegalRoute {
   hash: string;
@@ -22,113 +23,10 @@ interface LegalRoute {
   html: string;
 }
 
+// Texts in the page language — see legal-content.ts (German is binding).
 const ROUTES: LegalRoute[] = [
-  {
-    hash: "impressum",
-    title: "Impressum",
-    html: `
-      <h1 class="legal-title">Impressum</h1>
-
-      <h2>Offenlegung nach § 25 Mediengesetz</h2>
-      <p>
-        <strong>Kevin Schaberl</strong><br />
-        Ottensheim, Österreich<br />
-        Unternehmensgegenstand: Softwareentwicklung
-      </p>
-
-      <h2>Kontakt</h2>
-      <p><a href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></p>
-
-      <h2>Zweck dieser Website</h2>
-      <p>
-        Diese Seite stellt ausschließlich meine Person, mein Portfolio
-        und meine eigenen Projekte dar. Es werden keine Waren oder
-        Dienstleistungen angeboten und keine Entgelte in Aussicht
-        gestellt.
-      </p>
-      <p class="legal-note">
-        Für Websites, deren Inhalt sich auf die Darstellung des
-        Medieninhabers beschränkt, genügen nach § 25 Abs 5 MedienG
-        Name, Wohnort und Unternehmensgegenstand. Die Pflicht zur
-        Angabe einer geografischen Anschrift nach § 5 ECG greift nur
-        für Dienste, die in der Regel gegen Entgelt erbracht werden —
-        das ist hier nicht der Fall.
-      </p>
-
-      <h2>Urheberrecht</h2>
-      <p>
-        Texte, Bilder und Code auf dieser Seite stammen von mir,
-        soweit nicht anders gekennzeichnet.
-      </p>
-    `,
-  },
-  {
-    hash: "datenschutz",
-    title: "Datenschutzerklärung",
-    html: `
-      <h1 class="legal-title">Datenschutzerklärung</h1>
-
-      <h2>Verantwortlicher</h2>
-      <p>
-        Kevin Schaberl, Ottensheim, Österreich<br />
-        <a href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
-      </p>
-
-      <h2>Was diese Seite nicht tut</h2>
-      <p>
-        Keine Cookies. Keine Analyse- oder Trackingwerkzeuge. Keine
-        Einbindung von Ressourcen Dritter — Schriftart, Bilder und
-        Skripte liegen alle auf diesem Server. Beim Besuch dieser
-        Seite geht keine Anfrage an einen anderen Anbieter außer dem
-        Hoster selbst.
-      </p>
-
-      <h2>Hosting und Serverprotokolle</h2>
-      <p>
-        Die Seite wird von <strong>Vercel Inc.</strong> ausgeliefert.
-        Beim Aufruf verarbeitet Vercel technische Zugriffsdaten —
-        darunter IP-Adresse, Zeitpunkt, angeforderte Adresse,
-        Browserkennung — in Serverprotokollen. Das ist für den
-        Betrieb der Seite unvermeidbar. Rechtsgrundlage ist das
-        berechtigte Interesse an einer technisch sicheren
-        Auslieferung, Art. 6 Abs. 1 lit. f DSGVO.
-      </p>
-      <p>
-        <strong>Übermittlung in die USA:</strong> Vercel Inc. hat
-        seinen Sitz in den Vereinigten Staaten. Es findet dadurch
-        eine Übermittlung in ein Drittland statt. Vercel ist nach dem
-        EU-US Data Privacy Framework zertifiziert; ergänzend gelten
-        die Standardvertragsklauseln der EU-Kommission. Trotz dieser
-        Grundlagen kann ein Zugriff US-amerikanischer Behörden nicht
-        vollständig ausgeschlossen werden.
-      </p>
-
-      <h2>Kontaktaufnahme</h2>
-      <p>
-        Wenn Sie mir schreiben, verarbeite ich Ihre Angaben, um Ihre
-        Anfrage zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1
-        lit. f DSGVO, bei Anbahnung eines Beschäftigungsverhältnisses
-        Art. 6 Abs. 1 lit. b DSGVO. Ich lösche die Nachrichten,
-        sobald sie nicht mehr gebraucht werden und keine
-        Aufbewahrungspflicht entgegensteht.
-      </p>
-
-      <h2>Ihre Rechte</h2>
-      <p>
-        Sie haben das Recht auf Auskunft, Berichtigung, Löschung,
-        Einschränkung der Verarbeitung, Datenübertragbarkeit und
-        Widerspruch. Wenden Sie sich dafür an
-        <a href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>.
-      </p>
-      <p>
-        Außerdem können Sie sich bei der Aufsichtsbehörde
-        beschweren:<br />
-        <strong>Österreichische Datenschutzbehörde</strong>,
-        Barichgasse 40–42, 1030 Wien,
-        <a href="https://www.dsb.gv.at" target="_blank" rel="noopener noreferrer">dsb.gv.at</a>
-      </p>
-    `,
-  },
+  { hash: "impressum", ...IMPRESSUM },
+  { hash: "datenschutz", ...DATENSCHUTZ },
 ];
 
 export function initLegalOverlay(lenis: Lenis) {
@@ -145,7 +43,7 @@ export function initLegalOverlay(lenis: Lenis) {
       <main class="legal-main">
         <article class="legal">
           ${UI.legalNote ? `<p class="legal-lang-note" lang="${LANG}">${UI.legalNote}</p>` : ""}
-          <div lang="de" dir="ltr">${route.html}</div>
+          <div>${route.html}</div>
           <a class="legal-back" href="#">${RTL ? "&rarr;" : "&larr;"} ${UI.legalBack}</a>
         </article>
       </main>
