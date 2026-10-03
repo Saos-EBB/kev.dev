@@ -70,6 +70,12 @@ gsap.ticker.add((time) => {
 });
 gsap.ticker.lagSmoothing(0);
 
+// "PROJEKTE": the gradient text plus the white copy the shine band shows
+// (see .title-fill / .title-shine in style.css).
+function titleFx(text: string) {
+  return `<span class="title-fill">${text}</span><span class="title-shine" aria-hidden="true"><span class="title-shine-text">${text}</span></span>`;
+}
+
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div class="scrollbar" aria-hidden="true">
     <div class="scrollbar-thumb"></div>
@@ -170,12 +176,12 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </div>
   </section>
 
-  <div class="projects-headline" aria-hidden="true">${UI.projects}</div>
+  <div class="projects-headline" aria-hidden="true">${titleFx(UI.projects)}</div>
 
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
     <div class="projects-saos" aria-hidden="true"></div>
-    <h2 class="projects-title">${UI.projects}</h2>
+    <h2 class="projects-title">${titleFx(UI.projects)}</h2>
     <div class="carousel-stage">
       ${projectCards
         .map(
