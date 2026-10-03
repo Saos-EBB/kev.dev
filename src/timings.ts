@@ -128,8 +128,10 @@ export const TIMINGS = {
     // scrolling — see the ScrollTrigger onUpdate in contact.ts.
     autoScrollAt: 0.08,
     autoScroll: {
-      duration: 1.2, // seconds, real scroll time (Lenis), not timeline units
-      easing: (t: number) => 1 - Math.pow(1 - t, 3), // ease-out cubic
+      duration: 2.4, // seconds, real scroll time (Lenis), not timeline units — unhurried, so the fall-in reads as a glide, not a rush
+      // ease-in-out sine: picks up softly from where the user left off and
+      // settles softly — ease-out cubic shot off at full speed and rushed.
+      easing: (t: number) => -(Math.cos(Math.PI * t) - 1) / 2,
     },
 
     // Ambient per-letter float once landed (progress 1) — killed the
