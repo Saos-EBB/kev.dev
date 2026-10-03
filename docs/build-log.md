@@ -106,4 +106,8 @@
 ## 2026-10-03 — feat(legal): Impressum und Datenschutz in allen fünf Sprachen
 **Was:** Beide Texte gibt es jetzt auf Deutsch, Englisch, Russisch, Japanisch und Arabisch (`src/legal/legal-content.ts`, gewählt wie der Rest der Seite). Statt „nur auf Deutsch verfügbar“ steht oben: übersetzt aus dem Deutschen, bei Abweichungen gilt die deutsche Fassung. Gesetzesnamen (MedienG, ECG, DSGVO), die Datenschutzbehörde und ihre Adresse bleiben im Original, mit Erklärung in Klammern. Tab-Titel ebenfalls übersetzt; Arabisch rechts-nach-links.
 **Technik:** Japanische Absätze: Zeilenumbrüche im Quelltext zwischen zwei CJK-Zeichen würden als Leerzeichen gerendert — `joinCjk()` fügt sie zusammen. Titel `clamp(1.4rem, 6vw, 3rem)`, damit auch „КОНФИДЕНЦИАЛЬНОСТИ“ auf 390px passt.
-**Offen:** Übersetzungen von Muttersprachlern gegenlesen lassen. Inhaltlich unverändert übersetzt — auch der Satz „keine Ressourcen Dritter“, der seit YouTube-Player und CheerpJ nicht mehr ganz stimmt (siehe Chat).
+**Offen:** Übersetzungen von Muttersprachlern gegenlesen lassen.
+
+## 2026-10-03 — fix(legal): Datenschutz nennt YouTube und CheerpJ
+**Was:** Der Satz „keine Einbindung von Ressourcen Dritter“ stimmte nicht mehr: Der Musik-Button lädt beim ersten Klick den YouTube-Player (Google Ireland, youtube-nocookie.com), die Grundlagen-Live-Demo beim Öffnen die Java-Laufzeit CheerpJ (Leaning Technologies, UK). Jetzt in allen fünf Sprachen: „Was diese Seite nicht tut“ sagt, dass zwei Funktionen erst nach Klick Inhalte Dritter laden, plus je ein Abschnitt mit Anbieter, übertragenen Daten (IP, Browserdaten, ggf. lokaler Speicher/IndexedDB), Drittland (USA mit DPF / UK mit Angemessenheitsbeschluss) und Rechtsgrundlage (Einwilligung per Klick, Art. 6 Abs. 1 lit. a DSGVO, § 165 Abs. 3 TKG 2021).
+**Offen:** Kein Hinweis direkt am Play-Button/an der Demo — für eine saubere Einwilligung wäre ein kurzer Satz dort („lädt von YouTube“) besser. Kein Anwalt hat drübergeschaut.
