@@ -62,6 +62,10 @@ interface StillOptions {
 // the "not yet loaded" version; the colored version is the same call without
 // the flag (same data-URL reused for both the classic intro and the fill layer).
 function drawStill(width: number, height: number, opts: StillOptions = {}): string {
+  return drawStillCanvas(width, height, opts).toDataURL();
+}
+
+function drawStillCanvas(width: number, height: number, opts: StillOptions = {}): HTMLCanvasElement {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * dpr);
@@ -105,7 +109,7 @@ function drawStill(width: number, height: number, opts: StillOptions = {}): stri
   ctx.font = `${Math.max(12, Math.min(width * 0.018, 16))}px ${display}`;
   ctx.fillText(opts.hint ?? UI.introClick, width / 2, height * 0.86);
 
-  return canvas.toDataURL();
+  return canvas;
 }
 
 export function mountSaosIntro(
@@ -226,14 +230,21 @@ export function mountSaosIntro(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Loader mode: the intro stays until the page is genuinely ready, auto-shatters
-// at progress 1.0 instead of waiting for a click. Shows loading progress via a
-// bottom-to-top color fill over a gray wordmark.
+// once full instead of waiting for a click. Shows loading progress as colour
+// poured into the gray wordmark: a liquid in the site's gradient rises inside
+// the letters with a wavy surface that calms down as it fills.
+//
+// The level follows the real progress but never rises faster than MIN_MS
+// end to end — a fast load still gets the full pour (at least 2 s).
 //
 // Usage:
 //   const { setProgress } = mountSaosLoader(overlayEl, onShatterDone);
 //   setProgress(0.35); // fonts ready
-//   setProgress(1.0);  // triggers auto-shatter after a short settle
+//   setProgress(1.0);  // the pour finishes, then the shatter fires
 // ─────────────────────────────────────────────────────────────────────────────
+const MIN_MS = 2000;
+const SETTLE_MS = 220; // brief beat at full before the shatter
+
 export function mountSaosLoader(
   overlayEl: HTMLElement,
   onShatterDone: () => void,
@@ -242,40 +253,129 @@ export function mountSaosLoader(
   let shatterFired = false;
   let currentProgress = 0;
   let settleTimer: ReturnType<typeof setTimeout> | null = null;
+  let raf = 0;
 
   overlayEl.classList.add("saos-intro");
   // Not .is-active — loader is not interactive (no click to dismiss).
 
   const w = window.innerWidth;
   const h = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  // Gray base layer — always visible.
-  const grayStill = document.createElement("div");
-  grayStill.className = "saos-intro-still";
-  overlayEl.appendChild(grayStill);
+  // One canvas paints everything (gray still + liquid) every frame, so the
+  // shatter can simply snapshot it.
+  const canvas = document.createElement("canvas");
+  canvas.className = "saos-intro-still saos-intro-pour";
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  overlayEl.appendChild(canvas);
+  const ctx = canvas.getContext("2d")!;
 
-  // Colored fill layer — revealed bottom-to-top as progress rises.
-  const fillEl = document.createElement("div");
-  fillEl.className = "saos-intro-fill";
-  // Start fully clipped (top inset = 100%): nothing visible yet.
-  fillEl.style.clipPath = "inset(100% 0 0 0)";
-  overlayEl.appendChild(fillEl);
+  // The liquid layer: letters in black, then the liquid composited into them.
+  const liquid = document.createElement("canvas");
+  liquid.width = canvas.width;
+  liquid.height = canvas.height;
+  const lctx = liquid.getContext("2d")!;
 
-  // Draw both canvases immediately (font may fall back to sans-serif until it
-  // arrives — that's fine). Redraw once fonts settle for the best quality.
-  // NOT gated on font loading: on mobile the font often arrives after
-  // window.load + 220ms, which is when the shatter fires. Without a prior
-  // draw the shards get empty backgroundImage and the screen just vanishes.
-  function drawCanvases() {
-    if (destroyed) return;
-    grayStill.style.backgroundImage =
-      `url(${drawStill(w, h, { gray: true, hint: UI.introLoading })})`;
-    fillEl.style.backgroundImage =
-      `url(${drawStill(w, h, { hint: UI.introLoading })})`;
-    applyFill(currentProgress);
+  const css = getComputedStyle(document.documentElement);
+  const accent = css.getPropertyValue("--color-accent").trim() || "#cd57a6";
+  const line = css.getPropertyValue("--color-line").trim() || "#cd57ff";
+  const blue = css.getPropertyValue("--note-3").trim() || "#57b9ff";
+  const display = css.getPropertyValue("--font-display").trim() || "sans-serif";
+  const size = Math.min(w * 0.32, h * 0.4);
+  const textY = (h * IMPACT.y) / 100;
+
+  // Gray still and letter bounds. NOT gated on font loading (on mobile the
+  // font can arrive after window.load) — drawn now with whatever font is
+  // there, redrawn once fonts settle.
+  let base: HTMLCanvasElement;
+  let top = 0, bottom = 0, left = 0, right = 0;
+  function prepare() {
+    base = drawStillCanvas(w, h, { gray: true, hint: UI.introLoading });
+    lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lctx.font = `${size}px ${display}`;
+    lctx.textAlign = "center";
+    lctx.textBaseline = "middle";
+    const m = lctx.measureText("SAOS");
+    top = textY - m.actualBoundingBoxAscent;
+    bottom = textY + m.actualBoundingBoxDescent;
+    left = w / 2 - m.width / 2;
+    right = w / 2 + m.width / 2;
   }
-  drawCanvases();
-  document.fonts.ready.then(drawCanvases);
+  prepare();
+  document.fonts.ready.then(() => { if (!destroyed && !shatterFired) prepare(); });
+
+  // Surface height at x: the level line plus two travelling sines, calmer
+  // the fuller it gets. level 0 sits just below the letters, 1 just above.
+  const wave = (2 * Math.PI) / (size * 1.4);
+  function surface(level: number, t: number) {
+    const amp = size * (0.03 * (1 - level ** 3) + 0.006);
+    const y0 = bottom + 8 - (bottom - top + 28) * level;
+    return (x: number) =>
+      y0 + Math.sin(x * wave + t * 3.1) * amp + Math.sin(x * wave * 2.3 - t * 4.7) * amp * 0.45;
+  }
+
+  function render(level: number, t: number) {
+    lctx.globalCompositeOperation = "source-over";
+    lctx.clearRect(0, 0, w, h);
+    lctx.fillStyle = "#000";
+    lctx.fillText("SAOS", w / 2, textY);
+
+    const surf = surface(level, t);
+    lctx.globalCompositeOperation = "source-in";
+    const grad = lctx.createLinearGradient(left, 0, right, 0);
+    grad.addColorStop(0, accent);
+    grad.addColorStop(0.5, line);
+    grad.addColorStop(1, blue);
+    lctx.fillStyle = grad;
+    lctx.beginPath();
+    lctx.moveTo(0, h);
+    for (let x = 0; x <= w; x += 6) lctx.lineTo(x, surf(x));
+    lctx.lineTo(w, h);
+    lctx.closePath();
+    lctx.fill();
+
+    // Bright meniscus along the surface — atop, so it stays inside the
+    // letters without wiping the liquid (source-in would).
+    lctx.globalCompositeOperation = "source-atop";
+    lctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+    lctx.lineWidth = 2;
+    lctx.beginPath();
+    for (let x = 0; x <= w; x += 6) {
+      if (x === 0) lctx.moveTo(x, surf(x));
+      else lctx.lineTo(x, surf(x));
+    }
+    lctx.stroke();
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.shadowColor = "rgba(205, 87, 255, 0.45)";
+    ctx.shadowBlur = 18 * dpr;
+    ctx.drawImage(liquid, 0, 0);
+    ctx.restore();
+  }
+
+  // Level: real progress, capped at elapsed / MIN_MS, smoothed (frame-rate
+  // independent) so milestone jumps pour in instead of snapping.
+  const start = performance.now();
+  let last = start;
+  let shown = 0;
+  function frame() {
+    if (destroyed || shatterFired) return;
+    // performance.now(), not the rAF timestamp: the first callback can carry
+    // a frame time from before the loader mounted (negative dt).
+    const now = performance.now();
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+    last = now;
+    const target = Math.min(currentProgress, (now - start) / MIN_MS, 1);
+    shown += (target - shown) * (1 - Math.exp(-dt * 8));
+    if (target >= 1 && shown > 0.97) shown = 1;
+    render(shown, (now - start) / 1000);
+    if (shown >= 1) settleTimer ??= setTimeout(triggerShatter, SETTLE_MS);
+    else raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
 
   // Escape / Space = emergency skip in case loading hangs.
   function onKeyDown(e: KeyboardEvent) {
@@ -286,20 +386,14 @@ export function mountSaosLoader(
   }
   document.addEventListener("keydown", onKeyDown);
 
-  function applyFill(p: number) {
-    // top inset shrinks from 100% → 0% as p rises from 0 → 1.
-    const top = Math.round((1 - p) * 100);
-    fillEl.style.clipPath = `inset(${top}% 0 0 0)`;
-  }
-
   function triggerShatter() {
     if (shatterFired || destroyed) return;
     shatterFired = true;
+    cancelAnimationFrame(raf);
     document.removeEventListener("keydown", onKeyDown);
 
-    // Prefer the colored fill; fall back to the gray still in the rare case
-    // the fill canvas wasn't drawn yet (e.g. very early shatter trigger).
-    const image = fillEl.style.backgroundImage || grayStill.style.backgroundImage;
+    // The shards carry the pour canvas as it stands (full, normally).
+    const image = `url(${canvas.toDataURL()})`;
     const shards = SHARDS.map((poly, i) => {
       const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
       const cy = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
@@ -311,9 +405,7 @@ export function mountSaosLoader(
       overlayEl.appendChild(el);
       return { el, i, cx, cy };
     });
-    // Remove still layers — shards carry the image now.
-    grayStill.remove();
-    fillEl.remove();
+    canvas.remove();
 
     const tl = gsap.timeline({ onComplete: () => { if (!destroyed) onShatterDone(); } });
 
@@ -332,17 +424,9 @@ export function mountSaosLoader(
   }
 
   function setProgress(p: number) {
-    if (destroyed || shatterFired) return;
-    // Monotone: progress only ever goes forward.
-    if (p <= currentProgress) return;
+    // Monotone: progress only ever goes forward. The frame loop pours it in.
+    if (destroyed || shatterFired || p <= currentProgress) return;
     currentProgress = p;
-    applyFill(p);
-
-    if (p >= 1) {
-      // Brief settle so the fill transition completes visually before shatter.
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(triggerShatter, 220);
-    }
   }
 
   return { setProgress };
