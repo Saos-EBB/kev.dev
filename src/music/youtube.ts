@@ -1,6 +1,7 @@
 import "./music.css";
 import { createDancer } from "./dancer";
 import { UI } from "../i18n/ui";
+import { grantConsent, hasConsent } from "../consent";
 
 // Header play button for the "beim Bauen" playlist. Nothing from YouTube
 // is in the DOM until the visitor agrees (see the consent notice below):
@@ -24,26 +25,8 @@ const API_SRC = "https://www.youtube.com/iframe_api";
 
 // Consent before anything from YouTube loads: the first click on play opens
 // a short notice (what loads, from whom, link to the privacy policy) with
-// "Play" / "Cancel". Only "Play" loads the player. The choice is remembered
-// in this browser, so later visits play straight away; clearing the site's
-// data withdraws it. The privacy policy (legal-content.ts) describes this.
-const CONSENT_KEY = "kev-yt-consent";
-
-function hasConsent(): boolean {
-  try {
-    return localStorage.getItem(CONSENT_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function storeConsent() {
-  try {
-    localStorage.setItem(CONSENT_KEY, "1");
-  } catch {
-    // storage blocked — the notice just shows again next visit
-  }
-}
+// "Play" / "Cancel". Only "Play" loads the player. Remembered and
+// withdrawable — see consent.ts.
 
 interface YTPlayer {
   playVideo(): void;
@@ -147,7 +130,7 @@ export function initYoutubeButton() {
   }
 
   const consent = createConsent(button, () => {
-    storeConsent();
+    grantConsent("youtube");
     if (!loading) load();
   });
 
@@ -157,7 +140,7 @@ export function initYoutubeButton() {
       else player.playVideo();
     } else if (loading) {
       return;
-    } else if (hasConsent()) {
+    } else if (hasConsent("youtube")) {
       load();
     } else {
       consent.toggle();
@@ -175,7 +158,7 @@ function createConsent(button: HTMLButtonElement, onAccept: () => void) {
   box.setAttribute("aria-label", "YouTube");
   box.hidden = true;
   box.innerHTML = `
-    <p>${UI.ytConsentText} <a href="#datenschutz">${UI.ytConsentPrivacy}</a></p>
+    <p>${UI.ytConsentText} <a href="#datenschutz">${UI.consentPrivacy}</a></p>
     <div class="yt-consent-actions">
       <button type="button" class="yt-consent-play">${UI.ytConsentPlay}</button>
       <button type="button" class="yt-consent-cancel">${UI.ytConsentCancel}</button>

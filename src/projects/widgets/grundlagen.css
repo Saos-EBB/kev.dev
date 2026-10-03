@@ -287,6 +287,58 @@
   color: var(--color-text-muted);
 }
 
+/* Consent notice (grundlagen.ts, consent.ts): stands in for the terminal
+   until the visitor agrees to load CheerpJ from Leaning Technologies. */
+.gwidget-term.is-gated .gwidget-out,
+.gwidget-term.is-gated .gwidget-in,
+.gwidget-term.is-gated .gwidget-status {
+  display: none;
+}
+
+.gwidget-consent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 16rem;
+  padding: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.gwidget-consent[hidden] {
+  display: none;
+}
+
+.gwidget-consent-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gwidget-consent-start {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--pc);
+  background: var(--pc);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-terminal-bg);
+  cursor: pointer;
+}
+
+.gwidget-consent-start:hover,
+.gwidget-consent-start:focus-visible {
+  background: transparent;
+  color: var(--pc);
+}
+
+.gwidget-consent a {
+  color: var(--pc);
+}
+
 /* --- right: code ---------------------------------------------------- */
 
 .gwidget-codecol {
