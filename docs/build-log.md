@@ -102,3 +102,8 @@
 **Was:**
 - **Nicht scrollbar:** Während ein Panel offen ist, ist Lenis gestoppt — und ein gestopptes Lenis schluckt Mausrad-Events auf der ganzen Seite. Das Panel hat jetzt `data-lenis-prevent` (wie das Projekt-Overlay), dazu `overscroll-behavior: contain`. Gemessen: Mausrad vorher 0 px, jetzt 600 px gescrollt, Desktop wie 390px-Breite; Touch-Wischen scrollt ebenfalls.
 - **Abgeschnitten:** „DATENSCHUTZERKLÄRUNG“ ist ein einziges langes Wort und lief bei 390px Breite ~22px über den Rand (seitliches Scrollen). Titelgröße jetzt `clamp(1.4rem, 7vw, 3rem)` mit Silbentrennung als Reserve; Panel `overflow-x: hidden`.
+
+## 2026-10-03 — feat(legal): Impressum und Datenschutz in allen fünf Sprachen
+**Was:** Beide Texte gibt es jetzt auf Deutsch, Englisch, Russisch, Japanisch und Arabisch (`src/legal/legal-content.ts`, gewählt wie der Rest der Seite). Statt „nur auf Deutsch verfügbar“ steht oben: übersetzt aus dem Deutschen, bei Abweichungen gilt die deutsche Fassung. Gesetzesnamen (MedienG, ECG, DSGVO), die Datenschutzbehörde und ihre Adresse bleiben im Original, mit Erklärung in Klammern. Tab-Titel ebenfalls übersetzt; Arabisch rechts-nach-links.
+**Technik:** Japanische Absätze: Zeilenumbrüche im Quelltext zwischen zwei CJK-Zeichen würden als Leerzeichen gerendert — `joinCjk()` fügt sie zusammen. Titel `clamp(1.4rem, 6vw, 3rem)`, damit auch „КОНФИДЕНЦИАЛЬНОСТИ“ auf 390px passt.
+**Offen:** Übersetzungen von Muttersprachlern gegenlesen lassen. Inhaltlich unverändert übersetzt — auch der Satz „keine Ressourcen Dritter“, der seit YouTube-Player und CheerpJ nicht mehr ganz stimmt (siehe Chat).
