@@ -11,6 +11,7 @@ import { runJava, warmUp, writeFiles, type JavaProcess } from "./java-runner";
 import { Terminal } from "./terminal";
 import type { ProjectCard } from "../project-cards";
 import { UI } from "../../i18n/ui";
+import { grantConsent, hasConsent } from "../../consent";
 import { RTL } from "../../i18n";
 import { localizeNote } from "./grundlagen-i18n";
 
@@ -202,6 +203,13 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
         </label>
       </form>
       <p class="gwidget-status" aria-live="polite"></p>
+      <div class="gwidget-consent" hidden>
+        <p>${UI.gConsentText}</p>
+        <div class="gwidget-consent-actions">
+          <button type="button" class="gwidget-consent-start">${UI.gConsentStart}</button>
+          <a href="#datenschutz" data-close>${UI.consentPrivacy}</a>
+        </div>
+      </div>
     </div>
     <aside class="gwidget-codecol">
       <section class="ws-card gwidget-codecard">
@@ -225,6 +233,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   const input = q<HTMLInputElement>(".gwidget-in input");
   const status = q<HTMLElement>(".gwidget-status");
   const restart = q<HTMLButtonElement>(".gwidget-restart");
+  const consent = q<HTMLElement>(".gwidget-consent");
   const buttons = [...host.querySelectorAll<HTMLButtonElement>(".gwidget-tab")];
   const prev = q<HTMLButtonElement>(".gwidget-prev");
   const next = q<HTMLButtonElement>(".gwidget-next");
@@ -249,7 +258,18 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     restart.disabled = true;
 
     if (!note.run) {
+      termBox.classList.remove("is-gated");
+      consent.hidden = true;
       status.textContent = UI.gNoConsole;
+      return;
+    }
+    // Nothing loads from CheerpJ's server before the visitor agrees here
+    // (see consent.ts) — the notice stands in for the terminal until then.
+    const gated = !hasConsent("cheerpj");
+    termBox.classList.toggle("is-gated", gated);
+    consent.hidden = !gated;
+    if (gated) {
+      status.textContent = "";
       return;
     }
     // The runtime (and then the JVM) can take a while on a cold cache; a
@@ -343,6 +363,10 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   prev.addEventListener("click", () => step(-1));
   next.addEventListener("click", () => step(1));
   restart.addEventListener("click", () => active && start(active));
+  q<HTMLButtonElement>(".gwidget-consent-start").addEventListener("click", () => {
+    grantConsent("cheerpj");
+    if (active) start(active);
+  });
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (!process) return;
@@ -354,6 +378,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
 
   select(NOTES[0]);
 
-  // Start downloading the runtime now, so the first click is quicker.
-  warmUp().catch(() => {});
+  // Start downloading the runtime now, so the first click is quicker —
+  // only once the visitor has agreed to load it.
+  if (hasConsent("cheerpj")) warmUp().catch(() => {});
 }

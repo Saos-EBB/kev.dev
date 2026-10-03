@@ -259,8 +259,9 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         die Sie mit „Abspielen“ erteilen (Art. 6 Abs. 1 lit. a DSGVO,
         § 165 Abs. 3 TKG 2021). Ihr Browser merkt sich diese Wahl
         (localStorage), damit der Hinweis nicht bei jedem Besuch
-        erscheint; Sie widerrufen sie, indem Sie die Website-Daten in
-        Ihrem Browser löschen. Ohne Einwilligung findet keine Verbindung
+        erscheint; widerrufen können Sie sie jederzeit unten unter
+        „Einwilligungen widerrufen“ oder durch Löschen der Website-Daten
+        in Ihrem Browser. Ohne Einwilligung findet keine Verbindung
         statt. Mehr dazu:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
@@ -268,17 +269,27 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
       <h2>Java-Programme im Browser (CheerpJ)</h2>
       <p>
         Die Live-Demo „Grundlagen“ führt Java-Programme direkt im Browser
-        aus. Dafür wird beim Öffnen der Demo die Laufzeitumgebung
-        CheerpJ von <strong>Leaning Technologies Ltd.</strong>
-        (Vereinigtes Königreich) geladen (cjrtnc.leaningtech.com). Dabei
+        aus. Dafür braucht es die Laufzeitumgebung CheerpJ von <strong>Leaning Technologies Ltd.</strong>
+        (Vereinigtes Königreich). Die Demo zeigt zuerst einen Hinweis;
+        erst wenn Sie dort „Starten“ wählen, wird CheerpJ geladen
+        (cjrtnc.leaningtech.com). Dabei
         erhält der Anbieter Ihre IP-Adresse und technische Browserdaten;
         CheerpJ kann Dateien im Browser-Speicher (IndexedDB)
         zwischenspeichern. Für das Vereinigte Königreich besteht ein
         Angemessenheitsbeschluss der EU-Kommission. Rechtsgrundlage ist
-        Ihre Einwilligung durch das Öffnen der Demo (Art. 6 Abs. 1 lit. a
-        DSGVO, § 165 Abs. 3 TKG 2021). Ohne Öffnen der Demo wird nichts
-        geladen.
+        Ihre Einwilligung, die Sie mit „Starten“ erteilen (Art. 6 Abs. 1
+        lit. a DSGVO, § 165 Abs. 3 TKG 2021). Ihr Browser merkt sich
+        diese Wahl; widerrufen können Sie sie unten. Ohne Einwilligung
+        wird nichts geladen.
       </p>
+
+      <h2>Einwilligungen widerrufen</h2>
+      <p>
+        Hier sehen Sie, wozu Sie in diesem Browser eingewilligt haben,
+        und können es mit Wirkung für die Zukunft widerrufen. Läuft der
+        Player oder die Demo gerade, wird die Seite dafür neu geladen.
+      </p>
+      <div class="legal-consents"></div>
 
       <h2>Kontaktaufnahme</h2>
       <p>
@@ -356,8 +367,9 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         under the EU-US Data Privacy Framework. The legal basis is the
         consent you give with "Play" (Art. 6(1)(a) GDPR, § 165 (3) TKG
         2021). Your browser remembers this choice (localStorage) so the
-        notice doesn't appear on every visit; you withdraw it by clearing
-        this site's data in your browser. Without consent, no connection
+        notice doesn't appear on every visit; you can withdraw it at any
+        time under "Withdraw consent" below or by clearing this site's
+        data in your browser. Without consent, no connection
         is made. More:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
@@ -365,15 +377,25 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
       <h2>Java programs in the browser (CheerpJ)</h2>
       <p>
         The "Grundlagen" live demo runs Java programs directly in the
-        browser. When you open the demo, the CheerpJ runtime by
-        <strong>Leaning Technologies Ltd.</strong> (United Kingdom) is
-        loaded (cjrtnc.leaningtech.com). The provider then receives your
+        browser. This needs the CheerpJ runtime by
+        <strong>Leaning Technologies Ltd.</strong> (United Kingdom). The
+        demo first shows a notice; CheerpJ is loaded only once you choose
+        "Start" there (cjrtnc.leaningtech.com). The provider then receives your
         IP address and technical browser data; CheerpJ may cache files in
         browser storage (IndexedDB). The European Commission has issued
         an adequacy decision for the United Kingdom. The legal basis is
-        the consent you give by opening the demo (Art. 6(1)(a) GDPR,
-        § 165 (3) TKG 2021). Nothing is loaded unless you open the demo.
+        the consent you give with "Start" (Art. 6(1)(a) GDPR, § 165 (3)
+        TKG 2021). Your browser remembers this choice; you can withdraw
+        it below. Without consent, nothing is loaded.
       </p>
+
+      <h2>Withdraw consent</h2>
+      <p>
+        Here you can see what you have consented to in this browser and
+        withdraw it with effect for the future. If the player or the demo
+        is running, the page reloads to stop it.
+      </p>
+      <div class="legal-consents"></div>
 
       <h2>Contacting me</h2>
       <p>
@@ -453,24 +475,34 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         которое вы даёте кнопкой «Воспроизвести» (ст. 6 п. 1 лит. a GDPR,
         § 165 абз. 3 TKG 2021). Браузер запоминает этот выбор
         (localStorage), чтобы уведомление не появлялось при каждом
-        посещении; вы отзываете согласие, удалив данные этого сайта в
-        браузере. Без согласия соединение не устанавливается. Подробнее:
+        посещении; отозвать его можно в любой момент ниже в разделе
+        «Отзыв согласия» или удалив данные этого сайта в браузере. Без согласия соединение не устанавливается. Подробнее:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
       <h2>Java-программы в браузере (CheerpJ)</h2>
       <p>
         Live-демо «Grundlagen» выполняет Java-программы прямо в браузере.
-        Для этого при открытии демо загружается среда выполнения CheerpJ
-        компании <strong>Leaning Technologies Ltd.</strong>
-        (Великобритания) (cjrtnc.leaningtech.com). При этом поставщик
+        Для этого нужна среда выполнения CheerpJ компании
+        <strong>Leaning Technologies Ltd.</strong> (Великобритания). Демо
+        сначала показывает уведомление; CheerpJ загружается только после
+        того, как вы выберете в нём «Запустить» (cjrtnc.leaningtech.com). При этом поставщик
         получает ваш IP-адрес и технические данные браузера; CheerpJ
         может кэшировать файлы в хранилище браузера (IndexedDB). Для
         Великобритании действует решение Европейской комиссии об
         адекватности защиты данных. Правовое основание — ваше согласие,
-        выраженное открытием демо (ст. 6 п. 1 лит. a GDPR, § 165 абз. 3
-        TKG 2021). Без открытия демо ничего не загружается.
+        которое вы даёте кнопкой «Запустить» (ст. 6 п. 1 лит. a GDPR,
+        § 165 абз. 3 TKG 2021). Браузер запоминает этот выбор; отозвать
+        его можно ниже. Без согласия ничего не загружается.
       </p>
+
+      <h2>Отзыв согласия</h2>
+      <p>
+        Здесь видно, на что вы дали согласие в этом браузере, и его можно
+        отозвать на будущее. Если плеер или демо сейчас работают, страница
+        для этого перезагрузится.
+      </p>
+      <div class="legal-consents"></div>
 
       <h2>Обращение ко мне</h2>
       <p>
@@ -545,8 +577,9 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Google は EU-US Data Privacy Framework の認証を受けています。
         法的根拠は、「再生」によって与えられる同意（GDPR 第6条第1項(a)、
         TKG 2021 第165条第3項）です。毎回お知らせが表示されないよう、
-        ブラウザがこの選択を記憶します（localStorage）。ブラウザで本サイトの
-        データを削除すると同意は撤回されます。同意がない限り接続は行われません。
+        ブラウザがこの選択を記憶します（localStorage）。同意は下記の
+        「同意の撤回」から、またはブラウザで本サイトのデータを削除することで
+        いつでも撤回できます。同意がない限り接続は行われません。
         詳細：
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
@@ -554,14 +587,25 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
       <h2>ブラウザ上の Java プログラム（CheerpJ）</h2>
       <p>
         ライブデモ「Grundlagen」は Java プログラムをブラウザ上で直接実行
-        します。そのため、デモを開くと <strong>Leaning Technologies Ltd.</strong>
-        （英国）の実行環境 CheerpJ が読み込まれます（cjrtnc.leaningtech.com）。
+        します。そのためには <strong>Leaning Technologies Ltd.</strong>
+        （英国）の実行環境 CheerpJ が必要です。デモはまずお知らせを表示し、
+        そこで「開始」を選んだ場合にのみ CheerpJ が読み込まれます
+        （cjrtnc.leaningtech.com）。
         その際、提供者は IP アドレスと技術的なブラウザ情報を受け取り、
         CheerpJ はブラウザのストレージ（IndexedDB）にファイルをキャッシュする
         ことがあります。英国については欧州委員会の十分性認定があります。
-        法的根拠は、デモを開くことによる同意（GDPR 第6条第1項(a)、
-        TKG 2021 第165条第3項）です。デモを開かない限り何も読み込まれません。
+        法的根拠は、「開始」によって与えられる同意（GDPR 第6条第1項(a)、
+        TKG 2021 第165条第3項）です。ブラウザがこの選択を記憶し、下記から
+        撤回できます。同意がない限り何も読み込まれません。
       </p>
+
+      <h2>同意の撤回</h2>
+      <p>
+        このブラウザで与えた同意を確認し、将来に向けて撤回できます。
+        プレーヤーやデモが動作中の場合は、停止のためページが再読み込み
+        されます。
+      </p>
+      <div class="legal-consents"></div>
 
       <h2>お問い合わせ</h2>
       <p>
@@ -635,23 +679,31 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Privacy Framework. الأساس القانوني هو موافقتك التي تمنحها بزر «تشغيل»
         (المادة 6 الفقرة 1 البند (a) من GDPR، والمادة 165 الفقرة 3 من
         TKG 2021). يتذكّر متصفحك هذا الاختيار (localStorage) حتى لا يظهر
-        الإشعار في كل زيارة؛ ويمكنك سحب الموافقة بحذف بيانات هذا الموقع من
-        متصفحك. بدون موافقة لا يتم أي اتصال. المزيد:
+        الإشعار في كل زيارة؛ ويمكنك سحب الموافقة في أي وقت أدناه تحت
+        «سحب الموافقة» أو بحذف بيانات هذا الموقع من متصفحك. بدون موافقة لا يتم أي اتصال. المزيد:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
       <h2>برامج Java في المتصفح (CheerpJ)</h2>
       <p>
-        يشغّل العرض الحي «Grundlagen» برامج Java مباشرة في المتصفح. لذلك
-        تُحمَّل عند فتح العرض بيئة التشغيل CheerpJ من
-        <strong>Leaning Technologies Ltd.</strong> (المملكة المتحدة)
-        (cjrtnc.leaningtech.com). عندها يتلقى المزوّد عنوان IP الخاص بك
+        يشغّل العرض الحي «Grundlagen» برامج Java مباشرة في المتصفح. ولهذا
+        يلزم بيئة التشغيل CheerpJ من <strong>Leaning Technologies Ltd.</strong>
+        (المملكة المتحدة). يعرض العرض أولًا إشعارًا، ولا يُحمَّل CheerpJ إلا
+        عندما تختار فيه «تشغيل» (cjrtnc.leaningtech.com). عندها يتلقى المزوّد عنوان IP الخاص بك
         وبيانات تقنية عن المتصفح، وقد يخزّن CheerpJ ملفات مؤقتًا في تخزين
         المتصفح (IndexedDB). صدر بشأن المملكة المتحدة قرار كفاية من
-        المفوضية الأوروبية. الأساس القانوني هو موافقتك بفتح العرض (المادة 6
-        الفقرة 1 البند (a) من GDPR، والمادة 165 الفقرة 3 من TKG 2021). لا
-        يُحمَّل شيء ما لم تفتح العرض.
+        المفوضية الأوروبية. الأساس القانوني هو موافقتك التي تمنحها بزر «تشغيل»
+        (المادة 6 الفقرة 1 البند (a) من GDPR، والمادة 165 الفقرة 3 من
+        TKG 2021). يتذكّر متصفحك هذا الاختيار، ويمكنك سحبه أدناه. بدون
+        موافقة لا يُحمَّل شيء.
       </p>
+
+      <h2>سحب الموافقة</h2>
+      <p>
+        هنا ترى ما وافقت عليه في هذا المتصفح، ويمكنك سحبه بأثر مستقبلي. إذا
+        كان المشغّل أو العرض يعمل حاليًا، تُعاد تحميل الصفحة لإيقافه.
+      </p>
+      <div class="legal-consents"></div>
 
       <h2>التواصل معي</h2>
       <p>
