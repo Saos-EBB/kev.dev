@@ -84,3 +84,6 @@
   - Sobald der Screen den Viewport füllt, wird der Aufzug dahinter ausgeblendet (`.about-zoom.is-covered`).
   - „PROJEKTE“-Shine: war eine animierte `background-position` auf dem Text selbst, die die ganze Überschrift samt Glow-Filter jeden Frame neu malte. Jetzt ein maskiertes Fenster mit weißer Textkopie, das per `transform` drüberfährt (Text gleitet gegenläufig, steht also still) — reine Compositor-Animation, sieht gleich aus. Gilt auch für die mobile Überschrift.
 **Nicht gebaut / offen:** Gemessen nur in Headless-Chromium (Software-Rendering, keine echte GPU) — die Frame-Zeiten dort sind nicht aussagekräftig, die Raster-Einsparungen schon. Nicht in Safari/Firefox geprüft. Hero-Cloth und Aufzugfahrt selbst unverändert.
+
+## 2026-10-03 — fix(cv): Webadresse aktualisiert
+**Was:** Im Lebenslauf (beide Fassungen) steht statt `saos-repo.vercel.app` jetzt `kev-dev-gamma.vercel.app`; PDFs neu gebaut.
