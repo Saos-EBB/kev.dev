@@ -16,6 +16,24 @@ import type Lenis from "lenis";
 import { UI } from "../i18n/ui";
 import { LANG, RTL } from "../i18n";
 import { DATENSCHUTZ, IMPRESSUM } from "./legal-content";
+import { hasConsent, revokeConsent, type ConsentId } from "../consent";
+
+// The privacy policy's "withdraw consent" rows (slot .legal-consents in
+// legal-content.ts): current state per feature plus a withdraw button.
+const CONSENTS: { id: ConsentId; label: () => string; loaded: () => boolean }[] = [
+  { id: "youtube", label: () => UI.consentYoutube, loaded: () => "YT" in window },
+  { id: "cheerpj", label: () => UI.consentCheerpj, loaded: () => "cheerpjInit" in window },
+];
+
+function renderConsents(slot: HTMLElement) {
+  slot.innerHTML = CONSENTS.map(({ id, label }) => {
+    const on = hasConsent(id);
+    return `<div class="legal-consent-row">
+      <span>${label()}: <b>${on ? UI.consentOn : UI.consentOff}</b></span>
+      <button type="button" data-revoke="${id}" ${on ? "" : "disabled"}>${UI.consentRevoke}</button>
+    </div>`;
+  }).join("");
+}
 
 interface LegalRoute {
   hash: string;
@@ -50,6 +68,17 @@ export function initLegalOverlay(lenis: Lenis) {
     `;
     document.body.appendChild(panel);
     panels.set(route.hash, panel);
+
+    const consentSlot = panel.querySelector<HTMLElement>(".legal-consents");
+    consentSlot?.addEventListener("click", (e) => {
+      const id = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-revoke]")?.dataset.revoke as ConsentId | undefined;
+      if (!id) return;
+      revokeConsent(id);
+      // Already loaded in this page: only a reload really stops it (the hash
+      // keeps this panel open). Otherwise just show the new state.
+      if (CONSENTS.find((c) => c.id === id)!.loaded()) location.reload();
+      else renderConsents(consentSlot);
+    });
 
     // preventDefault so the empty-fragment href never triggers the
     // browser's native "no target → scroll to top of document" fallback
@@ -93,7 +122,11 @@ export function initLegalOverlay(lenis: Lenis) {
     for (const [hash, panel] of panels) {
       const isActive = hash === active;
       panel.classList.toggle("is-open", isActive);
-      if (isActive) panel.scrollTop = 0;
+      if (isActive) {
+        panel.scrollTop = 0;
+        const slot = panel.querySelector<HTMLElement>(".legal-consents");
+        if (slot) renderConsents(slot);
+      }
     }
   }
 

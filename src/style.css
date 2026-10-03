@@ -1421,6 +1421,47 @@ button:focus-visible {
   opacity: 0.8;
 }
 
+/* "Withdraw consent" rows in the privacy policy (legal-overlay.ts). */
+.legal-consents {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-consent-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 30%, transparent);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.legal-consent-row b {
+  color: var(--color-text);
+}
+
+.legal-consent-row button {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-accent);
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.legal-consent-row button:disabled {
+  border-color: color-mix(in srgb, var(--color-line) 30%, transparent);
+  color: var(--color-text-muted);
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ---------------------------------------------------------------- */
 /* Lite page (html.lite — phones / narrow tablets, see LITE in        */
 /* viewport.ts). No elevator ride, no monitor zoom, no pinned          */
