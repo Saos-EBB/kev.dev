@@ -1346,7 +1346,10 @@ button:focus-visible {
   position: fixed;
   inset: 0;
   z-index: 140;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: var(--color-bg);
 }
 
@@ -1384,7 +1387,12 @@ button:focus-visible {
 
 .legal-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 6vw, 3rem);
+  /* vw-led on phones: "DATENSCHUTZERKLÄRUNG" is one long word and ran past
+     a 390px screen at 2rem. Hyphenation (lang="de" on the wrapper) is the
+     safety net for anything narrower. */
+  font-size: clamp(1.4rem, 7vw, 3rem);
+  overflow-wrap: break-word;
+  hyphens: auto;
   text-transform: uppercase;
   color: var(--color-accent);
   margin-bottom: 2rem;
