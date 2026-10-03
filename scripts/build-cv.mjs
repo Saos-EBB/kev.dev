@@ -30,7 +30,7 @@ const CV = {
     ["mail", "kevin.schaberl.work@gmail.com"],
     ["tel", "+43 676 471 88 07"],
     ["adresse", "Lerchenfeldstraße 7, 4100 Ottensheim"],
-    ["web", "saos-repo.vercel.app"],
+    ["web", "kev-dev-gamma.vercel.app"],
     ["code", "github.com/Saos-EBB"],
     ["geboren", "24.04.1996, Österreich"],
   ],
