@@ -1346,7 +1346,10 @@ button:focus-visible {
   position: fixed;
   inset: 0;
   z-index: 140;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: var(--color-bg);
 }
 
@@ -1384,7 +1387,12 @@ button:focus-visible {
 
 .legal-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 6vw, 3rem);
+  /* vw-led on phones: "DATENSCHUTZERKLÄRUNG" / "КОНФИДЕНЦИАЛЬНОСТИ" are
+     single long words and ran past a 390px screen at 2rem. Hyphenation (lang="de" on the wrapper) is the
+     safety net for anything narrower. */
+  font-size: clamp(1.4rem, 6vw, 3rem);
+  overflow-wrap: break-word;
+  hyphens: auto;
   text-transform: uppercase;
   color: var(--color-accent);
   margin-bottom: 2rem;
@@ -1665,8 +1673,8 @@ button:focus-visible {
   }
 }
 
-/* Non-German visitors: the legal texts stay German (legally binding), with
-   a note in their language above them. */
+/* Non-German visitors: the legal texts are translated; this note above
+   them says the German original prevails (legal-content.ts). */
 .legal-lang-note {
   margin-bottom: 2rem;
   padding: 0.8rem 1rem;

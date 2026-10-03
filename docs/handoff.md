@@ -62,7 +62,8 @@ Nach jeder Antwort: Text eintragen und das `open`-Feld der Card löschen.
 
 - **Texte doppelt pflegen:** Deutsch ist die Quelle. Ändert sich ein deutscher Text, die vier Übersetzungen mitziehen: UI in `src/i18n/ui.ts`, About/Lebenslauf in `src/about/about-content.ts`, Projekt-Cards in `src/projects/projects-i18n.ts`, Grundlagen-Programme in `src/projects/widgets/grundlagen-i18n.ts`.
 - **Übersetzungen prüfen lassen:** EN/RU/JA/AR sind maschinennah von Claude übersetzt — vor allem JA und AR von Muttersprachlern gegenlesen lassen.
-- **Bewusst deutsch:** Impressum/Datenschutz (rechtlich verbindlich, mit Hinweis in der jeweiligen Sprache), `[OFFEN]`-Marker, die Konsolenausgabe der Java-Programme, Tech-Tags.
+- **Impressum/Datenschutz:** in allen fünf Sprachen (`src/legal/legal-content.ts`), Hinweis oben: bei Abweichungen gilt die deutsche Fassung. Bei Textänderungen alle fünf Fassungen mitziehen. Übersetzungen nicht von Muttersprachlern geprüft.
+- **Bewusst deutsch:** `[OFFEN]`-Marker, die Konsolenausgabe der Java-Programme, Tech-Tags.
 
 ## 7. Allgemein
 

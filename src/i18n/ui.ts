@@ -185,7 +185,7 @@ const en: Ui = {
   impressum: "Imprint",
   datenschutz: "Privacy",
   legalBack: "Back",
-  legalNote: "This page is only available in German. The German version is legally binding.",
+  legalNote: "Translated from German. In case of discrepancies, the German version prevails.",
   vizFig1: "fig. 1 — layers, built from the bottom up",
   vizFig2: "fig. 2 — modules per tenant",
   vizLayers: [
@@ -308,7 +308,7 @@ const ru: Ui = {
   impressum: "Выходные данные",
   datenschutz: "Конфиденциальность",
   legalBack: "Назад",
-  legalNote: "Эта страница доступна только на немецком языке. Юридическую силу имеет немецкая версия.",
+  legalNote: "Перевод с немецкого. В случае расхождений преимущественную силу имеет немецкая версия.",
   vizFig1: "рис. 1 — слои, построенные снизу вверх",
   vizFig2: "рис. 2 — модули по тенантам",
   vizLayers: [
@@ -431,7 +431,7 @@ const ja: Ui = {
   impressum: "運営者情報",
   datenschutz: "プライバシー",
   legalBack: "戻る",
-  legalNote: "このページはドイツ語のみです。法的にはドイツ語版が有効です。",
+  legalNote: "ドイツ語からの翻訳です。内容に相違がある場合は、ドイツ語版が優先されます。",
   vizFig1: "図1 — 下から組み上げたレイヤー",
   vizFig2: "図2 — テナントごとのモジュール",
   vizLayers: [
@@ -554,7 +554,7 @@ const ar: Ui = {
   impressum: "بيانات الناشر",
   datenschutz: "الخصوصية",
   legalBack: "رجوع",
-  legalNote: "هذه الصفحة متاحة باللغة الألمانية فقط. النسخة الألمانية هي الملزمة قانونيًا.",
+  legalNote: "مترجم من الألمانية. في حال وجود اختلاف، تُعتمد النسخة الألمانية.",
   vizFig1: "شكل 1 — طبقات مبنية من الأسفل إلى الأعلى",
   vizFig2: "شكل 2 — الوحدات لكل مستأجر",
   vizLayers: [

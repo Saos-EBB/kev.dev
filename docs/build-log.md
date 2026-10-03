@@ -97,3 +97,17 @@
 
 ## 2026-10-03 — fix(contact): Auto-Scroll ins Kontakt-Finale sanfter
 **Was:** Der automatische Rest-Scroll (startet kurz nach dem Eintauchen in den Kontakt-Pin) lief 1,2 s mit ease-out cubic — schoss mit voller Geschwindigkeit los und wirkte gehetzt. Jetzt 2,4 s mit ease-in-out sine: läuft weich an, gleitet, setzt weich auf (`TIMING.contact.autoScroll` in `timings.ts`). Gemessen (Headless, 1280×800): gleichmäßige S-Kurve über ~2,3 s, landet am selben Punkt wie vorher.
+
+## 2026-10-03 — fix(legal): Impressum/Datenschutz scrollbar und ohne Abschneiden
+**Was:**
+- **Nicht scrollbar:** Während ein Panel offen ist, ist Lenis gestoppt — und ein gestopptes Lenis schluckt Mausrad-Events auf der ganzen Seite. Das Panel hat jetzt `data-lenis-prevent` (wie das Projekt-Overlay), dazu `overscroll-behavior: contain`. Gemessen: Mausrad vorher 0 px, jetzt 600 px gescrollt, Desktop wie 390px-Breite; Touch-Wischen scrollt ebenfalls.
+- **Abgeschnitten:** „DATENSCHUTZERKLÄRUNG“ ist ein einziges langes Wort und lief bei 390px Breite ~22px über den Rand (seitliches Scrollen). Titelgröße jetzt `clamp(1.4rem, 7vw, 3rem)` mit Silbentrennung als Reserve; Panel `overflow-x: hidden`.
+
+## 2026-10-03 — feat(legal): Impressum und Datenschutz in allen fünf Sprachen
+**Was:** Beide Texte gibt es jetzt auf Deutsch, Englisch, Russisch, Japanisch und Arabisch (`src/legal/legal-content.ts`, gewählt wie der Rest der Seite). Statt „nur auf Deutsch verfügbar“ steht oben: übersetzt aus dem Deutschen, bei Abweichungen gilt die deutsche Fassung. Gesetzesnamen (MedienG, ECG, DSGVO), die Datenschutzbehörde und ihre Adresse bleiben im Original, mit Erklärung in Klammern. Tab-Titel ebenfalls übersetzt; Arabisch rechts-nach-links.
+**Technik:** Japanische Absätze: Zeilenumbrüche im Quelltext zwischen zwei CJK-Zeichen würden als Leerzeichen gerendert — `joinCjk()` fügt sie zusammen. Titel `clamp(1.4rem, 6vw, 3rem)`, damit auch „КОНФИДЕНЦИАЛЬНОСТИ“ auf 390px passt.
+**Offen:** Übersetzungen von Muttersprachlern gegenlesen lassen.
+
+## 2026-10-03 — fix(legal): Datenschutz nennt YouTube und CheerpJ
+**Was:** Der Satz „keine Einbindung von Ressourcen Dritter“ stimmte nicht mehr: Der Musik-Button lädt beim ersten Klick den YouTube-Player (Google Ireland, youtube-nocookie.com), die Grundlagen-Live-Demo beim Öffnen die Java-Laufzeit CheerpJ (Leaning Technologies, UK). Jetzt in allen fünf Sprachen: „Was diese Seite nicht tut“ sagt, dass zwei Funktionen erst nach Klick Inhalte Dritter laden, plus je ein Abschnitt mit Anbieter, übertragenen Daten (IP, Browserdaten, ggf. lokaler Speicher/IndexedDB), Drittland (USA mit DPF / UK mit Angemessenheitsbeschluss) und Rechtsgrundlage (Einwilligung per Klick, Art. 6 Abs. 1 lit. a DSGVO, § 165 Abs. 3 TKG 2021).
+**Offen:** Kein Hinweis direkt am Play-Button/an der Demo — für eine saubere Einwilligung wäre ein kurzer Satz dort („lädt von YouTube“) besser. Kein Anwalt hat drübergeschaut.
