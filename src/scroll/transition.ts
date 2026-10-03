@@ -76,54 +76,82 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     const previous = zoom.style.transform;
     zoom.style.transform = "none";
     // Place the live screen over the SVG's #screen rect (layout only, so
-    // this is the untransformed box).
+    // this is the untransformed box). Its top-left corner on a whole
+    // pixel: the browser paints a box's background from its pixel-snapped
+    // edge, so a fractional corner would come back ~30x larger at full
+    // zoom as an offset between the screen's grid and the projects grid.
+    // The far edges stay where the SVG has them, so it still fits the bezel.
     const office = screen.parentElement!;
     const box = office.querySelector("#screen")!.getBoundingClientRect();
     const o = office.getBoundingClientRect();
-    screen.style.left = `${box.left - o.left}px`;
-    screen.style.top = `${box.top - o.top}px`;
-    screen.style.width = `${box.width}px`;
-    screen.style.height = `${box.height}px`;
+    const zr = zoom.getBoundingClientRect();
+    const x0 = Math.round(box.left - zr.left) - (o.left - zr.left);
+    const y0 = Math.round(box.top - zr.top) - (o.top - zr.top);
+    screen.style.left = `${x0}px`;
+    screen.style.top = `${y0}px`;
+    screen.style.width = `${box.right - o.left - x0}px`;
+    screen.style.height = `${box.bottom - o.top - y0}px`;
     const z = zoom.getBoundingClientRect();
     const s = screen.getBoundingClientRect();
     zoom.style.transform = previous;
 
     const vw = z.width;
     const vh = viewportHeight();
-    // Covers the viewport: the screen fills one dimension and overflows the
-    // other. The hair of margin keeps sub-pixel layout rounding from
-    // letting a sliver of the monitor's frame show at the edge.
-    maxScale = Math.max(vw / s.width, vh / s.height) * COVER_MARGIN;
-    // Screen centre → viewport centre, where the viewport centre sits in
-    // the wrapper once #about is pinned (its bottom on the viewport's).
-    const cx = s.left - z.left + s.width / 2;
-    const cy = s.top - z.top + s.height / 2;
-    endX = vw / 2 - maxScale * cx;
-    endY = z.height - vh / 2 - maxScale * cy;
-
-    // Grid on the screen: cell/line shrunk by maxScale, phase shifted so
-    // that at full zoom the lines sit on multiples of --grid-cell from the
-    // projects section's top-left — which, once the pin ends, is the
-    // viewport's left edge and its bottom edge (the section follows #about).
-    // At the desktop bento breakpoint .projects-bg-grid itself shifts its
-    // background-position to center a line on the viewport (style.css) —
-    // mirror that same shift here (matched by shared breakpoint, not read
-    // off the element: getComputedStyle().backgroundPositionX comes back as
-    // an unresolved "calc(50% + Npx)" string for this multi-layer,
-    // var()-based position, not a usable pixel number) or the handover
-    // leaves a visible seam where the zoomed screen hands off to the grid.
     const root = getComputedStyle(document.documentElement);
     const cell = parseFloat(root.getPropertyValue("--grid-cell"));
     const line = parseFloat(root.getPropertyValue("--grid-line"));
+
+    // Covers the viewport: the screen fills one dimension and overflows the
+    // other. The hair of margin keeps sub-pixel layout rounding from
+    // letting a sliver of the monitor's frame show at the edge.
+    // The screen's tile is --grid-cell / maxScale, and the browser lays
+    // backgrounds out in 1/64 px steps — a tile that isn't one of those
+    // steps gets rounded, and at ~30x zoom that rounding adds up to several
+    // pixels across the viewport (the grid visibly jumped at the handover).
+    // So the tile is snapped down to a 1/64 step first and the scale
+    // derived from it: tile x maxScale is then exactly --grid-cell, and
+    // snapping down only ever zooms a hair further (still covering).
+    const snap = (v: number) => Math.floor(v * 64) / 64;
+    const coverScale = Math.max(vw / s.width, vh / s.height) * COVER_MARGIN;
+    const screenCell = snap(cell / coverScale);
+    maxScale = cell / screenCell;
+
+    // Screen centre → viewport centre, where the viewport centre sits in
+    // the wrapper once #about is pinned (its bottom on the viewport's).
+    const sx = s.left - z.left;
+    const sy = s.top - z.top;
+    endX = vw / 2 - maxScale * (sx + s.width / 2);
+    endY = z.height - vh / 2 - maxScale * (sy + s.height / 2);
+
+    // Grid on the screen, phased so that at full zoom its lines ARE the
+    // projects grid's lines. Those sit, in the viewport at the moment the
+    // pin releases, on vh (the section's top, right below #about) and on
+    // vw / 2 at the desktop bento breakpoint, where .projects-bg-grid runs
+    // a line through the centre (style.css: `calc(50% + cell / 2)` against
+    // a cell-wide tile resolves to exactly half the width), else on 0.
+    // Matched by the shared breakpoint, not read off the element:
+    // getComputedStyle() hands back the unresolved calc() string.
+    // The offset is snapped like the tile; what the snap leaves over
+    // (under maxScale / 64 px on screen) is taken up by the end translate.
     const isBento = window.matchMedia(`(min-width: ${BENTO_MIN_WIDTH_PX}px)`).matches;
-    const gridOffsetX = isBento ? vw / 2 + cell / 2 : 0;
-    const left = vw / 2 - (s.width * maxScale) / 2;
-    const top = vh / 2 - (s.height * maxScale) / 2;
+    const targetX = isBento ? vw / 2 : 0;
+    const targetY = vh;
     const phase = (v: number) => ((v % cell) + cell) % cell;
-    screen.style.setProperty("--screen-cell", `${cell / maxScale}px`);
+    const signed = (v: number) => {
+      const p = phase(v);
+      return p > cell / 2 ? p - cell : p;
+    };
+    // Screen's top-left on screen at full zoom (wrapper top = vh - z.height).
+    const left = endX + maxScale * sx;
+    const top = vh - z.height + endY + maxScale * sy;
+    const ox = snap(phase(targetX - left) / maxScale);
+    const oy = snap(phase(targetY - top) / maxScale);
+    endX += signed(targetX - (left + maxScale * ox));
+    endY += signed(targetY - (top + maxScale * oy));
+    screen.style.setProperty("--screen-cell", `${screenCell}px`);
     screen.style.setProperty("--screen-line", `${line / maxScale}px`);
-    screen.style.setProperty("--screen-ox", `${phase(gridOffsetX - left) / maxScale}px`);
-    screen.style.setProperty("--screen-oy", `${phase(vh - top) / maxScale}px`);
+    screen.style.setProperty("--screen-ox", `${ox}px`);
+    screen.style.setProperty("--screen-oy", `${oy}px`);
   };
   measure();
 
@@ -138,6 +166,12 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     scale: () => maxScale,
     duration: vhToUnits(zoomVh),
     ease: expEase,
+    // At full zoom the screen covers the viewport, so the shaft behind it
+    // (blown up ~30x) is out of sight — stop compositing it for the rest
+    // of the pin and the scroll-off into #projects.
+    onUpdate: () => {
+      zoom.classList.toggle("is-covered", zoomTween.progress() === 1);
+    },
   });
   tl.add(zoomTween);
   // After a resize: re-measure, and have the tween re-read its end values —
