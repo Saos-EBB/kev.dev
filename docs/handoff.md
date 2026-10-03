@@ -29,7 +29,7 @@ nach Bereich sortiert. Alles Sichtbare mit `[OFFEN: …]` auf der Seite ist hier
   evtl. nicht. Dann `#about`-Section verlängern (hängt an Elevator-Geometrie und `transition.ts`). Im Browser prüfen.
 - **A3 Grundsätze:** fertig, 3 Zitate. Ein 4. („Code ist Handwerk …“) ist nicht eingebaut. Entscheiden, ob es rein soll.
 - **A5 persönliche Zeile:** nur ein Vorschlag, darf getauscht werden.
-- **Lebenslauf:** im Seiten-Design, dunkel und hell (`public/cv/lebenslauf-kevin-schaberl-{dark,light}.pdf`), der Button liefert die zum Theme passende. Inhalt steht in `scripts/build-cv.mjs` — dort ändern und `node scripts/build-cv.mjs` laufen lassen (braucht Playwright/Chromium). Enthält Adresse, Telefon, Geburtsdatum — bewusst öffentlich? Webadresse: kev-dev-gamma.vercel.app.
+- **Lebenslauf:** im Seiten-Design, dunkel und hell (`public/cv/lebenslauf-kevin-schaberl-{dark,light}.pdf`), der Button liefert die zum Theme passende. Inhalt steht in `scripts/build-cv.mjs` — dort ändern und `node scripts/build-cv.mjs` laufen lassen (braucht Playwright/Chromium). Enthält Adresse, Telefon, Geburtsdatum — von Kevin so gewollt (2026-10-03). Webadresse: kev-dev-gamma.vercel.app.
 - **CV-Sections** (Werdegang/Ausbildung/Skills/Sprachen) stehen zwischen A4 und A5, weil es keine Profil-Seite gibt.
   Entscheiden: behalten oder `cvSections`-Block in `main.ts` entfernen.
 
