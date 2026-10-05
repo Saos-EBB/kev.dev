@@ -19,6 +19,7 @@ const cards: ProjectCard[] = [
     title: "YourBrand",
     claim:
       "Beweist Architektur-Denken — modulares White-Label-SaaS, multi-tenant gedacht, jeder Layer bewusst entworfen.",
+    points: ["White-Label-SaaS für Matching & Community — vom Schachklub bis zur Partnerbörse", "Multi-tenant: Module pro Tenant buchbar, Row-Level Security als Basis", "Solo in rund zwei Monaten — voll funktionsfähiger Prototyp"],
     what: "Mein erster Versuch, echte Software zu bauen: ein modulares White-Label-SaaS für Matching und sozialen Kontakt. Der Kern ist neutral gebaut — dieselbe Plattform trägt einen Schachklub, eine Theatergruppe, eine Partnerbörse oder jede andere Community, die Menschen zusammenbringen will. Multi-tenant angelegt: Jeder Tenant bringt seine eigene Marke mit und bekommt nur die Module, die er bucht. Als konkrete Ausbaustufe eine barrierefreie Plattform: Leichte Sprache, Kontrast- und Schriftgrößen-Optionen, intuitives Design, per i18n auf jede Sprache erweiterbar (aktuell Deutsch).",
     tags: [
       "TypeScript",
@@ -67,6 +68,7 @@ const cards: ProjectCard[] = [
     title: "TschoBBo",
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
+    points: ["Scrapt österreichische Jobbörsen, filtert per Regex", "Schreibt Anschreiben lokal mit Ollama — keine Cloud", "Versand bleibt bewusst manuell"],
     what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per Ollama. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg.",
     tags: ["TypeScript", "Node.js", "Playwright", "Ollama", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
@@ -105,6 +107,7 @@ const cards: ProjectCard[] = [
     title: "3D-Wireframe-Renderer",
     claim:
       "Beweist Tiefe — von einer Formel aus einem YouTube-Short bis zum Schädel-CT: OBJ, STL und DICOM auf einem simplen 2D-Canvas, ohne Grafik-Bibliothek.",
+    points: ["3D auf einem simplen 2D-Canvas, ohne Grafik-Bibliothek", "Projektion, Rotation und Tiefenschattierung selbst gerechnet", "Lädt OBJ, STL und DICOM — bis zum Schädel-CT"],
     what: "Angefangen mit einer Formel aus einem YouTube-Short (Tsodings „magic formula“): Die Idee, dass ich auf einem simplen 2D-HTML-Canvas komplettes 3D rendern kann, fand ich so spannend, dass ich die Grenzen ausreizen wollte. Projektion, Rotation und Tiefenschattierung selbst gerechnet, ohne Grafik-Bibliothek — dazu zum ersten Mal OBJ- und STL-Dateien eingelesen.",
     tags: ["JavaScript", "Canvas 2D", "3D-Mathematik", "OBJ/STL/DICOM"],
     meta: "Solo · aus Eigeninteresse · ca. 2 Wochen bis zum Ziel",
@@ -139,6 +142,7 @@ const cards: ProjectCard[] = [
       "Userscripts/Tampermonkey und DOM-Manipulation lernen — und üben, fremden Code zu verstehen und zu erweitern.",
     title: "AniScript",
     claim: "Ein Userscript für den eigenen Gebrauch — adaptiert und erweitert, nicht neu gebaut.",
+    points: ["Userscript für den eigenen Gebrauch", "Fremden Code adaptiert und erweitert: Hoster-Handling, Ad-Skip, Auto-Play", "Render-Bug bis zum Userscript-Manager zurückverfolgt"],
     what: "Ein Userscript, das ich adaptiert und um eigene Features erweitert habe: Hoster-Handling (Voe/Filemoon), Ad-Skipping, Auto-Play. Übung darin, fremden Code zu verstehen, zu warten und gezielt zu erweitern, statt bei null anzufangen. (Zielseite: aniworld.to)",
     tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
     meta: "Solo · für den eigenen Gebrauch · laufend gepflegt (v0.0.85)",
@@ -163,6 +167,7 @@ const cards: ProjectCard[] = [
       "Ein Portfolio, das man erlebt statt liest — und in dem jedes Element einen Grund hat.",
     title: "kev.dev",
     claim: "Beweist Gestaltungs-Denken — jede Animation erzählt etwas, nichts ist Deko.",
+    points: ["Portfolio zum Erleben — jedes Element hat einen Grund", "Vanilla TypeScript, GSAP, eigene Tuch-Physik auf Canvas", "Eigene Lite-Variante fürs Handy"],
     what: "Viele Portfolio-Seiten angesehen, dann jedes Element mit einem Sinn gebaut: Das Tuch im Hero ist so groß, dass man es anfassen muss. About ist ein Aufzug, an dem mein Leben vorbeizieht. Die Projekte liegen wie auf einer Werkbank, jedes mit Why und Learned. Kontakt kommt mit einem Übergang, und wer klickt, findet ein verstecktes Wow. Impressum und Datenschutz liegen als Overlay auf dem One-Pager, damit die Musik ohne Schnitt weiterläuft.",
     tags: ["TypeScript", "Vite", "GSAP / ScrollTrigger", "Lenis", "Canvas 2D", "CheerpJ"],
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
@@ -190,6 +195,7 @@ const cards: ProjectCard[] = [
     learnGoal: "Die Basics — von Hand, im Bootcamp gelernt (Java, OOP, SQL, Datenstrukturen).",
     title: "Grundlagen",
     claim: "Die Handwerks-Grundlagen — alles von Hand getippt, im Bootcamp gelernt.",
+    points: ["Bootcamp-Basics: Java, OOP, SQL, Datenstrukturen", "Alles von Hand getippt", "Die Programme laufen direkt im Browser"],
     widget: {
       label: "Bootcamp-Projekte, direkt im Browser ausführbar",
       mount: (el, card) => import("./widgets/grundlagen").then((m) => m.mount(el, card)),
