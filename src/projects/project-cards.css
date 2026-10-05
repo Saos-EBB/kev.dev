@@ -1149,8 +1149,8 @@
 
 /* ---------------------------------------------------------------- */
 /* Lite (phones / narrow tablets, html.lite — see LITE in viewport.ts) */
-/* One card per slide of the swipe gallery, parts stacked: head,       */
-/* visual, boxes. Boxes keep their teaser fade + overlay button.       */
+/* The card inside the project sheet (project-sheet.ts), parts       */
+/* stacked: head, visual, accordions.                                 */
 /* ---------------------------------------------------------------- */
 .lite .pcard {
   position: relative;
