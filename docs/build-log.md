@@ -139,3 +139,4 @@
 
 ## 2026-10-05 — feat(projects, mobile): Projekte-Schriftzug bleibt stehen, Liste läuft wie auf einem Rad
 **Was:** Am Handy bleibt der „Projekte“-Schriftzug oben stehen (sticky, mit Verlauf nach unten, damit die Einträge darunter verschwinden statt durch die Buchstaben zu laufen), während die Liste vorbeiläuft. Sobald die Unterkante des letzten Projekts über ~55 % der Bildschirmhöhe steigt, schiebt sich der Schriftzug mit nach oben weg (`TITLE_EXIT` in `projects/project-wheel.ts`). Die Einträge liegen wie auf einem Rad: in der Bildschirmmitte flach, darüber kippen sie nach hinten oben weg, von unten rollen sie von hinten nach vorn (rotateX + translateZ + Opacity, nur beim Scrollen per rAF). Reduced Motion: flache Liste.
+**Dazu:** In der Projektansicht ist immer nur eine Aufklapp-Sektion offen — öffnet man Learned!, geht Why? zu (`name`-Attribut auf `<details>`, JS-Fallback für ältere Browser).
