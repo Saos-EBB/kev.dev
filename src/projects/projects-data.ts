@@ -19,7 +19,7 @@ const cards: ProjectCard[] = [
     title: "YourBrand",
     claim:
       "Beweist Architektur-Denken — modulares White-Label-SaaS, multi-tenant gedacht, jeder Layer bewusst entworfen.",
-    what: "Mein erster Versuch, echte Software zu bauen: ein modulares White-Label-SaaS. Multi-tenant angelegt — jeder Tenant bekommt nur die Module, die er bucht. Als konkrete Ausbaustufe eine barrierefreie Plattform: Leichte Sprache, Kontrast- und Schriftgrößen-Optionen, intuitives Design, per i18n auf jede Sprache erweiterbar (aktuell Deutsch).",
+    what: "Mein erster Versuch, echte Software zu bauen: ein modulares White-Label-SaaS für Matching und sozialen Kontakt. Der Kern ist neutral gebaut — dieselbe Plattform trägt einen Schachklub, eine Theatergruppe, eine Partnerbörse oder jede andere Community, die Menschen zusammenbringen will. Multi-tenant angelegt: Jeder Tenant bringt seine eigene Marke mit und bekommt nur die Module, die er bucht. Als konkrete Ausbaustufe eine barrierefreie Plattform: Leichte Sprache, Kontrast- und Schriftgrößen-Optionen, intuitives Design, per i18n auf jede Sprache erweiterbar (aktuell Deutsch).",
     tags: [
       "TypeScript",
       "NestJS",
