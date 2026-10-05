@@ -26,6 +26,7 @@ import { initBoxToGridTransition } from "./scroll/transition";
 import { mountSaosLoader } from "./intro/saos-intro";
 import { LITE, LITE_QUERY, makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 import { closeProjectSheet, initProjectSheet } from "./projects/project-sheet";
+import { initProjectWheel } from "./projects/project-wheel";
 import { HERO_NAMES } from "./hero/hero-names";
 import { startNameTypewriter } from "./hero/name-typewriter";
 import { hexToRgb } from "./colors";
@@ -574,7 +575,10 @@ if (!LITE) {
 
 initFacetOverlay(projectsSection, projectCards, lenis);
 
-if (LITE) initProjectSheet(projectsSection, projectCards, lenis);
+if (LITE) {
+  initProjectSheet(projectsSection, projectCards, lenis);
+  initProjectWheel(projectsSection);
+}
 else initCarousel(projectsSection);
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
