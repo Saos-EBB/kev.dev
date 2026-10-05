@@ -124,3 +124,6 @@
 - **Datenschutzerklärung:** neuer Abschnitt „Einwilligungen widerrufen“ mit Status pro Funktion (erteilt / nicht erteilt) und „Widerrufen“-Button. Ist der Player bzw. CheerpJ in der Seite schon geladen, lädt die Seite neu (Hash hält die Erklärung offen), sonst nur Status-Update. YouTube- und CheerpJ-Abschnitte verweisen darauf. Alles in fünf Sprachen.
 **Gemessen (Headless, 1280px / 390px):** Demo öffnen → 0 Anfragen an leaningtech.com, Hinweis sichtbar; „Starten“ → Anfrage an cjrtnc.leaningtech.com, Einwilligung gespeichert; Widerrufen → Status „nicht erteilt“, Schlüssel gelöscht. Erklärung in allen Sprachen ohne seitliches Überlaufen.
 **Offen:** Von CheerpJ zwischengespeicherte Dateien (IndexedDB) bleiben beim Widerruf liegen — dafür Browserdaten löschen. Neuladen-Pfad beim Widerruf (Player schon geladen) nur logisch geprüft, YouTube ist in der Testumgebung gesperrt.
+
+## 2026-10-05 — copy(about): About-Text sachlicher
+**Was:** Story, Prinzipien, „Wie ich arbeite“ und Schluss im About-Overlay nüchterner formuliert, in allen fünf Sprachen. Fakten, Reihenfolge, Highlights und Projekte-Link bleiben gleich; raus sind die emotionalen Zuspitzungen („Mein Kopf hat gebrannt“, „Ich wollte es wissen.“, „Und das Zutrauen …“, „bis es sich richtig anfühlt“). Lebenslauf unverändert.
