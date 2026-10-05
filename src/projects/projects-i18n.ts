@@ -28,7 +28,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       kind: "White-label SaaS",
       learnGoal: "I wanted to learn how to build software in a modular way and get a real product with business logic off the ground.",
       claim: "Proves architectural thinking — a modular white-label SaaS, designed multi-tenant, every layer built on purpose.",
-      what: "My first attempt at building real software: a modular white-label SaaS. Set up multi-tenant — every tenant only gets the modules it books. As a concrete stage, an accessible platform: plain language, contrast and font-size options, intuitive design, extendable to any language via i18n (currently German).",
+      what: "My first attempt at building real software: a modular white-label SaaS for matching and social contact. The core is neutral — the same platform can carry a chess club, a theatre group, a dating site or any other community that wants to bring people together. Set up multi-tenant: every tenant brings its own brand and only gets the modules it books. As a concrete stage, an accessible platform: plain language, contrast and font-size options, intuitive design, extendable to any language via i18n (currently German).",
       meta: "Solo · April–June 2026, approx. 450 h · +50–75 h for load tests & a test dashboard · self-chosen final project",
       links: ["GitHub", "Live demo on request (happy to host it)"],
       decisions: [
@@ -126,7 +126,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       kind: "White-label SaaS",
       learnGoal: "Хотел научиться строить ПО модульно и поставить на ноги настоящий продукт с бизнес-логикой.",
       claim: "Доказывает архитектурное мышление — модульный white-label SaaS, задуманный как multi-tenant, каждый слой спроектирован осознанно.",
-      what: "Моя первая попытка сделать настоящее ПО: модульный white-label SaaS. Заложен как multi-tenant — каждый тенант получает только те модули, которые оплатил. Как конкретная ступень — доступная платформа: простой язык, настройки контраста и размера шрифта, интуитивный дизайн, расширяемость на любой язык через i18n (сейчас немецкий).",
+      what: "Моя первая попытка сделать настоящее ПО: модульный white-label SaaS для матчинга и социальных контактов. Ядро нейтрально — одна и та же платформа подойдёт шахматному клубу, театральной труппе, сайту знакомств или любому другому сообществу, которое хочет сводить людей вместе. Заложен как multi-tenant: каждый тенант приходит со своим брендом и получает только те модули, которые оплатил. Как конкретная ступень — доступная платформа: простой язык, настройки контраста и размера шрифта, интуитивный дизайн, расширяемость на любой язык через i18n (сейчас немецкий).",
       meta: "Соло · апрель–июнь 2026, около 450 ч · +50–75 ч на нагрузочные тесты и тестовую панель · самостоятельно выбранный выпускной проект",
       links: ["GitHub", "Демо по запросу (с радостью разверну)"],
       decisions: [
@@ -224,7 +224,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       kind: "ホワイトラベルSaaS",
       learnGoal: "ソフトウェアをモジュール式に作り、ビジネスロジックを持つ本物のプロダクトを立ち上げる方法を学びたかった。",
       claim: "設計思考の証明 — モジュール式のホワイトラベルSaaS、マルチテナント前提、どのレイヤーも意図して設計。",
-      what: "本物のソフトウェアを作る最初の試み：モジュール式のホワイトラベルSaaS。マルチテナントとして設計し、各テナントは契約したモジュールだけを使える。具体的な段階として、アクセシブルなプラットフォーム：やさしい言葉、コントラストと文字サイズの設定、直感的なデザイン、i18nで任意の言語に拡張可能（現在はドイツ語）。",
+      what: "本物のソフトウェアを作る最初の試み：マッチングと交流のためのモジュール式ホワイトラベルSaaS。コアは汎用的に作ってあり、同じプラットフォームでチェスクラブ、劇団、出会い系サービスなど、人と人をつなぎたいあらゆるコミュニティを支えられる。マルチテナントとして設計し、各テナントは自分のブランドを持ち込み、契約したモジュールだけを使える。具体的な段階として、アクセシブルなプラットフォーム：やさしい言葉、コントラストと文字サイズの設定、直感的なデザイン、i18nで任意の言語に拡張可能（現在はドイツ語）。",
       meta: "ソロ · 2026年4〜6月、約450時間 · 負荷テストとテスト用ダッシュボードに＋50〜75時間 · 自分で選んだ修了プロジェクト",
       links: ["GitHub", "ライブデモはご依頼に応じて（喜んでホストします）"],
       decisions: [
@@ -323,7 +323,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       kind: "SaaS بعلامة بيضاء",
       learnGoal: "أردت أن أتعلّم كيف تُبنى البرمجيات بشكل معياري وكيف يُطلق منتج حقيقي بمنطق أعمال.",
       claim: "يثبت التفكير المعماري — SaaS معياري بعلامة بيضاء، مصمّم لعدة مستأجرين، وكل طبقة مبنية عن قصد.",
-      what: "أول محاولة لي لبناء برمجيات حقيقية: SaaS معياري بعلامة بيضاء. مُعدّ لعدة مستأجرين — كل مستأجر يحصل فقط على الوحدات التي يحجزها. وكمرحلة ملموسة، منصة سهلة الوصول: لغة مبسّطة، خيارات للتباين وحجم الخط، تصميم بديهي، وقابلة للتوسّع لأي لغة عبر i18n (حاليًا الألمانية).",
+      what: "أول محاولة لي لبناء برمجيات حقيقية: SaaS معياري بعلامة بيضاء للمطابقة والتواصل الاجتماعي. النواة محايدة — المنصة نفسها تصلح لنادي شطرنج أو فرقة مسرحية أو موقع تعارف أو أي مجتمع آخر يريد أن يجمع الناس. مُعدّ لعدة مستأجرين: كل مستأجر يأتي بعلامته الخاصة ويحصل فقط على الوحدات التي يحجزها. وكمرحلة ملموسة، منصة سهلة الوصول: لغة مبسّطة، خيارات للتباين وحجم الخط، تصميم بديهي، وقابلة للتوسّع لأي لغة عبر i18n (حاليًا الألمانية).",
       meta: "منفرد · أبريل–يونيو 2026، نحو 450 ساعة · +50–75 ساعة لاختبارات الحمل ولوحة الاختبار · مشروع تخرّج اخترته بنفسي",
       links: ["GitHub", "عرض مباشر عند الطلب (أستضيفه بكل سرور)"],
       decisions: [
