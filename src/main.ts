@@ -1,5 +1,4 @@
 // First: sets <html lang/dir> from the stored language before anything renders.
-import { RTL } from "./i18n";
 import { UI } from "./i18n/ui";
 import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
@@ -18,7 +17,7 @@ import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
-import { renderProjectCard } from "./projects/project-cards";
+import { renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
@@ -26,7 +25,7 @@ import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
 import { mountSaosLoader } from "./intro/saos-intro";
 import { LITE, LITE_QUERY, makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
-import { initProjectSwiper } from "./projects/swiper";
+import { closeProjectSheet, initProjectSheet } from "./projects/project-sheet";
 import { HERO_NAMES } from "./hero/hero-names";
 import { startNameTypewriter } from "./hero/name-typewriter";
 import { hexToRgb } from "./colors";
@@ -182,28 +181,23 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <div class="projects-bg-grid" aria-hidden="true"></div>
     <div class="projects-saos" aria-hidden="true"></div>
     <h2 class="projects-title">${titleFx(UI.projects)}</h2>
-    <div class="carousel-stage">
-      ${projectCards
-        .map(
-          (card, i) => `
-        <div class="carousel-project" data-project="${i}" data-count="1">
-          ${renderProjectCard(card, i, projectCards.length)}
-        </div>
-      `,
-        )
-        .join("")}
-    </div>
-    <nav class="swiper-nav" aria-label="${UI.swiperAria}">
-      <button class="swiper-arrow" type="button" data-dir="-1" aria-label="${UI.swiperPrev}">${RTL ? "→" : "←"}</button>
-      <ol class="swiper-dots">
-        ${projectCards
-          .map(
-            (card, i) => `<li><button type="button" data-goto="${i}" aria-label="${card.title}"></button></li>`,
-          )
-          .join("")}
-      </ol>
-      <button class="swiper-arrow" type="button" data-dir="1" aria-label="${UI.swiperNext}">${RTL ? "←" : "→"}</button>
-    </nav>
+    ${
+      LITE
+        ? `<div class="project-list">
+            ${projectCards.map((card, i) => renderProjectTeaser(card, i, projectCards.length)).join("")}
+          </div>`
+        : `<div class="carousel-stage">
+            ${projectCards
+              .map(
+                (card, i) => `
+              <div class="carousel-project" data-project="${i}" data-count="1">
+                ${renderProjectCard(card, i, projectCards.length)}
+              </div>
+            `,
+              )
+              .join("")}
+          </div>`
+    }
   </section>
 
   <section class="contact" id="contact">
@@ -580,7 +574,7 @@ if (!LITE) {
 
 initFacetOverlay(projectsSection, projectCards, lenis);
 
-if (LITE) initProjectSwiper(projectsSection);
+if (LITE) initProjectSheet(projectsSection, projectCards, lenis);
 else initCarousel(projectsSection);
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
@@ -607,6 +601,7 @@ document.addEventListener("click", (e) => {
   const btn = (e.target as HTMLElement).closest('[data-facet="self"]');
   if (!btn) return;
   e.preventDefault();
+  closeProjectSheet();
   lenis.scrollTo(0, { immediate: true });
   setTimeout(() => cloth.pull(), 350);
 });

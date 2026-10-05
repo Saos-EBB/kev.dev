@@ -8,6 +8,7 @@
 // Learned! (challenge/origin) and Code + Architektur (GitHub, tags,
 // decisions, meta) — each opening in full in the shared overlay.
 
+import { RTL } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
@@ -50,6 +51,9 @@ export interface ProjectCard {
   learnGoal: string;
   title: string;
   claim: string;
+  // Three short bullet points for the phone list (lite), the whole card
+  // opens in the project sheet (project-sheet.ts).
+  points?: string[];
   what?: string;
   tags?: string[];
   meta?: string;
@@ -111,7 +115,9 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-export function renderProjectCard(card: ProjectCard, index = 0, total = 1): string {
+// The three text bodies (Why? / Learned! / Code + Architektur), shared by
+// the desktop card's teaser boxes and the phone sheet's accordions.
+function cardBodies(card: ProjectCard) {
   const gh = card.links?.find((l) => /github/i.test(l.label));
   const boxes = BOXES[card.layout];
   // Open questions sit with the code facts, or in Why? if a card has none.
@@ -143,25 +149,77 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
     opens,
   ].join("");
 
-  const parts = {
-    why: box("why", UI.boxWhy, why),
-    learned: box("learned", UI.boxLearned, learned),
-    code: box("code", UI.boxCode, code),
-  };
+  const headings = { why: UI.boxWhy, learned: UI.boxLearned, code: UI.boxCode };
+  return boxes.map((kind) => ({ kind, heading: headings[kind], body: { why, learned, code }[kind] }));
+}
 
+const indexLine = (card: ProjectCard, index: number, total: number) =>
+  `<span>${pad(index + 1)}</span> / ${pad(total)} · ${esc(card.kind)}`;
+
+const visualHidden = (card: ProjectCard) =>
+  card.layout === "blueprint" || card.layout === "editor" ? "true" : "false";
+
+export function renderProjectCard(card: ProjectCard, index = 0, total = 1): string {
   return `
     <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       <header class="pcard-head">
-        <p class="pcard-index"><span>${pad(index + 1)}</span> / ${pad(total)} · ${esc(card.kind)}</p>
+        <p class="pcard-index">${indexLine(card, index, total)}</p>
         <h3 class="pcard-title" aria-label="${esc(card.title)}">${displayText(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${renderFacetTiles(card)}
       </header>
-      <div class="pcard-visual" aria-hidden="${card.layout === "blueprint" || card.layout === "editor" ? "true" : "false"}">
+      <div class="pcard-visual" aria-hidden="${visualHidden(card)}">
         ${renderVisual(card)}
       </div>
-      ${boxes.map((b) => parts[b]).join("")}
+      ${cardBodies(card).map((b) => box(b.kind, b.heading, b.body)).join("")}
+    </article>
+  `;
+}
+
+// Phone list entry (lite): index, title, three bullet points, a few tags.
+// The title's button is stretched over the whole entry (project-sheet.css)
+// and opens the project sheet.
+export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): string {
+  const tags = card.tags?.slice(0, 4) ?? [];
+  return `
+    <article class="ptease" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      <p class="pcard-index">${indexLine(card, index, total)}</p>
+      <h3 class="ptease-title">
+        <button type="button" data-open-project="${esc(card.id)}" aria-label="${esc(card.title)} — ${esc(UI.projectOpen)}">${displayText(card.title)}</button>
+      </h3>
+      ${card.points?.length ? `<ul class="ptease-points">${card.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+      ${tags.length ? `<ul class="ptease-tags">${tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+      <span class="ptease-cta" aria-hidden="true">${esc(UI.projectOpen)} ${RTL ? "←" : "→"}</span>
+    </article>
+  `;
+}
+
+// The whole card for the phone sheet: head, bullet points, visual, then
+// Why? / Learned! / Code as accordions with their full text.
+export function renderProjectSheet(card: ProjectCard, index = 0, total = 1): string {
+  return `
+    <article class="pcard psheet-card pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      <header class="pcard-head">
+        <p class="pcard-index">${indexLine(card, index, total)}</p>
+        <h3 class="pcard-title" id="psheet-title">${displayText(card.title)}</h3>
+        ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
+        <p class="pcard-claim">${esc(card.claim)}</p>
+        ${card.points?.length ? `<ul class="ptease-points">${card.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+        ${renderFacetTiles(card)}
+      </header>
+      <div class="pcard-visual" aria-hidden="${visualHidden(card)}">
+        ${renderVisual(card)}
+      </div>
+      ${cardBodies(card)
+        .map(
+          (b) => `
+        <details class="psheet-acc pcard-part--${b.kind}">
+          <summary class="pcard-box-heading">${b.heading}</summary>
+          <div class="psheet-acc-body">${b.body}</div>
+        </details>`,
+        )
+        .join("")}
     </article>
   `;
 }
