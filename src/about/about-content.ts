@@ -43,7 +43,7 @@ const de: AboutContent = {
     `Über tausend solcher Fragen musste ich mir stellen und beantworten, bevor das Produkt Form hatte. ${hl("Genau dieser Teil reizt mich am meisten.")}`,
     `Ich plane, bevor ich baue, setze Ideen dann früh um und teste sie. Hakt es, war der Plan nicht genau genug — dann strukturiere ich neu und setze wieder an, ${hl("bis es funktioniert")}. Die Umsetzung läuft heute oft über ${hl("Claude Code")} als Implementierungs-Agent: Konzept und Architektur kommen von mir, CC schreibt den Code.`,
     `Kreativität gehört für mich dazu. Früher wollte ich Modedesigner werden und habe Graffiti gemalt; heute steckt das in UI und Interaktion. Die Graffiti-Überschriften auf dieser Seite und die vielen Elemente, die man anfassen kann, kommen nicht von ungefähr.`,
-    `An einem Projekt bleibe ich meist ${hl("zwei bis sieben Tage")} am Stück und wechsle dann, um ein Konzept in einem anderen Bereich auszuprobieren. So wächst der Werkzeugkasten ständig.`,
+    `Mein Arbeitsalltag ist ${hl("strukturiertes Chaos")}. Oft arbeite ich an einem Projekt und habe dabei eine Idee für ein anderes — dann wechsle ich dorthin. An Bugfix- und Clean-up-Tagen lasse ich mehrere Agents parallel an verschiedenen Projekten arbeiten; die Tasks sind meist klein, und beim Erledigen der ersten fallen immer noch ein paar neue an. An anderen Tagen sitze ich vor einer einzigen Datei und gehe Codeblöcke und Variablennamen durch, bis alles Sinn ergibt.`,
   ],
   end: `Ausgleich zum Coden und Lernen finde ich in der Natur und bei meiner Familie, allen voran bei ${hl("meinem Sohn")}.`,
   cv: [
@@ -98,7 +98,7 @@ const en: AboutContent = {
     `I had to ask and answer well over a thousand questions like these before the product took shape. ${hl("That's the part that appeals to me most.")}`,
     `I plan before I build, then put ideas into practice early and test them. If something snags, the plan wasn't precise enough — so I restructure and go again, ${hl("until it works")}. These days the implementation often runs through ${hl("Claude Code")} as an implementation agent: concept and architecture come from me, CC writes the code.`,
     `Creativity is part of it for me. I used to want to be a fashion designer and painted graffiti; today that goes into UI and interaction. The graffiti headlines on this page and the many elements you can touch are no coincidence.`,
-    `I usually stay with a project for ${hl("two to seven days")} straight, then switch to try a concept in another area. That way the toolbox keeps growing.`,
+    `My working days are ${hl("structured chaos")}. I'm often working on one project and get an idea for another — so I switch over to it. On bug-fix and clean-up days I have several agents working on different projects in parallel; the tasks are usually small, and finishing the first ones always turns up a few more. On other days I sit in front of a single file and go through code blocks and variable names until everything makes sense.`,
   ],
   end: `My balance to coding and learning is nature and my family, above all ${hl("my son")}.`,
   cv: [
@@ -153,7 +153,7 @@ const ru: AboutContent = {
     `Больше тысячи таких вопросов мне пришлось задать себе и ответить на них, прежде чем продукт обрёл форму. ${hl("Именно эта часть привлекает меня больше всего.")}`,
     `Я планирую, прежде чем строить, затем рано воплощаю идеи и тестирую их. Если что-то не идёт, значит план был недостаточно точным — тогда я перестраиваю его и пробую снова, ${hl("пока не заработает")}. Реализация сегодня часто идёт через ${hl("Claude Code")} как агента: концепция и архитектура — мои, CC пишет код.`,
     `Креативность для меня — часть работы. Раньше я хотел стать модельером и рисовал граффити; сегодня это уходит в UI и взаимодействие. Граффити-заголовки на этой странице и множество элементов, которые можно потрогать, — не случайность.`,
-    `Над одним проектом я обычно работаю ${hl("от двух до семи дней")} подряд, а затем переключаюсь, чтобы опробовать концепцию в другой области. Так набор инструментов постоянно растёт.`,
+    `Мои рабочие дни — это ${hl("структурированный хаос")}. Часто я работаю над одним проектом и у меня появляется идея для другого — тогда я переключаюсь на него. В дни багфиксов и уборки кода у меня параллельно работают несколько агентов над разными проектами; задачи обычно небольшие, и пока закрываешь первые, всегда появляется ещё несколько. В другие дни я сижу над одним файлом и перебираю блоки кода и имена переменных, пока всё не обретёт смысл.`,
   ],
   end: `Отдых от кода и учёбы для меня — природа и семья, и прежде всего ${hl("сын")}.`,
   cv: [
@@ -208,7 +208,7 @@ const ja: AboutContent = {
     `製品が形になるまでに、こうした問いを千以上も自分に投げかけ、答えを出す必要がありました。${hl("まさにこの部分に一番惹かれます。")}`,
     `作る前に計画し、アイデアは早めに形にしてテストします。行き詰まったら計画の精度が足りなかったということなので、構成を見直してもう一度取り組みます。${hl("動くまで")}。現在、実装には${hl("Claude Code")}を実装エージェントとしてよく使います。コンセプトとアーキテクチャは私が考え、CCがコードを書きます。`,
     `創造性も私にとって欠かせません。以前はファッションデザイナーを目指し、グラフィティを描いていました。今はそれがUIとインタラクションに生きています。このページの見出しがグラフィティ文字で、触れられる要素が多いのは偶然ではありません。`,
-    `1つのプロジェクトには通常${hl("2〜7日")}続けて取り組み、その後、別の分野でコンセプトを試すために切り替えます。こうして道具箱は増え続けます。`,
+    `私の仕事ぶりは${hl("構造化されたカオス")}です。あるプロジェクトに取り組んでいると別のプロジェクトのアイデアが浮かび、そちらに移ることがよくあります。バグ修正やクリーンアップの日には、複数のエージェントに並行して別々のプロジェクトを進めてもらいます。タスクはたいてい小さく、最初のいくつかを片づけるうちに必ず新しいものが出てきます。別の日には1つのファイルに向き合い、すべてが筋の通ったものになるまでコードブロックや変数名を見直します。`,
   ],
   end: `コードと学習の合間の息抜きは、自然と家族、何より${hl("息子")}です。`,
   cv: [
@@ -263,7 +263,7 @@ const ar: AboutContent = {
     `كان عليّ أن أطرح أكثر من ألف سؤال كهذه وأجيب عنها قبل أن يتشكّل المنتج. ${hl("وهذا بالذات الجزء الذي يجذبني أكثر.")}`,
     `أخطط قبل أن أبني، ثم أنفّذ الأفكار مبكرًا وأختبرها. وإذا تعثّر شيء، فالخطة لم تكن دقيقة بما يكفي — فأعيد هيكلتها وأحاول من جديد، ${hl("حتى يعمل")}. ويجري التنفيذ اليوم غالبًا عبر ${hl("Claude Code")} كوكيل تنفيذ: المفهوم والبنية مني، وCC يكتب الشيفرة.`,
     `الإبداع جزء من ذلك بالنسبة لي. كنت أريد أن أصبح مصمم أزياء وكنت أرسم الغرافيتي؛ واليوم يذهب ذلك إلى الواجهة والتفاعل. العناوين بخط الغرافيتي في هذه الصفحة والعناصر الكثيرة القابلة للّمس ليست صدفة.`,
-    `أعمل على المشروع الواحد عادة ${hl("من يومين إلى سبعة أيام")} متواصلة، ثم أنتقل لأجرّب مفهومًا في مجال آخر. وهكذا يكبر صندوق أدواتي باستمرار.`,
+    `أيام عملي ${hl("فوضى منظّمة")}. كثيرًا ما أعمل على مشروع فتخطر لي فكرة لمشروع آخر — فأنتقل إليه. وفي أيام إصلاح الأخطاء والتنظيف أترك عدة وكلاء يعملون بالتوازي على مشاريع مختلفة؛ المهام صغيرة عادةً، ومع إنجاز أولها تظهر دائمًا مهام جديدة. وفي أيام أخرى أجلس أمام ملف واحد وأراجع كتل الشيفرة وأسماء المتغيرات حتى يصبح كل شيء منطقيًا.`,
   ],
   end: `توازني مع البرمجة والتعلّم هو الطبيعة وعائلتي، وقبل كل شيء ${hl("ابني")}.`,
   cv: [
