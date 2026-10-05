@@ -214,7 +214,7 @@ export function renderProjectSheet(card: ProjectCard, index = 0, total = 1): str
       ${cardBodies(card)
         .map(
           (b) => `
-        <details class="psheet-acc pcard-part--${b.kind}">
+        <details class="psheet-acc pcard-part--${b.kind}" name="psheet-acc">
           <summary class="pcard-box-heading">${b.heading}</summary>
           <div class="psheet-acc-body">${b.body}</div>
         </details>`,
