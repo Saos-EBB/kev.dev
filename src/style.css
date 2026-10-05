@@ -1529,10 +1529,18 @@ button:focus-visible {
   font-size: 0.95rem;
 }
 
-/* The real heading is the visible one here (as under reduced motion). */
+/* The real heading is the visible one here (as under reduced motion).
+   It stays put while the project list rolls past underneath, and leaves
+   with the section's end, just before the last entry is gone. */
 .lite .projects-title {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 3;
   clip-path: none;
+  /* Entries rolling away underneath fade out behind it instead of
+     running through the letters. */
+  background: linear-gradient(to bottom, var(--color-bg) 75%, transparent);
+  pointer-events: none;
   padding: 1rem 16px 0.5rem;
   text-align: center;
 }

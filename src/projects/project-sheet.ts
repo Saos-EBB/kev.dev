@@ -89,6 +89,21 @@ export function initProjectSheet(root: HTMLElement, cards: ProjectCard[], lenis:
   });
   back.addEventListener("click", closeSheet);
 
+  // Only one accordion open at a time. name="psheet-acc" does this
+  // natively in newer browsers; this covers the older ones. toggle
+  // doesn't bubble, hence capture.
+  body.addEventListener(
+    "toggle",
+    (e) => {
+      const opened = e.target as HTMLDetailsElement;
+      if (!opened.matches?.(".psheet-acc") || !opened.open) return;
+      body.querySelectorAll<HTMLDetailsElement>(".psheet-acc[open]").forEach((d) => {
+        if (d !== opened) d.open = false;
+      });
+    },
+    true,
+  );
+
   document.addEventListener("keydown", (e) => {
     if (sheet.hidden || e.key !== "Escape") return;
     // ESC inside the facet overlay closes only that overlay.
