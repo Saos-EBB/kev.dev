@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Test — Kopf als 3D-Modell</title>
+  </head>
+  <body>
+    <main class="head-test">
+      <canvas class="head-canvas" aria-label="Kevins Gesicht als 3D-Drahtgitter, mit Finger oder Maus drehbar"></canvas>
+      <div class="head-tools" role="group" aria-label="Modell">
+        <button class="head-btn" type="button" data-model="fused" aria-pressed="true">4 Fotos</button>
+        <button class="head-btn" type="button" data-model="front" aria-pressed="false">Nur frontal</button>
+        <button class="head-btn" type="button" data-spin aria-pressed="true">Drehen</button>
+      </div>
+      <p class="head-hint"><span data-stats></span> · zum Drehen ziehen · Test-Seite, nicht verlinkt</p>
+    </main>
+    <script type="module" src="/src/test/head-model.ts"></script>
+  </body>
+</html>
