@@ -223,7 +223,10 @@ const cards: ProjectCard[] = [
     what: "Ein Foto geht durch ein Segmentierungsmodell, das für jeden Pixel schätzt, ob er Haare, Haut, Kleidung oder Hintergrund ist. Übrig bleibt der Kopf, eingefärbt im Verlauf dieser Seite. Daraus werden Punkte: ein Raster über das Bild, jeder Punkt so groß, wie die Stelle hell ist, jeder an einer Feder — wisch durch, sie weichen aus und federn zurück. Oder als ASCII, oder aufs Tuch aus dem Hero. Das Gesicht hier bin ich.",
     tags: ["TypeScript", "Canvas 2D", "MediaPipe", "WebAssembly", "Partikel-Physik"],
     meta: "Solo · eigenes Modul (packages/face-dots), als eigenes Repo auslagerbar",
-    links: [{ label: "Live direkt im Tool" }],
+    links: [
+      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/faceDots" },
+      { label: "Live direkt im Tool" },
+    ],
     decisions: [
       "Alles lokal: Bibliothek, wasm und Modell liegen auf dieser Seite — kein Request an Google, kein Upload",
       "Punkte statt 3D-Modell: ein Gesichts-Mesh aus Fotos blieb eine glatte Maske, die Punkte zeigen das echte Bild",

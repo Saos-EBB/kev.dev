@@ -6,6 +6,7 @@
   "main": "src/index.ts",
   "exports": { ".": "./src/index.ts" },
   "files": ["src", "README.md"],
+  "repository": { "type": "git", "url": "https://github.com/Saos-EBB/faceDots.git" },
   "peerDependencies": {
     "@mediapipe/tasks-vision": ">=0.10"
   },
