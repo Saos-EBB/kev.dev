@@ -1,0 +1,73 @@
+/* Test page only (/testModel): Kevin's face as a wireframe, drawn the way
+   the 3D-Wireframe-Renderer project draws its models. */
+:root {
+  --color-bg: #08070a;
+  --accent: #57b9ff;
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.head-test {
+  position: fixed;
+  inset: 0;
+  touch-action: none;
+}
+
+.head-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+}
+
+.head-canvas:active {
+  cursor: grabbing;
+}
+
+.head-tools {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  inset-inline: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.head-btn {
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  font: 0.72rem/1 ui-monospace, "JetBrains Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f5f5f6;
+  cursor: pointer;
+}
+
+.head-btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.head-hint {
+  position: absolute;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  inset-inline: 16px;
+  margin: 0;
+  text-align: center;
+  font: 0.72rem/1.4 ui-monospace, "JetBrains Mono", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8a8494;
+}
