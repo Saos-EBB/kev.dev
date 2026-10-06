@@ -490,6 +490,18 @@ function refreshHeroName() {
 refreshHeroName();
 document.fonts.ready.then(refreshHeroName);
 
+// Local font playground (src/dev/font-tool.ts); only on `npm run dev`,
+// the whole branch drops out of the production build.
+if (import.meta.env.DEV) {
+  import("./dev/font-tool").then((m) =>
+    m.mountFontTool(() => {
+      fitProjectsTitles();
+      refreshHeroName();
+      ScrollTrigger.refresh();
+    }),
+  );
+}
+
 // Reduced motion: leave the static name from the HTML/hero-names.ts in
 // place, unanimated — same convention as cloth.ts/contact.ts/carousel.ts.
 const heroNameForceMotion =
