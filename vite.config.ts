@@ -31,8 +31,9 @@ export default defineConfig({
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
-        // Unlinked playground (/test) for trying ideas before they go on the page.
-        test: root("test.html"),
+        // Unlinked playgrounds for trying ideas before they go on the page.
+        testCloth: root("testCloth.html"),
+        testModel: root("testModel.html"),
       },
     },
   },

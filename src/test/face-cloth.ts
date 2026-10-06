@@ -1,9 +1,9 @@
-// Test page (/test): the hero's cloth, but with Kevin's face as the
-// texture instead of the name. The default face (public/test/face.webp)
-// was processed offline — only that result is in the repo, never the
+// Test page (/testCloth): the hero's cloth, but with Kevin's face as the
+// texture instead of the name. The preset faces (public/test-cloth/,
+// made with scripts/face-textures.py) were processed offline — only that result is in the repo, never the
 // original photo. Any other photo can be dropped in (or picked) and is
 // cut out and duotoned right here in the browser (face-process.ts);
-// "Bild speichern" downloads the result to put into public/test/.
+// "Bild speichern" downloads the result.
 //
 // Motion is always on here (html.force-motion, like the main page), and a
 // finger may grab in any direction — nothing on this page scrolls.
@@ -30,16 +30,28 @@ function show(tex: HTMLCanvasElement) {
   cloth.setTextTexture(tex);
 }
 
-const img = new Image();
-img.src = "/test/face.webp";
-img.decode().then(() => {
-  const tex = document.createElement("canvas");
-  tex.width = img.naturalWidth;
-  tex.height = img.naturalHeight;
-  tex.getContext("2d")!.drawImage(img, 0, 0);
+const presets = [...document.querySelectorAll<HTMLButtonElement>("[data-face]")];
+const presetCache = new Map<string, HTMLCanvasElement>();
+
+async function showPreset(name: string) {
+  presets.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.face === name)));
+  let tex = presetCache.get(name);
+  if (!tex) {
+    const img = new Image();
+    img.src = `/test-cloth/face-${name}.webp`;
+    await img.decode();
+    tex = document.createElement("canvas");
+    tex.width = img.naturalWidth;
+    tex.height = img.naturalHeight;
+    tex.getContext("2d")!.drawImage(img, 0, 0);
+    presetCache.set(name, tex);
+  }
   show(tex);
-  cloth.startAutoPulls();
-});
+  save.hidden = true;
+}
+
+presets.forEach((b) => b.addEventListener("click", () => showPreset(b.dataset.face!)));
+showPreset("front").then(() => cloth.startAutoPulls());
 
 async function useFile(file: File | undefined) {
   if (!file || !file.type.startsWith("image/")) return;
@@ -47,6 +59,7 @@ async function useFile(file: File | undefined) {
   try {
     const { photoToFaceTexture } = await import("./face-process");
     show(await photoToFaceTexture(file));
+    presets.forEach((b) => b.setAttribute("aria-pressed", "false"));
     save.hidden = false;
     hint.textContent = "Fertig · zieh am Tuch";
   } catch (err) {
