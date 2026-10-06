@@ -1,8 +1,8 @@
 // Each card's signature visual — the part that gives a project its own
-// vibe at a glance. Plain HTML + CSS (project-cards.css), no canvas and no
-// per-frame JS: the only motion is the renderer's CSS cube, which runs on
-// the compositor. Everything shown is taken from the card's own data or
-// from facts already stated in its copy; nothing here is new information.
+// vibe at a glance. Plain HTML + CSS (project-cards.css), no per-frame JS —
+// except FaceDots' particles, which only move while settling or pushed.
+// Everything shown is taken from the card's own data or from facts
+// already stated in its copy; nothing here is new information.
 //
 // Buttons carrying data-card/data-facet open the shared overlay exactly
 // like the head's facet buttons (facet-overlay.ts listens on [data-facet]),
@@ -176,6 +176,17 @@ function storyboard(_card: ProjectCard): string {
   `;
 }
 
+// FaceDots: Kevin's face as live particles (face-dots-site.ts mounts
+// them on the canvas); the button opens the tool.
+function portrait(card: ProjectCard): string {
+  return `
+    <div class="viz-faces">
+      <canvas class="viz-faces-canvas" data-face-dots aria-hidden="true"></canvas>
+      <button class="viz-faces-open" type="button" data-card="${esc(card.id)}" data-facet="live-demo">${UI.vizFacesOpen}</button>
+    </div>
+  `;
+}
+
 export function renderVisual(card: ProjectCard): string {
   switch (card.layout) {
     case "blueprint":
@@ -190,5 +201,7 @@ export function renderVisual(card: ProjectCard): string {
       return pinboard(card);
     case "storyboard":
       return storyboard(card);
+    case "portrait":
+      return portrait(card);
   }
 }
