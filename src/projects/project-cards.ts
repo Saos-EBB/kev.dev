@@ -39,7 +39,7 @@ export interface ProjectWidget {
 export type FacetKind = "live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
-export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard" | "storyboard";
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard" | "storyboard" | "portrait";
 
 export interface ProjectCard {
   id: string;
@@ -111,6 +111,7 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
   editor: ["why", "learned", "code"],
   pinboard: ["why"],
   storyboard: ["why", "learned", "code"],
+  portrait: ["why", "learned", "code"],
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -184,6 +185,7 @@ export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): st
   const tags = card.tags?.slice(0, 4) ?? [];
   return `
     <article class="ptease" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${card.layout === "portrait" ? `<canvas class="ptease-face" data-face-dots aria-hidden="true"></canvas>` : ""}
       <p class="pcard-index">${indexLine(card, index, total)}</p>
       <h3 class="ptease-title">
         <button type="button" data-open-project="${esc(card.id)}" aria-label="${esc(card.title)} — ${esc(UI.projectOpen)}">${displayText(card.title)}</button>

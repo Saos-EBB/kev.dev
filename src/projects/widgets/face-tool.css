@@ -1,0 +1,124 @@
+/* FaceDots tool (see face-tool.ts): buttons on top, the stage fills the
+   rest of the overlay's workspace. --pc comes from the overlay panel. */
+.ftool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  min-height: 70vh;
+}
+
+.ftool-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.ftool-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ftool-group button,
+.ftool-pick {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.8rem;
+  border: 1px solid var(--pc-soft, color-mix(in srgb, var(--pc) 38%, transparent));
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.ftool-group button[aria-pressed="true"] {
+  border-color: var(--pc);
+  color: var(--pc);
+}
+
+.ftool-pick {
+  border-style: dashed;
+}
+
+.ftool-group button:focus-visible,
+.ftool-pick:focus-within {
+  outline: 2px solid var(--pc);
+  outline-offset: 3px;
+}
+
+.ftool-stage {
+  position: relative;
+  flex: 1;
+  min-height: 22rem;
+  border: 1px solid var(--pc);
+  background: radial-gradient(ellipse at 50% 45%, color-mix(in srgb, var(--pc) 10%, transparent), transparent 70%);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.ftool-dots,
+.ftool-cloth,
+.ftool-cloth canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ftool-dots[hidden],
+.ftool-cloth[hidden],
+.ftool-drop[hidden] {
+  display: none;
+}
+
+.ftool-cloth canvas {
+  pointer-events: none;
+}
+
+.ftool-cloth-bounds {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* Only measured: the cloth warps the face into this box. */
+.ftool-cloth-box {
+  height: 72%;
+  max-width: 80%;
+  aspect-ratio: 3 / 4;
+}
+
+.ftool-drop {
+  position: absolute;
+  inset: 0.75rem;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--pc);
+  background: color-mix(in srgb, var(--projects-bg) 75%, transparent);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text);
+  pointer-events: none;
+}
+
+.ftool-status,
+.ftool-privacy {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.ftool-status {
+  text-transform: uppercase;
+}

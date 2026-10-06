@@ -140,3 +140,10 @@
 ## 2026-10-05 — feat(projects, mobile): Projekte-Schriftzug bleibt stehen, Liste läuft wie auf einem Rad
 **Was:** Am Handy bleibt der „Projekte“-Schriftzug oben stehen (sticky, mit Verlauf nach unten, damit die Einträge darunter verschwinden statt durch die Buchstaben zu laufen), während die Liste vorbeiläuft. Sobald die Unterkante des letzten Projekts über ~55 % der Bildschirmhöhe steigt, schiebt sich der Schriftzug mit nach oben weg (`TITLE_EXIT` in `projects/project-wheel.ts`). Die Einträge liegen wie auf einem Rad: in der Bildschirmmitte flach, darüber kippen sie nach hinten oben weg, von unten rollen sie von hinten nach vorn (rotateX + translateZ + Opacity, nur beim Scrollen per rAF). Reduced Motion: flache Liste.
 **Dazu:** In der Projektansicht ist immer nur eine Aufklapp-Sektion offen — öffnet man Learned!, geht Why? zu (`name`-Attribut auf `<details>`, JS-Fallback für ältere Browser).
+
+## 2026-10-06 — feat(projects): FaceDots als 7. Projekt, Punkte-Modul ausgelagert
+**Was:** Neue letzte Projekt-Card „FaceDots“ (Layout `portrait`, als Tool gekennzeichnet): Kevins Gesicht als Partikel, direkt vor Kontakt — am Desktop rechts in der Card, am Handy oben im letzten Listeneintrag (fliegt beim Reinscrollen ein). Live-Demo = das Tool (`projects/widgets/face-tool.ts`): fünf vorbereitete Cap-Fotos oder ein eigenes Foto → Kopf wird im Browser freigestellt → als Punkte, ASCII oder auf dem Hero-Tuch. Texte in allen fünf Sprachen.
+**Modul:** `packages/face-dots/` (eigene README/package.json, keine Abhängigkeit zur Seite): `photoToFace` (MediaPipe-Segmentierung, Zuschnitt, Duotone) und `createFaceDots` (Punkte/ASCII mit Federn). Die Seite bindet es über `projects/face-dots-site.ts` ein.
+**Lokal:** Bibliothek, wasm und Modell (`public/face-dots/`) kommen von der eigenen Domain — beim Verarbeiten eines Fotos geht kein Request nach außen (geprüft).
+**Entfernt:** Testseiten `/testCloth`, `/testDots` (im Tool aufgegangen).
+**Offen:** GitHub-Link, sobald `face-dots` ein eigenes Repo ist.
