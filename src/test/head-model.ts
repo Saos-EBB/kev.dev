@@ -70,7 +70,7 @@ function draw() {
   const cy = Math.cos(yaw), sy = Math.sin(yaw);
   const cp = Math.cos(pitch), sp = Math.sin(pitch);
   const proj = new Float32Array(n * 3);
-  const scale = Math.min(w, h) * 1.05;
+  const scale = Math.min(w, h) * 0.85;
   let lo = Infinity, hi = -Infinity;
   for (let i = 0; i < n; i++) {
     let x = base[i * 3], y = base[i * 3 + 1], z = base[i * 3 + 2];
@@ -92,7 +92,7 @@ function draw() {
     const t = ((proj[edges[e] * 3 + 2] + proj[edges[e + 1] * 3 + 2]) / 2 - lo) / (hi - lo || 1);
     buckets[Math.min(15, Math.floor(t * 16))].push(e);
   }
-  ctx.lineWidth = Math.max(1, (window.devicePixelRatio || 1) * 0.8);
+  ctx.lineWidth = Math.max(0.6, (window.devicePixelRatio || 1) * 0.5);
   for (let s = 15; s >= 0; s--) {
     ctx.strokeStyle = SHADES[s];
     ctx.beginPath();
