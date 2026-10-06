@@ -1,9 +1,10 @@
 // Turns any photo into the cloth's face texture, right in the browser:
 // cut out the head (MediaPipe's multiclass selfie segmenter: hair, face
 // and neck skin), crop to it, then duotone it in the site's gradient.
-// Nothing is uploaded — the photo never leaves the page. Only the
-// segmentation model is fetched (from Google's model storage), and only
-// once a photo is actually dropped in.
+// Nothing is uploaded — the photo never leaves the page — and nothing is
+// fetched from anyone else: the library, its wasm and the model all come
+// from this site. The model (Google's, Apache-2.0, ~16 MB in public/models/)
+// only loads once a photo is actually dropped in.
 
 import type { ImageSegmenter } from "@mediapipe/tasks-vision";
 // The package's exports map hides its wasm folder, hence the plain path;
@@ -11,8 +12,9 @@ import type { ImageSegmenter } from "@mediapipe/tasks-vision";
 import wasmLoaderPath from "../../node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.js?url";
 import wasmBinaryPath from "../../node_modules/@mediapipe/tasks-vision/wasm/vision_wasm_internal.wasm?url";
 
-const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite";
+// Self-hosted copy of
+// storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/
+const MODEL_URL = "/models/selfie_multiclass_256x256.tflite";
 
 // selfie_multiclass categories: 0 background, 1 hair, 2 body skin,
 // 3 face skin, 4 clothes, 5 accessories.
