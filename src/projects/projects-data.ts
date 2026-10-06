@@ -1,4 +1,4 @@
-// The five project cards. Copy is taken verbatim from the handoff — do
+// The project cards. Copy is taken verbatim from the handoff — do
 // not reword. Order: the strongest three first, then AniScript, then
 // Grundlagen last. `open` entries are unresolved questions that stay
 // visible on the card until Kevin answers them. `layout` picks the card's
@@ -205,6 +205,40 @@ const cards: ProjectCard[] = [
       "Info-Texte zu Mastermind, Personalverwaltung und Bibliothek",
       "Bibliothek-Quelle fehlt; Personalverwaltung hat kein main (kein Terminal)",
     ],
+  },
+  {
+    id: "facedots",
+    layout: "portrait",
+    kind: "Tool · Foto zu Punkten",
+    accent: "var(--note-4)",
+    learnGoal:
+      "Wollte wissen, wie man Bilderkennung direkt im Browser laufen lässt — ohne Server, ohne dass ein Foto irgendwohin geht.",
+    title: "FaceDots",
+    claim: "Ein kleines Tool: Foto rein, Kopf freistellen, als Punkte, ASCII oder Tuch wieder raus — alles im Browser.",
+    points: [
+      "Foto rein: ein Bildmodell stellt den Kopf frei, lokal im Browser",
+      "Raus als Punkte, ASCII oder auf dem Tuch aus dem Hero",
+      "Eigenes Modul — als eigenes Repo auslagerbar",
+    ],
+    what: "Ein Foto geht durch ein Segmentierungsmodell, das für jeden Pixel schätzt, ob er Haare, Haut, Kleidung oder Hintergrund ist. Übrig bleibt der Kopf, eingefärbt im Verlauf dieser Seite. Daraus werden Punkte: ein Raster über das Bild, jeder Punkt so groß, wie die Stelle hell ist, jeder an einer Feder — wisch durch, sie weichen aus und federn zurück. Oder als ASCII, oder aufs Tuch aus dem Hero. Das Gesicht hier bin ich.",
+    tags: ["TypeScript", "Canvas 2D", "MediaPipe", "WebAssembly", "Partikel-Physik"],
+    meta: "Solo · eigenes Modul (packages/face-dots), als eigenes Repo auslagerbar",
+    links: [{ label: "Live direkt im Tool" }],
+    decisions: [
+      "Alles lokal: Bibliothek, wasm und Modell liegen auf dieser Seite — kein Request an Google, kein Upload",
+      "Punkte statt 3D-Modell: ein Gesichts-Mesh aus Fotos blieb eine glatte Maske, die Punkte zeigen das echte Bild",
+      "Feder pro Punkt, Farben in 16 Gruppen gezeichnet — läuft am Handy flüssig und steht still, sobald alles liegt",
+      "Als eigenständiges Modul gebaut, ohne Abhängigkeit zur Seite",
+    ],
+    challenge:
+      "Drei Varianten ausprobiert: Gesicht aufs Tuch, als 3D-Drahtgitter aus mehreren Fotos, als Punkte. Das Tuch verzerrt Gesichter schnell ins Gruselige, das 3D-Modell kennt nur die Gesichtsfläche ohne Cap und Haare. Die Punkte haben gewonnen.",
+    origin:
+      "Idee für ein interaktives Porträt auf dieser Seite → Testseiten für Tuch, 3D-Modell und Punkte → das Freistellen erst offline, dann direkt im Browser → Modell selbst gehostet → als Modul ausgelagert.",
+    widget: {
+      label: "Foto → Punkte, ASCII oder Tuch",
+      mount: (el, card) => import("./widgets/face-tool").then((m) => m.mount(el, card)),
+    },
+    facets: ["live-demo"],
   },
 ];
 
