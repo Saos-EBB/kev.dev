@@ -1,4 +1,4 @@
-/* Test page only (/test): Kevin's face, duotoned in the site's gradient,
+/* Test page only (/testCloth): Kevin's face, duotoned in the site's gradient,
    warped onto the same cloth as the hero name. */
 :root {
   --color-bg: #08070a;
@@ -59,9 +59,28 @@ body {
 .face-tools {
   position: absolute;
   top: max(1rem, env(safe-area-inset-top));
+  inset-inline: 16px;
   display: flex;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
   z-index: 2;
+}
+
+.face-pick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.face-pick .face-btn {
+  padding: 0 0.7rem;
+}
+
+.face-btn[aria-pressed="true"] {
+  border-color: var(--grid-color);
+  color: var(--grid-color);
 }
 
 .face-btn {
