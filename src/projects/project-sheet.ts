@@ -15,6 +15,7 @@ import "./project-sheet.css";
 import { RTL } from "../i18n";
 import { UI } from "../i18n/ui";
 import { renderProjectSheet, type ProjectCard } from "./project-cards";
+import { mountFaceVisuals } from "./face-dots-site";
 
 let closeSheet: () => void = () => {};
 
@@ -58,6 +59,7 @@ export function initProjectSheet(root: HTMLElement, cards: ProjectCard[], lenis:
     const i = cards.findIndex((c) => c.id === id);
     if (i < 0) return;
     body.innerHTML = renderProjectSheet(cards[i], i, cards.length);
+    mountFaceVisuals(body);
     sheet.style.setProperty("--pc", cards[i].accent);
     sheet.scrollTop = 0;
     sheet.hidden = false;

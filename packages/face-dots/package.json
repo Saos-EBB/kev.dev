@@ -1,0 +1,13 @@
+{
+  "name": "face-dots",
+  "version": "0.1.0",
+  "description": "Photo to cut-out, duotoned face to interactive dots or ASCII — in the browser, nothing uploaded.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "files": ["src", "README.md"],
+  "peerDependencies": {
+    "@mediapipe/tasks-vision": ">=0.10"
+  },
+  "keywords": ["face", "particles", "ascii", "mediapipe", "segmentation", "canvas"]
+}

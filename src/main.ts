@@ -27,6 +27,7 @@ import { mountSaosLoader } from "./intro/saos-intro";
 import { LITE, LITE_QUERY, makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 import { closeProjectSheet, initProjectSheet } from "./projects/project-sheet";
 import { initProjectWheel } from "./projects/project-wheel";
+import { mountFaceVisuals } from "./projects/face-dots-site";
 import { HERO_NAMES } from "./hero/hero-names";
 import { startNameTypewriter } from "./hero/name-typewriter";
 import { hexToRgb } from "./colors";
@@ -574,6 +575,8 @@ if (!LITE) {
 }
 
 initFacetOverlay(projectsSection, projectCards, lenis);
+// FaceDots: the face as live particles on its card / list entry.
+mountFaceVisuals(projectsSection);
 
 if (LITE) {
   initProjectSheet(projectsSection, projectCards, lenis);
