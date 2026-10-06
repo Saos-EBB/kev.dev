@@ -53,7 +53,24 @@ const cards: ProjectCard[] = [
       "Die eigentliche Herausforderung war der Umfang: kompletter Fullstack solo in zwei Monaten. Die Basis — DB, Security, API — ist sauber und bewusst gebaut. Der Business-Logic-Layer darüber ist der experimentelle Teil: hier habe ich Ideen ausprobiert, statt auf Nummer sicher zu gehen — und dabei am meisten gelernt.",
     origin:
       "2 Wochen DB-Brainstorm (Row-Level Security, PostGIS) → Backend drauf (Postman war Gold beim API-Bauen) → Frontend obendrauf, Layouts und Verhalten durchgespielt, bis es saß.",
-    facets: ["live-demo", "b2b"],
+    // Showcase from the YourBrand repo: one codebase, four tenants, side by
+    // side. The Discover screens are left out on purpose (test profiles use
+    // pictures of real people), and cut from the video too.
+    video: {
+      src: "/projects/yourbrand/mandanten.mp4",
+      poster: "/projects/yourbrand/mandanten-poster.webp",
+      alt: "Gleicher Ablauf, vier Mandanten gleichzeitig — die Unterschiede kommen nur aus der Mandanten-Config",
+    },
+    screenshots: [
+      { src: "/projects/yourbrand/01-login.webp", alt: "Login — dieselbe App, vier Mandanten: Campus Match, KiezConnect, Miteinander, Underground" },
+      { src: "/projects/yourbrand/02-zustimmung.webp", alt: "Zustimmung beim ersten Login, Texte je Mandant" },
+      { src: "/projects/yourbrand/03-dashboard.webp", alt: "Dashboard — Funktionen je nach gebuchtem Paket (Discover und Matching nur bei Premium)" },
+      { src: "/projects/yourbrand/04-chats.webp", alt: "Chat-Übersicht" },
+      { src: "/projects/yourbrand/05-chat.webp", alt: "Chat — Farben und Ton kommen aus der Mandanten-Config" },
+      { src: "/projects/yourbrand/07-hidden-zone.webp", alt: "Hidden Zone — nur Underground hat sie gebucht, inklusive eigener Leetspeak-Sprache" },
+      { src: "/projects/yourbrand/08-einstellungen.webp", alt: "Einstellungen — bei Miteinander standardmäßig in Leichter Sprache" },
+    ],
+    facets: ["live-demo", "screens", "b2b"],
     open: [
       "Multi-Tenancy „angelegt/gedacht“ vs. voll umgesetzt — Wortwahl von Kevin bestätigen lassen",
     ],
