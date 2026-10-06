@@ -147,3 +147,7 @@
 **Lokal:** Bibliothek, wasm und Modell (`public/face-dots/`) kommen von der eigenen Domain — beim Verarbeiten eines Fotos geht kein Request nach außen (geprüft).
 **Entfernt:** Testseiten `/testCloth`, `/testDots` (im Tool aufgegangen).
 **Repo:** https://github.com/Saos-EBB/faceDots (Stand des Moduls beim Auslagern; `packages/face-dots/` bleibt die Kopie, die die Seite nutzt).
+
+## 2026-10-06 — fix(build): schwarzer Bildschirm in Produktion
+**Bug:** Nach FaceDots war die Seite auf Vercel schwarz (React-Fehler #299). Das Tool lud `hero/cloth.ts` per `import()`, obwohl die Hauptseite es schon statisch enthält — dafür braucht der Bundler einen Namespace-Helfer, und den hat er in den Chunk der YourBrand-Seite gelegt. Die Hauptseite importierte so die ganze YourBrand-App, die beim Laden `createRoot` auf ein fehlendes `#root` aufrief und alles abbrechen ließ. Lokal im Dev-Server nicht sichtbar, nur im Build.
+**Fix:** `Cloth` im Tool statisch importieren. Geprüft mit `vite preview`: Hauptseite ohne Fehler, Tool samt Tuch läuft, `/yourbrand/` rendert weiter.
