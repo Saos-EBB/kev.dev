@@ -65,6 +65,9 @@ export interface ProjectCard {
   // Unresolved content questions, shown visibly on the card until answered.
   open?: string[];
   screenshots?: { src: string; alt: string }[];
+  // A clip shown on top of the screenshots in the Screens gallery (an
+  // .mp4 with a .webm of the same name next to it).
+  video?: { src: string; poster: string; alt: string };
   // A character to put on the card's visual (TschoBBo's mascot).
   mascot?: { src: string; alt: string };
   widget?: ProjectWidget;
