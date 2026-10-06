@@ -388,7 +388,8 @@
   gap: 0.5rem;
 }
 
-.facet-gallery img {
+.facet-gallery img,
+.facet-gallery video {
   display: block;
   width: 100%;
   height: auto;

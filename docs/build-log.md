@@ -151,3 +151,8 @@
 ## 2026-10-06 — fix(build): schwarzer Bildschirm in Produktion
 **Bug:** Nach FaceDots war die Seite auf Vercel schwarz (React-Fehler #299). Das Tool lud `hero/cloth.ts` per `import()`, obwohl die Hauptseite es schon statisch enthält — dafür braucht der Bundler einen Namespace-Helfer, und den hat er in den Chunk der YourBrand-Seite gelegt. Die Hauptseite importierte so die ganze YourBrand-App, die beim Laden `createRoot` auf ein fehlendes `#root` aufrief und alles abbrechen ließ. Lokal im Dev-Server nicht sichtbar, nur im Build.
 **Fix:** `Cloth` im Tool statisch importieren. Geprüft mit `vite preview`: Hauptseite ohne Fehler, Tool samt Tuch läuft, `/yourbrand/` rendert weiter.
+
+## 2026-10-06 — feat(yourbrand): Mandanten-Showcase als „Screens“
+**Was:** Die YourBrand-Card hat jetzt einen „Screens“-Button: zuerst das 2×2-Video (gleicher Ablauf, vier Mandanten gleichzeitig: Campus Match, KiezConnect, Miteinander, Underground), dann sieben Vergleichsbilder (Login, Zustimmung, Dashboard, Chats, Chat, Hidden Zone, Einstellungen) mit Beschriftung in allen fünf Sprachen. Belegt den White-Label-Punkt direkt. Bilder als WebP (je ~30–50 KB), Video als WebM + MP4 (je ~0,5 MB), alles in `public/projects/yourbrand/`.
+**Bewusst weggelassen:** Der Discover-Screen — die Testprofile nutzen Bilder echter Personen (u. a. Promi-Fotos, ein Meme) und fremde Manga-/Anime-Bilder. Auch aus dem Video herausgeschnitten (Sekunde 19–24 des Originals).
+**Fix nebenbei:** Der Commit „added ypurbrand pics“ hatte eine alte Kopie von `src/contact/` als `src/hero/contact/` mitgebracht — deren Imports zeigen ins Leere, `tsc` schlug fehl und damit der Build auf Vercel. Ordner entfernt; die Änderung an `hero-names.ts` bleibt.
