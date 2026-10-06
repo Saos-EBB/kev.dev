@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" class="force-motion">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -13,7 +13,15 @@
       <div class="face-bounds">
         <div class="face-box" aria-hidden="true"></div>
       </div>
-      <p class="face-hint">Zieh am Tuch · Test-Seite, nicht verlinkt</p>
+      <div class="face-tools">
+        <label class="face-btn">
+          Foto wählen
+          <input type="file" accept="image/*" hidden />
+        </label>
+        <button class="face-btn" type="button" data-save hidden>Bild speichern</button>
+      </div>
+      <p class="face-hint" aria-live="polite">Zieh am Tuch · oder zieh ein Foto hier rein</p>
+      <div class="face-drop" hidden>Foto loslassen</div>
     </main>
     <script type="module" src="/src/test/face-cloth.ts"></script>
   </body>
