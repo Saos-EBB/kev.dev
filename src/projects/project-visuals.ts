@@ -99,8 +99,8 @@ function editor(card: ProjectCard): string {
   const lines: [string, string][] = [
     ["c", "// ==UserScript=="],
     ["c", `// @name        ${card.title}`],
-    ["c", "// @version     0.0.85"],
-    ["c", "// @match       https://aniworld.to/*"],
+    ["c", "// @version     0.2.5"],
+    ["c", "// @grant       GM_getValue"],
     ["c", "// ==/UserScript=="],
     ["", ""],
     ...UI.vizEditorFeatures,
