@@ -192,12 +192,17 @@ export class Cloth {
   } | null = null; // cloth-pulls
 
   private readonly reducedMotion: boolean;
+  private readonly touchGrabAnyDirection: boolean;
 
   constructor(
     canvas: HTMLCanvasElement,
     boundsEl?: HTMLElement,
     textBoundsEl?: HTMLElement,
+    // On a page that doesn't scroll (the /test playground) a finger may
+    // grab in any direction, not just sideways.
+    { touchGrabAnyDirection = false } = {},
   ) {
+    this.touchGrabAnyDirection = touchGrabAnyDirection;
     this.canvas = canvas;
     this.boundsEl = boundsEl ?? null;
     this.textBoundsEl = textBoundsEl ?? null;
@@ -572,6 +577,13 @@ export class Cloth {
     }
     const pending = this.touchPending;
     if (!pending || pending.id !== e.pointerId) return;
+    if (this.touchGrabAnyDirection) {
+      if (Math.hypot(e.clientX - pending.x, e.clientY - pending.y) > TOUCH_SLOP) {
+        this.grabAt(pending.x, pending.y);
+        this.setPointer(e);
+      }
+      return;
+    }
     // Wandered off vertically: that's a scroll, not a press — no
     // long-press grab later either.
     if (Math.abs(e.clientY - pending.y) > TOUCH_SLOP) {
