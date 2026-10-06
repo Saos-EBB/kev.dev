@@ -12,8 +12,9 @@ browser; the photo is never uploaded.
    cell, sized by brightness, each on a spring. The pointer pushes them
    away, they fly back. Idle once settled.
 
-Written for [kev.dev](https://github.com/Saos-EBB/kev.dev), kept free of
-anything site-specific so it can live in its own repo.
+Written for [kev.dev](https://github.com/Saos-EBB/kev.dev) — that's where
+it runs live, as the last project. Free of anything site-specific.
+Standalone repo: https://github.com/Saos-EBB/faceDots
 
 ## Use
 
