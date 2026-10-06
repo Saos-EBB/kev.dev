@@ -12,4 +12,4 @@
 // superscript-four codepoint (⁴, U+2074) — a genuine, differently-shaped
 // glyph this font does have — and "..."/trailing "." use the real
 // ellipsis (…, U+2026) and middle dot (·, U+00B7) instead of periods.
-export const HERO_NAMES = ["Kevin Schaberl", "Saos", "SaosGone", "SaosOne", "3Rad","Geok","saos⁴3","Saos-EBB","Saos", "Saos-EBB-⁴3", "or just … kev ·"];
+export const HERO_NAMES = ["Kevin Schaberl", "Saos", "SaosOne", "SaosGone","zaoz","saos⁴3","Saos-EBB", "Saos-EBB-⁴3", "or just … kev ·"];
