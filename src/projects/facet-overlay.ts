@@ -112,7 +112,11 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
       return {
         title: UI.screensTitle(card.title),
         bodyHtml: card.screenshots?.length
-          ? `<div class="facet-gallery">${card.screenshots
+          ? `<div class="facet-gallery">${
+              card.video
+                ? `<figure><video poster="${esc(card.video.poster)}" controls muted loop playsinline preload="none"><source src="${esc(card.video.src.replace(/\.mp4$/, ".webm"))}" type="video/webm" /><source src="${esc(card.video.src)}" type="video/mp4" /></video><figcaption>${esc(card.video.alt)}</figcaption></figure>`
+                : ""
+            }${card.screenshots
               .map(
                 (s) => `<figure><img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" /><figcaption>${esc(s.alt)}</figcaption></figure>`,
               )
