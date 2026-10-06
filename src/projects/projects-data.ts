@@ -163,7 +163,7 @@ const cards: ProjectCard[] = [
       "Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt",
       "Jede Debug-Erkenntnis als Kommentar direkt im Code",
     ],
-    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Dann habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube. (Zielseite: aniworld.to)",
+    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Dann habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
     tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
     meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/AniScript" }, { label: "kein Live-Widget (Userscript)" }],
@@ -171,7 +171,6 @@ const cards: ProjectCard[] = [
       "Neu geschrieben statt weiter adaptiert — 5000 fremde Zeilen ließen sich nicht mehr sauber verstehen und warten",
       "Kommentare als Gedächtnis: jede Debug-Erkenntnis steht im Code, damit sie keiner zweimal lösen muss",
       "Theater-Modus per CSS statt echtem Vollbild — überlebt jeden Folgenwechsel im iframe",
-      "bs.to-Adaption geprüft und verworfen: andere Architektur (leitet auf externen Hoster um, statt im iframe einzubetten)",
     ],
     challenge:
       "Lange ein Render-Bug mit Darstellungsfehlern — Ursache war nicht das Script, sondern der Userscript-Manager unter Braves Umstieg von Manifest V2 auf V3. Der Wechsel von Violentmonkey zu ScriptCat hat's behoben, das mit MV3 sauber zurechtkam.",
