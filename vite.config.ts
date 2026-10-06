@@ -34,6 +34,7 @@ export default defineConfig({
         // Unlinked playgrounds for trying ideas before they go on the page.
         testCloth: root("testCloth.html"),
         testModel: root("testModel.html"),
+        testDots: root("testDots.html"),
       },
     },
   },
