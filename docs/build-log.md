@@ -146,4 +146,4 @@
 **Modul:** `packages/face-dots/` (eigene README/package.json, keine Abhängigkeit zur Seite): `photoToFace` (MediaPipe-Segmentierung, Zuschnitt, Duotone) und `createFaceDots` (Punkte/ASCII mit Federn). Die Seite bindet es über `projects/face-dots-site.ts` ein.
 **Lokal:** Bibliothek, wasm und Modell (`public/face-dots/`) kommen von der eigenen Domain — beim Verarbeiten eines Fotos geht kein Request nach außen (geprüft).
 **Entfernt:** Testseiten `/testCloth`, `/testDots` (im Tool aufgegangen).
-**Offen:** GitHub-Link, sobald `face-dots` ein eigenes Repo ist.
+**Repo:** https://github.com/Saos-EBB/faceDots (Stand des Moduls beim Auslagern; `packages/face-dots/` bleibt die Kopie, die die Seite nutzt).
