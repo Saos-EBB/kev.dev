@@ -9,7 +9,11 @@ import { UI } from "../../i18n/ui";
 import type { ProjectCard } from "../project-cards";
 import { createFaceDots, loadImage, photoToFace } from "../../../packages/face-dots/src";
 import { FACES, PROCESS_OPTIONS, faceUrl, type FaceId } from "../face-dots-site";
-import type { Cloth } from "../../hero/cloth";
+// Static on purpose: the hero already has the cloth in the main bundle.
+// A dynamic import() of it made the bundler need a namespace helper that
+// ended up in YourBrand's chunk — the portfolio then pulled in (and
+// crashed on) the whole YourBrand app.
+import { Cloth } from "../../hero/cloth";
 
 type View = "dots" | "ascii" | "cloth";
 
@@ -57,7 +61,6 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   async function showOnCloth() {
     if (!face) return;
     if (!cloth) {
-      const { Cloth } = await import("../../hero/cloth");
       cloth = new Cloth(
         clothWrap.querySelector("canvas")!,
         clothWrap.querySelector<HTMLElement>(".ftool-cloth-bounds")!,
