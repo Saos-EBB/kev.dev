@@ -74,21 +74,21 @@ export async function photoToFaceTexture(file: Blob): Promise<HTMLCanvasElement>
   const result = seg.segment(src);
   const cats = result.categoryMask!.getAsUint8Array();
   // Soft edges from the per-class confidences (hair + face skin + body
-  // skin), sharpened so the background goes fully clear but hair strands
+  // skin + accessories, so a cap or glasses stay on), sharpened so the background goes fully clear but hair strands
   // keep a soft rim instead of the category mask's hard staircase.
   const conf = result.confidenceMasks!.map((m) => m.getAsFloat32Array());
   const alpha = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) {
-    const keep = conf[1][i] + conf[2][i] + conf[3][i];
+    const keep = conf[1][i] + conf[2][i] + conf[3][i] + conf[5][i];
     const t = Math.max(0, Math.min(1, (keep - 0.35) / 0.3));
     alpha[i] = t * t * (3 - 2 * t);
   }
 
-  // Crop to the head: hair + face skin only (body skin would pull in the
-  // arms), then a bit further down for the neck.
+  // Crop to the head: hair, face skin and accessories (cap) only — body
+  // skin would pull in the arms — then a bit further down for the neck.
   let x0 = w, y0 = h, x1 = 0, y1 = 0;
   for (let i = 0; i < w * h; i++) {
-    if (cats[i] !== 1 && cats[i] !== 3) continue;
+    if (cats[i] !== 1 && cats[i] !== 3 && cats[i] !== 5) continue;
     const x = i % w, y = (i / w) | 0;
     if (x < x0) x0 = x;
     if (x > x1) x1 = x;
