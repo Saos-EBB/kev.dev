@@ -23,6 +23,7 @@ import { hasConsent, revokeConsent, type ConsentId } from "../consent";
 const CONSENTS: { id: ConsentId; label: () => string; loaded: () => boolean }[] = [
   { id: "youtube", label: () => UI.consentYoutube, loaded: () => "YT" in window },
   { id: "cheerpj", label: () => UI.consentCheerpj, loaded: () => "cheerpjInit" in window },
+  { id: "facedots", label: () => UI.consentFacedots, loaded: () => document.documentElement.dataset.faceModel === "loaded" },
 ];
 
 function renderConsents(slot: HTMLElement) {
