@@ -4,7 +4,8 @@
 // element and change its family/size/weight/line-height/spacing live.
 // "CSS kopieren" puts the result on the clipboard as plain CSS to hand
 // over. Fonts can come from the ones the site ships, a system font,
-// Google Fonts (by name) or a local .ttf/.otf/.woff(2) file.
+// Google Fonts (by name), a local .ttf/.otf/.woff(2) file, or any file
+// dropped into dev-fonts/ (shown as a preview gallery).
 //
 // Lives in a shadow root so neither the site's CSS nor its own font
 // changes reach the panel. State is kept in localStorage (best effort)
@@ -35,6 +36,15 @@ const SHIPPED: [string, string][] = [
   ["Courier Prime", "/fonts/ui/CourierPrime-400-latin.woff2"],
   ["JetBrains Mono", "/fonts/ui/JetBrainsMono-400-latin.woff2"],
 ];
+// Test fonts: every file dropped into /dev-fonts/ at the repo root shows
+// up in the gallery, named after its file. Outside public/ on purpose:
+// the dev server serves them, but they never ship with the site (several
+// are personal-use-only or trial licenses).
+const DEV_FONTS = Object.entries(
+  import.meta.glob<string>("/dev-fonts/*.{ttf,otf,woff,woff2,TTF,OTF}", { query: "?url", import: "default", eager: true }),
+)
+  .map(([path, url]) => ({ name: path.split("/").pop()!.replace(/\.[^.]+$/, ""), url }))
+  .sort((a, b) => a.name.localeCompare(b.name));
 const SYSTEM = ["system-ui", "sans-serif", "serif", "monospace", "Georgia", "Times New Roman", "Arial", "Helvetica", "Verdana", "Courier New", "Impact"];
 const RULE_FIELDS: { k: keyof Rule; css: string; label: string; ph: string }[] = [
   { k: "family", css: "font-family", label: "Font", ph: "z. B. Space Grotesk" },
@@ -128,6 +138,10 @@ export function mountFontTool(onChange: () => void) {
     });
   };
 
+  for (const f of DEV_FONTS) {
+    fontNames.add(f.name);
+    new FontFace(f.name, `url("${encodeURI(decodeURI(f.url))}")`).load().then((face) => document.fonts.add(face), () => {});
+  }
   for (const [name, url] of SHIPPED) {
     new FontFace(name, `url(${url})`).load().then((f) => document.fonts.add(f), () => {});
   }
@@ -175,6 +189,11 @@ export function mountFontTool(onChange: () => void) {
   .chip { padding: 2px 6px; font-size: 11px; }
   .primary { background: #2b5cff; border-color: #2b5cff; color: #fff; font-weight: 700; }
   .hl { position: fixed; pointer-events: none; outline: 2px solid #2b5cff; background: #2b5cff22; }
+  .gallery { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow: auto; }
+  .gallery button { all: unset; cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 4px 6px; border-radius: 4px; }
+  .gallery button:hover, .gallery button:focus-visible { background: #2b5cff33; }
+  .gallery .gs { font-size: 22px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gallery .gn { font-size: 10px; color: #999; flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .rules div { display: flex; justify-content: space-between; gap: 6px; margin: 2px 0; }
   .rules code { font-family: ui-monospace, monospace; color: #9cf; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
@@ -194,6 +213,11 @@ export function mountFontTool(onChange: () => void) {
   <div class="fields"></div>
   <div class="row"><button class="minus" type="button">A−</button><button class="plus" type="button">A+</button><button class="clearrule" type="button">Element zurücksetzen</button></div>
   <div class="rules"></div>
+
+  <h3>Test-Fonts (dev-fonts/)</h3>
+  <div class="row"><input class="gsample" value="SAOS · Kevin Schaberl"></div>
+  <div class="muted target"></div>
+  <div class="gallery"></div>
 
   <h3>Fonts laden</h3>
   <div class="row"><input class="gname" placeholder="Google-Font-Name, z. B. Bebas Neue"><button class="gadd" type="button">laden</button></div>
@@ -216,6 +240,42 @@ export function mountFontTool(onChange: () => void) {
   }
   fillList();
 
+  // Gallery: click a test font to put it into whichever font field was
+  // focused last (starts on the Display role).
+  let target: { inp: HTMLInputElement; label: string } | null = null;
+  const targetInfo = $(".target");
+  function setTarget(inp: HTMLInputElement, label: string) {
+    target = { inp, label };
+    targetInfo.textContent = `Klick übernimmt in: ${label}`;
+  }
+  const gallery = $(".gallery");
+  const gsample = $<HTMLInputElement>(".gsample");
+  const renderGallery = () => {
+    gallery.innerHTML = "";
+    if (!DEV_FONTS.length) gallery.textContent = "Keine Dateien in dev-fonts/";
+    for (const f of DEV_FONTS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.title = f.name;
+      const sample = document.createElement("span");
+      sample.className = "gs";
+      sample.style.fontFamily = `"${f.name}", sans-serif`;
+      sample.textContent = gsample.value || f.name;
+      const name = document.createElement("span");
+      name.className = "gn";
+      name.textContent = f.name;
+      b.append(sample, name);
+      b.addEventListener("click", () => {
+        if (!target) return;
+        target.inp.value = f.name;
+        target.inp.dispatchEvent(new Event("input"));
+      });
+      gallery.append(b);
+    }
+  };
+  gsample.addEventListener("input", renderGallery);
+  renderGallery();
+
   // Font roles
   const roles = $(".roles");
   for (const r of ROLES) {
@@ -236,8 +296,11 @@ export function mountFontTool(onChange: () => void) {
       sync();
       apply();
     });
+    inp.addEventListener("focus", () => setTarget(inp, r.label));
     roles.append(lab, sample);
   }
+
+  setTarget(root.querySelector<HTMLInputElement>(".roles input")!, ROLES[0].label);
 
   const rootIn = $<HTMLInputElement>(".root");
   const rootV = $(".rootv");
@@ -263,6 +326,7 @@ export function mountFontTool(onChange: () => void) {
       apply();
       renderRules();
     });
+    if (f.k === "family") inp.addEventListener("focus", () => setTarget(inp, `Element ${sel.value.trim() || "(erst wählen)"}`));
     inputs.set(f.k, inp);
     fields.append(lab);
   }
