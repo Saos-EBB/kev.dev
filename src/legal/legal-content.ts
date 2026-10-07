@@ -219,9 +219,17 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Keine Cookies. Keine Analyse- oder Trackingwerkzeuge.
         Schriftart, Bilder und Skripte liegen alle auf diesem Server.
         Beim bloßen Besuch dieser Seite geht keine Anfrage an einen
-        anderen Anbieter außer dem Hoster selbst. Zwei Funktionen laden
-        Inhalte Dritter — aber erst, wenn Sie sie selbst anklicken (siehe
-        „Musikplayer“ und „Java-Programme im Browser“).
+        anderen Anbieter außer dem Hoster selbst. Drei Funktionen laden
+        Inhalte Dritter — aber erst, wenn Sie sie selbst anklicken und
+        zustimmen (siehe „Musikplayer“, „Java-Programme im Browser“ und
+        „Gesicht-Tool“).
+      </p>
+      <p>
+        Im lokalen Speicher Ihres Browsers legt die Seite nur Ihre
+        Einstellungen ab (Sprache, Hell/Dunkel-Modus), ob das Intro in
+        dieser Sitzung schon lief, und — falls erteilt — Ihre
+        Einwilligungen. Das bleibt auf Ihrem Gerät und wird nicht an mich
+        übertragen.
       </p>
 
       <h2>Hosting und Serverprotokolle</h2>
@@ -283,11 +291,31 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         wird nichts geladen.
       </p>
 
+      <h2>Gesicht-Tool (FaceDots)</h2>
+      <p>
+        Im Projekt „FaceDots“ können Sie ein eigenes Foto in Punkte,
+        ASCII oder ein Tuch verwandeln. Das Foto wird ausschließlich in
+        Ihrem Browser verarbeitet und nirgends hochgeladen. Um den Kopf
+        freizustellen, braucht das Tool ein KI-Modell von Google
+        (MediaPipe, ca. 16 MB). Vor dem ersten eigenen Foto erscheint ein
+        Hinweis; erst wenn Sie dort „Laden“ wählen, lädt Ihr Browser das
+        Modell von Servern der <strong>Google LLC</strong> (USA,
+        storage.googleapis.com). Dabei erhält Google Ihre IP-Adresse und
+        technische Browserdaten, nicht aber Ihr Foto. Google ist nach dem
+        EU-US Data Privacy Framework zertifiziert. Rechtsgrundlage ist
+        Ihre Einwilligung, die Sie mit „Laden“ erteilen (Art. 6 Abs. 1
+        lit. a DSGVO). Ihr Browser merkt sich diese Wahl; widerrufen
+        können Sie sie unten. Ohne Einwilligung wird nichts geladen —
+        die vorbereiteten Gesichter funktionieren auch so. Mehr dazu:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
       <h2>Einwilligungen widerrufen</h2>
       <p>
         Hier sehen Sie, wozu Sie in diesem Browser eingewilligt haben,
-        und können es mit Wirkung für die Zukunft widerrufen. Läuft der
-        Player oder die Demo gerade, wird die Seite dafür neu geladen.
+        und können es mit Wirkung für die Zukunft widerrufen. Ist die
+        Funktion auf dieser Seite schon geladen, wird die Seite dafür neu
+        geladen.
       </p>
       <div class="legal-consents"></div>
 
@@ -331,9 +359,15 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         No cookies. No analytics or tracking tools. Font, images and
         scripts are all served from this server. Merely visiting this
         site sends no request to any provider other than the host
-        itself. Two features load third-party content — but only once
-        you click them yourself (see "Music player" and "Java programs
-        in the browser").
+        itself. Three features load third-party content — but only
+        once you click them yourself and agree (see "Music player",
+        "Java programs in the browser" and "Face tool").
+      </p>
+      <p>
+        In your browser's local storage the site only keeps your
+        settings (language, light/dark mode), whether the intro already
+        ran in this session, and — if given — your consents. That stays
+        on your device and is never sent to me.
       </p>
 
       <h2>Hosting and server logs</h2>
@@ -389,11 +423,29 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         it below. Without consent, nothing is loaded.
       </p>
 
+      <h2>Face tool (FaceDots)</h2>
+      <p>
+        In the "FaceDots" project you can turn a photo of your own into
+        dots, ASCII or a cloth. The photo is processed only in your
+        browser and never uploaded. To cut out the head, the tool needs
+        an AI model by Google (MediaPipe, about 16 MB). Before your first
+        own photo a notice appears; only when you choose "Load" there
+        does your browser fetch the model from servers of
+        <strong>Google LLC</strong> (USA, storage.googleapis.com). Google
+        receives your IP address and technical browser data, but not
+        your photo. Google is certified under the EU-US Data Privacy
+        Framework. The legal basis is your consent, given with "Load"
+        (Art. 6(1)(a) GDPR). Your browser remembers this choice; you can
+        withdraw it below. Without consent, nothing is loaded — the
+        prepared faces work anyway. More:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
       <h2>Withdraw consent</h2>
       <p>
         Here you can see what you have consented to in this browser and
-        withdraw it with effect for the future. If the player or the demo
-        is running, the page reloads to stop it.
+        withdraw it with effect for the future. If the feature is already
+        loaded on this page, the page reloads to stop it.
       </p>
       <div class="legal-consents"></div>
 
@@ -437,9 +489,16 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Никаких cookie. Никаких инструментов аналитики или отслеживания.
         Шрифт, изображения и скрипты находятся на этом сервере. При
         простом посещении сайта запросы не отправляются никакому другому
-        поставщику, кроме самого хостинга. Две функции загружают контент
-        третьих лиц — но только после того, как вы сами на них нажмёте
-        (см. «Музыкальный плеер» и «Java-программы в браузере»).
+        поставщику, кроме самого хостинга. Три функции загружают контент
+        третьих лиц — но только после того, как вы сами на них нажмёте и
+        согласитесь (см. «Музыкальный плеер», «Java-программы в браузере»
+        и «Инструмент лица»).
+      </p>
+      <p>
+        В локальном хранилище браузера сайт хранит только ваши настройки
+        (язык, светлая/тёмная тема), отметку о том, что интро в этом
+        сеансе уже показано, и — если они даны — ваши согласия. Всё это
+        остаётся на вашем устройстве и мне не передаётся.
       </p>
 
       <h2>Хостинг и серверные журналы</h2>
@@ -496,11 +555,29 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         его можно ниже. Без согласия ничего не загружается.
       </p>
 
+      <h2>Инструмент лица (FaceDots)</h2>
+      <p>
+        В проекте «FaceDots» можно превратить собственное фото в точки,
+        ASCII или ткань. Фото обрабатывается только в вашем браузере и
+        никуда не загружается. Чтобы вырезать голову, инструменту нужна
+        ИИ-модель от Google (MediaPipe, около 16 МБ). Перед первым
+        собственным фото появляется уведомление; только после нажатия
+        «Загрузить» браузер получает модель с серверов
+        <strong>Google LLC</strong> (США, storage.googleapis.com). Google
+        получает ваш IP-адрес и технические данные браузера, но не ваше
+        фото. Google сертифицирована по EU-US Data Privacy Framework.
+        Правовое основание — ваше согласие, данное кнопкой «Загрузить»
+        (ст. 6 (1) (a) GDPR). Браузер запоминает этот выбор; отозвать его
+        можно ниже. Без согласия ничего не загружается — подготовленные
+        лица работают и так. Подробнее:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
       <h2>Отзыв согласия</h2>
       <p>
         Здесь видно, на что вы дали согласие в этом браузере, и его можно
-        отозвать на будущее. Если плеер или демо сейчас работают, страница
-        для этого перезагрузится.
+        отозвать на будущее. Если функция на этой странице уже загружена,
+        страница для этого перезагрузится.
       </p>
       <div class="legal-consents"></div>
 
@@ -543,9 +620,15 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Cookie は使用しません。アクセス解析やトラッキングのツールも使用しません。
         フォント、画像、スクリプトはすべてこのサーバー上にあります。本サイトを
         閲覧するだけでは、ホスティング事業者以外の事業者へリクエストが送られる
-        ことはありません。第三者のコンテンツを読み込む機能が2つありますが、
-        ご自身でクリックした場合に限られます（「音楽プレーヤー」と
-        「ブラウザ上の Java プログラム」を参照）。
+        ことはありません。第三者のコンテンツを読み込む機能が3つありますが、
+        ご自身でクリックして同意した場合に限られます（「音楽プレーヤー」、
+        「ブラウザ上の Java プログラム」、「顔ツール」を参照）。
+      </p>
+      <p>
+        ブラウザのローカルストレージに保存するのは、設定（言語、ライト／
+        ダークモード）、このセッションでイントロが再生済みかどうか、
+        そして同意した場合はその同意だけです。これらはお使いの端末に
+        とどまり、私に送信されることはありません。
       </p>
 
       <h2>ホスティングとサーバーログ</h2>
@@ -599,11 +682,28 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         撤回できます。同意がない限り何も読み込まれません。
       </p>
 
+      <h2>顔ツール（FaceDots）</h2>
+      <p>
+        「FaceDots」プロジェクトでは、ご自身の写真をドット、ASCII、布に
+        変換できます。写真はブラウザ内でのみ処理され、どこにも
+        アップロードされません。頭部を切り抜くために、ツールは Google の
+        AI モデル（MediaPipe、約16 MB）を必要とします。最初に自分の写真を
+        使う前にお知らせが表示され、「読み込む」を選んだ場合にのみ、
+        ブラウザが <strong>Google LLC</strong>（米国、storage.googleapis.com）の
+        サーバーからモデルを取得します。その際 Google は IP アドレスと
+        ブラウザの技術情報を受け取りますが、写真は受け取りません。Google は
+        EU-US Data Privacy Framework の認証を受けています。法的根拠は
+        「読み込む」によるご同意です（GDPR 第6条1項a号）。ブラウザはこの
+        選択を記憶し、下記で撤回できます。同意がなければ何も読み込まれ
+        ません。用意された顔はそのままでも使えます。詳細：
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
       <h2>同意の撤回</h2>
       <p>
         このブラウザで与えた同意を確認し、将来に向けて撤回できます。
-        プレーヤーやデモが動作中の場合は、停止のためページが再読み込み
-        されます。
+        その機能がこのページですでに読み込まれている場合は、停止のため
+        ページが再読み込みされます。
       </p>
       <div class="legal-consents"></div>
 
@@ -644,8 +744,14 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         لا ملفات تعريف ارتباط (Cookies). لا أدوات تحليل أو تتبّع. الخط
         والصور والبرامج النصية كلها موجودة على هذا الخادم. مجرد زيارة هذا
         الموقع لا يُرسل أي طلب إلى أي مزوّد آخر غير مزوّد الاستضافة نفسه.
-        هناك ميزتان تحمّلان محتوى من أطراف ثالثة — لكن فقط عندما تنقر
-        عليهما بنفسك (انظر «مشغّل الموسيقى» و«برامج Java في المتصفح»).
+        هناك ثلاث ميزات تحمّل محتوى من أطراف ثالثة — لكن فقط عندما تنقر
+        عليها بنفسك وتوافق (انظر «مشغّل الموسيقى» و«برامج Java في المتصفح»
+        و«أداة الوجه»).
+      </p>
+      <p>
+        في التخزين المحلي لمتصفحك يحفظ الموقع فقط إعداداتك (اللغة، الوضع
+        الفاتح/الداكن)، وما إذا كانت المقدّمة قد عُرضت في هذه الجلسة، و—إن
+        منحتها—موافقاتك. يبقى ذلك على جهازك ولا يُرسل إليّ.
       </p>
 
       <h2>الاستضافة وسجلات الخادم</h2>
@@ -698,10 +804,26 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         موافقة لا يُحمَّل شيء.
       </p>
 
+      <h2>أداة الوجه (FaceDots)</h2>
+      <p>
+        في مشروع «FaceDots» يمكنك تحويل صورة لك إلى نقاط أو ASCII أو قماش.
+        تُعالَج الصورة في متصفحك فقط ولا تُرفع إلى أي مكان. لقصّ الرأس تحتاج
+        الأداة إلى نموذج ذكاء اصطناعي من Google ‏(MediaPipe، حوالي 16
+        ميغابايت). قبل أول صورة خاصة بك يظهر تنبيه؛ وفقط عندما تختار
+        «تحميل» يجلب متصفحك النموذج من خوادم <strong>Google LLC</strong>
+        (الولايات المتحدة، storage.googleapis.com). تحصل Google عندها على
+        عنوان IP الخاص بك وبيانات تقنية عن المتصفح، لكن ليس على صورتك. Google
+        معتمدة وفق إطار EU-US Data Privacy Framework. الأساس القانوني هو
+        موافقتك التي تمنحها بزر «تحميل» (المادة 6 (1) (أ) من اللائحة العامة
+        لحماية البيانات). يتذكّر متصفحك هذا الاختيار، ويمكنك سحبه أدناه. بدون
+        موافقة لا يُحمَّل أي شيء — والوجوه المُعدّة تعمل على أي حال. المزيد:
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
+      </p>
+
       <h2>سحب الموافقة</h2>
       <p>
         هنا ترى ما وافقت عليه في هذا المتصفح، ويمكنك سحبه بأثر مستقبلي. إذا
-        كان المشغّل أو العرض يعمل حاليًا، تُعاد تحميل الصفحة لإيقافه.
+        كانت الميزة محمّلة بالفعل في هذه الصفحة، تُعاد تحميل الصفحة لإيقافها.
       </p>
       <div class="legal-consents"></div>
 
