@@ -1,17 +1,20 @@
-// Consents for the two features that load from third parties, each only
+// Consents for the features that load from third parties, each only
 // after the visitor agrees in a notice right where the feature is:
-//   youtube — the header music player (music/youtube.ts)
-//   cheerpj — the Java runtime of the Grundlagen live demo
-//             (projects/widgets/grundlagen.ts)
+//   youtube   — the header music player (music/youtube.ts)
+//   cheerpj   — the Java runtime of the Grundlagen live demo
+//               (projects/widgets/grundlagen.ts)
+//   facedots  — Google's segmentation model, fetched the first time a
+//               visitor cuts out their own photo (projects/widgets/face-tool.ts)
 // Remembered in this browser (localStorage); the privacy policy has a
 // section to withdraw them (legal/legal-overlay.ts). Clearing the site's
 // data withdraws them too.
 
-export type ConsentId = "youtube" | "cheerpj";
+export type ConsentId = "youtube" | "cheerpj" | "facedots";
 
 const KEYS: Record<ConsentId, string> = {
   youtube: "kev-yt-consent",
   cheerpj: "kev-cheerpj-consent",
+  facedots: "kev-facedots-consent",
 };
 
 export function hasConsent(id: ConsentId): boolean {

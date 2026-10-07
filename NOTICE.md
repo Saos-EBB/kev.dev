@@ -16,9 +16,11 @@ Full license texts ship with each package in `node_modules/<package>/`.
 
 ## Models
 
-- `public/face-dots/selfie_multiclass_256x256.tflite`: MediaPipe Selfie
-  Multiclass segmentation model, © Google LLC, Apache License 2.0
-  (https://www.apache.org/licenses/LICENSE-2.0). Self-hosted, unmodified.
+- MediaPipe Selfie Multiclass segmentation model
+  (`selfie_multiclass_256x256.tflite`), © Google LLC, Apache License 2.0
+  (https://www.apache.org/licenses/LICENSE-2.0). Not stored here: the
+  FaceDots tool loads it unmodified from Google's model storage, only
+  after the visitor consents.
 - `src/projects/widgets/renderer-models/` (ducky, car, pochita30,
   craniumCut01): 3D models converted for the renderer widget. All of them
   are CC0 / public domain models from their respective authors.

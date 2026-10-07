@@ -248,7 +248,7 @@ const cards: ProjectCard[] = [
       { label: "Live direkt im Tool" },
     ],
     decisions: [
-      "Alles lokal: Bibliothek, wasm und Modell liegen auf dieser Seite — kein Request an Google, kein Upload",
+      "Das Foto bleibt im Browser, kein Upload. Nur das Modell (~16 MB) kommt von Google — erst nach Einwilligung, wie beim Musikplayer",
       "Punkte statt 3D-Modell: ein Gesichts-Mesh aus Fotos blieb eine glatte Maske, die Punkte zeigen das echte Bild",
       "Feder pro Punkt, Farben in 16 Gruppen gezeichnet — läuft am Handy flüssig und steht still, sobald alles liegt",
       "Als eigenständiges Modul gebaut, ohne Abhängigkeit zur Seite",
@@ -256,7 +256,7 @@ const cards: ProjectCard[] = [
     challenge:
       "Drei Varianten ausprobiert: Gesicht aufs Tuch, als 3D-Drahtgitter aus mehreren Fotos, als Punkte. Das Tuch verzerrt Gesichter schnell ins Gruselige, das 3D-Modell kennt nur die Gesichtsfläche ohne Cap und Haare. Die Punkte haben gewonnen.",
     origin:
-      "Idee für ein interaktives Porträt auf dieser Seite → Testseiten für Tuch, 3D-Modell und Punkte → das Freistellen erst offline, dann direkt im Browser → Modell selbst gehostet → als Modul ausgelagert.",
+      "Idee für ein interaktives Porträt auf dieser Seite → Testseiten für Tuch, 3D-Modell und Punkte → das Freistellen erst offline, dann direkt im Browser → als Modul ausgelagert → Modell von Google, nur mit Einwilligung.",
     widget: {
       label: "Foto → Punkte, ASCII oder Tuch",
       mount: (el, card) => import("./widgets/face-tool").then((m) => m.mount(el, card)),

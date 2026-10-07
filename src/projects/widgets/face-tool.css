@@ -74,7 +74,8 @@
 
 .ftool-dots[hidden],
 .ftool-cloth[hidden],
-.ftool-drop[hidden] {
+.ftool-drop[hidden],
+.ftool-consent[hidden] {
   display: none;
 }
 
@@ -108,6 +109,62 @@
   letter-spacing: 0.1em;
   color: var(--color-text);
   pointer-events: none;
+}
+
+/* The notice before Google's model loads, over the stage (same idea as
+   the music player's and the Java demo's). */
+.ftool-consent {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--projects-bg) 92%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.ftool-consent p {
+  margin: 0;
+  max-width: 34rem;
+}
+
+.ftool-consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ftool-consent-actions button {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--pc);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--pc);
+  cursor: pointer;
+}
+
+.ftool-consent-actions .ftool-consent-ok {
+  background: var(--pc);
+  color: var(--projects-bg);
+}
+
+.ftool-consent-actions .ftool-consent-ok:hover,
+.ftool-consent-actions .ftool-consent-ok:focus-visible {
+  background: transparent;
+  color: var(--pc);
+}
+
+.ftool-consent-actions a {
+  color: var(--color-text);
 }
 
 .ftool-status,
