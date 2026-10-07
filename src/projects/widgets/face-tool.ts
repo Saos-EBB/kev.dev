@@ -1,11 +1,17 @@
 // FaceDots tool (the FaceDots card's live demo): pick one of Kevin's
 // prepared faces or any photo, the head is cut out in the browser
-// (face-dots' photoToFace — self-hosted model, nothing uploaded), then it
-// becomes dots, ASCII, or the hero's cloth. Loaded lazily with the
-// overlay; the cloth is only built the first time it's picked.
+// (face-dots' photoToFace — the photo is never uploaded), then it becomes
+// dots, ASCII, or the hero's cloth. Loaded lazily with the overlay; the
+// cloth is only built the first time it's picked.
+//
+// Cutting out an own photo needs Google's segmentation model, which comes
+// from Google's servers: the first time, a notice asks first (like the
+// music player's), and only "Laden" fetches it. Remembered via consent.ts,
+// withdrawable in the privacy policy.
 
 import "./face-tool.css";
 import { UI } from "../../i18n/ui";
+import { grantConsent, hasConsent } from "../../consent";
 import type { ProjectCard } from "../project-cards";
 import { createFaceDots, loadImage, photoToFace } from "../../../packages/face-dots/src";
 import { FACES, PROCESS_OPTIONS, faceUrl, type FaceId } from "../face-dots-site";
@@ -38,6 +44,14 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
         <div class="ftool-cloth-bounds"><div class="ftool-cloth-box"></div></div>
       </div>
       <div class="ftool-drop" hidden>${UI.ftDrop}</div>
+      <div class="ftool-consent" role="dialog" aria-label="${UI.ftPick}" hidden>
+        <p>${UI.ftConsentText}</p>
+        <div class="ftool-consent-actions">
+          <button type="button" class="ftool-consent-ok">${UI.ftConsentOk}</button>
+          <button type="button" class="ftool-consent-cancel">${UI.ytConsentCancel}</button>
+          <a href="#datenschutz" data-close>${UI.consentPrivacy}</a>
+        </div>
+      </div>
     </div>
     <p class="ftool-status" aria-live="polite">${UI.ftHint}</p>
     <p class="ftool-privacy">${UI.ftPrivacy}</p>
@@ -52,6 +66,8 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   const faceButtons = [...host.querySelectorAll<HTMLButtonElement>("[data-face]")];
   const viewButtons = [...host.querySelectorAll<HTMLButtonElement>("[data-view]")];
   const input = host.querySelector<HTMLInputElement>('input[type="file"]')!;
+  const pick = host.querySelector<HTMLLabelElement>(".ftool-pick")!;
+  const consent = host.querySelector<HTMLElement>(".ftool-consent")!;
 
   const dots = createFaceDots(dotsCanvas, { interactive: "all" });
   let view: View = "dots";
@@ -89,9 +105,39 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     else dots.setMode(v);
   }
 
+  // Without consent the photo waits here (dropped) or the file dialog
+  // waits (clicked) until the notice is answered.
+  let pending: File | null = null;
+  function askConsent(file: File | null) {
+    pending = file;
+    consent.hidden = false;
+    consent.querySelector<HTMLButtonElement>(".ftool-consent-ok")!.focus();
+  }
+  consent.querySelector(".ftool-consent-ok")!.addEventListener("click", () => {
+    grantConsent("facedots");
+    consent.hidden = true;
+    const file = pending;
+    pending = null;
+    if (file) usePhoto(file);
+    else input.click(); // still inside the click, so the dialog may open
+  });
+  consent.querySelector(".ftool-consent-cancel")!.addEventListener("click", () => {
+    consent.hidden = true;
+    pending = null;
+  });
+  pick.addEventListener("click", (e) => {
+    if (hasConsent("facedots") || e.target === input) return;
+    e.preventDefault();
+    askConsent(null);
+  });
+
   async function usePhoto(file: File | undefined) {
     if (!file || !file.type.startsWith("image/")) return;
+    if (!hasConsent("facedots")) return askConsent(file);
     status.textContent = UI.ftWorking;
+    // From here on Google's model is (being) fetched into this page; a
+    // withdrawal in the privacy policy then reloads it (legal-overlay.ts).
+    document.documentElement.dataset.faceModel = "loaded";
     try {
       setFace(await photoToFace(file, PROCESS_OPTIONS));
       faceButtons.forEach((b) => b.setAttribute("aria-pressed", "false"));

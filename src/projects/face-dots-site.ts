@@ -1,8 +1,9 @@
 // kev.dev's side of the face-dots module (packages/face-dots): where its
 // files live on this site, the prepared faces, and mounting the live face
 // on the FaceDots card (desktop card, phone list entry, phone sheet).
-// Everything is self-hosted — library, wasm and model come from this
-// domain, nothing is requested from anyone else.
+// Library, wasm and the prepared faces come from this domain. Only the
+// segmentation model (~16 MB) comes from Google, and only once a visitor
+// cuts out their own photo and has agreed to it (face-tool.ts, consent.ts).
 
 import { createFaceDots, loadImage, type FaceDots, type ProcessOptions } from "../../packages/face-dots/src";
 // The package's exports map hides its wasm folder, hence the plain path;
@@ -13,8 +14,10 @@ import wasmBinaryPath from "../../node_modules/@mediapipe/tasks-vision/wasm/visi
 export const PROCESS_OPTIONS: ProcessOptions = {
   wasmLoaderPath,
   wasmBinaryPath,
-  // Self-hosted copy of Google's selfie_multiclass_256x256 (Apache-2.0).
-  modelPath: "/face-dots/selfie_multiclass_256x256.tflite",
+  // Google's selfie_multiclass_256x256 (Apache-2.0), from Google's model
+  // storage — loaded only after consent, see face-tool.ts.
+  modelPath:
+    "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite",
 };
 
 // Made from Kevin's photos with scripts/face-textures.py.
