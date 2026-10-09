@@ -18,9 +18,9 @@ const cards: ProjectCard[] = [
       "Wollte lernen, wie man Software modular baut und ein echtes Produkt mit Businesslogik auf die Beine stellt.",
     title: "YourBrand",
     claim:
-      "Beweist Architektur-Denken — modulares White-Label-SaaS, multi-tenant gedacht, jeder Layer bewusst entworfen.",
-    points: ["White-Label-SaaS für Matching & Community — vom Schachklub bis zur Partnerbörse", "Multi-tenant: Module pro Tenant buchbar, Row-Level Security als Basis", "Solo in rund zwei Monaten — voll funktionsfähiger Prototyp"],
-    what: "Mein erster Versuch, echte Software zu bauen: ein modulares White-Label-SaaS für Matching und sozialen Kontakt. Der Kern ist neutral gebaut — dieselbe Plattform trägt einen Schachklub, eine Theatergruppe, eine Partnerbörse oder jede andere Community, die Menschen zusammenbringen will. Multi-tenant angelegt: Jeder Tenant bringt seine eigene Marke mit und bekommt nur die Module, die er bucht. Als konkrete Ausbaustufe eine barrierefreie Plattform: Leichte Sprache, Kontrast- und Schriftgrößen-Optionen, intuitives Design, per i18n auf jede Sprache erweiterbar (aktuell Deutsch).",
+      "Beweist Architektur-Denken — modulares White-Label-SaaS, echt multi-tenant, jeder Layer bewusst entworfen.",
+    points: ["White-Label-SaaS für Matching & Community — vom Schachklub bis zur Partnerbörse", "Multi-tenant umgesetzt: eigene Datenbank pro Mandant, Marke & Module aus einer Config", "Solo gebaut — Prototyp in rund zwei Monaten, dazu eine Mandanten-Console"],
+    what: "Mein erster Versuch, echte Software zu bauen: ein modulares White-Label-SaaS für Matching und sozialen Kontakt. Der Kern ist neutral gebaut — dieselbe Plattform trägt einen Schachklub, eine Theatergruppe, eine Partnerbörse oder jede andere Community, die Menschen zusammenbringen will. Multi-tenant umgesetzt: Jeder Mandant läuft aus demselben Image mit eigener Datenbank, eigenem Speicher-Bucket und eigenem Redis-Bereich, bringt seine eigene Marke mit und bekommt nur die Module, die er bucht — ein neuer Mandant ist eine Config-Datei und ein Befehl. Verwaltet wird das über eine Mandanten-Console: alle Mandanten mit Kennzahlen und Verlauf im Überblick, Config-Editor mit Prüfung und Diff, Farb-Editor mit Kontrastcheck, Logo-Upload. Als konkrete Ausbaustufe eine barrierefreie Plattform: Leichte Sprache, Kontrast- und Schriftgrößen-Optionen, intuitives Design, per i18n auf jede Sprache erweiterbar (aktuell Deutsch).",
     tags: [
       "TypeScript",
       "NestJS",
@@ -31,7 +31,7 @@ const cards: ProjectCard[] = [
       "Stripe",
       "Docker",
     ],
-    meta: "Solo · April–Juni 2026, ca. 450 h · +50–75 h für Loadtests & Test-Dashboard · selbst gewähltes Abschlussprojekt",
+    meta: "Solo · April–Juni 2026, ca. 450 h · +50–75 h für Loadtests & Test-Dashboard · selbst gewähltes Abschlussprojekt · Okt. 2026: Multi-Tenant-Umbau & Mandanten-Console",
     links: [
       {
         label: "GitHub",
@@ -40,7 +40,9 @@ const cards: ProjectCard[] = [
       { label: "Live-Demo auf Anfrage (hoste ich gern)" },
     ],
     decisions: [
-      "Modular & multi-tenant angelegt: Module pro Tenant zu-/abschaltbar, Abrechnung nach gebuchtem Umfang",
+      "Silo-Multitenancy statt geteilter Datenbank: eigene DB, eigener Bucket und eigener Redis-Prefix pro Mandant — DSGVO-Daten physisch getrennt, keine Query musste umgebaut werden",
+      "Eine tenant.json pro Mandant als einzige Quelle: Marke, Theme, Sprachen, Tier und Module — beim Start validiert, Module zu-/abschaltbar, Abrechnung nach gebuchtem Umfang",
+      "Mandanten-Console statt Handarbeit: Übersicht und Kennzahlen aller Mandanten, Editor mit Diff und Auto-Commit, 19 Farb-Tokens mit WCAG-Kontrastprüfung, Logo-Upload mit erzeugtem Favicon",
       "Row-Level Security als Grundzustand: Schutz „von unten“, Sichtbarkeit steuert jede Person selbst",
       "PostGIS für Entfernungsberechnung direkt auf DB-Ebene — leichter als im Backend",
       "Barrierefreiheit von Anfang an (Leichte Sprache, Kontrast, Schriftgröße, i18n-ready)",
@@ -71,9 +73,6 @@ const cards: ProjectCard[] = [
       { src: "/projects/yourbrand/08-einstellungen.webp", alt: "Einstellungen — bei Miteinander standardmäßig in Leichter Sprache" },
     ],
     facets: ["live-demo", "screens", "b2b"],
-    open: [
-      "Multi-Tenancy „angelegt/gedacht“ vs. voll umgesetzt — Wortwahl von Kevin bestätigen lassen",
-    ],
   },
   {
     id: "tschobbo",
