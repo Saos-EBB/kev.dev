@@ -97,12 +97,12 @@ function galleryHtml(shots: { src: string; alt: string }[], lead = ""): string {
 }
 
 // YourBrand: the intro ("what it could be"), then one closed <details> per
-// tenant. Closed sections aren't rendered, so their lazy images and the
+// tenant, all sharing a name so opening one closes the others. Closed sections aren't rendered, so their lazy images and the
 // preload="none" clips cost nothing until a section is opened.
 function tenantsHtml(card: ProjectCard): string {
   const sections = (card.tenants ?? [])
     .map(
-      (t) => `<details class="facet-tenant">
+      (t) => `<details class="facet-tenant" name="facet-tenant">
         <summary><span class="facet-tenant-name">${esc(t.name)}</span><span class="facet-tenant-kind">${esc(t.kind)}</span></summary>
         <div class="facet-tenant-body">
           <p>${esc(t.about)}</p>
