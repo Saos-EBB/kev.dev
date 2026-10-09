@@ -1,7 +1,7 @@
 // kev.dev's side of the face-dots module (packages/face-dots): where its
-// files live on this site, the prepared faces, and mounting the live face
+// files live on this site, the prepared face, and mounting the live face
 // on the FaceDots card (desktop card, phone list entry, phone sheet).
-// Library, wasm and the prepared faces come from this domain. Only the
+// Library, wasm and the prepared face come from this domain. Only the
 // segmentation model (~16 MB) comes from Google, and only once a visitor
 // cuts out their own photo and has agreed to it (face-tool.ts, consent.ts).
 
@@ -21,7 +21,7 @@ export const PROCESS_OPTIONS: ProcessOptions = {
 };
 
 // Made from Kevin's photos with scripts/face-textures.py.
-export const FACES = ["front", "left", "right", "look", "side"] as const;
+export const FACES = ["front"] as const;
 export type FaceId = (typeof FACES)[number];
 export const faceUrl = (id: FaceId) => `/face-dots/face-${id}.webp`;
 
