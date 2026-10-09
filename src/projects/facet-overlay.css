@@ -401,3 +401,119 @@
   font-size: 0.78rem;
   color: var(--color-text-muted);
 }
+
+/* YourBrand's Screens facet: an intro, then one accordion section per
+   tenant (native <details>), in the card's accent. */
+.facet-tenants-heading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pc);
+}
+
+.facet-tenants {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.facet-tenant {
+  border: 1px solid var(--pc-soft);
+}
+
+.facet-tenant summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  min-height: 52px;
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+}
+
+.facet-tenant summary::-webkit-details-marker {
+  display: none;
+}
+
+.facet-tenant summary::after {
+  content: "+";
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 1rem;
+  transform: translateY(-50%);
+  font-size: 1.3rem;
+  color: var(--pc);
+}
+
+.facet-tenant[open] summary::after {
+  content: "–";
+}
+
+.facet-tenant summary:focus-visible {
+  outline: 2px solid var(--pc);
+  outline-offset: -2px;
+}
+
+.facet-tenant-name {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.facet-tenant-kind {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.facet-tenant-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1rem 1.25rem;
+}
+
+.facet-tenant-body p {
+  margin: 0;
+}
+
+.facet-tenant-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.facet-tenant-meta dt {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.facet-tenant-meta dd {
+  margin: 0;
+}
+
+.facet-tenant-meta ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facet-tenant-meta li {
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--pc-soft);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}

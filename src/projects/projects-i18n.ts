@@ -19,7 +19,6 @@ interface CardText {
   origin?: string;
   links?: string[];
   screenshots?: string[];
-  video?: string;
   mascot?: string;
   widget?: string;
 }
@@ -48,8 +47,6 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
       challenge: "The real challenge was scope: a complete full stack, solo, in two months. The base — DB, security, API — is clean and built on purpose. The business-logic layer on top is the experimental part: there I tried out ideas instead of playing it safe — and learned the most.",
       origin: "2 weeks of DB brainstorming (row-level security, PostGIS) → backend on top (Postman was gold while building the API) → frontend on top of that, playing through layouts and behaviour until it fit.",
-      screenshots: ["Login — the same app, four tenants: Campus Match, KiezConnect, Miteinander, Underground", "Consent on first login, texts per tenant", "Dashboard — features depend on the booked plan (Discover and Matching only on Premium)", "Chat overview", "Chat — colors and tone come from the tenant config", "Hidden Zone — only Underground booked it, including its own leetspeak language", "Settings — Miteinander defaults to plain language"],
-      video: "Same flow, four tenants at once — the differences come only from the tenant config",
     },
     tschobbo: {
       kind: "Job-application bot",
@@ -174,8 +171,6 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
       challenge: "Настоящей трудностью был объём: полный full stack в одиночку за два месяца. Основа — БД, безопасность, API — сделана чисто и осознанно. Слой бизнес-логики поверх — экспериментальная часть: там я пробовал идеи вместо того, чтобы перестраховываться, — и научился больше всего.",
       origin: "2 недели мозгового штурма по БД (Row-Level Security, PostGIS) → поверх бэкенд (Postman был на вес золота при создании API) → поверх фронтенд, проигрывал макеты и поведение, пока не село.",
-      screenshots: ["Вход — одно приложение, четыре тенанта: Campus Match, KiezConnect, Miteinander, Underground", "Согласие при первом входе, тексты у каждого тенанта свои", "Дашборд — функции зависят от тарифа (Discover и Matching только в Premium)", "Список чатов", "Чат — цвета и тон задаёт конфиг тенанта", "Hidden Zone — подключена только у Underground, вместе с собственным языком на leetspeak", "Настройки — у Miteinander по умолчанию простой язык"],
-      video: "Один сценарий, четыре тенанта одновременно — различия только из конфига тенанта",
     },
     tschobbo: {
       kind: "Бот для откликов",
@@ -300,8 +295,6 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
       challenge: "本当の課題は規模でした。フルスタックを一人で2か月で。土台 — DB、セキュリティ、API — はきれいに意図して作った。その上のビジネスロジック層は実験的な部分で、安全策より新しいアイデアを試し、そこで一番多くを学びました。",
       origin: "2週間のDB構想（行レベルセキュリティ、PostGIS）→ その上にバックエンド（API作りではPostmanが大活躍）→ さらにフロントエンド、しっくりくるまでレイアウトと挙動を試した。",
-      screenshots: ["ログイン — 同じアプリ、4つのテナント：Campus Match、KiezConnect、Miteinander、Underground", "初回ログイン時の同意、文言はテナントごと", "ダッシュボード — 機能は契約プランしだい（DiscoverとMatchingはPremiumのみ）", "チャット一覧", "チャット — 色とトーンはテナント設定から", "Hidden Zone — 契約しているのはUndergroundだけ。独自のリート語付き", "設定 — Miteinanderはやさしい言葉が標準"],
-      video: "同じ流れを4テナント同時に — 違いはテナント設定だけから",
     },
     tschobbo: {
       kind: "応募ボット",
@@ -427,8 +420,6 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
       challenge: "التحدي الحقيقي كان الحجم: نظام متكامل بالكامل، منفردًا، في شهرين. الأساس — قاعدة البيانات والأمان وواجهة API — نظيف ومبني عن قصد. طبقة منطق الأعمال فوقه هي الجزء التجريبي: هناك جرّبت أفكارًا بدل اللعب على المضمون — وتعلّمت الأكثر.",
       origin: "أسبوعان من العصف الذهني لقاعدة البيانات (أمان على مستوى الصفوف، PostGIS) ← الواجهة الخلفية فوقها (كان Postman كنزًا أثناء بناء API) ← ثم الواجهة الأمامية، مع تجربة التخطيطات والسلوك حتى استقر.",
-      screenshots: ["تسجيل الدخول — التطبيق نفسه، أربعة مستأجرين: Campus Match وKiezConnect وMiteinander وUnderground", "الموافقة عند أول تسجيل دخول، نصوص لكل مستأجر", "لوحة التحكم — الميزات حسب الباقة المحجوزة (Discover وMatching في Premium فقط)", "قائمة المحادثات", "المحادثة — الألوان والنبرة من إعدادات المستأجر", "Hidden Zone — حجزها Underground فقط، مع لغة leetspeak خاصة بها", "الإعدادات — Miteinander باللغة المبسّطة افتراضيًا"],
-      video: "المسار نفسه لأربعة مستأجرين في آن واحد — الفروق تأتي من إعدادات المستأجر فقط",
     },
     tschobbo: {
       kind: "بوت للتقديم على الوظائف",
@@ -551,7 +542,6 @@ export function localizeCard(card: ProjectCard): ProjectCard {
     origin: t.origin ?? card.origin,
     links: card.links?.map((l, i) => ({ ...l, label: t.links?.[i] ?? l.label })),
     screenshots: card.screenshots?.map((s, i) => ({ ...s, alt: t.screenshots?.[i] ?? s.alt })),
-    video: card.video && t.video ? { ...card.video, alt: t.video } : card.video,
     mascot: card.mascot && t.mascot ? { ...card.mascot, alt: t.mascot } : card.mascot,
     widget: card.widget && t.widget ? { ...card.widget, label: t.widget } : card.widget,
   };

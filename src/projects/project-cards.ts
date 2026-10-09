@@ -36,7 +36,19 @@ export interface ProjectWidget {
 // or the demo link, B2B -> the YourBrand accessible-site link.
 // Screens -> the card's screenshots as a gallery. Self -> no overlay: the
 // portfolio's own card, its "demo" is the page you're on (main.ts).
-export type FacetKind = "live-demo" | "b2b" | "screens" | "self";
+// One tenant in YourBrand's Screens facet: what it is, what it booked, a
+// click-through clip (.mp4) and its screens.
+export interface TenantShowcase {
+  name: string;
+  kind: string;
+  about: string;
+  tier: string;
+  modules: string[];
+  video: { src: string; poster: string; alt: string };
+  screenshots: { src: string; alt: string }[];
+}
+
+export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
 export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard" | "storyboard" | "portrait";
@@ -65,9 +77,10 @@ export interface ProjectCard {
   // Unresolved content questions, shown visibly on the card until answered.
   open?: string[];
   screenshots?: { src: string; alt: string }[];
-  // A clip shown on top of the screenshots in the Screens gallery (an
-  // .mp4 with a .webm of the same name next to it).
-  video?: { src: string; poster: string; alt: string };
+  // YourBrand's Screens facet: an intro, then one accordion section per
+  // tenant instead of a flat gallery of `screenshots`.
+  tenantsIntro?: string;
+  tenants?: TenantShowcase[];
   // A character to put on the card's visual (TschoBBo's mascot).
   mascot?: { src: string; alt: string };
   widget?: ProjectWidget;

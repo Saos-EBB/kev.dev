@@ -88,6 +88,39 @@ const B2B_PAGE: ProjectWidget = {
 
 const findLink = (card: ProjectCard, test: RegExp) => card.links?.find((l) => test.test(l.label));
 
+function figureHtml(s: { src: string; alt: string }): string {
+  return `<figure><img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" /><figcaption>${esc(s.alt)}</figcaption></figure>`;
+}
+
+function galleryHtml(shots: { src: string; alt: string }[], lead = ""): string {
+  return `<div class="facet-gallery">${lead}${shots.map(figureHtml).join("")}</div>`;
+}
+
+// YourBrand: the intro ("what it could be"), then one closed <details> per
+// tenant. Closed sections aren't rendered, so their lazy images and the
+// preload="none" clips cost nothing until a section is opened.
+function tenantsHtml(card: ProjectCard): string {
+  const sections = (card.tenants ?? [])
+    .map(
+      (t) => `<details class="facet-tenant">
+        <summary><span class="facet-tenant-name">${esc(t.name)}</span><span class="facet-tenant-kind">${esc(t.kind)}</span></summary>
+        <div class="facet-tenant-body">
+          <p>${esc(t.about)}</p>
+          <dl class="facet-tenant-meta">
+            <dt>${esc(UI.tenantTier)}</dt><dd>${esc(t.tier)}</dd>
+            <dt>${esc(UI.tenantModules)}</dt><dd><ul>${t.modules.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></dd>
+          </dl>
+          ${galleryHtml(
+            t.screenshots,
+            `<figure><video poster="${esc(t.video.poster)}" controls muted loop playsinline preload="none"><source src="${esc(t.video.src)}" type="video/mp4" /></video><figcaption>${esc(t.video.alt)}</figcaption></figure>`,
+          )}
+        </div>
+      </details>`,
+    )
+    .join("");
+  return `<h3 class="facet-tenants-heading">${esc(UI.tenantsHeading)}</h3><p>${esc(card.tenantsIntro ?? "")}</p><div class="facet-tenants">${sections}</div>`;
+}
+
 function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
   switch (kind) {
     case "live-demo": {
@@ -111,17 +144,11 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
     case "screens":
       return {
         title: UI.screensTitle(card.title),
-        bodyHtml: card.screenshots?.length
-          ? `<div class="facet-gallery">${
-              card.video
-                ? `<figure><video poster="${esc(card.video.poster)}" controls muted loop playsinline preload="none"><source src="${esc(card.video.src.replace(/\.mp4$/, ".webm"))}" type="video/webm" /><source src="${esc(card.video.src)}" type="video/mp4" /></video><figcaption>${esc(card.video.alt)}</figcaption></figure>`
-                : ""
-            }${card.screenshots
-              .map(
-                (s) => `<figure><img src="${esc(s.src)}" alt="${esc(s.alt)}" loading="lazy" decoding="async" /><figcaption>${esc(s.alt)}</figcaption></figure>`,
-              )
-              .join("")}</div>`
-          : `<p class="pcard-open">[OFFEN: Screenshots fehlen]</p>`,
+        bodyHtml: card.tenants?.length
+          ? tenantsHtml(card)
+          : card.screenshots?.length
+            ? galleryHtml(card.screenshots)
+            : `<p class="pcard-open">[OFFEN: Screenshots fehlen]</p>`,
       };
     case "b2b":
       // The white-label sales page (yourbrand/, from the b2b-cv repo) —

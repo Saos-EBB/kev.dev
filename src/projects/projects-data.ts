@@ -55,22 +55,107 @@ const cards: ProjectCard[] = [
       "Die eigentliche Herausforderung war der Umfang: kompletter Fullstack solo in zwei Monaten. Die Basis — DB, Security, API — ist sauber und bewusst gebaut. Der Business-Logic-Layer darüber ist der experimentelle Teil: hier habe ich Ideen ausprobiert, statt auf Nummer sicher zu gehen — und dabei am meisten gelernt.",
     origin:
       "2 Wochen DB-Brainstorm (Row-Level Security, PostGIS) → Backend drauf (Postman war Gold beim API-Bauen) → Frontend obendrauf, Layouts und Verhalten durchgespielt, bis es saß.",
-    // Showcase from the YourBrand repo: one codebase, four tenants, side by
-    // side. The Discover screens are left out on purpose (test profiles use
-    // pictures of real people), and cut from the video too.
-    video: {
-      src: "/projects/yourbrand/mandanten.mp4",
-      poster: "/projects/yourbrand/mandanten-poster.webp",
-      alt: "Gleicher Ablauf, vier Mandanten gleichzeitig — die Unterschiede kommen nur aus der Mandanten-Config",
-    },
-    screenshots: [
-      { src: "/projects/yourbrand/01-login.webp", alt: "Login — dieselbe App, vier Mandanten: Campus Match, KiezConnect, Miteinander, Underground" },
-      { src: "/projects/yourbrand/02-zustimmung.webp", alt: "Zustimmung beim ersten Login, Texte je Mandant" },
-      { src: "/projects/yourbrand/03-dashboard.webp", alt: "Dashboard — Funktionen je nach gebuchtem Paket (Discover und Matching nur bei Premium)" },
-      { src: "/projects/yourbrand/04-chats.webp", alt: "Chat-Übersicht" },
-      { src: "/projects/yourbrand/05-chat.webp", alt: "Chat — Farben und Ton kommen aus der Mandanten-Config" },
-      { src: "/projects/yourbrand/07-hidden-zone.webp", alt: "Hidden Zone — nur Underground hat sie gebucht, inklusive eigener Leetspeak-Sprache" },
-      { src: "/projects/yourbrand/08-einstellungen.webp", alt: "Einstellungen — bei Miteinander standardmäßig in Leichter Sprache" },
+    // Screens from the YourBrand repo: one codebase, five tenants, each in
+    // its own accordion section (facet-overlay.ts).
+    tenantsIntro:
+      "YourBrand ist kein fertiges Produkt, sondern ein Kern, aus dem viele werden können. Die fünf Mandanten unten laufen alle aus demselben Code und demselben Image — was sie unterscheidet, steht nur in ihrer tenant.json: Marke, Farben, Schrift, Navigation, Sprachen, Paket und Module. Vom Studenten-Dating über das Schwarze Brett im Kiez bis zur barrierearmen Plattform fürs betreute Wohnen. Verwaltet werden alle über die Mandanten-Console: Übersicht mit Kennzahlen und Verlauf, Config-Editor mit Prüfung und Diff, Farb-Editor mit Kontrastcheck, Logo-Upload — ein neuer Mandant ist eine Config-Datei und ein Befehl.",
+    tenants: [
+      {
+        name: "YourBrand",
+        kind: "Die neutrale Basis",
+        about:
+          "Die Grundausstattung, von der jeder Mandant ausgeht: dunkles Candy-Theme in Pink, Lila und Hellblau, Sidebar-Navigation, alle neun Sprachen inklusive Leichter Sprache und Leetspeak. Zeigt die Plattform im vollen Paket — Entdecken mit Umkreissuche, Matching per Swipe, Chat, Benachrichtigungen und das Admin-Dashboard mit Moderation und Kennzahlen.",
+        tier: "Premium",
+        modules: ["Chat", "Matching", "Bezahlung", "Hidden Zone"],
+        video: { src: "/projects/yourbrand/yourbrand/clickthrough.mp4", poster: "/projects/yourbrand/yourbrand/clickthrough-poster.webp", alt: "Einmal durch YourBrand geklickt" },
+        screenshots: [
+          { src: "/projects/yourbrand/yourbrand/00-login.webp", alt: "Login" },
+          { src: "/projects/yourbrand/yourbrand/01-dashboard.webp", alt: "Dashboard — Moderation, Plattform-Kennzahlen und Mitgliederwachstum für Owner und Admins" },
+          { src: "/projects/yourbrand/yourbrand/02-discover.webp", alt: "Entdecken — Filter nach Stadt, Umkreis, Alter und Online-Status" },
+          { src: "/projects/yourbrand/yourbrand/03-matches.webp", alt: "Matching per Swipe, gemeinsame Interessen markiert" },
+          { src: "/projects/yourbrand/yourbrand/04-chat.webp", alt: "Chat-Übersicht" },
+          { src: "/projects/yourbrand/yourbrand/05-chat-conversation.webp", alt: "Chat" },
+          { src: "/projects/yourbrand/yourbrand/06-notifications.webp", alt: "Benachrichtigungen" },
+          { src: "/projects/yourbrand/yourbrand/07-profile.webp", alt: "Profil — Interessen und rote Flaggen" },
+          { src: "/projects/yourbrand/yourbrand/08-settings.webp", alt: "Einstellungen — Design & Barrierefreiheit, Sichtbarkeit, Konto, Sicherheit" },
+        ],
+      },
+      {
+        name: "Campus Match",
+        kind: "Dating & Freundschaften an der Uni",
+        about:
+          "Eine Kennenlern-App für Studierende: Leiste oben statt Sidebar, dunkles Pink und Flieder, Bricolage Grotesque und DM Sans. Gebucht ist Premium — Entdecken und Matching per Swipe sind dabei, die Hidden Zone ist bewusst abgeschaltet. Sprachen: Deutsch und Englisch, für internationale Studierende.",
+        tier: "Premium",
+        modules: ["Chat", "Matching", "Bezahlung"],
+        video: { src: "/projects/yourbrand/campus-match/clickthrough.mp4", poster: "/projects/yourbrand/campus-match/clickthrough-poster.webp", alt: "Einmal durch Campus Match geklickt" },
+        screenshots: [
+          { src: "/projects/yourbrand/campus-match/00-login.webp", alt: "Login" },
+          { src: "/projects/yourbrand/campus-match/01-dashboard.webp", alt: "Dashboard mit Kennzahlen" },
+          { src: "/projects/yourbrand/campus-match/02-discover.webp", alt: "Entdecken" },
+          { src: "/projects/yourbrand/campus-match/03-matches.webp", alt: "Matching per Swipe" },
+          { src: "/projects/yourbrand/campus-match/04-chat.webp", alt: "Chat-Übersicht" },
+          { src: "/projects/yourbrand/campus-match/05-chat-conversation.webp", alt: "Chat in Pink und Flieder" },
+          { src: "/projects/yourbrand/campus-match/06-profile.webp", alt: "Profil" },
+          { src: "/projects/yourbrand/campus-match/07-settings.webp", alt: "Einstellungen" },
+        ],
+      },
+      {
+        name: "KiezConnect",
+        kind: "Schwarzes Brett für die Nachbarschaft",
+        about:
+          "Ein Nachbarschaftsnetz für einen Kiez-Verein: hell, Ziegelrot, Archivo, Aushänge mit Abreißzetteln wie am echten Brett. Das kleinste Paket plus das Modul Schwarzes Brett: Suche, Biete, Verschenke, Treffen — sichtbar für die Straße, 500 m, 1 km, den Kiez oder alle. „Zettel abreißen“ schickt eine Kontaktanfrage, Aushänge laufen nach 14 Tagen ab, öffentliche stehen schon auf der Login-Seite. Kein Matching — hier geht's um Hilfe, nicht ums Daten. Sprachen: Deutsch, Englisch, Leichte Sprache.",
+        tier: "Core",
+        modules: ["Chat", "Bezahlung", "Schwarzes Brett"],
+        video: { src: "/projects/yourbrand/kiez/clickthrough.mp4", poster: "/projects/yourbrand/kiez/clickthrough-poster.webp", alt: "Einmal durch KiezConnect geklickt" },
+        screenshots: [
+          { src: "/projects/yourbrand/kiez/00-login.webp", alt: "Login — öffentliche Aushänge schon vor der Anmeldung" },
+          { src: "/projects/yourbrand/kiez/01-dashboard.webp", alt: "Dashboard — Aushänge aus der Nähe" },
+          { src: "/projects/yourbrand/kiez/02-board.webp", alt: "Brett — nach Umkreis und Art filtern" },
+          { src: "/projects/yourbrand/kiez/03-board-notice.webp", alt: "Aushang — Zettel abreißen und schreiben" },
+          { src: "/projects/yourbrand/kiez/04-board-new.webp", alt: "Neuer Aushang — wer ihn sieht, bestimmt der Umkreis" },
+          { src: "/projects/yourbrand/kiez/05-requests.webp", alt: "Kontaktanfragen" },
+          { src: "/projects/yourbrand/kiez/06-chat.webp", alt: "Chat-Übersicht" },
+          { src: "/projects/yourbrand/kiez/07-chat-conversation.webp", alt: "Chat" },
+          { src: "/projects/yourbrand/kiez/08-profile.webp", alt: "Profil" },
+        ],
+      },
+      {
+        name: "Miteinander",
+        kind: "Barrierearm, für betreutes Wohnen",
+        about:
+          "Für einen Träger im ambulant betreuten Wohnen: Leichte Sprache als Standard, Atkinson Hyperlegible in 18 px, breite Sidebar mit großen Feldern, Vorlesen, fertige Antworten im Chat und ein Hilfe-Knopf, der immer sichtbar ist. Paket Connect ohne Bezahlung, dazu Betreuung und Organisation: Ein Konto betreut wenige andere, die betreute Person stimmt zu und kann Rechte ändern oder die Betreuung beenden; bei geschützten Personen wartet ein neuer Kontakt auf die Freigabe. Der Träger sieht sein Team und alle Betreuungen auf einen Blick.",
+        tier: "Connect",
+        modules: ["Chat", "Betreuung", "Organisation"],
+        video: { src: "/projects/yourbrand/miteinander/clickthrough.mp4", poster: "/projects/yourbrand/miteinander/clickthrough-poster.webp", alt: "Einmal durch Miteinander geklickt" },
+        screenshots: [
+          { src: "/projects/yourbrand/miteinander/00-login.webp", alt: "Login in Leichter Sprache" },
+          { src: "/projects/yourbrand/miteinander/01-dashboard.webp", alt: "Start — „Meine Leute“ und Kennzahlen" },
+          { src: "/projects/yourbrand/miteinander/02-care.webp", alt: "Betreuung — wen ich betreue, Freigaben, Schutz" },
+          { src: "/projects/yourbrand/miteinander/03-org.webp", alt: "Organisation — betreute Personen, Rechte, Team" },
+          { src: "/projects/yourbrand/miteinander/04-requests.webp", alt: "Kontaktanfragen" },
+          { src: "/projects/yourbrand/miteinander/05-chat.webp", alt: "Nachrichten" },
+          { src: "/projects/yourbrand/miteinander/06-chat-conversation.webp", alt: "Chat mit Vorlesen und fertigen Antworten" },
+          { src: "/projects/yourbrand/miteinander/07-settings.webp", alt: "Einstellungen" },
+        ],
+      },
+      {
+        name: "Underground",
+        kind: "Gaming-Crew mit Hidden Zone",
+        about:
+          "Eine Community für eine Gaming-Crew: dunkel, Signalgelb, Big Shoulders und Barlow, die Navigation als Linienplan mit eigenen Menünamen (Leitstand, Durchsagen, Stellwerk). Volles Premium inklusive Hidden Zone mit öffentlichen Beef-Duellen, Münzen und Bestenliste. Sprachen: Deutsch, Englisch und Leetspeak.",
+        tier: "Premium",
+        modules: ["Chat", "Matching", "Bezahlung", "Hidden Zone"],
+        video: { src: "/projects/yourbrand/underground/clickthrough.mp4", poster: "/projects/yourbrand/underground/clickthrough-poster.webp", alt: "Einmal durch Underground geklickt" },
+        screenshots: [
+          { src: "/projects/yourbrand/underground/00-login.webp", alt: "Login" },
+          { src: "/projects/yourbrand/underground/01-dashboard.webp", alt: "Leitstand — das Dashboard am Linienplan" },
+          { src: "/projects/yourbrand/underground/03-discover.webp", alt: "Crew — Entdecken unter eigenem Namen" },
+          { src: "/projects/yourbrand/underground/04-notifications.webp", alt: "Durchsagen — Beef-Ergebnisse aus der Hidden Zone" },
+          { src: "/projects/yourbrand/underground/05-chat.webp", alt: "Chat-Übersicht" },
+          { src: "/projects/yourbrand/underground/06-chat-conversation.webp", alt: "Chat" },
+          { src: "/projects/yourbrand/underground/07-profile.webp", alt: "Profil" },
+        ],
+      },
     ],
     facets: ["live-demo", "screens", "b2b"],
   },
