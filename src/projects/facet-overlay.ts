@@ -114,6 +114,8 @@ function tenantsHtml(card: ProjectCard): string {
             t.screenshots,
             `<figure><video poster="${esc(t.video.poster)}" controls muted loop playsinline preload="none"><source src="${esc(t.video.src)}" type="video/mp4" /></video><figcaption>${esc(t.video.alt)}</figcaption></figure>`,
           )}
+          <h4 class="facet-tenant-mobile-heading">${esc(UI.tenantMobile)}</h4>
+          <div class="facet-gallery facet-gallery-mobile">${t.screenshots.map((s) => (s.mobile ? figureHtml({ src: s.mobile, alt: s.alt }) : "")).join("")}</div>
         </div>
       </details>`,
     )

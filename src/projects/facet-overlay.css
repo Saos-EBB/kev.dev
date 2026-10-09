@@ -518,3 +518,21 @@
   border-radius: 999px;
   font-size: 0.85rem;
 }
+
+/* The tenant's phone screens: a grid of narrow shots below the desktop
+   ones, as many per row as fit. */
+.facet-tenant-mobile-heading {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.facet-gallery-mobile {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.25rem 1rem;
+}

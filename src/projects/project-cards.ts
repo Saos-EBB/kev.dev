@@ -37,7 +37,7 @@ export interface ProjectWidget {
 // Screens -> the card's screenshots as a gallery. Self -> no overlay: the
 // portfolio's own card, its "demo" is the page you're on (main.ts).
 // One tenant in YourBrand's Screens facet: what it is, what it booked, a
-// click-through clip (.mp4) and its screens.
+// click-through clip (.mp4) and its screens, each as desktop and mobile.
 export interface TenantShowcase {
   name: string;
   kind: string;
@@ -45,7 +45,8 @@ export interface TenantShowcase {
   tier: string;
   modules: string[];
   video: { src: string; poster: string; alt: string };
-  screenshots: { src: string; alt: string }[];
+  // `mobile` is missing where the phone capture was unusable.
+  screenshots: { src: string; mobile?: string; alt: string }[];
 }
 
 export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
