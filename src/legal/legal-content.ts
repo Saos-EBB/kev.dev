@@ -306,7 +306,7 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Ihre Einwilligung, die Sie mit „Laden“ erteilen (Art. 6 Abs. 1
         lit. a DSGVO). Ihr Browser merkt sich diese Wahl; widerrufen
         können Sie sie unten. Ohne Einwilligung wird nichts geladen —
-        die vorbereiteten Gesichter funktionieren auch so. Mehr dazu:
+        das vorbereitete Gesicht funktioniert auch so. Mehr dazu:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
@@ -437,7 +437,7 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         Framework. The legal basis is your consent, given with "Load"
         (Art. 6(1)(a) GDPR). Your browser remembers this choice; you can
         withdraw it below. Without consent, nothing is loaded — the
-        prepared faces work anyway. More:
+        prepared face works anyway. More:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
@@ -568,8 +568,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         фото. Google сертифицирована по EU-US Data Privacy Framework.
         Правовое основание — ваше согласие, данное кнопкой «Загрузить»
         (ст. 6 (1) (a) GDPR). Браузер запоминает этот выбор; отозвать его
-        можно ниже. Без согласия ничего не загружается — подготовленные
-        лица работают и так. Подробнее:
+        можно ниже. Без согласия ничего не загружается — подготовленное
+        лицо работает и так. Подробнее:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
@@ -816,7 +816,7 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
         معتمدة وفق إطار EU-US Data Privacy Framework. الأساس القانوني هو
         موافقتك التي تمنحها بزر «تحميل» (المادة 6 (1) (أ) من اللائحة العامة
         لحماية البيانات). يتذكّر متصفحك هذا الاختيار، ويمكنك سحبه أدناه. بدون
-        موافقة لا يُحمَّل أي شيء — والوجوه المُعدّة تعمل على أي حال. المزيد:
+        موافقة لا يُحمَّل أي شيء — والوجه المُعدّ يعمل على أي حال. المزيد:
         <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">policies.google.com/privacy</a>
       </p>
 
