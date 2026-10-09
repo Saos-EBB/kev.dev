@@ -1,5 +1,5 @@
 // FaceDots tool (the FaceDots card's live demo): pick one of Kevin's
-// prepared faces or any photo, the head is cut out in the browser
+// prepared face or any photo, the head is cut out in the browser
 // (face-dots' photoToFace — the photo is never uploaded), then it becomes
 // dots, ASCII, or the hero's cloth. Loaded lazily with the overlay; the
 // cloth is only built the first time it's picked.
