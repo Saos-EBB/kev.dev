@@ -125,6 +125,10 @@ const PRESET_HIGH: Record<number, SlotLayout[]> = {
 // project 3 wraps back to PRESET_LEFT, and so on.
 const PRESETS = [PRESET_LEFT, PRESET_RIGHT, PRESET_HIGH];
 
+// The big projects' cards fill the space under the headline (big-cards.css),
+// so they sit dead centre instead of on a desk preset.
+const CENTERED: SlotLayout = { x: 0, y: 0, rotate: 0, scale: 1, zIndex: 1 };
+
 // On a narrow viewport the full-size offsets above push cards mostly
 // off-screen instead of just "spread out" — scale them down instead of
 // hand-authoring a second set of presets.
@@ -240,8 +244,9 @@ export function initCarousel(section: HTMLElement) {
     // separate from xPercent on purpose since GSAP can't mix two units
     // in one value the way CSS calc() can — and opacity animate for the
     // small entry slide.
+    const big = group.dataset.group === "big";
     cards.forEach((card, ci) => {
-      const slot = preset[ci];
+      const slot = big ? CENTERED : preset[ci];
       gsap.set(card, {
         xPercent: -50 + slot.x * spreadScale,
         yPercent: -50 + slot.y * spreadScale,
