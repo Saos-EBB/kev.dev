@@ -13,6 +13,7 @@ import { UI } from "../i18n/ui";
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
 import { renderTouch, renderVisual } from "./project-visuals";
+import { renderBigCard } from "./big-cards";
 
 // A link without href renders as plain text (e.g. "Live-Demo auf Anfrage").
 export interface ProjectLink {
@@ -207,15 +208,20 @@ const visualHidden = (card: ProjectCard) =>
   card.layout === "blueprint" || card.layout === "editor" ? "true" : "false";
 
 export function renderProjectCard(card: ProjectCard, index = 0, total = 1): string {
-  return `
-    <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+  const head = `
       <header class="pcard-head">
         <p class="pcard-index">${indexLine(card, index, total)}</p>
         <h3 class="pcard-title" aria-label="${esc(card.title)}">${displayText(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${renderFacetTiles(card)}
-      </header>
+      </header>`;
+  // The big three have a desktop card of their own (big-cards.ts).
+  const big = card.group === "big" ? renderBigCard(card, head) : "";
+  if (big) return big;
+  return `
+    <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
       <div class="pcard-visual" aria-hidden="${visualHidden(card)}">
         ${renderVisual(card)}
       </div>

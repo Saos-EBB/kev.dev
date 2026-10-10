@@ -15,7 +15,8 @@ const cards: ProjectCard[] = [
     group: "big",
     layout: "blueprint",
     kind: "White-Label-SaaS",
-    accent: "var(--note-2)",
+    // YourBrand's own brand pink (its default tenant's primary color).
+    accent: "#FF5FC8",
     learnGoal:
       "Wollte lernen, wie man Software modular baut und ein echtes Produkt mit Businesslogik auf die Beine stellt.",
     title: "YourBrand",

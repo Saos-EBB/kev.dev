@@ -1,0 +1,222 @@
+/* ---------------------------------------------------------------- */
+/* The big three's own desktop cards (big-cards.ts). Same footprint as */
+/* the bento card (24 x 13 cells from the breakpoint on), but a column */
+/* of head + one structure of their own instead of the shared grid.   */
+/* ---------------------------------------------------------------- */
+
+.pcard--big {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  /* The carousel scales the cover card up by 1.15 (carousel.ts presets):
+     divided out here so the scaled card still fits under the headline. */
+  height: clamp(26rem, calc((100vh - var(--projects-title-h, 12rem) - 5rem) / 1.15), 34rem);
+}
+
+.pcard--big .pcard-head {
+  flex: none;
+}
+
+@media (min-width: 1248px) {
+  .pcard--big {
+    height: calc(13 * var(--grid-cell));
+  }
+  .pcard--big .pcard-head {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    column-gap: 1.5rem;
+  }
+  .pcard--big .pcard-head .facet-tiles {
+    margin-inline-start: auto;
+  }
+}
+
+/* --- er (YourBrand): the card as its data model ------------------ */
+
+.er {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.25rem minmax(0, 1fr) 3.25rem minmax(0, 1.15fr) 3.25rem minmax(0, 1fr);
+  align-items: start;
+  font-family: var(--font-mono);
+}
+
+.er-entity {
+  max-height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+}
+
+.er-name {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: color-mix(in srgb, var(--pc) 16%, var(--projects-bg));
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.er-name span:last-child {
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.er-name--lead {
+  background: var(--pc);
+  color: #120a10;
+}
+
+.er-name--lead span:last-child {
+  color: inherit;
+}
+
+.er-row + .er-row {
+  border-top: 1px solid color-mix(in srgb, var(--pc) 18%, transparent);
+}
+
+.er-row summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.75rem;
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.er-row summary::-webkit-details-marker {
+  display: none;
+}
+
+.er-row summary::before {
+  content: "";
+  flex: none;
+  border-inline-start: 5px solid var(--color-text-muted);
+  border-block: 4px solid transparent;
+  transition: transform var(--transition-hover);
+}
+
+.er-row[open] > summary::before {
+  transform: rotate(90deg);
+  border-inline-start-color: var(--pc);
+}
+
+.er-row summary:hover {
+  background: var(--pc-faint);
+}
+
+.er-row summary:focus-visible {
+  outline: 2px solid var(--pc);
+  outline-offset: -2px;
+}
+
+.er-key {
+  flex: none;
+  min-width: 1.4em;
+  font-size: 0.62rem;
+  color: var(--pc);
+}
+
+.er-swatch {
+  flex: none;
+  width: 0.65rem;
+  height: 0.65rem;
+}
+
+.er-attr {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.er-type {
+  margin-inline-start: auto;
+  flex: none;
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+}
+
+.er-row--hot .er-attr,
+.er-row--hot .er-type {
+  color: var(--pc);
+}
+
+.er-body {
+  padding: 0.1rem 0.75rem 0.8rem 1.6rem;
+  font-family: var(--font-read);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+
+.er-body p + p,
+.er-body p + ul,
+.er-body ul + p {
+  margin-top: 0.5rem;
+}
+
+.er-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-inline-start: 1rem;
+}
+
+.er-body b {
+  color: var(--color-text);
+}
+
+.er-body a {
+  color: var(--pc);
+}
+
+.er-mods {
+  color: var(--pc);
+}
+
+.er-body .er-tags {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0;
+  list-style: none;
+}
+
+.er-tags li {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--pc-soft);
+  font-size: 0.65rem;
+}
+
+/* The relation between two neighbours, drawn at header height. */
+.er-rel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0.15rem;
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+}
+
+.er-rel svg {
+  width: 100%;
+  height: 2.2rem;
+  stroke: var(--color-text-muted);
+  stroke-width: 1.5;
+}
+
+:root[dir="rtl"] .er-rel svg {
+  transform: scaleX(-1);
+}
