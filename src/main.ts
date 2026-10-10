@@ -489,9 +489,6 @@ function refreshHeroName() {
 
 refreshHeroName();
 document.fonts.ready.then(refreshHeroName);
-// Digits/punctuation in the names come from Saos Fill, which only loads
-// once text needs it — the canvas texture must not rasterize before.
-document.fonts.load("1em 'Saos Fill'", HERO_NAMES.join("")).then(refreshHeroName);
 
 // Local font playground (src/dev/font-tool.ts); only on `npm run dev`,
 // the whole branch drops out of the production build.
