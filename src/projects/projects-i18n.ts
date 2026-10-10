@@ -22,6 +22,8 @@ interface CardText {
   tenantsIntro?: string;
   // Matched to the card's tenants by position; name and tier stay as they are.
   tenants?: { kind: string; about: string; video: string; screenshots: string[] }[];
+  // Matched to the card's parts by position; files stay as they are.
+  parts?: { does: string; reuse: string }[];
   mascot?: string;
   widget?: string;
 }
@@ -195,6 +197,13 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       what: "I looked at a lot of portfolio sites, then built every element with a purpose: the cloth in the hero is so big you have to touch it. About is an elevator my life passes by. The projects lie on a workbench, each with Why and Learned. Contact comes with a transition, and whoever clicks finds a hidden wow. Imprint and privacy policy are overlays on the one-pager, so the music keeps playing without a cut.",
       meta: "Solo · the sixth attempt at a site of my own · kev.dev itself since 18 September 2026: approx. 190–310 h · with all its predecessors (three before I used Git, then SAOS.ME, b2b-cv, cv) and the 3D renderer around 550–800 h · Claude Code as implementation agent only since the YourBrand frontend, sometimes more, sometimes less — and still counting",
       origin: "Before that: three attempts, before I even used Git (approx. 45 h) → March: SAOS.ME, the first one with Git — SaoS animation, raygun button, a one-pager on GitHub Pages → June to September: b2b-cv, the white-label sales page for YourBrand (React + Tailwind), which lives on today as the B2B page in the YourBrand card → August: the 3D renderer, wireframe without a library → 15 September: cv, a quick one-pager with my background and the 3D engine as a module → 18 September: kev.dev, the sixth attempt — first the elevator and the SAOS floor relief, then project cards with live demos, the contact finale with the raygun, the phone version, a new About, FaceDots for the portrait and five languages.",
+      parts: [
+        { does: "A spring simulation on canvas. The name and subtitle are painted on as a texture and warped along — with gradient, glow and shine like the headings.", reuse: "The cloth takes any canvas texture (setTextTexture) — a name, a logo or a photo." },
+        { does: "A pinned ride through a shaft of CSS 3D walls; at the end the zoom into the monitor, whose grid turns seamlessly into the projects grid.", reuse: "The pattern for every pinned scene: its own scrubbed timeline, measured against the 100vh probe instead of innerHeight." },
+        { does: "Cards from data: one object per project, layout and visual per card; live demos only load on first open (CheerpJ, 3D renderer, FaceDots).", reuse: "A new project is one entry in projects-data.ts — desktop card, phone list and sheet come with it." },
+        { does: "The letters fall in driven by scroll; three clicks shatter everything into real physics, then the raygun appears.", reuse: "The raygun is a standalone button (mountRaygunButton) in two variants, fixed or inline — it plugs into any page." },
+        { does: "Imprint and privacy policy as an overlay over the page — music, theme and scroll position stay; the old addresses redirect there.", reuse: "One overlay for every legal text: the content lives in legal-content.ts, the page around it stays put." },
+      ],
       links: ["GitHub (public)"],
       decisions: [
         "Vanilla TypeScript + Vite, no framework — the page is animation, not state",
@@ -397,6 +406,13 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       what: "Пересмотрел много сайтов-портфолио и затем строил каждый элемент со смыслом: ткань в hero такая большая, что её надо потрогать. «Обо мне» — лифт, мимо которого проезжает моя жизнь. Проекты лежат как на верстаке, у каждого «Зачем» и «Чему научился». Контакт приходит с переходом, а тот, кто кликнет, найдёт спрятанный сюрприз. Выходные данные и политика конфиденциальности — оверлеи на одностраничнике, чтобы музыка играла без обрыва.",
       meta: "Соло · шестая попытка сделать собственный сайт · сам kev.dev с 18 сентября 2026: около 190–310 ч · со всеми предшественниками (три ещё до Git, потом SAOS.ME, b2b-cv, cv) и 3D-рендерером примерно 550–800 ч · Claude Code как агент реализации только с фронтенда YourBrand, то больше, то меньше — и счёт идёт дальше",
       origin: "До этого: три попытки, ещё до того, как я начал пользоваться Git (около 45 ч) → март: SAOS.ME, первая с Git — анимация SaoS, кнопка-бластер, одностраничник на GitHub Pages → с июня по сентябрь: b2b-cv, white-label-страница продаж для YourBrand (React + Tailwind), которая сегодня живёт как B2B-страница в карточке YourBrand → август: 3D-рендерер, каркас без библиотек → 15 сентября: cv, быстрый одностраничник с биографией и 3D-движком как модулем → 18 сентября: kev.dev, шестая попытка — сначала лифт и рельеф SAOS на полу, потом карточки проектов с живыми демо, финал контактов с бластером, мобильная версия, новый About, FaceDots для портрета и пять языков.",
+      parts: [
+        { does: "Пружинная симуляция на canvas. Имя и подзаголовок нанесены как текстура и деформируются вместе с тканью — с градиентом, свечением и бликом, как у заголовков.", reuse: "Ткань принимает любую canvas-текстуру (setTextTexture) — имя, логотип или фото." },
+        { does: "Закреплённая поездка по шахте из CSS-3D-стен; в конце зум в монитор, чья сетка плавно становится сеткой проектов.", reuse: "Шаблон для любой закреплённой сцены: своя таймлайн-анимация по скроллу, измеренная по пробе 100vh, а не по innerHeight." },
+        { does: "Карточки из данных: один объект на проект, свой макет и визуал у каждой карточки; живые демо загружаются только при первом открытии (CheerpJ, 3D-рендерер, FaceDots).", reuse: "Новый проект — это одна запись в projects-data.ts: карточка для десктопа, мобильный список и шторка появляются сами." },
+        { does: "Буквы падают по скроллу; три клика разбивают всё в настоящую физику, и появляется бластер.", reuse: "Бластер — самостоятельная кнопка (mountRaygunButton) в двух вариантах, fixed или inline: подключается к любой странице." },
+        { does: "Импрессум и политика конфиденциальности как оверлей поверх страницы — музыка, тема и позиция прокрутки сохраняются; старые адреса перенаправляют туда.", reuse: "Один оверлей для любого юридического текста: содержимое в legal-content.ts, страница вокруг остаётся на месте." },
+      ],
       links: ["GitHub (public)"],
       decisions: [
         "Чистый TypeScript + Vite, без фреймворка — страница это анимация, а не состояние",
@@ -600,6 +616,13 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       what: "多くのポートフォリオサイトを見たうえで、すべての要素に意味を持たせて作りました。ヒーローの布は大きく、触らずにはいられない。自己紹介は人生が通り過ぎていくエレベーター。プロジェクトは作業台に並び、それぞれに「なぜ」と「学んだこと」。連絡にはトランジションがあり、クリックした人には隠し玉が。運営者情報とプライバシーポリシーはワンページ上のオーバーレイなので、音楽が途切れない。",
       meta: "ひとりで · 自分のサイトへの6回目の挑戦 · kev.dev自体は2026年9月18日から：約190〜310時間 · すべての前身（Gitを使う前に3つ、その後SAOS.ME、b2b-cv、cv）と3Dレンダラーを合わせて約550〜800時間 · Claude Codeを実装エージェントとして使い始めたのはYourBrandのフロントエンドから、時期によって多かったり少なかったり — まだ続いている",
       origin: "その前に：Gitを使う前の挑戦が3つ（約45時間）→ 3月：SAOS.ME、Gitを使った最初の挑戦 — SaoSアニメーション、光線銃ボタン、GitHub Pagesのワンページ → 6〜9月：b2b-cv、YourBrandのホワイトラベル営業ページ（React + Tailwind）、今もYourBrandカードのB2Bページとして生きている → 8月：3Dレンダラー、ライブラリなしのワイヤーフレーム → 9月15日：cv、経歴と3Dエンジンをモジュールにした手早いワンページ → 9月18日：kev.dev、6回目の挑戦 — まずエレベーターとSAOSの床レリーフ、次にライブデモ付きのプロジェクトカード、光線銃のあるコンタクトのフィナーレ、スマホ版、新しいAbout、ポートレート用のFaceDots、そして5つの言語。",
+      parts: [
+        { does: "canvas上のばねシミュレーション。名前とサブタイトルはテクスチャとして描かれ、布と一緒にゆがむ — 見出しと同じグラデーション、グロー、光の帯付き。", reuse: "布はどんなcanvasテクスチャでも受け取る（setTextTexture）— 名前、ロゴ、写真。" },
+        { does: "CSS 3Dの壁でできたシャフトを固定スクロールで進み、最後にモニターへズーム。その格子がそのままプロジェクトのグリッドになる。", reuse: "あらゆる固定シーンの型：スクロールに連動する専用タイムライン、innerHeightではなく100vhの計測要素で測る。" },
+        { does: "データから作るカード：プロジェクトごとに1つのオブジェクト、カードごとのレイアウトとビジュアル。ライブデモは最初に開いたときだけ読み込む（CheerpJ、3Dレンダラー、FaceDots）。", reuse: "新しいプロジェクトはprojects-data.tsに1件追加するだけ — デスクトップのカード、スマホのリスト、シートが付いてくる。" },
+        { does: "文字がスクロールに合わせて落ちてくる。3回クリックすると全部が本物の物理で崩れ、光線銃が現れる。", reuse: "光線銃は独立したボタン（mountRaygunButton）で、fixedとinlineの2種類 — どのページにも差し込める。" },
+        { does: "インプレッサムとプライバシーポリシーはページ上のオーバーレイ — 音楽、テーマ、スクロール位置はそのまま。古いアドレスはそこへ転送される。", reuse: "法的なテキストはすべて1つのオーバーレイで：内容はlegal-content.tsにあり、周りのページは動かない。" },
+      ],
       links: ["GitHub（公開）"],
       decisions: [
         "フレームワークなしの素のTypeScript＋Vite — このページは状態ではなくアニメーション",
@@ -803,6 +826,13 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       what: "اطّلعت على مواقع أعمال كثيرة، ثم بنيت كل عنصر بمعنى: القماش في الواجهة كبير لدرجة أنك مضطر للمسه. «نبذة» مصعد تمرّ به حياتي. المشاريع على طاولة عمل، لكل منها «لماذا» و«ما تعلّمته». التواصل يأتي مع انتقال، ومن ينقر يجد مفاجأة مخفية. بيانات الناشر وسياسة الخصوصية طبقات فوق الصفحة الواحدة، كي تستمر الموسيقى دون انقطاع.",
       meta: "عمل فردي · المحاولة السادسة لموقع خاص بي · kev.dev نفسه منذ 18 سبتمبر 2026: نحو 190–310 ساعة · ومع كل سابقاته (ثلاث قبل أن أستخدم Git، ثم SAOS.ME وb2b-cv وcv) والعارض ثلاثي الأبعاد نحو 550–800 ساعة · وClaude Code كوكيل تنفيذ فقط منذ الواجهة الأمامية لـYourBrand، أحيانًا أكثر وأحيانًا أقل — والعدّاد مستمر",
       origin: "قبل ذلك: ثلاث محاولات قبل أن أستخدم Git أصلًا (نحو 45 ساعة) ← مارس: SAOS.ME، الأولى مع Git — حركة SaoS، وزر مسدس الأشعة، وصفحة واحدة على GitHub Pages ← من يونيو إلى سبتمبر: b2b-cv، صفحة المبيعات ذات العلامة البيضاء لـYourBrand (React + Tailwind)، وما زالت تعيش اليوم كصفحة B2B في بطاقة YourBrand ← أغسطس: العارض ثلاثي الأبعاد، إطار سلكي بلا مكتبة ← 15 سبتمبر: cv، صفحة واحدة سريعة بالمسيرة ومحرك ثلاثي الأبعاد كوحدة ← 18 سبتمبر: kev.dev، المحاولة السادسة — أولًا المصعد ونقش SAOS على الأرضية، ثم بطاقات المشاريع مع عروض حية، وختام صفحة التواصل مع مسدس الأشعة، ونسخة الهاتف، وقسم About جديد، وFaceDots للصورة الشخصية، وخمس لغات.",
+      parts: [
+        { does: "محاكاة نوابض على canvas. يُرسم الاسم والعنوان الفرعي كنسيج ويتشوهان مع القماش — بتدرج وتوهج ولمعة مثل العناوين.", reuse: "يقبل القماش أي نسيج canvas ‏(setTextTexture) — اسمًا أو شعارًا أو صورة." },
+        { does: "رحلة مثبّتة عبر بئر من جدران CSS ثلاثية الأبعاد؛ وفي النهاية تكبير داخل الشاشة، وتصبح شبكتها شبكة المشاريع بلا انقطاع.", reuse: "النمط لكل مشهد مثبّت: خط زمني خاص يتبع التمرير، يُقاس بمسبار 100vh بدل innerHeight." },
+        { does: "بطاقات من البيانات: كائن واحد لكل مشروع، وتخطيط وعنصر بصري لكل بطاقة؛ العروض الحية لا تُحمَّل إلا عند الفتح الأول (CheerpJ، العارض ثلاثي الأبعاد، FaceDots).", reuse: "المشروع الجديد مدخل واحد في projects-data.ts — وتأتي معه بطاقة سطح المكتب وقائمة الهاتف واللوحة." },
+        { does: "تسقط الحروف مع التمرير؛ وثلاث نقرات تحطّم كل شيء في فيزياء حقيقية، ثم يظهر مسدس الأشعة.", reuse: "مسدس الأشعة زر مستقل (mountRaygunButton) بنوعين، fixed أو inline — يُركَّب في أي صفحة." },
+        { does: "بيانات الناشر وسياسة الخصوصية كطبقة فوق الصفحة — تبقى الموسيقى والسمة وموضع التمرير؛ والعناوين القديمة تُحوَّل إليها.", reuse: "طبقة واحدة لكل نص قانوني: المحتوى في legal-content.ts، والصفحة حولها تبقى مكانها." },
+      ],
       links: ["GitHub (عام)"],
       decisions: [
         "TypeScript خالص مع Vite، بلا إطار — الصفحة حركة لا حالة",
@@ -869,6 +899,7 @@ export function localizeCard(card: ProjectCard): ProjectCard {
         screenshots: tenant.screenshots.map((s, j) => ({ ...s, alt: tt.screenshots[j] ?? s.alt })),
       };
     }),
+    parts: card.parts?.map((part, i) => (t.parts?.[i] ? { ...part, ...t.parts[i] } : part)),
     mascot: card.mascot && t.mascot ? { ...card.mascot, alt: t.mascot } : card.mascot,
     widget: card.widget && t.widget ? { ...card.widget, label: t.widget } : card.widget,
   };

@@ -566,47 +566,6 @@
   box-shadow: 0 10px 24px color-mix(in srgb, var(--color-shadow) 50%, transparent);
 }
 
-/* --- the big three's extra touch (project-visuals.ts renderTouch) - */
-
-.pcard-touch {
-  position: absolute;
-  z-index: 6;
-  pointer-events: none;
-}
-
-/* kev.dev: a map pin — this card is the page you're on. */
-.touch-here {
-  top: -0.9rem;
-  right: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.8rem 0.3rem 0.6rem;
-  border-radius: 999px;
-  background: var(--pc);
-  color: #111;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  box-shadow: 0 0 18px color-mix(in srgb, var(--pc) 45%, transparent);
-}
-
-.touch-here::before {
-  content: "";
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: #111;
-  animation: touch-here-ping 1.6s ease-out infinite;
-}
-
-@keyframes touch-here-ping {
-  0% { box-shadow: 0 0 0 0 rgb(17 17 17 / 0.6); }
-  100% { box-shadow: 0 0 0 0.5rem rgb(17 17 17 / 0); }
-}
-
 /* --- viewport (Renderer) ----------------------------------------- */
 
 .viz-viewport {
@@ -1401,7 +1360,6 @@
   :root:not(.force-motion) .viz-cube,
   :root:not(.force-motion) .viz-caret,
   :root:not(.force-motion) .viz-keys-letter,
-  :root:not(.force-motion) .touch-here::before,
   :root:not(.force-motion) .viz-prompt i {
     animation: none;
   }

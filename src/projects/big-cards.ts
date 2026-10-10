@@ -3,7 +3,7 @@
 // own built from the same card data — YourBrand reads as its data model.
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
-import { esc, TENANT_MODULES, type ProjectCard } from "./project-cards";
+import { cardBodies, esc, TENANT_MODULES, type ProjectCard } from "./project-cards";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
 
@@ -197,6 +197,68 @@ function mailCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// One small looping animation per section of this page (CSS in
+// big-cards.css), in UI.vizStory's order: cloth, elevator, project cards,
+// falling letters, the legal overlay with the music still going.
+const DEMOS = [
+  `<span class="demo-cloth"><b>Kev</b></span>`,
+  `<span class="demo-shaft"></span><span class="demo-car"></span>`,
+  `<span class="demo-card"></span><span class="demo-card"></span><span class="demo-card"></span>`,
+  `<span class="demo-fall">H</span><span class="demo-fall">I</span><span class="demo-fall">!</span>`,
+  `<span class="demo-page"></span><span class="demo-sheet"></span><span class="demo-bars"><i></i><i></i><i></i></span>`,
+];
+
+// kev.dev: Why? / Learned! / Code as tabs on the left, the page's own
+// sections on the right as accordions — each with a mini demo, and opened,
+// what it does, the files behind it and what of it is reusable.
+function partsCard(card: ProjectCard, head: string): string {
+  const bodies = cardBodies(card);
+  const parts = UI.vizStory.map(([name, line], i) => ({ name, line, ...(card.parts?.[i] ?? { does: "", files: [], reuse: "" }) }));
+  const id = (kind: string) => `parts-${esc(card.id)}-${kind}`;
+  return `
+    <article class="pcard pcard--big pcard--parts" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head.replace("</header>", `<span class="parts-here" aria-hidden="true">${esc(UI.touchHere)}</span></header>`)}
+      <div class="parts">
+        <section class="parts-text">
+          <div class="parts-tabs" role="tablist">
+            ${bodies
+              .map(
+                (b, i) =>
+                  `<button type="button" role="tab" id="${id(b.kind)}-tab" aria-controls="${id(b.kind)}" aria-selected="${i === 0}" data-tab="${b.kind}">${b.heading}</button>`,
+              )
+              .join("")}
+          </div>
+          ${bodies
+            .map(
+              (b, i) =>
+                `<div class="parts-panel" role="tabpanel" id="${id(b.kind)}" aria-labelledby="${id(b.kind)}-tab" data-panel="${b.kind}" data-lenis-prevent${i === 0 ? "" : " hidden"}>${b.body}</div>`,
+            )
+            .join("")}
+        </section>
+        <div class="parts-list" data-lenis-prevent>
+          <p class="parts-head">${esc(UI.partsHead)}</p>
+          ${parts
+            .map(
+              (p, i) => `
+            <details class="parts-item" name="parts-${esc(card.id)}"${i === 0 ? " open" : ""}>
+              <summary>
+                <span class="parts-demo" aria-hidden="true">${DEMOS[i] ?? ""}</span>
+                <span class="parts-name"><b><i>${String(i + 1).padStart(2, "0")}</i> ${esc(p.name)}</b><span>${esc(p.line)}</span></span>
+              </summary>
+              <dl class="parts-body">
+                <dt>${esc(UI.partsDoes)}</dt><dd>${esc(p.does)}</dd>
+                <dt>${esc(UI.partsFiles)}</dt><dd>${p.files.map((f) => `<code>${esc(f)}</code>`).join(" ")}</dd>
+                <dt>${esc(UI.partsReuse)}</dt><dd>${esc(p.reuse)}</dd>
+              </dl>
+            </details>`,
+            )
+            .join("")}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
 // Picking a folder or an inbox row shows its letter. One listener per
 // big card; the cards are rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement) {
@@ -215,6 +277,17 @@ export function initBigCards(root: HTMLElement) {
       card.querySelector(".mail-paper")?.scrollTo(0, 0);
     });
   });
+  // kev.dev's text tabs.
+  root.querySelectorAll<HTMLElement>(".pcard--parts").forEach((card) => {
+    card.addEventListener("click", (e) => {
+      const tab = (e.target as Element).closest<HTMLElement>("[data-tab]");
+      if (!tab) return;
+      card.querySelectorAll<HTMLElement>("[data-tab]").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+      card.querySelectorAll<HTMLElement>("[data-panel]").forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab.dataset.tab;
+      });
+    });
+  });
 }
 
 // The big card for this project, or "" to fall back to the shared layout.
@@ -224,6 +297,8 @@ export function renderBigCard(card: ProjectCard, head: string): string {
       return erCard(card, head);
     case "inbox":
       return mailCard(card, head);
+    case "storyboard":
+      return partsCard(card, head);
     default:
       return "";
   }

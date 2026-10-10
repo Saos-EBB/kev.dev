@@ -226,6 +226,33 @@ const cards: ProjectCard[] = [
     meta: "Solo · der sechste Anlauf auf eine eigene Seite · kev.dev selbst seit 18. September 2026: ca. 190–310 h · mit allen Vorläufern (drei noch vor Git, dann SAOS.ME, b2b-cv, cv) und dem 3D-Renderer rund 550–800 h · Claude Code als Implementierungs-Agent erst seit dem YourBrand-Frontend, mal mehr, mal weniger — und es läuft weiter",
     origin:
       "Davor: drei Anläufe, noch bevor ich Git benutzt habe (ca. 45 h) → März: SAOS.ME, der erste mit Git — SaoS-Animation, Raygun-Button, Onepager auf GitHub Pages → Juni bis September: b2b-cv, die White-Label-Verkaufsseite für YourBrand (React + Tailwind), die heute als B2B-Seite in der YourBrand-Karte weiterlebt → August: der 3D-Renderer, Wireframe ohne Bibliothek → 15. September: cv, ein schneller Onepager mit Werdegang und der 3D-Engine als Modul → 18. September: kev.dev, der sechste Anlauf — erst Aufzug und SAOS-Bodenrelief, dann Projektkarten mit Live-Demos, das Kontakt-Finale mit Raygun, die Handy-Version, About neu, FaceDots fürs Porträt und fünf Sprachen.",
+    parts: [
+      {
+        does: "Eine Feder-Simulation auf Canvas. Name und Untertitel werden als Textur aufgemalt und mitverzerrt — mit Verlauf, Glow und Shine wie die Überschriften.",
+        files: ["hero/cloth.ts", "hero/name-typewriter.ts", "hero/hero-names.ts"],
+        reuse: "Das Tuch nimmt jede Canvas-Textur (setTextTexture) — Name, Logo oder ein Foto.",
+      },
+      {
+        does: "Eine gepinnte Fahrt durch einen Schacht aus CSS-3D-Wänden; am Ende der Zoom in den Monitor, dessen Gitter nahtlos zum Projekte-Grid wird.",
+        files: ["about/elevator.ts", "scroll/transition.ts", "viewport.ts"],
+        reuse: "Das Muster für jede Pin-Szene: eine eigene, gescrubbte Timeline, gemessen an der 100vh-Sonde statt an innerHeight.",
+      },
+      {
+        does: "Karten aus Daten: ein Objekt pro Projekt, Layout und Visual pro Karte; Live-Demos laden erst beim ersten Öffnen (CheerpJ, 3D-Renderer, FaceDots).",
+        files: ["projects/projects-data.ts", "projects/project-cards.ts", "projects/project-visuals.ts", "projects/widgets/"],
+        reuse: "Ein neues Projekt ist ein Eintrag in projects-data.ts — Desktop-Karte, Handy-Liste und Sheet kommen mit.",
+      },
+      {
+        does: "Die Buchstaben fallen scroll-gesteuert ein; dreimal klicken zerbricht alles in echte Physik, dann kommt die Raygun.",
+        files: ["contact/contact.ts", "contact/contact-physics.ts", "raygun/raygun.ts"],
+        reuse: "Die Raygun ist ein eigenständiger Button (mountRaygunButton) in zwei Varianten, fixed oder inline — an jede Seite steckbar.",
+      },
+      {
+        does: "Impressum und Datenschutz als Overlay über der Seite — Musik, Theme und Scrollposition bleiben; die alten Adressen leiten dorthin um.",
+        files: ["legal/legal-content.ts", "legal/legal-overlay.ts", "impressum.html"],
+        reuse: "Ein Overlay für jeden rechtlichen Text: der Inhalt steht in legal-content.ts, die Seite drumherum bleibt stehen.",
+      },
+    ],
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [
       "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",

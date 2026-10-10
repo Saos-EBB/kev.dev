@@ -12,7 +12,7 @@ import { RTL } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
-import { renderTouch, renderVisual } from "./project-visuals";
+import { renderVisual } from "./project-visuals";
 import { renderBigCard } from "./big-cards";
 
 // A link without href renders as plain text (e.g. "Live-Demo auf Anfrage").
@@ -108,6 +108,9 @@ export interface ProjectCard {
   // tenant instead of a flat gallery of `screenshots`.
   tenantsIntro?: string;
   tenants?: TenantShowcase[];
+  // kev.dev's desktop card: per section of this page (same order as
+  // UI.vizStory) what it does, the files behind it and what is reusable.
+  parts?: { does: string; files: string[]; reuse: string }[];
   // A character to put on the card's visual (TschoBBo's mascot).
   mascot?: { src: string; alt: string };
   widget?: ProjectWidget;
@@ -163,7 +166,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 // The three text bodies (Why? / Learned! / Code + Architektur), shared by
 // the desktop card's teaser boxes and the phone sheet's accordions.
-function cardBodies(card: ProjectCard) {
+export function cardBodies(card: ProjectCard) {
   const gh = card.links?.find((l) => /github/i.test(l.label));
   const boxes = BOXES[card.layout];
   // Open questions sit with the code facts, or in Why? if a card has none.
@@ -226,7 +229,6 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
         ${renderVisual(card)}
       </div>
       ${cardBodies(card).map((b) => box(b.kind, b.heading, b.body)).join("")}
-      ${card.group === "big" ? renderTouch(card) : ""}
     </article>
   `;
 }

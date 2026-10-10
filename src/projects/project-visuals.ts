@@ -225,16 +225,6 @@ function portrait(card: ProjectCard): string {
   `;
 }
 
-// kev.dev's extra touch on its desktop card: a "you are here" pin — the card is the page you're on. Decoration only.
-export function renderTouch(card: ProjectCard): string {
-  switch (card.layout) {
-    case "storyboard":
-      return `<div class="pcard-touch touch-here" aria-hidden="true">${esc(UI.touchHere)}</div>`;
-    default:
-      return "";
-  }
-}
-
 export function renderVisual(card: ProjectCard): string {
   switch (card.layout) {
     case "blueprint":
