@@ -119,6 +119,32 @@ function editor(card: ProjectCard): string {
   `;
 }
 
+// ReleaseWatcher: its own CLI in the editor's window chrome — the
+// commands as its README lists them, no made-up output.
+function terminal(card: ProjectCard): string {
+  const lines: [string, string][] = [
+    ["c", "# release-watcher · Bun + SQLite"],
+    ["", "$ bun run start add --source mangadex <query>"],
+    ["", "$ bun run start check-new"],
+    ["add", "+ tmdb · anilist · mangadex · tvdb"],
+    ["", "$ bun run start progress <id> <number>"],
+    ["", "$ bun run ui"],
+    ["c", "# → http://localhost:3000"],
+  ];
+  return `
+    <div class="viz-editor">
+      <div class="viz-tabs"><span class="is-active">${esc(card.title.toLowerCase())}</span><span>zsh</span></div>
+      <pre class="viz-code"><code>${lines
+        .map(
+          ([kind, text], i) =>
+            `<span class="ln">${String(i + 1).padStart(2, " ")}</span><span class="${kind}">${esc(text)}</span>`,
+        )
+        .join("\n")}<span class="viz-caret"></span></code></pre>
+      <div class="viz-status"><span><b>●</b> bun test</span><span>TypeScript · SQLite</span></div>
+    </div>
+  `;
+}
+
 // Grundlagen: the nine Bootcamp programs as sticky notes in their own
 // colors (same --note-N each one has in the widget), each one starts the
 // in-browser Java terminal. Labels come from widgets/grundlagen-i18n.ts,
@@ -195,6 +221,8 @@ export function renderVisual(card: ProjectCard): string {
       return viewport(card);
     case "editor":
       return editor(card);
+    case "terminal":
+      return terminal(card);
     case "pinboard":
       return pinboard(card);
     case "storyboard":

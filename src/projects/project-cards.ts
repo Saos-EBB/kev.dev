@@ -57,7 +57,7 @@ export interface TenantShowcase {
 export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
-export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard" | "storyboard" | "portrait";
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "pinboard" | "storyboard" | "portrait";
 
 // Which of the three project groups a card belongs to. The cards are
 // ordered by group (projects-data.ts); the group's word shows up around
@@ -149,6 +149,7 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
   inbox: ["why", "learned", "code"],
   viewport: ["why", "learned", "code"],
   editor: ["why", "learned", "code"],
+  terminal: ["why", "learned", "code"],
   pinboard: ["why"],
   storyboard: ["why", "learned", "code"],
   portrait: ["why", "learned", "code"],

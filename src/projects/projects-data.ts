@@ -263,6 +263,37 @@ const cards: ProjectCard[] = [
     ],
   },
   {
+    id: "releasewatcher",
+    group: "tools",
+    layout: "terminal",
+    kind: "CLI + Web-UI",
+    accent: "var(--note-7)",
+    learnGoal: "Wissen, wann was Neues rauskommt, ohne fünf Seiten abzuklappern — und dabei lernen, mehrere fremde APIs hinter eine gemeinsame Schnittstelle zu bringen.",
+    title: "ReleaseWatcher",
+    claim: "Ein Release-Radar für Serien, Anime und Manga — vier APIs, eine Watchlist.",
+    points: [
+      "Neue Folgen und Kapitel aus TMDB, AniList, MangaDex und TVDB — mit Link pro Release",
+      "CLI und Web-UI mit Suche, Kalender und „Check new“-Button",
+      "Angefangen als Puppeteer-Scraper, neu gebaut auf Bun + SQLite über offizielle APIs",
+    ],
+    what: "Ich schaue Serien, Anime und Manga quer über mehrere Plattformen und wollte nicht mehr selbst nachsehen, wo es was Neues gibt. Angefangen hat es im April als kleines Node-Script, das mit Puppeteer Manga-Seiten abgegrast hat. Im September habe ich es durch einen richtigen Media-Tracker ersetzt: Bun und SQLite, Quellen nur noch über offizielle APIs (TMDB, AniList, MangaDex, TVDB), jede als Adapter hinter derselben Schnittstelle. „check-new“ fragt alle Titel der Watchlist ab und listet, was neu erschienen ist, samt Link. Dazu manuelles Progress-Tracking und eine Web-UI mit Suche, Kalender-Ansicht und „Check new“-Button.",
+    tags: ["TypeScript", "Bun", "SQLite", "REST-APIs"],
+    meta: "Solo · April 2026 als Scraper, September 2026 neu gebaut · für den eigenen Gebrauch",
+    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/ReleaseWatcher" }, { label: "kein Live-Widget (braucht API-Keys)" }],
+    decisions: [
+      "APIs statt Scraping: offizielle Schnittstellen statt Seiten auslesen, die sich jederzeit ändern können",
+      "Eine Quellen-Schnittstelle, vier Adapter — „check-new“ fragt jede Quelle gleich ab, eine neue Quelle ist ein neuer Adapter",
+      "Ersetzt statt daneben weitergeführt: das alte Scraper-Script ist raus, ein Projekt pro Repo",
+      "Tests überspringen sich selbst, wenn ein API-Key fehlt oder eine Quelle gerade nicht erreichbar ist",
+      "MangaDex mit festem 250-ms-Delay pro Request — keine Bursts über viele Titel",
+    ],
+    challenge:
+      "Vier APIs, vier Eigenheiten: TVDB braucht einen Login-Token, MangaDex ein Rate-Limit, AniList liefert für Manga keine Release-Termine, TMDB trennt Serien und Filme. Die Arbeit war, das alles hinter einer schmalen gemeinsamen Schnittstelle zu verstecken.",
+    open: [
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
     id: "renderer",
     group: "along",
     layout: "viewport",
