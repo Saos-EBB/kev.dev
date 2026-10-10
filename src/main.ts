@@ -16,6 +16,7 @@ import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
+import { initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
@@ -605,7 +606,10 @@ if (LITE) {
   initProjectSheet(projectsSection, projectCards, lenis);
   initProjectWheel(projectsSection);
 }
-else initCarousel(projectsSection);
+else {
+  initCarousel(projectsSection);
+  initBigCards(projectsSection);
+}
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 

@@ -112,11 +112,118 @@ function erCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// A decision reads "Head: the rest" or "Head — the rest"; the head becomes
+// the list row's title, like a mail subject.
+function splitDecision(d: string): [string, string] {
+  const m = d.match(/^(.{4,60}?)(?::| —) (.+)$/);
+  return m ? [m[1], m[2]] : [d, ""];
+}
+
+// The fit colors the JobBot list uses (match / off-stack / brutal).
+const FIT = ["#5B8CFF", "#E8B04B", "#E8622A"];
+
+// TschoBBo: the card as the bot's own mail client — folders on the left,
+// the decisions as the inbox, and whatever is picked as a letter on paper.
+// Clicks are wired in initBigCards.
+function mailCard(card: ProjectCard, head: string): string {
+  const decisions = (card.decisions ?? []).map(splitDecision);
+  const panes: { id: string; kicker: string; title: string; body: string }[] = [
+    { id: "what", kicker: UI.lblWhat, title: card.claim, body: card.what ?? "" },
+    { id: "why", kicker: UI.boxWhy, title: card.learnGoal, body: "" },
+    { id: "learned", kicker: UI.boxLearned, title: UI.lblChallenge, body: card.challenge ?? "" },
+    { id: "origin", kicker: UI.lblOrigin, title: card.title, body: card.origin ?? "" },
+    ...decisions.map(([title], i) => ({ id: `d${i}`, kicker: UI.boxCode, title, body: card.decisions![i] })),
+  ];
+  const folders: [string, string, number][] = [
+    ["what", UI.lblWhat, 1],
+    ["why", UI.boxWhy, 1],
+    ["learned", UI.boxLearned, 1],
+    ["d0", UI.boxCode, decisions.length],
+    ["origin", UI.lblOrigin, 1],
+  ];
+  const gh = card.links?.find((l) => l.href);
+
+  return `
+    <article class="pcard pcard--big pcard--mail" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="mail">
+        <div class="mail-bar" aria-hidden="true"><i></i><i></i><i></i><span>jobbot :// ${esc(card.title)}</span></div>
+        <div class="mail-panes">
+          <nav class="mail-folders">
+            <p class="mail-logo" aria-hidden="true">jobbot <span>://</span></p>
+            ${folders
+              .map(
+                ([id, label, n]) =>
+                  `<button type="button" class="mail-folder" data-mail="${id}" aria-pressed="${id === "what"}"><span>${esc(label)}</span><span class="mail-n">${n}</span></button>`,
+              )
+              .join("")}
+            ${card.mascot ? `<img class="mail-mascot" src="${esc(card.mascot.src)}" alt="${esc(card.mascot.alt)}" loading="lazy" decoding="async" />` : ""}
+          </nav>
+          <div class="mail-list" data-lenis-prevent>
+            <p class="mail-list-head">${esc(UI.boxCode)}</p>
+            ${decisions
+              .map(
+                ([title, sub], i) => `
+              <button type="button" class="mail-row" data-mail="d${i}" aria-pressed="false">
+                <i style="background: ${FIT[i % FIT.length]}"></i>
+                <span><b>${esc(title)}</b><span>${esc(sub)}</span></span>
+              </button>`,
+              )
+              .join("")}
+            <ul class="mail-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+          </div>
+          <div class="mail-read">
+            <article class="mail-paper" data-lenis-prevent>
+              <div class="mail-stamp" aria-hidden="true">
+                ${card.mascot ? `<img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" />` : ""}
+                <span>${esc(UI.touchStamp)}</span>
+              </div>
+              ${panes
+                .map(
+                  (p) => `
+                <div class="mail-pane" data-pane="${p.id}"${p.id === "what" ? "" : " hidden"}>
+                  <p class="mail-kicker">${esc(p.kicker)}</p>
+                  <h4>${esc(p.title)}</h4>
+                  ${p.body ? `<p>${esc(p.body)}</p>` : ""}
+                </div>`,
+                )
+                .join("")}
+            </article>
+            ${gh ? `<a class="mail-send" href="${esc(gh.href!)}" target="_blank" rel="noopener noreferrer">${esc(gh.label)} ↗</a>` : ""}
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+// Picking a folder or an inbox row shows its letter. One listener per
+// big card; the cards are rendered once, so nothing to tear down.
+export function initBigCards(root: HTMLElement) {
+  root.querySelectorAll<HTMLElement>(".pcard--mail").forEach((card) => {
+    card.addEventListener("click", (e) => {
+      const pick = (e.target as Element).closest<HTMLElement>("[data-mail]");
+      if (!pick) return;
+      const id = pick.dataset.mail!;
+      card.querySelectorAll<HTMLElement>(".mail-pane").forEach((pane) => {
+        pane.hidden = pane.dataset.pane !== id;
+      });
+      card.querySelectorAll<HTMLElement>("[data-mail]").forEach((btn) => {
+        const on = btn.dataset.mail === id || (btn.classList.contains("mail-folder") && btn.dataset.mail === "d0" && id.startsWith("d"));
+        btn.setAttribute("aria-pressed", String(on));
+      });
+      card.querySelector(".mail-paper")?.scrollTo(0, 0);
+    });
+  });
+}
+
 // The big card for this project, or "" to fall back to the shared layout.
 export function renderBigCard(card: ProjectCard, head: string): string {
   switch (card.layout) {
     case "blueprint":
       return erCard(card, head);
+    case "inbox":
+      return mailCard(card, head);
     default:
       return "";
   }

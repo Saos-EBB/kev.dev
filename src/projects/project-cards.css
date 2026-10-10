@@ -574,38 +574,6 @@
   pointer-events: none;
 }
 
-/* TschoBBo: a postage stamp on the corner — cream paper, perforated edge
-   (dark dots on the paper), Tschobbo as the motif. */
-.touch-stamp {
-  top: -1.4rem;
-  right: -1rem;
-  width: 7.5rem;
-  padding: 0.45rem 0.45rem 0.35rem;
-  border: 0.35rem dotted var(--projects-bg);
-  background: #f3eee4;
-  color: #2a2230;
-  rotate: 7deg;
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-shadow) 55%, transparent);
-}
-
-.touch-stamp img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-}
-
-.touch-stamp span {
-  display: block;
-  margin-top: 0.3rem;
-  font-family: var(--font-mono);
-  font-size: 0.55rem;
-  font-weight: 700;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 /* kev.dev: a map pin — this card is the page you're on. */
 .touch-here {
   top: -0.9rem;

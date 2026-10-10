@@ -225,15 +225,9 @@ function portrait(card: ProjectCard): string {
   `;
 }
 
-// The three big projects' extra touch on the desktop card, each its own:
-// TschoBBo gets a postage stamp (it writes letters, locally), and kev.dev
-// a "you are here" pin — the card is the page you're on. Decoration only.
+// kev.dev's extra touch on its desktop card: a "you are here" pin — the card is the page you're on. Decoration only.
 export function renderTouch(card: ProjectCard): string {
   switch (card.layout) {
-    case "inbox":
-      return card.mascot
-        ? `<div class="pcard-touch touch-stamp" aria-hidden="true"><img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" /><span>${esc(UI.touchStamp)}</span></div>`
-        : "";
     case "storyboard":
       return `<div class="pcard-touch touch-here" aria-hidden="true">${esc(UI.touchHere)}</div>`;
     default:
