@@ -33,7 +33,7 @@ const cards: ProjectCard[] = [
       "Stripe",
       "Docker",
     ],
-    meta: "Solo · April–Juni 2026, ca. 450 h · +50–75 h für Loadtests & Test-Dashboard · selbst gewähltes Abschlussprojekt · Okt. 2026: Multi-Tenant-Umbau & Mandanten-Console",
+    meta: "Solo · April–Juni 2026: ca. 450 h, selbst gewähltes Abschlussprojekt · seitdem ca. 200–300 h mehr — Loadtests & Dashboard ~60–90 h, Multi-Tenant & Mandanten-Console ~35–55 h — und es läuft weiter",
     links: [
       {
         label: "GitHub",
@@ -57,7 +57,7 @@ const cards: ProjectCard[] = [
     challenge:
       "Die eigentliche Herausforderung war der Umfang: kompletter Fullstack solo in zwei Monaten. Die Basis — DB, Security, API — ist sauber und bewusst gebaut. Der Business-Logic-Layer darüber ist der experimentelle Teil: hier habe ich Ideen ausprobiert, statt auf Nummer sicher zu gehen — und dabei am meisten gelernt.",
     origin:
-      "2 Wochen DB-Brainstorm (Row-Level Security, PostGIS) → Backend drauf (Postman war Gold beim API-Bauen) → Frontend obendrauf, Layouts und Verhalten durchgespielt, bis es saß.",
+      "April: 2 Wochen DB-Brainstorm (Row-Level Security, PostGIS), dann das Backend (Postman war Gold beim API-Bauen) → Mai/Juni: Frontend obendrauf, Layouts und Verhalten durchgespielt, bis es saß → Juli: alles in Docker, Seed-Generator für Fake-User → Ende Juli/August: Loadtests mit eigenem Live-Dashboard, drei Modi (Login-Kapazität, Nutzer-Mix, Endpoint-Raten) → September: Skalierungs-Umbau — Redis, Object Storage, Job-Queue mit Worker, bcrypt im eigenen Thread-Pool; Hosting über ngrok, Vercel und Railway ausprobiert und wieder verworfen → Oktober: Multi-Tenant mit eigener DB, eigenem Bucket und Redis pro Mandant, Mandanten-Console, neue Module (Schwarzes Brett, Betreuung, Organisationen) → gerade: das Shop-Modul.",
     // Screens from the YourBrand repo: one codebase, five tenants, each in
     // its own accordion section (facet-overlay.ts).
     tenantsIntro:
