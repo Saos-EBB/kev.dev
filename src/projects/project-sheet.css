@@ -31,6 +31,21 @@
   transition: background-color var(--transition-hover);
 }
 
+/* Same height as FaceDots' face (.ptease-face) — the big three stand as
+   tall as it in the list. */
+.lite .ptease.ptease--big .ptease-visual {
+  height: 20rem;
+  margin: -0.25rem 0 0.25rem;
+  overflow: hidden;
+}
+
+/* YourBrand's layers + tenant matrix don't both fit that height: the list
+   shows the tenants, the sheet still has both. */
+.ptease--big .viz-stack,
+.ptease--big .viz-caption:first-child {
+  display: none;
+}
+
 .ptease:has(button:active) {
   background: var(--pc-faint);
 }
