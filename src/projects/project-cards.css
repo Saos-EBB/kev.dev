@@ -566,6 +566,103 @@
   box-shadow: 0 10px 24px color-mix(in srgb, var(--color-shadow) 50%, transparent);
 }
 
+/* --- the big three's extra touch (project-visuals.ts renderTouch) - */
+
+.pcard-touch {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* YourBrand: one folder tab per tenant, in its brand color, standing on
+   the card's top edge. */
+.touch-tenants {
+  bottom: 100%;
+  left: 1.5rem;
+  display: flex;
+  gap: 0.3rem;
+  list-style: none;
+}
+
+.touch-tenants li {
+  padding: 0.3rem 0.7rem 0.4rem;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: var(--t);
+  color: #111;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  box-shadow: 0 -4px 14px color-mix(in srgb, var(--t) 35%, transparent);
+}
+
+/* TschoBBo: a postage stamp on the corner — cream paper, perforated edge
+   (dark dots on the paper), Tschobbo as the motif. */
+.touch-stamp {
+  top: -1.4rem;
+  right: -1rem;
+  width: 7.5rem;
+  padding: 0.45rem 0.45rem 0.35rem;
+  border: 0.35rem dotted var(--projects-bg);
+  background: #f3eee4;
+  color: #2a2230;
+  rotate: 7deg;
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-shadow) 55%, transparent);
+}
+
+.touch-stamp img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.touch-stamp span {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* kev.dev: a map pin — this card is the page you're on. */
+.touch-here {
+  top: -0.9rem;
+  right: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--pc);
+  color: #111;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--pc) 45%, transparent);
+}
+
+.touch-here::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #111;
+  animation: touch-here-ping 1.6s ease-out infinite;
+}
+
+@keyframes touch-here-ping {
+  0% { box-shadow: 0 0 0 0 rgb(17 17 17 / 0.6); }
+  100% { box-shadow: 0 0 0 0.5rem rgb(17 17 17 / 0); }
+}
+
 /* --- viewport (Renderer) ----------------------------------------- */
 
 .viz-viewport {
@@ -1360,6 +1457,7 @@
   :root:not(.force-motion) .viz-cube,
   :root:not(.force-motion) .viz-caret,
   :root:not(.force-motion) .viz-keys-letter,
+  :root:not(.force-motion) .touch-here::before,
   :root:not(.force-motion) .viz-prompt i {
     animation: none;
   }

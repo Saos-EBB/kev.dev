@@ -102,6 +102,8 @@ const de = {
   vizOpen: (l: string) => `${l} öffnen`,
   vizSpin: "▶ Live drehen",
   vizEditorStatus: "läuft in ScriptCat",
+  touchStamp: "lokal per Ollama",
+  touchHere: "Du bist hier",
   vizKeysModes: ["Kleckse", "Tiere", "Tippen"],
   vizEditorFeatures: [
     ["add", "+ Autoplay"],
@@ -263,6 +265,8 @@ const en: Ui = {
   vizOpen: (l) => `Open ${l}`,
   vizSpin: "▶ Spin it live",
   vizEditorStatus: "running in ScriptCat",
+  touchStamp: "local via Ollama",
+  touchHere: "You are here",
   vizKeysModes: ["Blobs", "Animals", "Typing"],
   vizEditorFeatures: [
     ["add", "+ Autoplay"],
@@ -419,6 +423,8 @@ const ru: Ui = {
   vizOpen: (l) => `Открыть: ${l}`,
   vizSpin: "▶ Покрутить",
   vizEditorStatus: "работает в ScriptCat",
+  touchStamp: "локально через Ollama",
+  touchHere: "Вы здесь",
   vizKeysModes: ["Кляксы", "Животные", "Набор"],
   vizEditorFeatures: [
     ["add", "+ Автовоспроизведение"],
@@ -575,6 +581,8 @@ const ja: Ui = {
   vizOpen: (l) => `${l}を開く`,
   vizSpin: "▶ 回してみる",
   vizEditorStatus: "ScriptCat で稼働中",
+  touchStamp: "Ollamaでローカル",
+  touchHere: "現在地",
   vizKeysModes: ["しみ", "どうぶつ", "タイプ"],
   vizEditorFeatures: [
     ["add", "+ 自動再生"],
@@ -731,6 +739,8 @@ const ar: Ui = {
   vizOpen: (l) => `فتح ${l}`,
   vizSpin: "▶ أدِره مباشرة",
   vizEditorStatus: "يعمل في ScriptCat",
+  touchStamp: "محليًا عبر Ollama",
+  touchHere: "أنت هنا",
   vizKeysModes: ["بقع", "حيوانات", "كتابة"],
   vizEditorFeatures: [
     ["add", "+ تشغيل تلقائي"],

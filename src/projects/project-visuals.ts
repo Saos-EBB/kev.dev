@@ -225,6 +225,27 @@ function portrait(card: ProjectCard): string {
   `;
 }
 
+// The three big projects' extra touch on the desktop card, each its own:
+// YourBrand wears its tenants' brand colors as folder tabs over the card,
+// TschoBBo gets a postage stamp (it writes letters, locally), and kev.dev
+// a "you are here" pin — the card is the page you're on. Decoration only.
+export function renderTouch(card: ProjectCard): string {
+  switch (card.layout) {
+    case "blueprint":
+      return `<ul class="pcard-touch touch-tenants" aria-hidden="true">${(card.tenants ?? [])
+        .map((t) => `<li style="--t: ${esc(t.color)}">${esc(t.name)}</li>`)
+        .join("")}</ul>`;
+    case "inbox":
+      return card.mascot
+        ? `<div class="pcard-touch touch-stamp" aria-hidden="true"><img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" /><span>${esc(UI.touchStamp)}</span></div>`
+        : "";
+    case "storyboard":
+      return `<div class="pcard-touch touch-here" aria-hidden="true">${esc(UI.touchHere)}</div>`;
+    default:
+      return "";
+  }
+}
+
 export function renderVisual(card: ProjectCard): string {
   switch (card.layout) {
     case "blueprint":

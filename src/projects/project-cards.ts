@@ -12,7 +12,7 @@ import { RTL } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
-import { renderVisual } from "./project-visuals";
+import { renderTouch, renderVisual } from "./project-visuals";
 
 // A link without href renders as plain text (e.g. "Live-Demo auf Anfrage").
 export interface ProjectLink {
@@ -45,6 +45,8 @@ export type TenantModule = (typeof TENANT_MODULES)[number];
 // click-through clip (.mp4) and its screens, each as desktop and mobile.
 export interface TenantShowcase {
   name: string;
+  // Its primary brand color (--color-primary-fixed-dim in its tenant.json).
+  color: string;
   kind: string;
   about: string;
   tier: string;
@@ -218,6 +220,7 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
         ${renderVisual(card)}
       </div>
       ${cardBodies(card).map((b) => box(b.kind, b.heading, b.body)).join("")}
+      ${card.group === "big" ? renderTouch(card) : ""}
     </article>
   `;
 }
