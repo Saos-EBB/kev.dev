@@ -21,7 +21,7 @@ interface CardText {
   screenshots?: string[];
   tenantsIntro?: string;
   // Matched to the card's tenants by position; name and tier stay as they are.
-  tenants?: { kind: string; about: string; modules: string[]; video: string; screenshots: string[] }[];
+  tenants?: { kind: string; about: string; video: string; screenshots: string[] }[];
   mascot?: string;
   widget?: string;
 }
@@ -55,35 +55,30 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         {
           kind: "The neutral base",
           about: "The base kit every tenant starts from: a dark candy theme in pink, purple and light blue, sidebar navigation, all nine languages including plain language and leetspeak. Shows the platform in the full plan — discover with radius search, matching by swipe, chat, notifications and the admin dashboard with moderation and stats.",
-          modules: ["Chat", "Matching", "Payments", "Hidden Zone"],
           video: "One click-through of YourBrand",
           screenshots: ["Login", "Dashboard — moderation, platform stats and member growth for owners and admins", "Discover — filter by city, radius, age and online status", "Matching by swipe, shared interests marked", "Chat overview", "Chat", "Notifications", "Profile — interests and red flags", "Settings — design & accessibility, visibility, account, security"],
         },
         {
           kind: "Dating & friendships at university",
           about: "A meet-people app for students: a top bar instead of a sidebar, dark pink and lilac, Bricolage Grotesque and DM Sans. The booked plan is Premium — discover and swipe matching are in, the Hidden Zone is deliberately switched off. Languages: German and English, for international students.",
-          modules: ["Chat", "Matching", "Payments"],
           video: "One click-through of Campus Match",
           screenshots: ["Login", "Dashboard with stats", "Discover", "Matching by swipe", "Chat overview", "Chat in pink and lilac", "Profile", "Settings"],
         },
         {
           kind: "Notice board for the neighborhood",
           about: "A neighborhood network for a local association: light, brick red, Archivo, notices with tear-off slips like on a real board. The smallest plan plus the notice-board module: looking for, offering, giving away, meetups — visible to the street, 500 m, 1 km, the neighborhood or everyone. \"Tear off a slip\" sends a contact request, notices expire after 14 days, public ones already show on the login page. No matching — this is about helping, not dating. Languages: German, English, plain language.",
-          modules: ["Chat", "Payments", "Notice board"],
           video: "One click-through of KiezConnect",
           screenshots: ["Login — public notices even before signing in", "Dashboard — notices nearby", "Board — filter by radius and type", "Notice — tear off a slip and write", "New notice — the radius decides who sees it", "Contact requests", "Chat overview", "Chat", "Profile"],
         },
         {
           kind: "Accessible, for supported living",
           about: "For a provider of supported living: plain language by default, Atkinson Hyperlegible at 18 px, a wide sidebar with large fields, read-aloud, ready-made replies in chat and a help button that is always visible. The Connect plan without payments, plus care and organization: one account looks after a few others, the person cared for consents and can change rights or end the care; for protected persons a new contact waits for approval. The provider sees its team and all care relationships at a glance.",
-          modules: ["Chat", "Care", "Organization"],
           video: "One click-through of Miteinander",
           screenshots: ["Login in plain language", "Start — \"My people\" and stats", "Care — who I look after, approvals, protection", "Organization — people in care, rights, team", "Contact requests", "Messages", "Chat with read-aloud and ready-made replies", "Settings"],
         },
         {
           kind: "Gaming crew with a Hidden Zone",
           about: "A community for a gaming crew: dark, signal yellow, Big Shoulders and Barlow, the navigation as a transit line map with its own menu names (control room, announcements, signal box). Full Premium including the Hidden Zone with public beef duels, coins and a leaderboard. Languages: German, English and leetspeak.",
-          modules: ["Chat", "Matching", "Payments", "Hidden Zone"],
           video: "One click-through of Underground",
           screenshots: ["Login", "Control room — the dashboard on the line map", "Crew — discover under its own name", "Announcements — beef results from the Hidden Zone", "Chat overview", "Chat", "Profile"],
         },
@@ -217,35 +212,30 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         {
           kind: "Нейтральная основа",
           about: "Базовый набор, с которого начинается каждый тенант: тёмная «конфетная» тема в розовом, фиолетовом и голубом, навигация в боковой панели, все девять языков, включая простой язык и leetspeak. Показывает платформу в полном тарифе — поиск по радиусу, matching свайпом, чат, уведомления и админ-дашборд с модерацией и показателями.",
-          modules: ["Чат", "Matching", "Платежи", "Hidden Zone"],
           video: "Прогон по YourBrand",
           screenshots: ["Вход", "Дашборд — модерация, показатели платформы и рост участников для владельцев и админов", "Discover — фильтр по городу, радиусу, возрасту и статусу онлайн", "Matching свайпом, общие интересы отмечены", "Список чатов", "Чат", "Уведомления", "Профиль — интересы и красные флажки", "Настройки — дизайн и доступность, видимость, аккаунт, безопасность"],
         },
         {
           kind: "Знакомства и дружба в университете",
           about: "Приложение для знакомств студентов: панель сверху вместо боковой, тёмно-розовый и сиреневый, Bricolage Grotesque и DM Sans. Подключён Premium — Discover и matching свайпом есть, Hidden Zone намеренно выключена. Языки: немецкий и английский, для иностранных студентов.",
-          modules: ["Чат", "Matching", "Платежи"],
           video: "Прогон по Campus Match",
           screenshots: ["Вход", "Дашборд с показателями", "Discover", "Matching свайпом", "Список чатов", "Чат в розовом и сиреневом", "Профиль", "Настройки"],
         },
         {
           kind: "Доска объявлений для соседей",
           about: "Соседская сеть для районного объединения: светлая, кирпично-красная, Archivo, объявления с отрывными листочками, как на настоящей доске. Самый маленький тариф плюс модуль доски: ищу, предлагаю, отдам даром, встречи — видно улице, 500 м, 1 км, району или всем. «Оторвать листочек» отправляет запрос на контакт, объявления истекают через 14 дней, публичные видны уже на странице входа. Без matching — здесь речь о помощи, а не о знакомствах. Языки: немецкий, английский, простой язык.",
-          modules: ["Чат", "Платежи", "Доска объявлений"],
           video: "Прогон по KiezConnect",
           screenshots: ["Вход — публичные объявления ещё до входа", "Дашборд — объявления поблизости", "Доска — фильтр по радиусу и типу", "Объявление — оторвать листочек и написать", "Новое объявление — кто его увидит, решает радиус", "Запросы на контакт", "Список чатов", "Чат", "Профиль"],
         },
         {
           kind: "Доступная платформа для сопровождаемого проживания",
           about: "Для организации сопровождаемого проживания: простой язык по умолчанию, Atkinson Hyperlegible 18 px, широкая боковая панель с крупными полями, чтение вслух, готовые ответы в чате и кнопка помощи, которая видна всегда. Тариф Connect без платежей, плюс сопровождение и организация: один аккаунт опекает нескольких других, опекаемый даёт согласие и может менять права или закончить сопровождение; у защищённых людей новый контакт ждёт одобрения. Организация видит свою команду и все сопровождения сразу.",
-          modules: ["Чат", "Сопровождение", "Организация"],
           video: "Прогон по Miteinander",
           screenshots: ["Вход на простом языке", "Старт — «Мои люди» и показатели", "Сопровождение — кого я опекаю, одобрения, защита", "Организация — опекаемые, права, команда", "Запросы на контакт", "Сообщения", "Чат с чтением вслух и готовыми ответами", "Настройки"],
         },
         {
           kind: "Игровая команда с Hidden Zone",
           about: "Сообщество для игровой команды: тёмное, сигнально-жёлтое, Big Shoulders и Barlow, навигация в виде схемы линий метро со своими названиями пунктов меню (пульт, объявления, диспетчерская). Полный Premium, включая Hidden Zone с публичными beef-дуэлями, монетами и таблицей рекордов. Языки: немецкий, английский и leetspeak.",
-          modules: ["Чат", "Matching", "Платежи", "Hidden Zone"],
           video: "Прогон по Underground",
           screenshots: ["Вход", "Пульт — дашборд на схеме линий", "Crew — Discover под своим названием", "Объявления — итоги beef из Hidden Zone", "Список чатов", "Чат", "Профиль"],
         },
@@ -379,35 +369,30 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         {
           kind: "ニュートラルな土台",
           about: "すべてのテナントの出発点となる基本セット：ピンク・紫・水色のダークな「キャンディ」テーマ、サイドバーナビ、やさしい言葉とリート語を含む全9言語。フルプランのプラットフォームを見せます——半径検索付きのDiscover、スワイプでのMatching、チャット、通知、モデレーションと指標のある管理ダッシュボード。",
-          modules: ["チャット", "Matching", "決済", "Hidden Zone"],
           video: "YourBrandをひと通りクリック",
           screenshots: ["ログイン", "ダッシュボード — オーナーと管理者向けのモデレーション、指標、メンバー推移", "Discover — 都市、半径、年齢、オンライン状態で絞り込み", "スワイプでMatching、共通の興味をマーク", "チャット一覧", "チャット", "通知", "プロフィール — 興味とレッドフラッグ", "設定 — デザインとアクセシビリティ、公開範囲、アカウント、セキュリティ"],
         },
         {
           kind: "大学での出会いと友だち探し",
           about: "学生向けの出会いアプリ：サイドバーの代わりに上部バー、濃いピンクとライラック、Bricolage GrotesqueとDM Sans。契約はPremium——Discoverとスワイプでのマッチングはあり、Hidden Zoneはあえてオフ。言語はドイツ語と英語、留学生のために。",
-          modules: ["チャット", "Matching", "決済"],
           video: "Campus Matchをひと通りクリック",
           screenshots: ["ログイン", "指標付きダッシュボード", "Discover", "スワイプでMatching", "チャット一覧", "ピンクとライラックのチャット", "プロフィール", "設定"],
         },
         {
           kind: "ご近所の掲示板",
           about: "地域の団体のためのご近所ネットワーク：明るいレンガ色、Archivo、本物の掲示板のような切り取り式の張り紙。最小プランに掲示板モジュールを追加：探しています、譲ります、あげます、集まり——通り、500 m、1 km、地区、全員の範囲で公開。「紙を切り取る」で連絡リクエストが届き、張り紙は14日で期限切れ、公開のものはログイン画面にも表示。マッチングはなし——ここは出会いではなく助け合いの場です。言語：ドイツ語、英語、やさしい言葉。",
-          modules: ["チャット", "決済", "掲示板"],
           video: "KiezConnectをひと通りクリック",
           screenshots: ["ログイン — ログイン前から公開の張り紙", "ダッシュボード — 近くの張り紙", "掲示板 — 範囲と種類で絞り込み", "張り紙 — 紙を切り取ってメッセージ", "新しい張り紙 — 誰が見るかは範囲で決まる", "連絡リクエスト", "チャット一覧", "チャット", "プロフィール"],
         },
         {
           kind: "支援付き住居のためのバリアフリー",
           about: "支援付き住居の事業者向け：やさしい言葉が標準、Atkinson Hyperlegibleを18 pxで、大きな項目の広いサイドバー、読み上げ、チャットの定型返信、常に見えるヘルプボタン。決済なしのConnectプランに、見守りと組織を追加：1つのアカウントが少数の人を見守り、見守られる本人が同意し、権限を変えたり見守りを終えたりできる。保護対象の人には、新しい連絡先が承認を待つ。事業者はチームとすべての見守りをひと目で確認できます。",
-          modules: ["チャット", "見守り", "組織"],
           video: "Miteinanderをひと通りクリック",
           screenshots: ["やさしい言葉のログイン", "スタート — 「わたしの人たち」と指標", "見守り — 誰を見守るか、承認、保護", "組織 — 見守り対象、権限、チーム", "連絡リクエスト", "メッセージ", "読み上げと定型返信付きのチャット", "設定"],
         },
         {
           kind: "Hidden Zone付きのゲーミングクルー",
           about: "ゲーミングクルーのためのコミュニティ：ダーク、シグナルイエロー、Big ShouldersとBarlow、ナビは独自のメニュー名（指令所、アナウンス、信号所）を持つ路線図。公開のbeef対決、コイン、ランキングのあるHidden Zoneを含むフルPremium。言語：ドイツ語、英語、リート語。",
-          modules: ["チャット", "Matching", "決済", "Hidden Zone"],
           video: "Undergroundをひと通りクリック",
           screenshots: ["ログイン", "指令所 — 路線図の上のダッシュボード", "Crew — 独自の名前のDiscover", "アナウンス — Hidden Zoneのbeef結果", "チャット一覧", "チャット", "プロフィール"],
         },
@@ -542,35 +527,30 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         {
           kind: "الأساس المحايد",
           about: "العُدّة الأساسية التي يبدأ منها كل مستأجر: سمة داكنة بألوان الحلوى الوردي والبنفسجي والأزرق الفاتح، تنقل بشريط جانبي، واللغات التسع كلها بما فيها اللغة المبسّطة وleetspeak. يعرض المنصة بالباقة الكاملة — الاستكشاف مع البحث بالنطاق، وMatching بالسحب، والمحادثة، والإشعارات، ولوحة الإدارة مع الإشراف والمؤشرات.",
-          modules: ["المحادثة", "Matching", "المدفوعات", "Hidden Zone"],
           video: "جولة نقر عبر YourBrand",
           screenshots: ["تسجيل الدخول", "لوحة التحكم — الإشراف ومؤشرات المنصة ونمو الأعضاء للمالكين والمشرفين", "Discover — التصفية حسب المدينة والنطاق والعمر وحالة الاتصال", "Matching بالسحب مع تمييز الاهتمامات المشتركة", "قائمة المحادثات", "المحادثة", "الإشعارات", "الملف الشخصي — الاهتمامات والعلامات الحمراء", "الإعدادات — التصميم وسهولة الوصول والظهور والحساب والأمان"],
         },
         {
           kind: "تعارف وصداقات في الجامعة",
           about: "تطبيق تعارف للطلاب: شريط علوي بدل الشريط الجانبي، وردي داكن وليلكي، وخطّا Bricolage Grotesque وDM Sans. الباقة المحجوزة Premium — الاستكشاف وMatching بالسحب موجودان، وHidden Zone مُطفأة عن قصد. اللغات: الألمانية والإنجليزية، للطلاب الدوليين.",
-          modules: ["المحادثة", "Matching", "المدفوعات"],
           video: "جولة نقر عبر Campus Match",
           screenshots: ["تسجيل الدخول", "لوحة التحكم مع المؤشرات", "Discover", "Matching بالسحب", "قائمة المحادثات", "المحادثة بالوردي والليلكي", "الملف الشخصي", "الإعدادات"],
         },
         {
           kind: "لوحة إعلانات للحي",
           about: "شبكة جيران لجمعية حي: فاتحة، أحمر طوبي، خط Archivo، وإعلانات بقصاصات قابلة للنزع كما على لوحة حقيقية. أصغر باقة مع وحدة لوحة الإعلانات: أبحث عن، أعرض، أهدي، لقاءات — مرئية للشارع أو 500 م أو 1 كم أو الحي أو للجميع. «انزع قصاصة» يرسل طلب تواصل، وتنتهي الإعلانات بعد 14 يومًا، والعامة منها تظهر على صفحة الدخول. بلا Matching — هنا الأمر عن المساعدة لا عن المواعدة. اللغات: الألمانية والإنجليزية واللغة المبسّطة.",
-          modules: ["المحادثة", "المدفوعات", "لوحة الإعلانات"],
           video: "جولة نقر عبر KiezConnect",
           screenshots: ["تسجيل الدخول — إعلانات عامة حتى قبل الدخول", "لوحة التحكم — إعلانات قريبة", "اللوحة — التصفية حسب النطاق والنوع", "إعلان — انزع قصاصة واكتب", "إعلان جديد — النطاق يحدد من يراه", "طلبات التواصل", "قائمة المحادثات", "المحادثة", "الملف الشخصي"],
         },
         {
           kind: "سهلة الوصول، للسكن المدعوم",
           about: "لجهة تقدّم السكن المدعوم: اللغة المبسّطة افتراضيًا، خط Atkinson Hyperlegible بحجم 18 px، شريط جانبي عريض بحقول كبيرة، قراءة بصوت عالٍ، ردود جاهزة في المحادثة وزر مساعدة ظاهر دائمًا. باقة Connect بلا مدفوعات، مع الرعاية والمنظمة: حساب واحد يرعى بضعة آخرين، والشخص المرعي يوافق ويستطيع تغيير الصلاحيات أو إنهاء الرعاية؛ وللأشخاص المحميين ينتظر التواصل الجديد الموافقة. وترى الجهة فريقها وكل حالات الرعاية بنظرة واحدة.",
-          modules: ["المحادثة", "الرعاية", "المنظمة"],
           video: "جولة نقر عبر Miteinander",
           screenshots: ["تسجيل الدخول باللغة المبسّطة", "البداية — «أشخاصي» والمؤشرات", "الرعاية — من أرعى، الموافقات، الحماية", "المنظمة — الأشخاص المرعيّون والصلاحيات والفريق", "طلبات التواصل", "الرسائل", "محادثة مع القراءة بصوت عالٍ والردود الجاهزة", "الإعدادات"],
         },
         {
           kind: "فريق ألعاب مع Hidden Zone",
           about: "مجتمع لفريق ألعاب: داكن، أصفر إشاري، خطّا Big Shoulders وBarlow، والتنقل كخريطة خطوط مترو بأسماء قوائم خاصة (غرفة التحكم، الإعلانات، برج الإشارات). Premium كاملة بما فيها Hidden Zone مع مبارزات beef علنية وعملات ولوحة صدارة. اللغات: الألمانية والإنجليزية وleetspeak.",
-          modules: ["المحادثة", "Matching", "المدفوعات", "Hidden Zone"],
           video: "جولة نقر عبر Underground",
           screenshots: ["تسجيل الدخول", "غرفة التحكم — لوحة التحكم على خريطة الخطوط", "Crew — الاستكشاف باسم خاص", "الإعلانات — نتائج beef من Hidden Zone", "قائمة المحادثات", "المحادثة", "الملف الشخصي"],
         },
@@ -705,7 +685,6 @@ export function localizeCard(card: ProjectCard): ProjectCard {
         ...tenant,
         kind: tt.kind,
         about: tt.about,
-        modules: tt.modules,
         video: { ...tenant.video, alt: tt.video },
         screenshots: tenant.screenshots.map((s, j) => ({ ...s, alt: tt.screenshots[j] ?? s.alt })),
       };

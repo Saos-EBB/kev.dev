@@ -8,23 +8,18 @@
 // like the head's facet buttons (facet-overlay.ts listens on [data-facet]),
 // so the viewport and the pinboard notes double as "start the live demo".
 
-import { esc, type ProjectCard } from "./project-cards";
+import { esc, TENANT_MODULES, type ProjectCard, type TenantModule } from "./project-cards";
 import { UI } from "../i18n/ui";
 import { RTL } from "../i18n";
 import { NOTE_IDS, noteLabel } from "./widgets/grundlagen-i18n";
 
 // YourBrand: the four layers named in its copy (DB → Security → API, and
-// the experimental business logic on top), plus the per-tenant modules.
+// the experimental business logic on top), plus which module each real
+// tenant has switched on (their tenant.json). Shop is being built, no
+// tenant has it yet.
 function blueprint(card: ProjectCard): string {
   const layers = UI.vizLayers;
-  const modules = UI.vizModules;
-  // Which modules each example tenant has booked — illustrates "jeder
-  // Tenant bekommt nur die Module, die er bucht", not real customers.
-  const tenants: [string, boolean[]][] = [
-    ["Tenant A", [true, true, false, true]],
-    ["Tenant B", [true, false, true, false]],
-    ["Tenant C", [true, true, true, true]],
-  ];
+  const wip = (m: TenantModule) => m === "shop";
   return `
     <div class="viz-blueprint">
       <p class="viz-caption">${UI.vizFig1}</p>
@@ -36,19 +31,22 @@ function blueprint(card: ProjectCard): string {
           )
           .join("")}
       </ol>
-      <p class="viz-caption">${UI.vizFig2}</p>
+      <p class="viz-caption">${UI.vizFig2} · ${esc(UI.vizModules.shop)} ${UI.vizWip}</p>
       <table class="viz-tenants">
-        <thead><tr><th></th>${modules.map((m) => `<th>${m}</th>`).join("")}</tr></thead>
+        <thead><tr><th></th>${TENANT_MODULES.map(
+          (m) => `<th class="${wip(m) ? "wip" : ""}"><span>${esc(UI.vizModules[m])}</span></th>`,
+        ).join("")}</tr></thead>
         <tbody>
-          ${tenants
+          ${(card.tenants ?? [])
             .map(
-              ([name, on]) =>
-                `<tr><th>${name}</th>${on.map((v) => `<td class="${v ? "on" : ""}"></td>`).join("")}</tr>`,
+              (t) =>
+                `<tr><th>${esc(t.name)}</th>${TENANT_MODULES.map(
+                  (m) => `<td class="${t.modules.includes(m) ? "on" : wip(m) ? "wip" : ""}"></td>`,
+                ).join("")}</tr>`,
             )
             .join("")}
         </tbody>
       </table>
-      <span class="viz-stamp">${esc(card.title)} · ${esc(card.kind)}</span>
     </div>
   `;
 }

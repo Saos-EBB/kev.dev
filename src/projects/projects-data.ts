@@ -66,7 +66,7 @@ const cards: ProjectCard[] = [
         about:
           "Die Grundausstattung, von der jeder Mandant ausgeht: dunkles Candy-Theme in Pink, Lila und Hellblau, Sidebar-Navigation, alle neun Sprachen inklusive Leichter Sprache und Leetspeak. Zeigt die Plattform im vollen Paket — Entdecken mit Umkreissuche, Matching per Swipe, Chat, Benachrichtigungen und das Admin-Dashboard mit Moderation und Kennzahlen.",
         tier: "Premium",
-        modules: ["Chat", "Matching", "Bezahlung", "Hidden Zone"],
+        modules: ["chat", "matching", "payments", "hidden"],
         video: { src: "/projects/yourbrand/yourbrand/clickthrough.mp4", poster: "/projects/yourbrand/yourbrand/clickthrough-poster.webp", alt: "Einmal durch YourBrand geklickt" },
         screenshots: [
           { src: "/projects/yourbrand/yourbrand/00-login.webp", mobile: "/projects/yourbrand/yourbrand/mobile/00-login.webp", alt: "Login" },
@@ -86,7 +86,7 @@ const cards: ProjectCard[] = [
         about:
           "Eine Kennenlern-App für Studierende: Leiste oben statt Sidebar, dunkles Pink und Flieder, Bricolage Grotesque und DM Sans. Gebucht ist Premium — Entdecken und Matching per Swipe sind dabei, die Hidden Zone ist bewusst abgeschaltet. Sprachen: Deutsch und Englisch, für internationale Studierende.",
         tier: "Premium",
-        modules: ["Chat", "Matching", "Bezahlung"],
+        modules: ["chat", "matching", "payments"],
         video: { src: "/projects/yourbrand/campus-match/clickthrough.mp4", poster: "/projects/yourbrand/campus-match/clickthrough-poster.webp", alt: "Einmal durch Campus Match geklickt" },
         screenshots: [
           { src: "/projects/yourbrand/campus-match/00-login.webp", mobile: "/projects/yourbrand/campus-match/mobile/00-login.webp", alt: "Login" },
@@ -105,7 +105,7 @@ const cards: ProjectCard[] = [
         about:
           "Ein Nachbarschaftsnetz für einen Kiez-Verein: hell, Ziegelrot, Archivo, Aushänge mit Abreißzetteln wie am echten Brett. Das kleinste Paket plus das Modul Schwarzes Brett: Suche, Biete, Verschenke, Treffen — sichtbar für die Straße, 500 m, 1 km, den Kiez oder alle. „Zettel abreißen“ schickt eine Kontaktanfrage, Aushänge laufen nach 14 Tagen ab, öffentliche stehen schon auf der Login-Seite. Kein Matching — hier geht's um Hilfe, nicht ums Daten. Sprachen: Deutsch, Englisch, Leichte Sprache.",
         tier: "Core",
-        modules: ["Chat", "Bezahlung", "Schwarzes Brett"],
+        modules: ["chat", "payments", "board"],
         video: { src: "/projects/yourbrand/kiez/clickthrough.mp4", poster: "/projects/yourbrand/kiez/clickthrough-poster.webp", alt: "Einmal durch KiezConnect geklickt" },
         screenshots: [
           { src: "/projects/yourbrand/kiez/00-login.webp", mobile: "/projects/yourbrand/kiez/mobile/00-login.webp", alt: "Login — öffentliche Aushänge schon vor der Anmeldung" },
@@ -125,7 +125,7 @@ const cards: ProjectCard[] = [
         about:
           "Für einen Träger im ambulant betreuten Wohnen: Leichte Sprache als Standard, Atkinson Hyperlegible in 18 px, breite Sidebar mit großen Feldern, Vorlesen, fertige Antworten im Chat und ein Hilfe-Knopf, der immer sichtbar ist. Paket Connect ohne Bezahlung, dazu Betreuung und Organisation: Ein Konto betreut wenige andere, die betreute Person stimmt zu und kann Rechte ändern oder die Betreuung beenden; bei geschützten Personen wartet ein neuer Kontakt auf die Freigabe. Der Träger sieht sein Team und alle Betreuungen auf einen Blick.",
         tier: "Connect",
-        modules: ["Chat", "Betreuung", "Organisation"],
+        modules: ["chat", "caretaker", "orgs"],
         video: { src: "/projects/yourbrand/miteinander/clickthrough.mp4", poster: "/projects/yourbrand/miteinander/clickthrough-poster.webp", alt: "Einmal durch Miteinander geklickt" },
         screenshots: [
           { src: "/projects/yourbrand/miteinander/00-login.webp", mobile: "/projects/yourbrand/miteinander/mobile/00-login.webp", alt: "Login in Leichter Sprache" },
@@ -144,7 +144,7 @@ const cards: ProjectCard[] = [
         about:
           "Eine Community für eine Gaming-Crew: dunkel, Signalgelb, Big Shoulders und Barlow, die Navigation als Linienplan mit eigenen Menünamen (Leitstand, Durchsagen, Stellwerk). Volles Premium inklusive Hidden Zone mit öffentlichen Beef-Duellen, Münzen und Bestenliste. Sprachen: Deutsch, Englisch und Leetspeak.",
         tier: "Premium",
-        modules: ["Chat", "Matching", "Bezahlung", "Hidden Zone"],
+        modules: ["chat", "matching", "payments", "hidden"],
         video: { src: "/projects/yourbrand/underground/clickthrough.mp4", poster: "/projects/yourbrand/underground/clickthrough-poster.webp", alt: "Einmal durch Underground geklickt" },
         screenshots: [
           { src: "/projects/yourbrand/underground/00-login.webp", mobile: "/projects/yourbrand/underground/mobile/00-login.webp", alt: "Login" },

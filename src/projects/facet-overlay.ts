@@ -108,7 +108,7 @@ function tenantsHtml(card: ProjectCard): string {
           <p>${esc(t.about)}</p>
           <dl class="facet-tenant-meta">
             <dt>${esc(UI.tenantTier)}</dt><dd>${esc(t.tier)}</dd>
-            <dt>${esc(UI.tenantModules)}</dt><dd><ul>${t.modules.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></dd>
+            <dt>${esc(UI.tenantModules)}</dt><dd><ul>${t.modules.map((m) => `<li>${esc(UI.vizModules[m])}</li>`).join("")}</ul></dd>
           </dl>
           ${galleryHtml(
             t.screenshots,
