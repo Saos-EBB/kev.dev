@@ -9,14 +9,14 @@
 html[lang="ja"] {
   --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", system-ui, sans-serif;
   --font-read: "JetBrains Mono Variable", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", monospace;
-  --font-display: "Koeeya Trial", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: "Koeeya Trial", "Saos Fill", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
 }
 
 html[lang="ar"] {
   --font-sans: "Noto Sans Arabic", "Segoe UI", "Geeza Pro", Tahoma, system-ui, sans-serif;
   /* Arabic in a monospace fallback reads badly — prose gets a sans. */
   --font-read: "Noto Sans Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
-  --font-display: "Koeeya Trial", "Noto Kufi Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
+  --font-display: "Koeeya Trial", "Saos Fill", "Noto Kufi Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
 }
 
 /* Display headings in scripts Koeeya doesn't have: the fallback is a
