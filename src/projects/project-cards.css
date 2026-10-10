@@ -31,6 +31,11 @@
   --pc-soft: color-mix(in srgb, var(--pc) 38%, transparent);
   --pc-faint: color-mix(in srgb, var(--pc) 7%, transparent);
   --box-bg: color-mix(in srgb, var(--projects-bg) 80%, transparent);
+  /* Reading sizes in the project cards, growing with the viewport:
+     ~15 / 17 / 19 px body at 1100 / 1440 / 1920 px wide. */
+  --fs-read: clamp(0.95rem, 0.6rem + 0.5vw, 1.2rem);
+  --fs-small: clamp(0.8rem, 0.55rem + 0.35vw, 1rem);
+  --fs-tiny: clamp(0.68rem, 0.5rem + 0.22vw, 0.82rem);
 }
 
 /* Mid-size arrangement (desktop bento below overrides it): head across,
@@ -112,7 +117,7 @@
 
 .pcard-head .pcard-claim {
   flex: 1 1 22rem;
-  font-size: 0.85rem;
+  font-size: calc(var(--fs-read) * 0.9);
 }
 
 .pcard-head .facet-tiles {
@@ -143,7 +148,7 @@
 
 .pcard-claim {
   max-width: 48ch;
-  font-size: 0.95rem;
+  font-size: var(--fs-read);
   font-weight: 600;
   line-height: 1.4;
   color: var(--color-text);
@@ -263,7 +268,7 @@
 }
 
 .pcard-goal {
-  font-size: 1rem;
+  font-size: var(--fs-read);
   line-height: 1.5;
   color: var(--color-text-muted);
 }
@@ -280,7 +285,7 @@
 }
 
 .pcard-what {
-  font-size: 1rem;
+  font-size: var(--fs-read);
   line-height: 1.45;
   color: var(--color-text-muted);
 }
@@ -317,7 +322,7 @@
   flex-direction: column;
   gap: 0.4rem;
   list-style: none;
-  font-size: 1rem;
+  font-size: var(--fs-read);
   line-height: 1.45;
   color: var(--color-text-muted);
 }
@@ -924,6 +929,14 @@
   container-type: inline-size;
 }
 
+/* Phones keep fixed reading sizes — the viewport-based ones above would
+   shrink them there. */
+.lite .pcard {
+  --fs-read: 1rem;
+  --fs-small: 0.8rem;
+  --fs-tiny: 0.68rem;
+}
+
 @container (max-height: 330px) {
   .viz-blueprint {
     gap: 0.5rem;
@@ -1164,7 +1177,7 @@
 
   .pcard-head .pcard-claim {
     flex: none;
-    font-size: 0.95rem;
+    font-size: var(--fs-read);
   }
 
   .pcard-head .facet-tiles {
