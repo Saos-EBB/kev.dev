@@ -57,7 +57,7 @@ export interface TenantShowcase {
 export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
-export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "pinboard" | "storyboard" | "portrait";
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "keys" | "pinboard" | "storyboard" | "portrait";
 
 // Which of the three project groups a card belongs to. The cards are
 // ordered by group (projects-data.ts); the group's word shows up around
@@ -150,6 +150,7 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
   viewport: ["why", "learned", "code"],
   editor: ["why", "learned", "code"],
   terminal: ["why", "learned", "code"],
+  keys: ["why", "learned", "code"],
   pinboard: ["why"],
   storyboard: ["why", "learned", "code"],
   portrait: ["why", "learned", "code"],
@@ -182,7 +183,9 @@ function cardBodies(card: ProjectCard) {
   const code = [
     gh?.href
       ? `<p><a class="facet-link" href="${esc(gh.href)}" target="_blank" rel="noopener noreferrer">${esc(gh.label)} ↗</a></p>`
-      : open("GitHub-Link fehlt"),
+      : gh // a private repo: named, nothing to link
+        ? `<p>${esc(gh.label)}</p>`
+        : open("GitHub-Link fehlt"),
     card.tags?.length ? `<ul class="pcard-tags">${card.tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : "",
     card.decisions?.length
       ? `<ul class="pcard-decisions">${card.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`

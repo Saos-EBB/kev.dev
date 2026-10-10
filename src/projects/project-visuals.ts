@@ -145,6 +145,20 @@ function terminal(card: ProjectCard): string {
   `;
 }
 
+// Oskalizer: the playground's screen as the animal mode shows it — one
+// key, big, with its animal and what the voice says — and the three modes
+// it went through, the current one lit.
+function keys(): string {
+  const [blobs, animals, typing] = UI.vizKeysModes;
+  return `
+    <div class="viz-keys">
+      <div class="viz-keys-screen"><span class="viz-keys-letter">A</span><span class="viz-keys-animal">🐒</span></div>
+      <p class="viz-keys-say">„A wie Affe“</p>
+      <ol class="viz-keys-modes"><li>${blobs}</li><li class="is-on">${animals}</li><li>${typing}</li></ol>
+    </div>
+  `;
+}
+
 // Grundlagen: the nine Bootcamp programs as sticky notes in their own
 // colors (same --note-N each one has in the widget), each one starts the
 // in-browser Java terminal. Labels come from widgets/grundlagen-i18n.ts,
@@ -223,6 +237,8 @@ export function renderVisual(card: ProjectCard): string {
       return editor(card);
     case "terminal":
       return terminal(card);
+    case "keys":
+      return keys();
     case "pinboard":
       return pinboard(card);
     case "storyboard":

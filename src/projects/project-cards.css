@@ -53,12 +53,14 @@
 /* Mirrored: the visual on the right. */
 .pcard--inbox .pcard-visual,
 .pcard--editor .pcard-visual,
-.pcard--terminal .pcard-visual {
+.pcard--terminal .pcard-visual,
+.pcard--keys .pcard-visual {
   grid-area: 2 / 6 / 3 / 13;
 }
 .pcard--inbox .pcard-part--why,
 .pcard--editor .pcard-part--why,
-.pcard--terminal .pcard-part--why {
+.pcard--terminal .pcard-part--why,
+.pcard--keys .pcard-part--why {
   grid-area: 2 / 1 / 3 / 6;
 }
 .pcard--pinboard .pcard-visual {
@@ -669,6 +671,75 @@
   color: var(--color-canvas-bg);
 }
 
+/* --- keys (Oskalizer) -------------------------------------------- */
+
+/* The playground's dark full screen: one key, big, in the card's color,
+   its animal beside it; below, the three modes it grew through. */
+.viz-keys {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.25rem;
+  background: #050507;
+}
+
+.viz-keys-screen {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: clamp(5rem, 28cqh, 11rem);
+  line-height: 1;
+}
+
+.viz-keys-letter {
+  font-family: var(--font-display);
+  color: var(--pc);
+  filter: drop-shadow(0 0 0.12em color-mix(in srgb, var(--pc) 60%, transparent));
+  animation: viz-keys-pop 2.4s ease-out infinite;
+}
+
+.viz-keys-animal {
+  font-size: 0.8em;
+}
+
+/* "Kurz aufpoppend" like the real thing — a press, then it rests. */
+@keyframes viz-keys-pop {
+  0% { transform: scale(0.6); }
+  12% { transform: scale(1.08); }
+  20%, 100% { transform: scale(1); }
+}
+
+.viz-keys-say {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.viz-keys-modes {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.viz-keys-modes li {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--pc-soft);
+  color: var(--color-text-muted);
+}
+
+.viz-keys-modes li.is-on {
+  border-color: var(--pc);
+  color: var(--pc);
+}
+
 /* --- editor (AniScript), terminal (ReleaseWatcher) ------------- */
 
 .pcard--editor .pcard-part,
@@ -1141,11 +1212,11 @@
   .pcard--terminal .viz-code { font-size: 0.9rem; line-height: 1.85; }
 
   /* editor: full-height script on the left */
-  .pcard--editor .pcard-visual, .pcard--terminal .pcard-visual { grid-area: 1 / 1 / 14 / 12; }
-  .pcard--editor .pcard-head, .pcard--terminal .pcard-head { grid-area: 1 / 13 / 4 / 25; }
-  .pcard--editor .pcard-part--why, .pcard--terminal .pcard-part--why { grid-area: 5 / 13 / 9 / 25; }
-  .pcard--editor .pcard-part--learned, .pcard--terminal .pcard-part--learned { grid-area: 10 / 13 / 14 / 18; }
-  .pcard--editor .pcard-part--code, .pcard--terminal .pcard-part--code { grid-area: 10 / 19 / 14 / 25; }
+  .pcard--editor .pcard-visual, .pcard--terminal .pcard-visual, .pcard--keys .pcard-visual { grid-area: 1 / 1 / 14 / 12; }
+  .pcard--editor .pcard-head, .pcard--terminal .pcard-head, .pcard--keys .pcard-head { grid-area: 1 / 13 / 4 / 25; }
+  .pcard--editor .pcard-part--why, .pcard--terminal .pcard-part--why, .pcard--keys .pcard-part--why { grid-area: 5 / 13 / 9 / 25; }
+  .pcard--editor .pcard-part--learned, .pcard--terminal .pcard-part--learned, .pcard--keys .pcard-part--learned { grid-area: 10 / 13 / 14 / 18; }
+  .pcard--editor .pcard-part--code, .pcard--terminal .pcard-part--code, .pcard--keys .pcard-part--code { grid-area: 10 / 19 / 14 / 25; }
 
   /* storyboard: story left, the page's frames down the right (portrait:
      the face down the right) */
@@ -1222,6 +1293,7 @@
   padding: 1rem;
 }
 
+.lite .pcard--keys .pcard-visual,
 .lite .pcard--viewport .pcard-visual {
   aspect-ratio: 4 / 3;
 }
@@ -1287,6 +1359,7 @@
   }
   :root:not(.force-motion) .viz-cube,
   :root:not(.force-motion) .viz-caret,
+  :root:not(.force-motion) .viz-keys-letter,
   :root:not(.force-motion) .viz-prompt i {
     animation: none;
   }

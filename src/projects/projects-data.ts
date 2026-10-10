@@ -294,6 +294,37 @@ const cards: ProjectCard[] = [
     ],
   },
   {
+    id: "oskalizer",
+    group: "tools",
+    layout: "keys",
+    kind: "Tastatur-Spielplatz",
+    accent: "var(--note-8)",
+    learnGoal: "Mein Sohn will an meine Tastatur, sobald ich daran sitze — also habe ich ihm etwas gebaut, bei dem er hämmern kann, ohne dass etwas kaputtgeht, und trotzdem etwas passiert.",
+    title: "Oskalizer",
+    claim: "Ein Tastatur-Spielplatz für meinen Sohn — der mit ihm mitwächst.",
+    points: [
+      "Tastatur und Maus werden exklusiv übernommen: er hämmert, das System bleibt unangetastet",
+      "Erst bunte Kleckse, jetzt Buchstaben mit Tier und Stimme: „A wie Affe“",
+      "Modus Tippen: er schreibt, Enter liest es ihm vor",
+    ],
+    what: "Der Oskalizer übernimmt eine externe Tastatur und die Maus exklusiv, zeigt alles im Vollbild und lässt das System in Ruhe — beenden geht nur, wenn man Esc fünf Sekunden hält. Die Modi sind mit meinem Sohn gewachsen. Am Anfang war jeder Tastendruck einfach ein bunter Klecks auf dunklem Grund, in drei Stilen (Tinte, Kugeln, Schleim), ohne Zusammenhang zwischen Taste und Bild. Als er älter wurde, kam der Modus Tiere: Jede Taste zeigt groß ihr Zeichen, A bis Z mit einem Tier dazu, eine Stimme sagt „A wie Affe“ und macht den Tierlaut, Ziffern werden vorgelesen. Mit Strg+Umschalt+D wechselt man in den Modus Tippen: Die Buchstaben bleiben als Text stehen, die Leertaste macht Wortabstände, und Enter liest ihm vor, was er geschrieben hat.",
+    tags: ["Python", "pygame", "evdev", "Piper TTS"],
+    meta: "Solo · September 2026 begonnen, Oktober 2026 umgebaut · für meinen Sohn",
+    links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (läuft lokal unter Linux)" }],
+    decisions: [
+      "Tastatur und Maus exklusiv gegrabbt (evdev) — kein Tastendruck erreicht das System, Beenden nur mit fünf Sekunden Esc",
+      "Mitgewachsen statt ergänzt: die Kleckse sind raus, als Buchstaben und Tiere spannender wurden",
+      "Stimme „Thorsten“ über Piper, lokal und offline; fehlt sie, springt espeak-ng ein",
+      "Eigene Tierbilder und Tierlaute einfach als Datei ablegen (a.png, a.ogg) — ohne Code anzufassen",
+      "Jeder neue Tastendruck bricht Bild und Ton des vorigen ab — beim Hämmern bleibt nichts hängen",
+    ],
+    challenge:
+      "Gehämmert wird schneller, als eine Stimme sprechen kann. Die Sprache wird pro Taste in einem eigenen Thread berechnet, jeder Auftrag bekommt eine Nummer, und was veraltet ist, wird verworfen — sonst hinkt der Ton dem Kind hinterher.",
+    open: [
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
     id: "renderer",
     group: "along",
     layout: "viewport",

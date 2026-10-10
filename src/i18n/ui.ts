@@ -102,6 +102,7 @@ const de = {
   vizOpen: (l: string) => `${l} öffnen`,
   vizSpin: "▶ Live drehen",
   vizEditorStatus: "läuft in ScriptCat",
+  vizKeysModes: ["Kleckse", "Tiere", "Tippen"],
   vizEditorFeatures: [
     ["add", "+ Autoplay"],
     ["add", "+ Intro-Skip"],
@@ -262,6 +263,7 @@ const en: Ui = {
   vizOpen: (l) => `Open ${l}`,
   vizSpin: "▶ Spin it live",
   vizEditorStatus: "running in ScriptCat",
+  vizKeysModes: ["Blobs", "Animals", "Typing"],
   vizEditorFeatures: [
     ["add", "+ Autoplay"],
     ["add", "+ Intro skip"],
@@ -417,6 +419,7 @@ const ru: Ui = {
   vizOpen: (l) => `Открыть: ${l}`,
   vizSpin: "▶ Покрутить",
   vizEditorStatus: "работает в ScriptCat",
+  vizKeysModes: ["Кляксы", "Животные", "Набор"],
   vizEditorFeatures: [
     ["add", "+ Автовоспроизведение"],
     ["add", "+ Пропуск заставки"],
@@ -572,6 +575,7 @@ const ja: Ui = {
   vizOpen: (l) => `${l}を開く`,
   vizSpin: "▶ 回してみる",
   vizEditorStatus: "ScriptCat で稼働中",
+  vizKeysModes: ["しみ", "どうぶつ", "タイプ"],
   vizEditorFeatures: [
     ["add", "+ 自動再生"],
     ["add", "+ イントロスキップ"],
@@ -727,6 +731,7 @@ const ar: Ui = {
   vizOpen: (l) => `فتح ${l}`,
   vizSpin: "▶ أدِره مباشرة",
   vizEditorStatus: "يعمل في ScriptCat",
+  vizKeysModes: ["بقع", "حيوانات", "كتابة"],
   vizEditorFeatures: [
     ["add", "+ تشغيل تلقائي"],
     ["add", "+ تخطي المقدمة"],
