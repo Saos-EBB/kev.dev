@@ -39,6 +39,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       decisions: [
         "Silo multi-tenancy instead of a shared database: its own DB, bucket and Redis prefix per tenant — GDPR data physically separated, not a single query had to be rewritten",
         "One tenant.json per tenant as the single source: brand, theme, languages, tier and modules — validated at startup, modules switchable, billing by booked scope",
+        "Pluggable modules: every feature is its own NestJS module behind a switch in tenant.json — switched-off ones are never even loaded. A new feature means: build the module, register it, switch it on for a tenant; the core stays untouched. That's how the shop is being built right now: food, merch, license keys and unlock codes — suspicious orders pause until a human decides",
         "A tenant console instead of manual work: overview and stats of every tenant, editor with diff and auto-commit, 19 color tokens with WCAG contrast check, logo upload with generated favicon",
         "Row-level security as the baseline: protection \"from the bottom\", every person controls their own visibility",
         "PostGIS for distance calculation right in the database — easier than in the backend",
@@ -196,6 +197,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       decisions: [
         "Silo-multitenancy вместо общей базы: своя БД, свой бакет и свой Redis-префикс у каждого тенанта — данные GDPR физически разделены, ни один запрос не пришлось переписывать",
         "Один tenant.json на тенанта как единственный источник: бренд, тема, языки, тариф и модули — проверяется при старте, модули включаются/выключаются, оплата по объёму подписки",
+        "Подключаемые модули: каждая функция — отдельный модуль NestJS за переключателем в tenant.json, выключенные даже не загружаются. Новая функция — это: собрать модуль, зарегистрировать его, включить у тенанта; ядро остаётся нетронутым. Так сейчас строится магазин: еда, мерч, лицензионные ключи и коды разблокировки — подозрительные заказы останавливаются, пока решение не примет человек",
         "Консоль тенантов вместо ручной работы: обзор и метрики всех тенантов, редактор с diff и автокоммитом, 19 цветовых токенов с проверкой контраста WCAG, загрузка логотипа с генерацией favicon",
         "Row-Level Security как базовое состояние: защита «снизу», видимостью каждый управляет сам",
         "PostGIS для расчёта расстояний прямо в базе — проще, чем в бэкенде",
@@ -353,6 +355,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       decisions: [
         "共有DBではなくサイロ型マルチテナント：テナントごとに専用のDB・バケット・Redisプレフィックス — GDPR対象データは物理的に分離、クエリの書き換えはゼロ",
         "テナントごとに1つのtenant.jsonが唯一の情報源：ブランド、テーマ、言語、プラン、モジュール — 起動時に検証、モジュールはオン/オフ可能、契約範囲に応じて課金",
+        "差し込めるモジュール：機能はそれぞれ独立したNestJSモジュールで、tenant.jsonのスイッチで切り替え — オフのものはそもそも読み込まれない。新機能は「モジュールを作る、レジストリに登録する、テナントでオンにする」だけで、コアには手を入れない。いまこの方法でショップを作っている：フード、グッズ、ライセンスキー、アンロックコード — 怪しい注文は人が判断するまで保留になる",
         "手作業ではなくテナントコンソール：全テナントの概要と指標、差分と自動コミットつきエディタ、WCAGコントラストチェックつきの19のカラートークン、ファビコンを自動生成するロゴアップロード",
         "行レベルセキュリティを基本に：「下から」守り、可視範囲は各自が管理",
         "距離計算はPostGISでDB上で直接 — バックエンドより簡単",
@@ -511,6 +514,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       decisions: [
         "تعدد مستأجرين بنموذج الصوامع بدل قاعدة بيانات مشتركة: قاعدة بيانات وحاوية وبادئة Redis خاصة لكل مستأجر — بيانات GDPR مفصولة فعليًا، ولم يلزم تعديل أي استعلام",
         "ملف tenant.json واحد لكل مستأجر كمصدر وحيد: العلامة والسمة واللغات والباقة والوحدات — يُتحقق منه عند التشغيل، والوحدات قابلة للتفعيل/التعطيل، والفوترة حسب النطاق المحجوز",
+        "وحدات قابلة للتركيب: كل ميزة وحدة NestJS مستقلة خلف مفتاح في tenant.json — والوحدات المعطّلة لا تُحمَّل أصلًا. الميزة الجديدة تعني: بناء الوحدة، تسجيلها، تفعيلها لدى المستأجر؛ والنواة تبقى كما هي. وهكذا يُبنى المتجر الآن: طعام، منتجات، مفاتيح ترخيص وأكواد فتح — والطلبات المريبة تتوقف حتى يقرر إنسان",
         "لوحة مستأجرين بدل العمل اليدوي: نظرة عامة ومؤشرات لكل المستأجرين، ومحرر مع عرض الفروق وحفظ تلقائي في git، و19 رمز لون مع فحص تباين WCAG، ورفع شعار مع توليد أيقونة الموقع",
         "أمان على مستوى الصفوف كأساس: حماية «من الأسفل»، وكل شخص يتحكم في ظهوره بنفسه",
         "PostGIS لحساب المسافات مباشرة في قاعدة البيانات — أسهل من الواجهة الخلفية",

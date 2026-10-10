@@ -42,6 +42,7 @@ const cards: ProjectCard[] = [
     decisions: [
       "Silo-Multitenancy statt geteilter Datenbank: eigene DB, eigener Bucket und eigener Redis-Prefix pro Mandant — DSGVO-Daten physisch getrennt, keine Query musste umgebaut werden",
       "Eine tenant.json pro Mandant als einzige Quelle: Marke, Theme, Sprachen, Tier und Module — beim Start validiert, Module zu-/abschaltbar, Abrechnung nach gebuchtem Umfang",
+      "Steckbare Module: Jedes Feature ist ein eigenes NestJS-Modul hinter einem Schalter in der tenant.json — abgeschaltete werden gar nicht erst geladen. Neues Feature heißt: Modul bauen, in der Registry eintragen, beim Mandanten anschalten; der Kern bleibt unberührt. So entsteht gerade der Shop: Essen, Merch, Lizenz-Keys und Freischalt-Codes — auffällige Bestellungen halten an, bis ein Mensch entscheidet",
       "Mandanten-Console statt Handarbeit: Übersicht und Kennzahlen aller Mandanten, Editor mit Diff und Auto-Commit, 19 Farb-Tokens mit WCAG-Kontrastprüfung, Logo-Upload mit erzeugtem Favicon",
       "Row-Level Security als Grundzustand: Schutz „von unten“, Sichtbarkeit steuert jede Person selbst",
       "PostGIS für Entfernungsberechnung direkt auf DB-Ebene — leichter als im Backend",
