@@ -63,6 +63,18 @@ export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboa
 // ordered by group (projects-data.ts); the group's word shows up around
 // the "Projekte" heading while its cards are on screen (project-groups.ts).
 export type ProjectGroup = "big" | "tools" | "along";
+export const GROUP_LABELS: Record<ProjectGroup, string> = {
+  big: "TheBigOnes",
+  tools: "Tools",
+  along: "Along the way",
+};
+
+// The group words, one span each; CSS places them (fixed spots around the
+// desktop headline, all on one spot in the phone title).
+export const groupTagsHtml = () =>
+  (Object.keys(GROUP_LABELS) as ProjectGroup[])
+    .map((g) => `<span class="projects-group" data-group="${g}">${GROUP_LABELS[g]}</span>`)
+    .join("");
 
 export interface ProjectCard {
   id: string;
@@ -212,7 +224,7 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
 export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): string {
   const tags = card.tags?.slice(0, 4) ?? [];
   return `
-    <article class="ptease" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+    <article class="ptease" data-card="${esc(card.id)}" data-group="${card.group}" style="--pc: ${card.accent}">
       ${card.layout === "portrait" ? `<canvas class="ptease-face" data-face-dots aria-hidden="true"></canvas>` : ""}
       <p class="pcard-index">${indexLine(card, index, total)}</p>
       <h3 class="ptease-title">

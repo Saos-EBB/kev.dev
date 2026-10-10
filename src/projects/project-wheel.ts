@@ -21,6 +21,7 @@ export function initProjectWheel(root: HTMLElement) {
   if (!entries.length) return;
 
   let queued = false;
+  let activeGroup = "";
 
   const update = () => {
     queued = false;
@@ -38,6 +39,20 @@ export function initProjectWheel(root: HTMLElement) {
       el.style.opacity = String(Math.max(0, 1 - Math.max(0, a - 0.35) * 0.9));
     }
     if (title) {
+      // The group of the entry nearest the middle lights up its word in the
+      // title (all words share one spot there, see .projects-groups--spot).
+      let nearest = entries[0];
+      let best = Infinity;
+      for (const el of entries) {
+        const r = el.getBoundingClientRect();
+        const dist = Math.abs(r.top + r.height / 2 - half);
+        if (dist < best) { best = dist; nearest = el; }
+      }
+      const group = nearest.dataset.group ?? "";
+      if (group !== activeGroup) {
+        activeGroup = group;
+        title.dataset.group = group;
+      }
       const lastBottom = entries[entries.length - 1].getBoundingClientRect().bottom;
       const lift = Math.min(0, lastBottom - window.innerHeight * TITLE_EXIT);
       title.style.transform = lift ? `translateY(${lift}px)` : "";

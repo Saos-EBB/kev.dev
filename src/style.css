@@ -868,6 +868,82 @@ button:focus-visible {
   pointer-events: none;
 }
 
+/* The project categories' words (project-cards.ts's GROUP_LABELS), smaller
+   than the heading and set slightly askew. Desktop: each has its own fixed
+   spot around the fixed headline, in units of its height (--projects-title-h,
+   published by main.ts), and pops in while its projects are on screen
+   (carousel.ts). Phones: all share one spot in the sticky title's corner,
+   so they cost no extra room (project-wheel.ts sets the title's data-group). */
+.projects-group {
+  position: absolute;
+  font-family: var(--font-display);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--color-text);
+  filter: drop-shadow(0 0 0.15em color-mix(in srgb, var(--title-glow) 60%, transparent));
+  opacity: 0;
+}
+
+.projects-groups--spots {
+  --h: var(--projects-title-h, 8rem);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--h);
+  z-index: 51;
+  pointer-events: none;
+}
+
+.projects-groups--spots .projects-group {
+  font-size: calc(var(--h) * 0.22);
+}
+
+/* Left of the word, right of it, and under it — clamped to the viewport.
+   The em values are roughly each word's own width. */
+.projects-groups--spots [data-group="big"] {
+  left: max(1rem, calc(50% - var(--projects-word-w, 30vw) / 2 - 4.3em));
+  top: calc(var(--h) * 0.5);
+  rotate: -8deg;
+  color: var(--title-grad-from);
+}
+
+.projects-groups--spots [data-group="tools"] {
+  left: min(calc(100% - 3.2em), calc(50% + var(--projects-word-w, 30vw) / 2 + 0.3em));
+  top: calc(var(--h) * 0.4);
+  rotate: 6deg;
+  color: var(--title-grad-to);
+}
+
+.projects-groups--spots [data-group="along"] {
+  left: calc(50% - var(--projects-word-w, 30vw) * 0.1);
+  top: calc(var(--h) * 0.8);
+  rotate: -3deg;
+  color: var(--title-grad-mid);
+}
+
+.projects-groups--spot {
+  position: absolute;
+  right: 16px;
+  bottom: 0.15rem;
+  font-size: 1.05rem;
+}
+
+.projects-groups--spot .projects-group {
+  right: 0;
+  bottom: 0;
+  rotate: -4deg;
+  translate: 0 0.4em;
+  transition: opacity 0.3s ease, translate 0.3s ease;
+}
+
+.projects-title[data-group="big"] .projects-group[data-group="big"],
+.projects-title[data-group="tools"] .projects-group[data-group="tools"],
+.projects-title[data-group="along"] .projects-group[data-group="along"] {
+  opacity: 1;
+  translate: 0 0;
+}
+
 /* Shared look of both "PROJEKTE" headings (the cloth's hero name gets
    the same look painted into its canvas texture, see main.ts's
    paintNameTexture): the --title-* gradient clipped to the glyphs, a

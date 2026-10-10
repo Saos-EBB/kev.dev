@@ -221,6 +221,9 @@ export function initCarousel(section: HTMLElement) {
   });
 
   const tl = gsap.timeline({ paused: true });
+  // Timeline span of each project category ("big", "tools", "along"):
+  // from its first project's slide-in to its last one's slide-out.
+  const spans = new Map<string, { start: number; end: number }>();
 
   projectGroups.forEach((group, i) => {
     const cards = Array.from(
@@ -251,6 +254,7 @@ export function initCarousel(section: HTMLElement) {
     });
 
     const onSlide = () => applyTrack(group);
+    const start = tl.duration();
 
     tl.to(group, {
       x: "0vw",
@@ -272,6 +276,19 @@ export function initCarousel(section: HTMLElement) {
         ease: clear.ease,
         onUpdate: onSlide,
       });
+    const key = group.dataset.group ?? "";
+    spans.set(key, { start: spans.get(key)?.start ?? start, end: tl.duration() });
+  });
+
+  // The category's word pops in on its fixed spot around the headline
+  // while its projects are on screen (CSS: .projects-groups--spots).
+  // Placed into the same timeline, so it scrubs and reverses with it.
+  document.querySelectorAll<HTMLElement>(".projects-groups--spots .projects-group").forEach((label) => {
+    const span = spans.get(label.dataset.group ?? "");
+    if (!span) return;
+    gsap.set(label, { opacity: 0, scale: 0.6 });
+    tl.to(label, { opacity: 1, scale: 1, duration: reveal.duration * 0.5, ease: "back.out(2)" }, span.start);
+    tl.to(label, { opacity: 0, scale: 0.8, duration: clear.duration * 0.5, ease: "power1.in" }, span.end - clear.duration * 0.5);
   });
 
   // The fixed "PROJEKTE" headline (see .projects-headline) stays until the

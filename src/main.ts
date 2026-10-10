@@ -17,7 +17,7 @@ import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
 import { projectCards } from "./projects/projects-data";
-import { renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
+import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initScrollProgress } from "./scroll/progress";
@@ -178,11 +178,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   </section>
 
   <div class="projects-headline" aria-hidden="true">${titleFx(UI.projects)}</div>
+  ${LITE ? "" : `<div class="projects-groups projects-groups--spots" aria-hidden="true">${groupTagsHtml()}</div>`}
 
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
     <div class="projects-saos" aria-hidden="true"></div>
-    <h2 class="projects-title">${titleFx(UI.projects)}</h2>
+    <h2 class="projects-title">${titleFx(UI.projects)}${
+      LITE ? `<span class="projects-groups projects-groups--spot" aria-hidden="true">${groupTagsHtml()}</span>` : ""
+    }</h2>
     ${
       LITE
         ? `<div class="project-list">
@@ -192,7 +195,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             ${projectCards
               .map(
                 (card, i) => `
-              <div class="carousel-project" data-project="${i}" data-count="1">
+              <div class="carousel-project" data-project="${i}" data-group="${card.group}" data-count="1">
                 ${renderProjectCard(card, i, projectCards.length)}
               </div>
             `,
@@ -344,6 +347,14 @@ function fitProjectsTitles() {
     document.documentElement.style.setProperty(
       "--projects-title-h",
       `${headline.offsetHeight}px`,
+    );
+    // The word's own width (the block is full-width): the group words
+    // around it (.projects-groups--spots) sit relative to its edges.
+    const word = document.createRange();
+    word.selectNodeContents(headline.querySelector(".title-fill")!);
+    document.documentElement.style.setProperty(
+      "--projects-word-w",
+      `${word.getBoundingClientRect().width}px`,
     );
   }
 }
