@@ -1,6 +1,7 @@
 // The project cards. Copy is taken verbatim from the handoff — do
-// not reword. Order: the strongest three first, then AniScript, then
-// Grundlagen last. `open` entries are unresolved questions that stay
+// not reword. Order follows the groups (see ProjectGroup): the three big
+// ones (YourBrand, Jobbot, kev.dev), then the tools, then what was built
+// along the way to learn something for a project. `open` entries are unresolved questions that stay
 // visible on the card until Kevin answers them. `layout` picks the card's
 // own arrangement and signature visual (project-visuals.ts), `accent` its
 // color — every project looks like itself, on the same grid.
@@ -11,6 +12,7 @@ import { localizeCard } from "./projects-i18n";
 const cards: ProjectCard[] = [
   {
     id: "yourbrand",
+    group: "big",
     layout: "blueprint",
     kind: "White-Label-SaaS",
     accent: "var(--note-2)",
@@ -162,6 +164,7 @@ const cards: ProjectCard[] = [
   },
   {
     id: "tschobbo",
+    group: "big",
     layout: "inbox",
     kind: "Bewerbungs-Bot",
     accent: "var(--note-5)",
@@ -201,7 +204,67 @@ const cards: ProjectCard[] = [
     facets: ["screens"],
   },
   {
+    id: "kevdev",
+    group: "big",
+    layout: "storyboard",
+    kind: "Dieses Portfolio",
+    accent: "var(--note-9)",
+    learnGoal:
+      "Ein Portfolio, das man erlebt statt liest — und in dem jedes Element einen Grund hat.",
+    title: "kev.dev",
+    claim: "Beweist Gestaltungs-Denken — jede Animation erzählt etwas, nichts ist Deko.",
+    points: ["Portfolio zum Erleben — jedes Element hat einen Grund", "Vanilla TypeScript, GSAP, eigene Tuch-Physik auf Canvas", "Eigene Lite-Variante fürs Handy"],
+    what: "Viele Portfolio-Seiten angesehen, dann jedes Element mit einem Sinn gebaut: Das Tuch im Hero ist so groß, dass man es anfassen muss. About ist ein Aufzug, an dem mein Leben vorbeizieht. Die Projekte liegen wie auf einer Werkbank, jedes mit Why und Learned. Kontakt kommt mit einem Übergang, und wer klickt, findet ein verstecktes Wow. Impressum und Datenschutz liegen als Overlay auf dem One-Pager, damit die Musik ohne Schnitt weiterläuft.",
+    tags: ["TypeScript", "Vite", "GSAP / ScrollTrigger", "Lenis", "Canvas 2D", "CheerpJ"],
+    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
+    decisions: [
+      "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",
+      "Tuch als eigene Verlet-Physik auf Canvas, der Name wird als Textur mitverzerrt",
+      "Aufzug aus CSS-3D-Wänden, Zoom in den Monitor als Übergang ins Projekte-Grid",
+      "Ein durchgehendes Grid als roter Faden von About bis Kontakt",
+      "Impressum/Datenschutz als Overlay statt eigener Seite — die Musik läuft weiter",
+      "Eigene Lite-Variante fürs Handy statt Kompromisse für beide",
+    ],
+    challenge:
+      "Mobile ist eine eigene Welt: Was am Desktop flüssig lief, ruckelte am Handy. Messen statt raten — die Aufzugswände waren Layer so hoch wie die ganze Section. Am Ende eine eigene Lite-Variante statt Kompromisse für beide.",
+    facets: ["self"],
+    open: [
+      "Zeitraum und Umfang (Stunden, solo, Anteil CC als Implementierungs-Agent) — Kevin bestätigt",
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
+    id: "aniscript",
+    group: "tools",
+    layout: "editor",
+    kind: "Userscript",
+    accent: "var(--note-1)",
+    learnGoal: "Userscripts und DOM-Manipulation lernen — und herausfinden, ob ich ein großes fremdes Script schlanker und verständlicher neu bauen kann.",
+    title: "AniScript",
+    claim: "Ein Userscript für den eigenen Gebrauch — von Grund auf neu geschrieben, schlank und durchkommentiert.",
+    points: [
+      "Komplett neu geschrieben: ~800 statt ~5000 Zeilen",
+      "Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt",
+      "Jede Debug-Erkenntnis als Kommentar direkt im Code",
+    ],
+    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Dann habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
+    tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
+    meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
+    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/AniScript" }, { label: "kein Live-Widget (Userscript)" }],
+    decisions: [
+      "Neu geschrieben statt weiter adaptiert — 5000 fremde Zeilen ließen sich nicht mehr sauber verstehen und warten",
+      "Kommentare als Gedächtnis: jede Debug-Erkenntnis steht im Code, damit sie keiner zweimal lösen muss",
+      "Theater-Modus per CSS statt echtem Vollbild — überlebt jeden Folgenwechsel im iframe",
+    ],
+    challenge:
+      "Lange ein Render-Bug mit Darstellungsfehlern — Ursache war nicht das Script, sondern der Userscript-Manager unter Braves Umstieg von Manifest V2 auf V3. Der Wechsel von Violentmonkey zu ScriptCat hat's behoben, das mit MV3 sauber zurechtkam.",
+    open: [
+      "Brave/MV2→V3-Detail final gegenchecken",
+    ],
+  },
+  {
     id: "renderer",
+    group: "along",
     layout: "viewport",
     kind: "3D ohne Bibliothek",
     accent: "var(--note-3)",
@@ -236,64 +299,8 @@ const cards: ProjectCard[] = [
     ],
   },
   {
-    id: "aniscript",
-    layout: "editor",
-    kind: "Userscript",
-    accent: "var(--note-1)",
-    learnGoal: "Userscripts und DOM-Manipulation lernen — und herausfinden, ob ich ein großes fremdes Script schlanker und verständlicher neu bauen kann.",
-    title: "AniScript",
-    claim: "Ein Userscript für den eigenen Gebrauch — von Grund auf neu geschrieben, schlank und durchkommentiert.",
-    points: [
-      "Komplett neu geschrieben: ~800 statt ~5000 Zeilen",
-      "Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt",
-      "Jede Debug-Erkenntnis als Kommentar direkt im Code",
-    ],
-    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Dann habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
-    tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
-    meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
-    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/AniScript" }, { label: "kein Live-Widget (Userscript)" }],
-    decisions: [
-      "Neu geschrieben statt weiter adaptiert — 5000 fremde Zeilen ließen sich nicht mehr sauber verstehen und warten",
-      "Kommentare als Gedächtnis: jede Debug-Erkenntnis steht im Code, damit sie keiner zweimal lösen muss",
-      "Theater-Modus per CSS statt echtem Vollbild — überlebt jeden Folgenwechsel im iframe",
-    ],
-    challenge:
-      "Lange ein Render-Bug mit Darstellungsfehlern — Ursache war nicht das Script, sondern der Userscript-Manager unter Braves Umstieg von Manifest V2 auf V3. Der Wechsel von Violentmonkey zu ScriptCat hat's behoben, das mit MV3 sauber zurechtkam.",
-    open: [
-      "Brave/MV2→V3-Detail final gegenchecken",
-    ],
-  },
-  {
-    id: "kevdev",
-    layout: "storyboard",
-    kind: "Dieses Portfolio",
-    accent: "var(--note-9)",
-    learnGoal:
-      "Ein Portfolio, das man erlebt statt liest — und in dem jedes Element einen Grund hat.",
-    title: "kev.dev",
-    claim: "Beweist Gestaltungs-Denken — jede Animation erzählt etwas, nichts ist Deko.",
-    points: ["Portfolio zum Erleben — jedes Element hat einen Grund", "Vanilla TypeScript, GSAP, eigene Tuch-Physik auf Canvas", "Eigene Lite-Variante fürs Handy"],
-    what: "Viele Portfolio-Seiten angesehen, dann jedes Element mit einem Sinn gebaut: Das Tuch im Hero ist so groß, dass man es anfassen muss. About ist ein Aufzug, an dem mein Leben vorbeizieht. Die Projekte liegen wie auf einer Werkbank, jedes mit Why und Learned. Kontakt kommt mit einem Übergang, und wer klickt, findet ein verstecktes Wow. Impressum und Datenschutz liegen als Overlay auf dem One-Pager, damit die Musik ohne Schnitt weiterläuft.",
-    tags: ["TypeScript", "Vite", "GSAP / ScrollTrigger", "Lenis", "Canvas 2D", "CheerpJ"],
-    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
-    decisions: [
-      "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",
-      "Tuch als eigene Verlet-Physik auf Canvas, der Name wird als Textur mitverzerrt",
-      "Aufzug aus CSS-3D-Wänden, Zoom in den Monitor als Übergang ins Projekte-Grid",
-      "Ein durchgehendes Grid als roter Faden von About bis Kontakt",
-      "Impressum/Datenschutz als Overlay statt eigener Seite — die Musik läuft weiter",
-      "Eigene Lite-Variante fürs Handy statt Kompromisse für beide",
-    ],
-    challenge:
-      "Mobile ist eine eigene Welt: Was am Desktop flüssig lief, ruckelte am Handy. Messen statt raten — die Aufzugswände waren Layer so hoch wie die ganze Section. Am Ende eine eigene Lite-Variante statt Kompromisse für beide.",
-    facets: ["self"],
-    open: [
-      "Zeitraum und Umfang (Stunden, solo, Anteil CC als Implementierungs-Agent) — Kevin bestätigt",
-      "Texte in Kevins Worten nachschärfen",
-    ],
-  },
-  {
     id: "grundlagen",
+    group: "along",
     layout: "pinboard",
     kind: "Bootcamp · Java",
     accent: "var(--note-6)",
@@ -313,6 +320,7 @@ const cards: ProjectCard[] = [
   },
   {
     id: "facedots",
+    group: "along",
     layout: "portrait",
     kind: "Tool · Foto zu Punkten",
     accent: "var(--note-4)",

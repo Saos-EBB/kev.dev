@@ -59,8 +59,14 @@ export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
 // Which arrangement + signature visual a card uses (see the file header).
 export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "pinboard" | "storyboard" | "portrait";
 
+// Which of the three project groups a card belongs to. The cards are
+// ordered by group (projects-data.ts); the group's word shows up around
+// the "Projekte" heading while its cards are on screen (project-groups.ts).
+export type ProjectGroup = "big" | "tools" | "along";
+
 export interface ProjectCard {
   id: string;
+  group: ProjectGroup;
   layout: CardLayout;
   // Short genre label in the card head ("White-Label-SaaS").
   kind: string;
