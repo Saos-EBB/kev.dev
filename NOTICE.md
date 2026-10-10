@@ -34,6 +34,7 @@ Full license texts ship with each package in `node_modules/<package>/`.
 |---|---|---|
 | `public/fonts/koeeya-trial.ttf` | Koeeya (trial version) | Trial license of the type designer; used non-commercially on this personal portfolio, not redistributed for other use |
 | `public/fonts/ui/*` | Space Grotesk, Source Serif 4, Courier Prime, JetBrains Mono | SIL Open Font License 1.1 |
+| `public/favicon.svg`, `public/apple-touch-icon.png` | "kev" glyph outlines from Don Graffiti (Juan Miguel Castillo / Don Marciano), converted to SVG paths | Freeware — designer: "If the License is 'Free' do what ever you want with it, even for commercial use" (fontspace.com/don-graffiti-font-f31465) |
 
 ## Images and sounds
 
