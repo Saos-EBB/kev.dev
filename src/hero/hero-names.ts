@@ -4,10 +4,8 @@
 // as the real name: it's also what the page shows with JS disabled and
 // under prefers-reduced-motion (see main.ts).
 //
-// Koeeya Trial (--font-display) is missing most digits: every one of
-// 0,1,2,4,5,6,7,8,9 renders as the same placeholder glyph, only "3" is a
-// real digit, and "." (period) is likewise a placeholder — checked via
-// the font's own glyf table, not a browser fallback issue. "-" (hyphen)
-// is a real glyph and renders fine. Check new names against that before
-// adding them (e.g. with a test list of characters).
+// Koeeya Trial (--font-display) has placeholder marks instead of most
+// digits and some punctuation; style.css's unicode-range hands those to
+// the fallback font, so any name renders — just with those characters in
+// a plain sans.
 export const HERO_NAMES = ["Kevin Schaberl", "SaoS", "SaosOne!", "SaosGone?","zaoz","saos43","Saos-EBB", "Saos-EBB-43", "or just … kev#"];

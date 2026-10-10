@@ -94,9 +94,9 @@ export interface ProjectCard {
   facets?: FacetKind[];
 }
 
-// Koeeya Trial (--font-display) has no real punctuation — its "." and ","
-// render as a "pdt." trial mark. In display titles they're set in the
-// reading font instead (.pcard-title-punct).
+// Punctuation in display titles is set in the reading font
+// (.pcard-title-punct): Koeeya Trial (--font-display) has no real "." ","
+// ";" "?" (style.css falls back for those), and its ":" "!" don't match.
 export const displayText = (s: string) =>
   esc(s).replace(/[.,:;!?]/g, (c) => `<span class="pcard-title-punct">${c}</span>`);
 

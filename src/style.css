@@ -1,7 +1,14 @@
+/* The trial draws 23 characters as one shared placeholder mark instead of
+   a real glyph: % & ) , . / 0-2 4-9 ; ? @ ] } » › ≥ (found by comparing
+   the font's own outlines). They're left out of the range, so the browser
+   takes them from the next font in --font-display's stack — in the DOM
+   and in canvas text alike. */
 @font-face {
   font-family: "Koeeya Trial";
   src: url("/fonts/koeeya-trial.ttf") format("truetype");
   font-display: swap;
+  unicode-range: U+0-24, U+27-28, U+2A-2B, U+2D, U+33, U+3A, U+3C-3E, U+41-5C, U+5E-7C, U+7E-BA, U+BC-2039,
+    U+203B-2264, U+2266-10FFFF;
 }
 
 /* ---------------------------------------------------------------- */
