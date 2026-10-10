@@ -1,6 +1,6 @@
 @font-face {
-  font-family: "Koeeya Trial";
-  src: url("/fonts/koeeya-trial.ttf") format("truetype");
+  font-family: "Urban Sign";
+  src: url("/fonts/urban-sign.woff") format("woff");
   font-display: swap;
 }
 
@@ -119,7 +119,7 @@
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono",
     monospace;
-  --font-display: "Koeeya Trial", var(--font-sans);
+  --font-display: "Urban Sign", var(--font-sans);
 
   --hero-pad-inline: clamp(1.25rem, 5vw, 3rem);
 

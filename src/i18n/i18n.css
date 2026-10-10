@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------- */
 /* Per-language type and right-to-left support (html[lang], html[dir], */
-/* set by i18n/index.ts). Koeeya (display) and JetBrains Mono (reading) */
+/* set by i18n/index.ts). Urban Sign (display) and JetBrains Mono (reading) */
 /* only cover Latin, Mono also Cyrillic — Japanese and Arabic fall     */
 /* back to the system's fonts for their scripts, named here so the     */
 /* fallback is a good one instead of the browser's first guess.        */
@@ -9,18 +9,18 @@
 html[lang="ja"] {
   --font-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", system-ui, sans-serif;
   --font-read: "JetBrains Mono Variable", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Meiryo", monospace;
-  --font-display: "Koeeya Trial", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: "Urban Sign", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
 }
 
 html[lang="ar"] {
   --font-sans: "Noto Sans Arabic", "Segoe UI", "Geeza Pro", Tahoma, system-ui, sans-serif;
   /* Arabic in a monospace fallback reads badly — prose gets a sans. */
   --font-read: "Noto Sans Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
-  --font-display: "Koeeya Trial", "Noto Kufi Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
+  --font-display: "Urban Sign", "Noto Kufi Arabic", "Segoe UI", "Geeza Pro", Tahoma, sans-serif;
 }
 
-/* Display headings in scripts Koeeya doesn't have: the fallback is a
-   plain sans, so give it the weight Koeeya's brush strokes have. */
+/* Display headings in scripts Urban Sign doesn't have: the fallback is a
+   plain sans, so give it the weight Urban Sign's brush strokes have. */
 html[lang="ru"] :is(.projects-headline, .projects-title, .pcard-title, .contact-headline, .facet-overlay-title, .about-card-name, .gwidget-name, .viz-frame-text b),
 html[lang="ja"] :is(.projects-headline, .projects-title, .pcard-title, .contact-headline, .facet-overlay-title, .about-card-name, .gwidget-name, .viz-frame-text b, .viz-note),
 html[lang="ar"] :is(.projects-headline, .projects-title, .pcard-title, .contact-headline, .facet-overlay-title, .about-card-name, .gwidget-name, .viz-frame-text b, .viz-note) {

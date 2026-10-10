@@ -132,7 +132,7 @@ export function mountSaosIntro(
   overlayEl.appendChild(still);
 
   // The wordmark uses the display font — draw the still only once it's in.
-  document.fonts.load("100px 'Koeeya Trial'").finally(() => {
+  document.fonts.load("100px 'Urban Sign'").finally(() => {
     if (destroyed) return;
     still.style.backgroundImage = `url(${drawStill(window.innerWidth, window.innerHeight, {})})`;
   });

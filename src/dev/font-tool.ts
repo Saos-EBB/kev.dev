@@ -110,7 +110,7 @@ function selectorFor(el: Element): string {
 
 export function mountFontTool(onChange: () => void) {
   let s = load();
-  const fontNames = new Set<string>(["Koeeya Trial", "JetBrains Mono Variable", ...SHIPPED.map((f) => f[0]), ...SYSTEM]);
+  const fontNames = new Set<string>(["Urban Sign", "JetBrains Mono Variable", ...SHIPPED.map((f) => f[0]), ...SYSTEM]);
 
   const pageStyle = document.createElement("style");
   pageStyle.id = "font-tool-style";

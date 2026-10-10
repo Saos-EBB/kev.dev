@@ -285,7 +285,7 @@ function fitBlockToWidth(el: HTMLElement, maxHeightFrac = 1) {
 }
 
 // Which name needs the most *rendered* width, not the most characters:
-// Koeeya Trial (--font-display) is a hand-drawn display font with very
+// Urban Sign (--font-display) is a hand-drawn display font with very
 // uneven glyph widths, so character count is not a reliable proxy — e.g.
 // "Kevin Schaberl" (14 chars) renders wider than "or just … kev ·" (15
 // chars). Measured on `el` itself (a fixed probe size, restored after),
