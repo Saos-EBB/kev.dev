@@ -119,14 +119,11 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
   // on the first reveal so the audio/canvas overlay never loads for a
   // visitor who never clicks the headline.
   const raygunMount = section.querySelector<HTMLElement>(".contact-raygun");
-  let raygunMounted = false;
+  let raygun: ReturnType<typeof mountRaygunButton> | null = null;
   function revealRaygun() {
     if (!raygunMount) return;
     raygunMount.hidden = false;
-    if (!raygunMounted) {
-      raygunMounted = true;
-      mountRaygunButton(raygunMount, { variant: "inline" });
-    }
+    raygun ??= mountRaygunButton(raygunMount, { variant: "inline" });
   }
   function hideRaygun() {
     if (raygunMount) raygunMount.hidden = true;
@@ -449,6 +446,8 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     if (!isBroken || isReturning) return;
     isReturning = true;
     teardownPhysics();
+    // An open raygun's icons fly back into it while the letters return.
+    raygun?.close(TIMING.break.returnDuration * 1000);
     gsap.to(physicsElements, {
       x: 0,
       y: 0,

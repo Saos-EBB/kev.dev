@@ -1248,6 +1248,11 @@ button:focus-visible {
   justify-content: center;
 }
 
+/* display: flex above would otherwise beat the hidden attribute. */
+.contact-raygun[hidden] {
+  display: none;
+}
+
 .contact-raygun:not([hidden]) {
   animation: contact-raygun-in 0.4s ease-out;
 }

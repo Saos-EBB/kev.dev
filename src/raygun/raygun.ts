@@ -348,16 +348,34 @@ export function mountRaygunButton(
     animating = false;
   }
 
-  function closeSocial() {
+  // Instant on a click; with `durationMs` the icons fly back into the gun
+  // and it turns back over that time instead (the contact section closes
+  // it that way alongside its letters' return, see contact.ts).
+  function closeSocial(durationMs = 0) {
     open = false;
     animating = false;
     barrelIdx = -1;
     token = {};
     button.classList.remove("open", "raygun-charging");
-    img.style.transition = "none";
-    img.style.transform = "rotate(0deg)";
-    snapIconsToBtn();
     clearCanvas();
+    if (durationMs <= 0) {
+      img.style.transition = "none";
+      img.style.transform = "rotate(0deg)";
+      snapIconsToBtn();
+      return;
+    }
+    img.style.transition = `transform ${durationMs}ms ease-in-out`;
+    img.style.transform = "rotate(0deg)";
+    const bc = btnCenter();
+    for (const icon of iconEls) {
+      icon.style.transition = ["left", "top", "opacity", "transform"]
+        .map((prop) => `${prop} ${durationMs}ms ease-in`)
+        .join(", ");
+      icon.style.left = `${bc.x - iconSize / 2}px`;
+      icon.style.top = `${bc.y - iconSize / 2}px`;
+      icon.style.opacity = "0";
+      icon.style.transform = "scale(0)";
+    }
   }
 
   button.addEventListener("click", async () => {
@@ -388,6 +406,9 @@ export function mountRaygunButton(
 
   return {
     button,
+    close(durationMs = 0) {
+      if (open) closeSocial(durationMs);
+    },
     destroy() {
       window.removeEventListener("resize", handleResize);
       audioCtx?.close().catch(() => {});
