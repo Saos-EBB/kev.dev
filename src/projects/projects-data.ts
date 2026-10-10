@@ -222,9 +222,9 @@ const cards: ProjectCard[] = [
     points: ["Portfolio zum Erleben — jedes Element hat einen Grund", "Vanilla TypeScript, GSAP, eigene Tuch-Physik auf Canvas", "Eigene Lite-Variante fürs Handy"],
     what: "Viele Portfolio-Seiten angesehen, dann jedes Element mit einem Sinn gebaut: Das Tuch im Hero ist so groß, dass man es anfassen muss. About ist ein Aufzug, an dem mein Leben vorbeizieht. Die Projekte liegen wie auf einer Werkbank, jedes mit Why und Learned. Kontakt kommt mit einem Übergang, und wer klickt, findet ein verstecktes Wow. Impressum und Datenschutz liegen als Overlay auf dem One-Pager, damit die Musik ohne Schnitt weiterläuft.",
     tags: ["TypeScript", "Vite", "GSAP / ScrollTrigger", "Lenis", "Canvas 2D", "CheerpJ"],
-    meta: "Solo · der sechste Anlauf auf eine eigene Seite · kev.dev selbst seit 18. September 2026: ca. 190–310 h · mit den Vorläufern (u. a. SAOS.ME, b2b-cv, cv) und dem 3D-Renderer rund 500–750 h — und es läuft weiter",
+    meta: "Solo · der sechste Anlauf auf eine eigene Seite · kev.dev selbst seit 18. September 2026: ca. 190–310 h · mit allen Vorläufern (drei noch vor Git, dann SAOS.ME, b2b-cv, cv) und dem 3D-Renderer rund 550–800 h · Claude Code als Implementierungs-Agent erst seit dem YourBrand-Frontend, mal mehr, mal weniger — und es läuft weiter",
     origin:
-      "März: SAOS.ME, der erste Anlauf — SaoS-Animation, Raygun-Button, Onepager auf GitHub Pages → Juni bis September: b2b-cv, die White-Label-Verkaufsseite für YourBrand (React + Tailwind), die heute als B2B-Seite in der YourBrand-Karte weiterlebt → August: der 3D-Renderer, Wireframe ohne Bibliothek → 15. September: cv, ein schneller Onepager mit Werdegang und der 3D-Engine als Modul → 18. September: kev.dev, der sechste Anlauf — erst Aufzug und SAOS-Bodenrelief, dann Projektkarten mit Live-Demos, das Kontakt-Finale mit Raygun, die Handy-Version, About neu, FaceDots fürs Porträt und fünf Sprachen.",
+      "Davor: drei Anläufe, noch bevor ich Git benutzt habe (ca. 45 h) → März: SAOS.ME, der erste mit Git — SaoS-Animation, Raygun-Button, Onepager auf GitHub Pages → Juni bis September: b2b-cv, die White-Label-Verkaufsseite für YourBrand (React + Tailwind), die heute als B2B-Seite in der YourBrand-Karte weiterlebt → August: der 3D-Renderer, Wireframe ohne Bibliothek → 15. September: cv, ein schneller Onepager mit Werdegang und der 3D-Engine als Modul → 18. September: kev.dev, der sechste Anlauf — erst Aufzug und SAOS-Bodenrelief, dann Projektkarten mit Live-Demos, das Kontakt-Finale mit Raygun, die Handy-Version, About neu, FaceDots fürs Porträt und fünf Sprachen.",
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [
       "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",
@@ -238,7 +238,6 @@ const cards: ProjectCard[] = [
       "Mobile ist eine eigene Welt: Was am Desktop flüssig lief, ruckelte am Handy. Messen statt raten — die Aufzugswände waren Layer so hoch wie die ganze Section. Am Ende eine eigene Lite-Variante statt Kompromisse für beide.",
     facets: ["self"],
     open: [
-      "Zeitraum und Umfang (Stunden, solo, Anteil CC als Implementierungs-Agent) — Kevin bestätigt",
       "Texte in Kevins Worten nachschärfen",
     ],
   },
