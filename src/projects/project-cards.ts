@@ -94,6 +94,12 @@ export interface ProjectCard {
   facets?: FacetKind[];
 }
 
+// Punctuation in display titles is set in the reading font
+// (.pcard-title-punct): Koeeya Trial (--font-display) has no real "." ","
+// ";" "?" (style.css falls back for those), and its ":" "!" don't match.
+export const displayText = (s: string) =>
+  esc(s).replace(/[.,:;!?]/g, (c) => `<span class="pcard-title-punct">${c}</span>`);
+
 // Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt").
 const label = (text: string) => `<span class="pcard-label">${text}</span>`;
 
@@ -181,7 +187,7 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
     <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       <header class="pcard-head">
         <p class="pcard-index">${indexLine(card, index, total)}</p>
-        <h3 class="pcard-title">${esc(card.title)}</h3>
+        <h3 class="pcard-title" aria-label="${esc(card.title)}">${displayText(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${renderFacetTiles(card)}
@@ -204,7 +210,7 @@ export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): st
       ${card.layout === "portrait" ? `<canvas class="ptease-face" data-face-dots aria-hidden="true"></canvas>` : ""}
       <p class="pcard-index">${indexLine(card, index, total)}</p>
       <h3 class="ptease-title">
-        <button type="button" data-open-project="${esc(card.id)}" aria-label="${esc(card.title)} — ${esc(UI.projectOpen)}">${esc(card.title)}</button>
+        <button type="button" data-open-project="${esc(card.id)}" aria-label="${esc(card.title)} — ${esc(UI.projectOpen)}">${displayText(card.title)}</button>
       </h3>
       ${card.points?.length ? `<ul class="ptease-points">${card.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
       ${tags.length ? `<ul class="ptease-tags">${tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
@@ -220,7 +226,7 @@ export function renderProjectSheet(card: ProjectCard, index = 0, total = 1): str
     <article class="pcard psheet-card pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       <header class="pcard-head">
         <p class="pcard-index">${indexLine(card, index, total)}</p>
-        <h3 class="pcard-title" id="psheet-title">${esc(card.title)}</h3>
+        <h3 class="pcard-title" id="psheet-title">${displayText(card.title)}</h3>
         ${card.status ? `<span class="pcard-status">${esc(card.status)}</span>` : ""}
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${card.points?.length ? `<ul class="ptease-points">${card.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
