@@ -180,7 +180,7 @@ const cards: ProjectCard[] = [
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
     points: ["Scrapt österreichische Jobbörsen, filtert per Regex", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
-    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg.",
+    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; per Knopf läuft die ganze Kette bis zum Entwurf automatisch, abgeschickt wird immer von mir. Ein Gmail-Sync sortiert Gesendetes und Absagen ein, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
     tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
     links: [
@@ -193,7 +193,45 @@ const cards: ProjectCard[] = [
       "Versand bleibt manuell: der Bot generiert, feuert aber nie selbst eine Bewerbung ab",
       "Filter über Regex, nicht LLM: was ein Regex in Sekunden macht, muss kein Sprachmodell langsam erledigen — LLM nur noch fürs Anschreiben",
       "Mail-Client-UI (Gmail/Proton als Referenz) für maximale Übersicht",
+      "Fünf Portale hinter einem Scraper-Interface: karriere.at, devjobs.at, LinkedIn, AMS, jobs.at — Playwright nur dort, wo eine Seite ohne Browser nichts hergibt (AMS, devjobs.at)",
+      "Eigene JSON-Ablage statt Datenbank: ein Job = eine Datei, das Anschreiben als .md daneben, geschrieben über Temp-Datei + rename — nie halb geschriebene Daten",
+      "Das Modell hinter einer Schnittstelle (LlmProvider): llama.cpp oder OpenAI-kompatibel, Modelle als Presets — Wechsel ohne Codeänderung",
+      "Rund 575 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
     ],
+    // The architecture as code on the desktop card: the pipeline (stage,
+    // file, the job status it leaves behind) and an excerpt of the real
+    // types from the JoBBoT repo.
+    arch: {
+      steps: [
+        ["scrape", "scrapers/*.ts", "'new'"],
+        ["filter", "lib/filter-runner.ts", "'triaged' · fit"],
+        ["anschreiben", "lib/anschreiben.ts", "'generated'"],
+        ["review", "ui/", "'freigegeben'"],
+        ["gmail", "mail/gmail.ts", "'postausgang' → 'gesendet'"],
+      ],
+      code: [
+        "type JobStatus =",
+        "  | 'new' | 'triaged' | 'generated'",
+        "  | 'freigegeben' | 'postausgang' | 'gesendet'",
+        "  | 'geloescht' | 'fehler' | 'offline';",
+        "type Fit = 'matched' | 'offstack' | 'brutal';",
+        "",
+        "// storage/json-store.ts — one job, one file; temp file + rename",
+        "interface Storage {",
+        "  save(job: Job): Promise<void>;",
+        "  updateStatus(id: string, status: JobStatus): Promise<Job>;",
+        "  getBrief(job: { id: string }): Promise<string | null>;",
+        "}",
+        "",
+        "// lib/llm/types.ts — llama.cpp or OpenAI-compatible",
+        "interface LlmProvider {",
+        "  chat(req: ChatRequest): Promise<string>;",
+        "  ensureReady(host?: string): Promise<void>;",
+        "}",
+        "",
+        "// test/ — ~575 tests, node:test, temp dirs + mock server",
+      ].join("\n"),
+    },
     challenge:
       "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern.",
     origin:

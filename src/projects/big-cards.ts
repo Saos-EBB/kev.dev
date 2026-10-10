@@ -119,6 +119,40 @@ function splitDecision(d: string): [string, string] {
   return m ? [m[1], m[2]] : [d, ""];
 }
 
+// A tiny highlighter for the architecture excerpt: comments, strings and a
+// few keywords — enough to read as code, not a parser.
+function highlight(code: string): string {
+  return code
+    .split("\n")
+    .map((line) => {
+      const safe = esc(line);
+      if (safe.trimStart().startsWith("//")) return `<span class="c">${safe}</span>`;
+      return safe
+        .replace(/&#39;[^&]*&#39;|'[^']*'/g, (m) => `<span class="s">${m}</span>`)
+        .replace(/\b(type|interface|Promise)\b/g, (m) => `<span class="k">${m}</span>`);
+    })
+    .join("\n");
+}
+
+// The architecture pane: the pipeline as an aligned table, then the types.
+function archPane(card: ProjectCard): string {
+  if (!card.arch) return "";
+  const w = Math.max(...card.arch.steps.map(([name]) => name.length)) + 2;
+  const f = Math.max(...card.arch.steps.map(([, file]) => file.length)) + 2;
+  const steps = card.arch.steps
+    .map(
+      ([name, file, status], i) =>
+        `<span class="n">${String(i + 1).padStart(2, "0")}</span>  <span class="k">${esc(name.padEnd(w))}</span><span class="f">${esc(file.padEnd(f))}</span><span class="o">→</span> <span class="s">${esc(status)}</span>`,
+    )
+    .join("\n");
+  return `
+    <div class="mail-code" data-pane="arch" hidden>
+      <p class="mail-code-head"><span>pipeline</span><span>${esc(UI.boxCode)}</span></p>
+      <pre><code>${steps}</code></pre>
+      <pre><code>${highlight(card.arch.code)}</code></pre>
+    </div>`;
+}
+
 // The fit colors the JobBot list uses (match / off-stack / brutal).
 const FIT = ["#5B8CFF", "#E8B04B", "#E8622A"];
 
@@ -138,7 +172,7 @@ function mailCard(card: ProjectCard, head: string): string {
     ["what", UI.lblWhat, 1],
     ["why", UI.boxWhy, 1],
     ["learned", UI.boxLearned, 1],
-    ["d0", UI.boxCode, decisions.length],
+    [card.arch ? "arch" : "d0", UI.boxCode, decisions.length],
     ["origin", UI.lblOrigin, 1],
   ];
   const gh = card.links?.find((l) => l.href);
@@ -173,6 +207,7 @@ function mailCard(card: ProjectCard, head: string): string {
             <ul class="mail-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
           </div>
           <div class="mail-read">
+            ${archPane(card)}
             <article class="mail-paper">
               <div class="mail-stamp" aria-hidden="true">
                 ${card.mascot ? `<img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" />` : ""}
@@ -267,14 +302,21 @@ export function initBigCards(root: HTMLElement) {
       const pick = (e.target as Element).closest<HTMLElement>("[data-mail]");
       if (!pick) return;
       const id = pick.dataset.mail!;
-      card.querySelectorAll<HTMLElement>(".mail-pane").forEach((pane) => {
+      card.querySelectorAll<HTMLElement>("[data-pane]").forEach((pane) => {
         pane.hidden = pane.dataset.pane !== id;
       });
+      // The architecture is code, not a letter: no paper behind it.
+      const paper = card.querySelector<HTMLElement>(".mail-paper");
+      if (paper) {
+        paper.hidden = id === "arch";
+        paper.scrollTo(0, 0);
+      }
+      // Its folder stays lit while one of its decisions is open.
+      const folder = card.querySelector<HTMLElement>(".mail-folder[data-mail='arch'], .mail-folder[data-mail='d0']");
       card.querySelectorAll<HTMLElement>("[data-mail]").forEach((btn) => {
-        const on = btn.dataset.mail === id || (btn.classList.contains("mail-folder") && btn.dataset.mail === "d0" && id.startsWith("d"));
+        const on = btn.dataset.mail === id || (btn === folder && /^d\d/.test(id));
         btn.setAttribute("aria-pressed", String(on));
       });
-      card.querySelector(".mail-paper")?.scrollTo(0, 0);
     });
   });
   // kev.dev's text tabs.

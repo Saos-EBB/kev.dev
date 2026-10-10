@@ -108,6 +108,9 @@ export interface ProjectCard {
   // tenant instead of a flat gallery of `screenshots`.
   tenantsIntro?: string;
   tenants?: TenantShowcase[];
+  // TschoBBo's desktop card: its architecture as code — the pipeline's
+  // stages (name, file, resulting job status) and a code excerpt.
+  arch?: { steps: [string, string, string][]; code: string };
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
   parts?: { does: string; files: string[]; reuse: string }[];

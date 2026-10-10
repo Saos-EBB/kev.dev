@@ -488,6 +488,57 @@
   max-width: 36rem;
 }
 
+/* The architecture as code: the pipeline table, then the types. */
+.mail-code {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem 1.2rem;
+  border: 1px solid var(--jb-line);
+  border-radius: 6px;
+  background: #0a0d12;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.mail-code[hidden],
+.mail-paper[hidden] {
+  display: none;
+}
+
+.mail-code-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--jb-line);
+  font-size: var(--fs-tiny);
+  color: var(--jb-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.mail-code pre {
+  margin: 0;
+  font: inherit;
+  white-space: pre;
+  color: var(--jb-text);
+}
+
+.mail-code pre + pre {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--jb-line);
+}
+
+.mail-code .n { color: var(--jb-dim); }
+.mail-code .k { color: #c792ea; }
+.mail-code .f { color: #5b8cff; }
+.mail-code .o { color: var(--jb-dim); }
+.mail-code .s { color: #35d0a5; }
+.mail-code .c { color: var(--jb-dim); font-style: italic; }
+
 /* A postage stamp on the letter — cream paper, perforated edge (dark
    dots on the paper), Tschobbo as the motif. */
 .mail-stamp {
