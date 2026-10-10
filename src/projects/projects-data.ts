@@ -222,6 +222,9 @@ const cards: ProjectCard[] = [
     points: ["Portfolio zum Erleben — jedes Element hat einen Grund", "Vanilla TypeScript, GSAP, eigene Tuch-Physik auf Canvas", "Eigene Lite-Variante fürs Handy"],
     what: "Viele Portfolio-Seiten angesehen, dann jedes Element mit einem Sinn gebaut: Das Tuch im Hero ist so groß, dass man es anfassen muss. About ist ein Aufzug, an dem mein Leben vorbeizieht. Die Projekte liegen wie auf einer Werkbank, jedes mit Why und Learned. Kontakt kommt mit einem Übergang, und wer klickt, findet ein verstecktes Wow. Impressum und Datenschutz liegen als Overlay auf dem One-Pager, damit die Musik ohne Schnitt weiterläuft.",
     tags: ["TypeScript", "Vite", "GSAP / ScrollTrigger", "Lenis", "Canvas 2D", "CheerpJ"],
+    meta: "Solo · der sechste Anlauf auf eine eigene Seite · kev.dev selbst seit 18. September 2026: ca. 190–310 h · mit den Vorläufern (u. a. SAOS.ME, b2b-cv, cv) und dem 3D-Renderer rund 500–750 h — und es läuft weiter",
+    origin:
+      "März: SAOS.ME, der erste Anlauf — SaoS-Animation, Raygun-Button, Onepager auf GitHub Pages → Juni bis September: b2b-cv, die White-Label-Verkaufsseite für YourBrand (React + Tailwind), die heute als B2B-Seite in der YourBrand-Karte weiterlebt → August: der 3D-Renderer, Wireframe ohne Bibliothek → 15. September: cv, ein schneller Onepager mit Werdegang und der 3D-Engine als Modul → 18. September: kev.dev, der sechste Anlauf — erst Aufzug und SAOS-Bodenrelief, dann Projektkarten mit Live-Demos, das Kontakt-Finale mit Raygun, die Handy-Version, About neu, FaceDots fürs Porträt und fünf Sprachen.",
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [
       "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",

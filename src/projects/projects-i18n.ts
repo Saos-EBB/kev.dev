@@ -193,6 +193,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       claim: "Proves design thinking — every animation tells something, nothing is decoration.",
       points: ["A portfolio to experience — every element has a reason", "Vanilla TypeScript, GSAP, my own cloth physics on canvas", "Its own lite version for phones"],
       what: "I looked at a lot of portfolio sites, then built every element with a purpose: the cloth in the hero is so big you have to touch it. About is an elevator my life passes by. The projects lie on a workbench, each with Why and Learned. Contact comes with a transition, and whoever clicks finds a hidden wow. Imprint and privacy policy are overlays on the one-pager, so the music keeps playing without a cut.",
+      meta: "Solo · the sixth attempt at a site of my own · kev.dev itself since 18 September 2026: approx. 190–310 h · with its predecessors (SAOS.ME, b2b-cv, cv among them) and the 3D renderer around 500–750 h — and still counting",
+      origin: "March: SAOS.ME, the first attempt — SaoS animation, raygun button, a one-pager on GitHub Pages → June to September: b2b-cv, the white-label sales page for YourBrand (React + Tailwind), which lives on today as the B2B page in the YourBrand card → August: the 3D renderer, wireframe without a library → 15 September: cv, a quick one-pager with my background and the 3D engine as a module → 18 September: kev.dev, the sixth attempt — first the elevator and the SAOS floor relief, then project cards with live demos, the contact finale with the raygun, the phone version, a new About, FaceDots for the portrait and five languages.",
       links: ["GitHub (public)"],
       decisions: [
         "Vanilla TypeScript + Vite, no framework — the page is animation, not state",
@@ -393,6 +395,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       claim: "Доказывает дизайнерское мышление — каждая анимация что-то рассказывает, ничего ради украшения.",
       points: ["Портфолио, которое проживаешь, — у каждого элемента есть причина", "Vanilla TypeScript, GSAP, собственная физика ткани на canvas", "Отдельная лёгкая версия для телефона"],
       what: "Пересмотрел много сайтов-портфолио и затем строил каждый элемент со смыслом: ткань в hero такая большая, что её надо потрогать. «Обо мне» — лифт, мимо которого проезжает моя жизнь. Проекты лежат как на верстаке, у каждого «Зачем» и «Чему научился». Контакт приходит с переходом, а тот, кто кликнет, найдёт спрятанный сюрприз. Выходные данные и политика конфиденциальности — оверлеи на одностраничнике, чтобы музыка играла без обрыва.",
+      meta: "Соло · шестая попытка сделать собственный сайт · сам kev.dev с 18 сентября 2026: около 190–310 ч · вместе с предшественниками (среди них SAOS.ME, b2b-cv, cv) и 3D-рендерером примерно 500–750 ч — и счёт идёт дальше",
+      origin: "Март: SAOS.ME, первая попытка — анимация SaoS, кнопка-бластер, одностраничник на GitHub Pages → с июня по сентябрь: b2b-cv, white-label-страница продаж для YourBrand (React + Tailwind), которая сегодня живёт как B2B-страница в карточке YourBrand → август: 3D-рендерер, каркас без библиотек → 15 сентября: cv, быстрый одностраничник с биографией и 3D-движком как модулем → 18 сентября: kev.dev, шестая попытка — сначала лифт и рельеф SAOS на полу, потом карточки проектов с живыми демо, финал контактов с бластером, мобильная версия, новый About, FaceDots для портрета и пять языков.",
       links: ["GitHub (public)"],
       decisions: [
         "Чистый TypeScript + Vite, без фреймворка — страница это анимация, а не состояние",
@@ -594,6 +598,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       claim: "デザイン思考の証明 — どのアニメーションも何かを語り、飾りは一つもない。",
       points: ["体験するポートフォリオ — すべての要素に理由がある", "Vanilla TypeScript、GSAP、キャンバス上の自作の布物理", "スマホ専用のライト版"],
       what: "多くのポートフォリオサイトを見たうえで、すべての要素に意味を持たせて作りました。ヒーローの布は大きく、触らずにはいられない。自己紹介は人生が通り過ぎていくエレベーター。プロジェクトは作業台に並び、それぞれに「なぜ」と「学んだこと」。連絡にはトランジションがあり、クリックした人には隠し玉が。運営者情報とプライバシーポリシーはワンページ上のオーバーレイなので、音楽が途切れない。",
+      meta: "ひとりで · 自分のサイトへの6回目の挑戦 · kev.dev自体は2026年9月18日から：約190〜310時間 · 前身（SAOS.ME、b2b-cv、cvなど）と3Dレンダラーを合わせて約500〜750時間 — まだ続いている",
+      origin: "3月：SAOS.ME、最初の挑戦 — SaoSアニメーション、光線銃ボタン、GitHub Pagesのワンページ → 6〜9月：b2b-cv、YourBrandのホワイトラベル営業ページ（React + Tailwind）、今もYourBrandカードのB2Bページとして生きている → 8月：3Dレンダラー、ライブラリなしのワイヤーフレーム → 9月15日：cv、経歴と3Dエンジンをモジュールにした手早いワンページ → 9月18日：kev.dev、6回目の挑戦 — まずエレベーターとSAOSの床レリーフ、次にライブデモ付きのプロジェクトカード、光線銃のあるコンタクトのフィナーレ、スマホ版、新しいAbout、ポートレート用のFaceDots、そして5つの言語。",
       links: ["GitHub（公開）"],
       decisions: [
         "フレームワークなしの素のTypeScript＋Vite — このページは状態ではなくアニメーション",
@@ -795,6 +801,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       claim: "يثبت التفكير التصميمي — كل حركة تحكي شيئًا، ولا شيء للزينة.",
       points: ["موقع أعمال يُعاش — لكل عنصر سبب", "TypeScript خالص وGSAP وفيزياء قماش خاصة على canvas", "نسخة خفيفة خاصة بالهاتف"],
       what: "اطّلعت على مواقع أعمال كثيرة، ثم بنيت كل عنصر بمعنى: القماش في الواجهة كبير لدرجة أنك مضطر للمسه. «نبذة» مصعد تمرّ به حياتي. المشاريع على طاولة عمل، لكل منها «لماذا» و«ما تعلّمته». التواصل يأتي مع انتقال، ومن ينقر يجد مفاجأة مخفية. بيانات الناشر وسياسة الخصوصية طبقات فوق الصفحة الواحدة، كي تستمر الموسيقى دون انقطاع.",
+      meta: "عمل فردي · المحاولة السادسة لموقع خاص بي · kev.dev نفسه منذ 18 سبتمبر 2026: نحو 190–310 ساعة · ومع سابقاته (منها SAOS.ME وb2b-cv وcv) والعارض ثلاثي الأبعاد نحو 500–750 ساعة — والعدّاد مستمر",
+      origin: "مارس: SAOS.ME، المحاولة الأولى — حركة SaoS، وزر مسدس الأشعة، وصفحة واحدة على GitHub Pages ← من يونيو إلى سبتمبر: b2b-cv، صفحة المبيعات ذات العلامة البيضاء لـYourBrand (React + Tailwind)، وما زالت تعيش اليوم كصفحة B2B في بطاقة YourBrand ← أغسطس: العارض ثلاثي الأبعاد، إطار سلكي بلا مكتبة ← 15 سبتمبر: cv، صفحة واحدة سريعة بالمسيرة ومحرك ثلاثي الأبعاد كوحدة ← 18 سبتمبر: kev.dev، المحاولة السادسة — أولًا المصعد ونقش SAOS على الأرضية، ثم بطاقات المشاريع مع عروض حية، وختام صفحة التواصل مع مسدس الأشعة، ونسخة الهاتف، وقسم About جديد، وFaceDots للصورة الشخصية، وخمس لغات.",
       links: ["GitHub (عام)"],
       decisions: [
         "TypeScript خالص مع Vite، بلا إطار — الصفحة حركة لا حالة",
