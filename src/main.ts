@@ -65,7 +65,10 @@ window.matchMedia(LITE_QUERY).addEventListener("change", () => location.reload()
 // Smooth-scroll base for the whole page, wired to GSAP's ticker so Lenis
 // and ScrollTrigger (used by the project carousel) share one scroll
 // instead of running two competing rAF loops.
-const lenis = new Lenis();
+// allowNestedScroll: a scrollable box inside the page (the big project
+// cards' columns) takes the wheel while it can still move that way, then
+// hands it back to the page — instead of swallowing it for good.
+const lenis = new Lenis({ allowNestedScroll: true });
 lenis.on("scroll", ScrollTrigger.update);
 gsap.ticker.add((time) => {
   lenis.raf(time * 1000);

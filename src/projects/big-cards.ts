@@ -35,7 +35,7 @@ function row(entity: string, opts: { key?: string; swatch?: string; attr: string
 
 function entity(name: string, count: string, rows: string, lead = false): string {
   return `
-    <section class="er-entity" data-lenis-prevent>
+    <section class="er-entity">
       <h4 class="er-name${lead ? " er-name--lead" : ""}"><span>${name}</span><span>${esc(count)}</span></h4>
       ${rows}
     </section>`;
@@ -159,7 +159,7 @@ function mailCard(card: ProjectCard, head: string): string {
               .join("")}
             ${card.mascot ? `<img class="mail-mascot" src="${esc(card.mascot.src)}" alt="${esc(card.mascot.alt)}" loading="lazy" decoding="async" />` : ""}
           </nav>
-          <div class="mail-list" data-lenis-prevent>
+          <div class="mail-list">
             <p class="mail-list-head">${esc(UI.boxCode)}</p>
             ${decisions
               .map(
@@ -173,7 +173,7 @@ function mailCard(card: ProjectCard, head: string): string {
             <ul class="mail-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
           </div>
           <div class="mail-read">
-            <article class="mail-paper" data-lenis-prevent>
+            <article class="mail-paper">
               <div class="mail-stamp" aria-hidden="true">
                 ${card.mascot ? `<img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" />` : ""}
                 <span>${esc(UI.touchStamp)}</span>
@@ -231,11 +231,11 @@ function partsCard(card: ProjectCard, head: string): string {
           ${bodies
             .map(
               (b, i) =>
-                `<div class="parts-panel" role="tabpanel" id="${id(b.kind)}" aria-labelledby="${id(b.kind)}-tab" data-panel="${b.kind}" data-lenis-prevent${i === 0 ? "" : " hidden"}>${b.body}</div>`,
+                `<div class="parts-panel" role="tabpanel" id="${id(b.kind)}" aria-labelledby="${id(b.kind)}-tab" data-panel="${b.kind}"${i === 0 ? "" : " hidden"}>${b.body}</div>`,
             )
             .join("")}
         </section>
-        <div class="parts-list" data-lenis-prevent>
+        <div class="parts-list">
           <p class="parts-head">${esc(UI.partsHead)}</p>
           ${parts
             .map(

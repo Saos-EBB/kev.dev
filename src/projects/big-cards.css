@@ -55,7 +55,6 @@
 .er-entity {
   max-height: 100%;
   overflow: auto;
-  overscroll-behavior: contain;
   border: 1px solid var(--pc-soft);
   background: var(--box-bg);
 }
@@ -362,7 +361,6 @@
   flex-direction: column;
   min-height: 0;
   overflow: auto;
-  overscroll-behavior: contain;
   border-inline-end: 1px solid var(--jb-line);
 }
 
@@ -458,7 +456,6 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  overscroll-behavior: contain;
   padding: 1.6rem 1.9rem;
   border-radius: 4px;
   background: var(--jb-paper);
@@ -615,7 +612,6 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  overscroll-behavior: contain;
   padding: 1rem 1.2rem;
   font-size: 0.82rem;
   line-height: 1.6;
@@ -633,7 +629,6 @@
   gap: 0.45rem;
   min-height: 0;
   overflow: auto;
-  overscroll-behavior: contain;
 }
 
 .parts-head {
