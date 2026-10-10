@@ -24,7 +24,7 @@
 import { UI } from "../i18n/ui";
 import "./facet-overlay.css";
 import type Lenis from "lenis";
-import { displayText, type ProjectCard, type ProjectWidget, type FacetKind } from "./project-cards";
+import { type ProjectCard, type ProjectWidget, type FacetKind } from "./project-cards";
 
 function esc(s: string): string {
   return s
@@ -291,9 +291,8 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     parkActiveWidget();
     el.classList.remove("facet-overlay--workspace");
     el.querySelector(".facet-overlay-sub")!.textContent = "";
-    el.querySelector(".facet-overlay-title")!.innerHTML = displayText(
-      `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`,
-    );
+    el.querySelector(".facet-overlay-title")!.textContent =
+      `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`;
     el.querySelector(".facet-overlay-body")!.innerHTML = boxEl.querySelector(".pcard-box-body")!.innerHTML;
     show(el, btn, card);
   });
@@ -319,7 +318,7 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     // A live widget gets the workspace: the whole screen, the project's
     // name as the title and the widget's own label under it.
     el.classList.toggle("facet-overlay--workspace", !!content.widget);
-    el.querySelector(".facet-overlay-title")!.innerHTML = displayText(content.widget ? card.title : content.title);
+    el.querySelector(".facet-overlay-title")!.textContent = content.widget ? card.title : content.title;
     el.querySelector(".facet-overlay-sub")!.textContent = content.widget ? content.title : "";
 
     if (content.widget) {

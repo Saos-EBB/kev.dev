@@ -97,11 +97,6 @@
   min-width: 0;
 }
 
-.pcard-head .pcard-title-punct {
-  font-family: var(--font-read);
-  font-weight: 700;
-}
-
 .pcard-index {
   width: 100%;
 }
