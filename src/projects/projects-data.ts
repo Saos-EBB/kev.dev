@@ -178,16 +178,17 @@ const cards: ProjectCard[] = [
     title: "TschoBBo",
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
-    points: ["Scrapt österreichische Jobbörsen, filtert per Regex", "Schreibt Anschreiben lokal mit Ollama — keine Cloud", "Versand bleibt bewusst manuell"],
-    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per Ollama. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg.",
-    tags: ["TypeScript", "Node.js", "Playwright", "Ollama", "Regex"],
+    points: ["Scrapt österreichische Jobbörsen, filtert per Regex", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
+    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg.",
+    tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
     links: [
       { label: "GitHub (public)", href: "https://github.com/Saos-EBB/jobsuche-apply-bot" },
       { label: "läuft lokal — Screenshots in den Details" },
     ],
     decisions: [
-      "Lokal statt Cloud: Ollama auf der eigenen Maschine — meine Daten bleiben hier",
+      "Lokal statt Cloud: llama.cpp auf der eigenen Maschine — meine Daten bleiben hier",
+      "Modell nach Messung gewählt: von Ollama/Mistral auf llama.cpp mit Gemma 4 26B (MoE) — gleicher Prompt, gleiche Jobs: Anschreiben rund viermal schneller, weniger Floskeln, keine erfundenen Behauptungen mehr",
       "Versand bleibt manuell: der Bot generiert, feuert aber nie selbst eine Bewerbung ab",
       "Filter über Regex, nicht LLM: was ein Regex in Sekunden macht, muss kein Sprachmodell langsam erledigen — LLM nur noch fürs Anschreiben",
       "Mail-Client-UI (Gmail/Proton als Referenz) für maximale Übersicht",
@@ -198,7 +199,7 @@ const cards: ProjectCard[] = [
       "Angefangen als reiner Scraper (karriere.at zuerst, weil am leichtesten), dann AMS und devjobs dazu. Erst alles CLI; UI und Maskottchen kamen später, nachdem Freunde Potenzial gesehen haben. Aus derselben Logik ist nebenbei ein kleines CLI-Tool entstanden — Release Watcher, das Manga-Seiten auf neue Kapitel prüft, weil ich zu oft gespoilert wurde. Gleiche Idee, kleiner Rahmen.",
     // UI screenshots: the real JoBBoT UI, fed offline with the real
     // postings from its own test fixtures (parsers + regex filter, no
-    // scraping, no Ollama — so no cover letters in them).
+    // scraping, no LLM — so no cover letters in them).
     screenshots: [
       { src: "/projects/jobbot/inbox.jpg", alt: "Posteingang: gefilterte Stellen nach Fit (Match/Offstack), Inserat geöffnet" },
       { src: "/projects/jobbot/aussortiert.jpg", alt: "Aussortiert: was der Regex-Filter rausgeworfen hat" },
