@@ -454,6 +454,26 @@ const cards: ProjectCard[] = [
         files: ["legal/legal-content.ts", "legal/legal-overlay.ts", "impressum.html"],
         reuse: "Ein Overlay für jeden rechtlichen Text: der Inhalt steht in legal-content.ts, die Seite drumherum bleibt stehen.",
       },
+      {
+        name: "Sprachen",
+        line: "Vier Sprachen, ohne Library.",
+        does: "Hält jeden Text der Seite in vier Sprachen. Die Sprache steht einmal beim Laden fest — gespeicherte Wahl, sonst Browsersprache, sonst Englisch —, weil die Szenen ihren Text beim Start messen; umschalten speichert und lädt neu. Russisch und Japanisch sind KI-übersetzt und sagen das.",
+        files: ["i18n/index.ts", "i18n/ui.ts", "i18n/switcher.ts", "i18n/i18n.css", "projects/projects-i18n.ts", "about/about-content.ts", "legal/legal-content.ts", "projects/widgets/grundlagen-i18n.ts"],
+        reuse: "pick() mit Deutsch als Fallback und der Typ aus dem deutschen Original (type Ui = typeof de) — passt ohne Abhängigkeit in jedes TypeScript-Projekt.",
+        pros: [
+          "Typsicher: fehlt einer Sprache ein Schlüssel, meldet es der Compiler",
+          "Keine Library, nichts lädt zur Laufzeit nach — die Texte sind TypeScript und landen im Build",
+          "Funktionen statt Platzhalter: Mehrzahl und Satzbau frei pro Sprache",
+          "Fehlt eine Übersetzung, springt Deutsch ein",
+        ],
+        cons: [
+          "Alle Sprachen stecken im Bundle, auch die, die niemand liest",
+          "Sprachwechsel heißt neu laden, weil die Szenen beim Start messen",
+          "Projekttexte hängen an der Position: eine Zeile umsortiert, und die Übersetzung landet beim falschen Eintrag",
+          "Übersetzen heißt Code anfassen — ohne Repo kann niemand mithelfen",
+          "Die Texte liegen verteilt in mehreren Dateien",
+        ],
+      },
     ],
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [

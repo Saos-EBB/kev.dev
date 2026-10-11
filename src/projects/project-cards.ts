@@ -127,7 +127,9 @@ export interface ProjectCard {
   timelineChart?: [string, number, number][];
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
-  parts?: { does: string; files: string[]; reuse: string }[];
+  // Past UI.vizStory's sections a part brings its own name and line (the
+  // languages, which run through every section); pros/cons are optional.
+  parts?: { name?: string; line?: string; does: string; files: string[]; reuse: string; pros?: string[]; cons?: string[] }[];
   // A character to put on the card's visual (TschoBBo's mascot).
   mascot?: { src: string; alt: string };
   widget?: ProjectWidget;

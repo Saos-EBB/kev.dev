@@ -23,7 +23,7 @@ interface CardText {
   // Matched to the card's tenants by position; name and tier stay as they are.
   tenants?: { kind: string; about: string; video: string; screenshots: string[] }[];
   // Matched to the card's parts by position; files stay as they are.
-  parts?: { does: string; reuse: string }[];
+  parts?: { name?: string; line?: string; does: string; reuse: string; pros?: string[]; cons?: string[] }[];
   // Replace the card's own as a whole (no fallback per entry).
   mailbox?: Record<MailFolder, [string, string][]>;
   layers?: Detail[];
@@ -361,6 +361,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         { does: "Cards from data: one object per project, layout and visual per card; live demos only load on first open (CheerpJ, 3D renderer, FaceDots).", reuse: "A new project is one entry in projects-data.ts — desktop card, phone list and sheet come with it." },
         { does: "The letters fall in driven by scroll; three clicks shatter everything into real physics, then the raygun appears.", reuse: "The raygun is a standalone button (mountRaygunButton) in two variants, fixed or inline — it plugs into any page." },
         { does: "Imprint and privacy policy as an overlay over the page — music, theme and scroll position stay; the old addresses redirect there.", reuse: "One overlay for every legal text: the content lives in legal-content.ts, the page around it stays put." },
+        {"name": "Languages", "line": "Four languages, no library.", "does": "Holds every text of the page in four languages. The language is fixed once at load — the stored choice, else the browser's language, else English — because the scenes measure their text at start-up; switching stores and reloads. Russian and Japanese are AI-translated and say so.", "reuse": "pick() with German as the fallback and the type taken from the German original (type Ui = typeof de) — drops into any TypeScript project without a dependency.", "pros": ["Type-safe: if a language is missing a key, the compiler says so", "No library, nothing loads at runtime — the texts are TypeScript and end up in the build", "Functions instead of placeholders: plurals and word order free per language", "If a translation is missing, German steps in"], "cons": ["Every language sits in the bundle, even the ones nobody reads", "Switching language means a reload, because the scenes measure at start-up", "Project texts are matched by position: reorder one line and the translation lands on the wrong entry", "Translating means touching code — nobody can help without the repo", "The texts are spread over several files"]},
       ],
       links: ["GitHub (public)"],
       decisions: [
@@ -721,6 +722,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         { does: "Карточки из данных: один объект на проект, свой макет и визуал у каждой карточки; живые демо загружаются только при первом открытии (CheerpJ, 3D-рендерер, FaceDots).", reuse: "Новый проект — это одна запись в projects-data.ts: карточка для десктопа, мобильный список и шторка появляются сами." },
         { does: "Буквы падают по скроллу; три клика разбивают всё в настоящую физику, и появляется бластер.", reuse: "Бластер — самостоятельная кнопка (mountRaygunButton) в двух вариантах, fixed или inline: подключается к любой странице." },
         { does: "Импрессум и политика конфиденциальности как оверлей поверх страницы — музыка, тема и позиция прокрутки сохраняются; старые адреса перенаправляют туда.", reuse: "Один оверлей для любого юридического текста: содержимое в legal-content.ts, страница вокруг остаётся на месте." },
+        {"name": "Языки", "line": "Четыре языка, без библиотеки.", "does": "Хранит каждый текст страницы на четырёх языках. Язык определяется один раз при загрузке — сохранённый выбор, иначе язык браузера, иначе английский, — потому что сцены измеряют свой текст при старте; переключение сохраняет выбор и перезагружает страницу. Русский и японский переведены ИИ, и страница об этом говорит.", "reuse": "pick() с немецким как запасным вариантом и тип из немецкого оригинала (type Ui = typeof de) — встраивается в любой проект на TypeScript без зависимостей.", "pros": ["Типобезопасно: если в языке не хватает ключа, об этом скажет компилятор", "Без библиотеки, ничего не подгружается во время работы — тексты это TypeScript и попадают в сборку", "Функции вместо плейсхолдеров: множественное число и порядок слов свободны для каждого языка", "Если перевода нет, подставляется немецкий"], "cons": ["Все языки лежат в бандле, даже те, что никто не читает", "Смена языка — это перезагрузка, потому что сцены измеряют при старте", "Тексты проектов сопоставляются по позиции: переставишь строку — и перевод окажется у чужой записи", "Переводить — значит трогать код: без репозитория никто не поможет", "Тексты разбросаны по нескольким файлам"]},
       ],
       links: ["GitHub (public)"],
       decisions: [
@@ -1082,6 +1084,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
         { does: "データから作るカード：プロジェクトごとに1つのオブジェクト、カードごとのレイアウトとビジュアル。ライブデモは最初に開いたときだけ読み込む（CheerpJ、3Dレンダラー、FaceDots）。", reuse: "新しいプロジェクトはprojects-data.tsに1件追加するだけ — デスクトップのカード、スマホのリスト、シートが付いてくる。" },
         { does: "文字がスクロールに合わせて落ちてくる。3回クリックすると全部が本物の物理で崩れ、光線銃が現れる。", reuse: "光線銃は独立したボタン（mountRaygunButton）で、fixedとinlineの2種類 — どのページにも差し込める。" },
         { does: "インプレッサムとプライバシーポリシーはページ上のオーバーレイ — 音楽、テーマ、スクロール位置はそのまま。古いアドレスはそこへ転送される。", reuse: "法的なテキストはすべて1つのオーバーレイで：内容はlegal-content.tsにあり、周りのページは動かない。" },
+        {"name": "言語", "line": "4 つの言語、ライブラリなし。", "does": "ページのすべてのテキストを 4 つの言語で保持。言語は読み込み時に一度だけ決まる — 保存された選択、なければブラウザの言語、なければ英語 — シーンが起動時にテキストを測るため。切り替えは保存して再読み込み。ロシア語と日本語は AI 翻訳で、そのことを明記している。", "reuse": "ドイツ語をフォールバックにした pick() と、ドイツ語の原文から取った型（type Ui = typeof de）— 依存なしでどの TypeScript プロジェクトにも入る。", "pros": ["型安全：ある言語にキーが欠けていればコンパイラが知らせる", "ライブラリなし、実行時に何も読み込まない — テキストは TypeScript でビルドに入る", "プレースホルダーではなく関数：複数形や語順を言語ごとに自由に", "翻訳がなければドイツ語が代わりに出る"], "cons": ["誰も読まない言語も含め、すべての言語がバンドルに入る", "シーンが起動時に測るので、言語の切り替えは再読み込みになる", "プロジェクトのテキストは位置で対応付け：1 行並べ替えると翻訳が別の項目に付く", "翻訳するにはコードを触る必要がある — リポジトリなしでは誰も手伝えない", "テキストが複数のファイルに分散している"]},
       ],
       links: ["GitHub（公開）"],
       decisions: [

@@ -357,6 +357,7 @@ const DEMOS = [
   `<span class="demo-card"></span><span class="demo-card"></span><span class="demo-card"></span>`,
   `<span class="demo-fall">H</span><span class="demo-fall">I</span><span class="demo-fall">!</span>`,
   `<span class="demo-page"></span><span class="demo-sheet"></span><span class="demo-bars"><i></i><i></i><i></i></span>`,
+  `<span class="demo-lang"><b>Hallo</b><b>Hello</b><b>Привет</b><b>こんにちは</b></span>`,
 ];
 
 // kev.dev: Why? / Learned! / Code as tabs on the left, the page's own
@@ -364,7 +365,12 @@ const DEMOS = [
 // what it does, the files behind it and what of it is reusable.
 function partsCard(card: ProjectCard, head: string): string {
   const bodies = cardBodies(card);
-  const parts = UI.vizStory.map(([name, line], i) => ({ name, line, ...(card.parts?.[i] ?? { does: "", files: [], reuse: "" }) }));
+  const story = UI.vizStory;
+  const parts = Array.from({ length: Math.max(story.length, card.parts?.length ?? 0) }, (_, i) => {
+    const part = card.parts?.[i] ?? { does: "", files: [], reuse: "" };
+    return { ...part, name: part.name ?? story[i]?.[0] ?? "", line: part.line ?? story[i]?.[1] ?? "" };
+  });
+  const list = (items?: string[]) => (items?.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
   const id = (kind: string) => `parts-${esc(card.id)}-${kind}`;
   return `
     <article class="pcard pcard--big pcard--parts" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
@@ -400,6 +406,8 @@ function partsCard(card: ProjectCard, head: string): string {
                 <dt>${esc(UI.partsDoes)}</dt><dd>${esc(p.does)}</dd>
                 <dt>${esc(UI.partsFiles)}</dt><dd>${p.files.map((f) => `<code>${esc(f)}</code>`).join(" ")}</dd>
                 <dt>${esc(UI.partsReuse)}</dt><dd>${esc(p.reuse)}</dd>
+                ${p.pros?.length ? `<dt>${esc(UI.partsPros)}</dt><dd class="parts-pro">${list(p.pros)}</dd>` : ""}
+                ${p.cons?.length ? `<dt>${esc(UI.partsCons)}</dt><dd class="parts-con">${list(p.cons)}</dd>` : ""}
               </dl>
             </details>`,
             )
