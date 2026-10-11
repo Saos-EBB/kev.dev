@@ -386,46 +386,60 @@ function textTabs(card: ProjectCard, extra: Panel[] = []): string {
 }
 
 // kev.dev: Why? / Learned! / Code as tabs on the left, the page's own
-// sections on the right as accordions — each with a mini demo, and opened,
-// what it does, the files behind it and what of it is reusable.
+// sections on the right as tabs over one table — each with a mini demo,
+// what it does, the files behind it, what of it is reusable and, where
+// there are some, pros and cons.
 function partsCard(card: ProjectCard, head: string): string {
   const story = UI.vizStory;
   const parts = Array.from({ length: Math.max(story.length, card.parts?.length ?? 0) }, (_, i) => {
     const part = card.parts?.[i] ?? { does: "", files: [], reuse: "" };
     return { ...part, name: part.name ?? story[i]?.[0] ?? "", line: part.line ?? story[i]?.[1] ?? "" };
   });
+  const pid = (i: number) => `parts-${esc(card.id)}-${i}`;
   const list = (items?: string[]) => (items?.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
   return `
     <article class="pcard pcard--big pcard--parts" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       ${head.replace("</header>", `<span class="parts-here" aria-hidden="true">${esc(UI.touchHere)}</span></header>`)}
       <div class="parts">
         ${textTabs(card)}
-        <div class="parts-list">
+        <div class="parts-side">
           <p class="parts-head">${esc(UI.partsHead)}</p>
-          ${parts
-            .map(
-              (p, i) => `
-            <details class="parts-item" name="parts-${esc(card.id)}"${i === 0 ? " open" : ""}>
-              <summary>
+          <section class="parts-box" data-tabs>
+            <div class="parts-tabbar" role="tablist">
+              ${parts
+                .map(
+                  (p, i) =>
+                    `<button type="button" role="tab" id="${pid(i)}-tab" aria-controls="${pid(i)}" aria-selected="${i === 0}" data-tab="p${i}"><i>${String(i + 1).padStart(2, "0")}</i> ${esc(p.name)}</button>`,
+                )
+                .join("")}
+            </div>
+            ${parts
+              .map(
+                (p, i) => `
+            <div class="parts-panel" role="tabpanel" id="${pid(i)}" aria-labelledby="${pid(i)}-tab" data-panel="p${i}"${i === 0 ? "" : " hidden"}>
+              <div class="parts-top">
                 <span class="parts-demo" aria-hidden="true">${DEMOS[i] ?? ""}</span>
-                <span class="parts-name"><b><i>${String(i + 1).padStart(2, "0")}</i> ${esc(p.name)}</b><span>${esc(p.line)}</span></span>
-              </summary>
-              <dl class="parts-body">
-                <dt>${esc(UI.partsDoes)}</dt><dd>${esc(p.does)}</dd>
-                <dt>${esc(UI.partsFiles)}</dt><dd>${p.files.map((f) => `<code>${esc(f)}</code>`).join(" ")}</dd>
-                <dt>${esc(UI.partsReuse)}</dt><dd>${esc(p.reuse)}</dd>
-              </dl>
-              ${
-                p.pros?.length || p.cons?.length
-                  ? `<div class="parts-procon">
-                <div class="parts-pro"><p>${esc(UI.partsPros)}</p>${list(p.pros)}</div>
-                <div class="parts-con"><p>${esc(UI.partsCons)}</p>${list(p.cons)}</div>
-              </div>`
-                  : ""
-              }
-            </details>`,
-            )
-            .join("")}
+                <p><b>${esc(p.name)}</b><span>${esc(p.line)}</span></p>
+              </div>
+              <table class="parts-table">
+                <tbody>
+                  <tr><th scope="row">${esc(UI.partsDoes)}</th><td>${esc(p.does)}</td></tr>
+                  <tr><th scope="row">${esc(UI.partsFiles)}</th><td>${p.files.map((f) => `<code>${esc(f)}</code>`).join(" ")}</td></tr>
+                  <tr><th scope="row">${esc(UI.partsReuse)}</th><td>${esc(p.reuse)}</td></tr>
+                  ${
+                    p.pros?.length || p.cons?.length
+                      ? `<tr><td colspan="2"><div class="parts-procon">
+                    <div class="parts-pro"><p>${esc(UI.partsPros)}</p>${list(p.pros)}</div>
+                    <div class="parts-con"><p>${esc(UI.partsCons)}</p>${list(p.cons)}</div>
+                  </div></td></tr>`
+                      : ""
+                  }
+                </tbody>
+              </table>
+            </div>`,
+              )
+              .join("")}
+          </section>
         </div>
       </div>
     </article>
@@ -565,28 +579,6 @@ export function initBigCards(root: HTMLElement) {
     box.querySelectorAll<HTMLElement>(":scope > [data-panel]").forEach((panel) => {
       panel.hidden = panel.dataset.panel !== tab.dataset.tab;
     });
-  });
-  root.querySelectorAll<HTMLElement>(".pcard--parts").forEach((card) => {
-    // An opened part scrolls the list until all of it is in view; one
-    // taller than the list scrolls down to its end (pro/con), the start is
-    // a wheel turn up — so the list needs no scrollbar. `toggle` doesn't
-    // bubble: listened for in the capture phase.
-    const list = card.querySelector<HTMLElement>(".parts-list");
-    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("force-motion");
-    card.addEventListener(
-      "toggle",
-      (e) => {
-        const item = e.target as HTMLDetailsElement;
-        if (!list || !item.matches(".parts-item") || !item.open) return;
-        requestAnimationFrame(() => {
-          const top = item.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
-          const end = top + item.offsetHeight - list.clientHeight;
-          const target = item.offsetHeight > list.clientHeight ? end : Math.min(top, Math.max(list.scrollTop, end));
-          list.scrollTo({ top: Math.max(0, target), behavior: smooth ? "smooth" : "auto" });
-        });
-      },
-      true,
-    );
   });
 }
 
