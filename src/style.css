@@ -1240,6 +1240,46 @@ button:focus-visible {
   height: 22px;
 }
 
+/* GitHub contribution graph (src/contact/github-graph.ts). Levels 1–4 are
+   the accent at rising strength, so it follows light/dark like the rest. */
+.contact-graph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(100%, 680px);
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.contact-graph[hidden] {
+  display: none;
+}
+
+.contact-graph-grid {
+  width: 100%;
+  height: auto;
+}
+
+.contact-graph-grid rect {
+  fill: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+}
+.contact-graph-grid rect[data-l="1"] { fill: color-mix(in srgb, var(--color-accent) 35%, transparent); }
+.contact-graph-grid rect[data-l="2"] { fill: color-mix(in srgb, var(--color-accent) 60%, transparent); }
+.contact-graph-grid rect[data-l="3"] { fill: color-mix(in srgb, var(--color-accent) 80%, transparent); }
+.contact-graph-grid rect[data-l="4"] { fill: var(--color-accent); }
+
+.contact-graph-caption {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  transition: color var(--transition-hover);
+}
+
+.contact-graph:hover .contact-graph-caption,
+.contact-graph:focus-visible .contact-graph-caption {
+  color: var(--color-line);
+}
+
 /* Raygun button (src/raygun/raygun.ts) — revealed under the headline once
    it's been shattered (contact.ts's startBreak/returnHome toggle the
    [hidden] attribute this pop-in keys off). */

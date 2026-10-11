@@ -125,6 +125,12 @@ export const TIMINGS = {
       startOffset: 0.2, // pulled back this far from the mail tween's end — overlapping
     },
 
+    graph: {
+      duration: 0.6, // the GitHub contribution graph under the icons, fading/sliding in last
+      ease: "power2.out",
+      startOffset: 0.3, // pulled back this far from the icons' end — overlapping
+    },
+
     // Once the user has scrolled this far into the pin (a little past the
     // black hold — see `hold` above), the page finishes the rest of the
     // scroll itself so the headline/mail/icons land without further manual
