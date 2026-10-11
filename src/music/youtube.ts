@@ -73,7 +73,7 @@ export function initYoutubeButton() {
 
   if (!PLAYLIST_ID) {
     button.disabled = true;
-    button.title = "[OFFEN: Playlist-ID fehlt]";
+    if (import.meta.env.DEV) button.title = "[OFFEN: Playlist-ID fehlt]";
     return;
   }
 

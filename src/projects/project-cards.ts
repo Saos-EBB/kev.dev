@@ -130,7 +130,8 @@ export const displayText = (s: string) =>
 // Small inline tag in front of a card's text ("Ziel", "Beweis", "Projekt").
 const label = (text: string) => `<span class="pcard-label">${text}</span>`;
 
-const open = (text: string) => `<p class="pcard-open">[OFFEN: ${esc(text)}]</p>`;
+// [OFFEN: …] notes are Kevin's to-dos: shown on `npm run dev` only.
+const open = (text: string) => (import.meta.env.DEV ? `<p class="pcard-open">[OFFEN: ${esc(text)}]</p>` : "");
 
 export function esc(s: string): string {
   return s

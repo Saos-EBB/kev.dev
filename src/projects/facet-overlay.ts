@@ -138,7 +138,9 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
           ? demo.href
             ? `<p><a class="facet-link" href="${esc(demo.href)}" target="_blank" rel="noopener noreferrer">${esc(demo.label)} ↗</a></p>`
             : `<p>${esc(demo.label)}</p>`
-          : `<p class="pcard-open">[OFFEN: Live-Demo-Info fehlt]</p>`,
+          : import.meta.env.DEV
+            ? `<p class="pcard-open">[OFFEN: Live-Demo-Info fehlt]</p>`
+            : "",
       };
     }
     case "self":
@@ -150,7 +152,9 @@ function resolveFacetContent(card: ProjectCard, kind: FacetKind): FacetContent {
           ? tenantsHtml(card)
           : card.screenshots?.length
             ? galleryHtml(card.screenshots)
-            : `<p class="pcard-open">[OFFEN: Screenshots fehlen]</p>`,
+            : import.meta.env.DEV
+              ? `<p class="pcard-open">[OFFEN: Screenshots fehlen]</p>`
+              : "",
       };
     case "b2b":
       // The white-label sales page (yourbrand/, from the b2b-cv repo) —
