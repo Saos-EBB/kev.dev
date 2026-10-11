@@ -61,28 +61,40 @@
 /* --- er (YourBrand): the card as its data model ------------------ */
 
 .er {
-  flex: 1;
-  min-height: 0;
+  flex: none;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) 2.5rem minmax(0, 0.9fr) 2.5rem minmax(0, 1.2fr) 2.5rem minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 2.5rem minmax(0, 0.85fr) 2.5rem minmax(0, 1fr) 2.5rem minmax(0, 1.6fr);
+  align-items: start;
   font-family: var(--font-mono);
 }
 
+/* Only as tall as its rows — the text lives in .er-detail. */
 .er-entity {
-  min-height: 0;
-  overflow: auto;
   border: 1px solid var(--pc-soft);
   background: var(--box-bg);
 }
 
+/* More than six rows (the modules) run in two columns, so no table is
+   taller than six rows. */
+.er-entity--wide .er-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(4, auto);
+}
+
+.er-entity--wide .er-row:nth-child(n + 5) {
+  border-inline-start: 1px solid color-mix(in srgb, var(--pc) 18%, transparent);
+}
+
+.er-entity--wide .er-row:nth-child(5) {
+  border-top: 0;
+}
+
 .er-name {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   display: flex;
   justify-content: space-between;
-  padding: 0.7rem 0.9rem;
+  padding: 0.55rem 0.9rem;
   background: color-mix(in srgb, var(--pc) 16%, var(--projects-bg));
   color: var(--color-text);
   font-size: var(--fs-small);
@@ -105,43 +117,51 @@
   color: inherit;
 }
 
-.er-row + .er-row {
-  border-top: 1px solid color-mix(in srgb, var(--pc) 18%, transparent);
-}
-
-.er-row summary {
+.er-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: 2.75rem;
-  padding: 0.45rem 0.9rem;
-  list-style: none;
-  cursor: pointer;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.25rem 0.8rem;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
   font-size: var(--fs-small);
+  text-align: start;
+  cursor: pointer;
 }
 
-.er-row summary::-webkit-details-marker {
-  display: none;
+.er-row:not(:first-child) {
+  border-top: 1px solid color-mix(in srgb, var(--pc) 18%, transparent);
 }
 
-.er-row summary::before {
+.er-row::before {
   content: "";
   flex: none;
   border-inline-start: 5px solid var(--color-text-muted);
   border-block: 4px solid transparent;
-  transition: transform var(--transition-hover);
 }
 
-.er-row[open] > summary::before {
-  transform: rotate(90deg);
-  border-inline-start-color: var(--pc);
-}
-
-.er-row summary:hover {
+.er-row:hover {
   background: var(--pc-faint);
 }
 
-.er-row summary:focus-visible {
+.er-row[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--pc) 14%, transparent);
+  box-shadow: inset 3px 0 0 var(--pc);
+}
+
+:root[dir="rtl"] .er-row[aria-pressed="true"] {
+  box-shadow: inset -3px 0 0 var(--pc);
+}
+
+.er-row[aria-pressed="true"]::before {
+  border-inline-start-color: var(--pc);
+}
+
+.er-row:focus-visible {
   outline: 2px solid var(--pc);
   outline-offset: -2px;
 }
@@ -166,6 +186,13 @@
   white-space: nowrap;
 }
 
+/* Types read as code (text[]), also in RTL. */
+.er-type,
+.er-path i {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 .er-type {
   margin-inline-start: auto;
   flex: none;
@@ -178,12 +205,104 @@
   color: var(--pc);
 }
 
+/* The picked row's text: the rest of the card's height, the full width,
+   set in columns so even the long entries fit without scrolling. */
+.er-detail {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--pc-soft);
+  border-top: 2px solid var(--pc);
+  background: var(--box-bg);
+}
+
+.er-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 0.8rem 1.1rem 1rem;
+}
+
+.er-pane[hidden] {
+  display: none;
+}
+
+.er-path {
+  flex: none;
+  margin-bottom: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--color-text);
+}
+
+.er-path span {
+  color: var(--pc);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.er-path i {
+  font-style: normal;
+  font-size: var(--fs-tiny);
+  color: var(--color-text-muted);
+}
+
 .er-body {
-  padding: 0.15rem 0.9rem 1rem 1.75rem;
+  flex: 1;
+  min-height: 0;
+  columns: 4 15rem;
+  column-fill: auto;
+  column-gap: 2.5rem;
+  transition: transform 0.35s ease;
+  column-rule: 1px solid color-mix(in srgb, var(--pc) 14%, transparent);
   font-family: var(--font-read);
   font-size: calc(var(--fs-read) * 0.92);
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--color-text-muted);
+}
+
+.er-pager {
+  position: absolute;
+  top: 0.55rem;
+  inset-inline-end: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  color: var(--color-text-muted);
+}
+
+.er-pager[hidden] {
+  display: none;
+}
+
+.er-pager button {
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--pc-soft);
+  background: none;
+  color: var(--pc);
+  font: inherit;
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+
+.er-pager button:hover:not(:disabled) {
+  background: var(--pc-faint);
+}
+
+.er-pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .er-body {
+    transition: none;
+  }
 }
 
 .er-body p + p,
@@ -193,10 +312,11 @@
 }
 
 .er-body ul {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
   padding-inline-start: 1rem;
+}
+
+.er-body li + li {
+  margin-top: 0.3rem;
 }
 
 .er-body b {
@@ -212,14 +332,15 @@
 }
 
 .er-body .er-tags {
-  flex-direction: row;
+  display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
   padding: 0;
   list-style: none;
 }
 
-.er-tags li {
+.er-body .er-tags li {
+  margin: 0;
   padding: 0.1rem 0.4rem;
   border: 1px solid var(--pc-soft);
   font-size: var(--fs-tiny);

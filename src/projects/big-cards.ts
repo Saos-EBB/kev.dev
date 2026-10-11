@@ -20,29 +20,30 @@ function relation(ends: string, label: string): string {
     </div>`;
 }
 
-// One attribute row: an accordion in its entity (one open at a time).
-function row(entity: string, opts: { key?: string; swatch?: string; attr: string; type?: string; body: string; open?: boolean; hot?: boolean }): string {
-  return `
-    <details class="er-row${opts.hot ? " er-row--hot" : ""}" name="er-${entity}"${opts.open ? " open" : ""}>
-      <summary>
-        ${opts.swatch ? `<span class="er-swatch" style="background: ${esc(opts.swatch)}"></span>` : `<span class="er-key">${opts.key ?? ""}</span>`}
-        <span class="er-attr">${esc(opts.attr)}</span>
-        ${opts.type ? `<span class="er-type">${esc(opts.type)}</span>` : ""}
-      </summary>
-      <div class="er-body">${opts.body}</div>
-    </details>`;
-}
+// One attribute row. Its text isn't in the table: picking the row shows it
+// in the detail box under the diagram, so the tables stay as tall as their
+// rows and the text gets the card's full width.
+type ErRow = { key?: string; swatch?: string; attr: string; type?: string; body: string; hot?: boolean };
 
-function entity(name: string, count: string, rows: string, lead = false): string {
+function entity(name: string, count: string, rows: ErRow[], selected: string, lead = false): string {
   return `
-    <section class="er-entity">
+    <section class="er-entity${rows.length > 6 ? " er-entity--wide" : ""}">
       <h4 class="er-name${lead ? " er-name--lead" : ""}"><span>${name}</span><span>${esc(count)}</span></h4>
-      ${rows}
+      <div class="er-rows">${rows
+        .map(
+          (r, i) => `
+      <button type="button" class="er-row${r.hot ? " er-row--hot" : ""}" data-er="${name}-${i}" aria-pressed="${`${name}-${i}` === selected}">
+        ${r.swatch ? `<span class="er-swatch" style="background: ${esc(r.swatch)}"></span>` : `<span class="er-key">${r.key ?? ""}</span>`}
+        <span class="er-attr">${esc(r.attr)}</span>
+        ${r.type ? `<span class="er-type">${esc(r.type)}</span>` : ""}
+      </button>`,
+        )
+        .join("")}</div>
     </section>`;
 }
 
 // YourBrand: project —1:1— core —1:n— tenant —n:m— module, left to right,
-// each deeper than the last.
+// and under them the picked row's text.
 function erCard(card: ProjectCard, head: string): string {
   const tenants = card.tenants ?? [];
   const p = (s?: string) => (s ? `<p>${esc(s)}</p>` : "");
@@ -51,66 +52,74 @@ function erCard(card: ProjectCard, head: string): string {
     .map((l) => (l.href ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>` : esc(l.label)))
     .join(" · ");
 
-  const project = [
-    row("project", { key: "PK", attr: "why", type: "text", open: true, body: p(card.learnGoal) + p(card.what) }),
-    row("project", { attr: "learned", type: "text", body: p(card.challenge) }),
-    row("project", {
-      attr: "architecture",
-      type: "text[]",
-      body: `<ul>${(card.decisions ?? []).map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`,
-    }),
-    row("project", { attr: "hours", type: "text", body: p(card.meta) }),
-    row("project", { attr: "timeline", type: "text", body: p(card.origin) }),
-    row("project", {
-      attr: "repo",
-      type: "url",
-      body: `<p>${links}</p><ul class="er-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`,
-    }),
-  ].join("");
+  const project: ErRow[] = [
+    { key: "PK", attr: "why", type: "text", body: p(card.learnGoal) + p(card.what) },
+    { attr: "learned", type: "text", body: p(card.challenge) },
+    { attr: "architecture", type: "text[]", body: `<ul>${(card.decisions ?? []).map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` },
+    { attr: "hours", type: "text", body: p(card.meta) },
+    { attr: "timeline", type: "text", body: p(card.origin) },
+    { attr: "repo", type: "url", body: `<p>${links}</p><ul class="er-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` },
+  ];
 
   const layers = UI.vizLayers;
-  const core = layers
-    .map(([name, sub], i) =>
-      row("core", { key: `L${layers.length - i}`, attr: name, open: i === 1, body: `<p><b>${esc(sub)}</b></p>${detail(card.layers?.[i])}` }),
-    )
-    .join("");
+  const core: ErRow[] = layers.map(([name, sub], i) => ({
+    key: `L${layers.length - i}`,
+    attr: name,
+    body: `<p><b>${esc(sub)}</b></p>${detail(card.layers?.[i])}`,
+  }));
 
-  const tenant = tenants
-    .map((t, i) =>
-      row("tenant", {
-        swatch: t.color,
-        attr: t.name,
-        type: t.tier,
-        open: i === 0,
-        body: `<p><b>${esc(t.kind)}</b></p>${p(t.about)}<p class="er-mods">${t.modules.map((m) => esc(UI.vizModules[m])).join(" · ")}</p>`,
-      }),
-    )
-    .join("");
+  const tenant: ErRow[] = tenants.map((t) => ({
+    swatch: t.color,
+    attr: t.name,
+    type: t.tier,
+    body: `<p><b>${esc(t.kind)}</b></p>${p(t.about)}<p class="er-mods">${t.modules.map((m) => esc(UI.vizModules[m])).join(" · ")}</p>`,
+  }));
 
-  const module = TENANT_MODULES.map((m, i) => {
+  const module: ErRow[] = TENANT_MODULES.map((m) => {
     const users = tenants.filter((t) => t.modules.includes(m));
     const wip = m === "shop";
-    return row("module", {
+    return {
       attr: UI.vizModules[m],
       type: wip ? UI.vizWip : `${users.length} / ${tenants.length}`,
       hot: wip,
-      open: i === 1,
       body: detail(card.moduleInfo?.[m]) + `<p class="er-mods">${esc(users.length ? users.map((t) => t.name).join(" · ") : UI.vizWip)}</p>`,
-    });
-  }).join("");
+    };
+  });
+
+  const all: [string, ErRow[]][] = [["project", project], ["core", core], ["tenant", tenant], ["module", module]];
+  const selected = "project-0";
+  const panes = all
+    .flatMap(([name, rows]) =>
+      rows.map(
+        (r, i) => `
+      <div class="er-pane" data-er-pane="${name}-${i}"${`${name}-${i}` === selected ? "" : " hidden"}>
+        <p class="er-path"><span>${name}</span> › ${esc(r.attr)}${r.type ? ` <i>${esc(r.type)}</i>` : ""}</p>
+        <div class="er-body">${r.body}</div>
+      </div>`,
+      ),
+    )
+    .join("");
 
   return `
     <article class="pcard pcard--big pcard--er" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       ${head}
       <div class="er">
-        ${entity("project", "1", project, true)}
+        ${entity("project", "1", project, selected, true)}
         ${relation(ONE(7) + ONE(40), "1 : 1")}
-        ${entity("core", "1", core)}
+        ${entity("core", "1", core, selected)}
         ${relation(ONE(7) + MANY_RIGHT, "1 : n")}
-        ${entity("tenant", String(tenants.length), tenant)}
+        ${entity("tenant", String(tenants.length), tenant, selected)}
         ${relation(MANY_LEFT + MANY_RIGHT, "n : m")}
-        ${entity("module", String(TENANT_MODULES.length), module)}
+        ${entity("module", String(TENANT_MODULES.length), module, selected)}
       </div>
+      <section class="er-detail">
+        ${panes}
+        <p class="er-pager" hidden>
+          <button type="button" data-er-page="-1" aria-label="${esc(UI.erPrev)}">‹</button>
+          <span dir="ltr"></span>
+          <button type="button" data-er-page="1" aria-label="${esc(UI.erNext)}">›</button>
+        </p>
+      </section>
     </article>
   `;
 }
@@ -338,6 +347,54 @@ export function initBigCards(root: HTMLElement) {
       const mail = target.closest<HTMLElement>("[data-mail]");
       if (mail) show(mail.dataset.mail!);
     });
+  });
+  // YourBrand: a row shows its text in the detail box. Text that doesn't
+  // fit runs on into more columns to the side; the pager slides them in a
+  // box-width at a time — pages instead of a scrollbar.
+  const rtl = document.documentElement.dir === "rtl";
+  root.querySelectorAll<HTMLElement>(".pcard--er").forEach((card) => {
+    const pager = card.querySelector<HTMLElement>(".er-pager");
+    let page = 0;
+    const paginate = () => {
+      const body = card.querySelector<HTMLElement>(".er-pane:not([hidden]) .er-body");
+      if (!body || !pager) return;
+      body.style.transform = "";
+      const gap = parseFloat(getComputedStyle(body).columnGap) || 0;
+      const step = body.clientWidth + gap;
+      // How far the columns reach past the box's start edge.
+      const box = body.getBoundingClientRect();
+      let reach = 0;
+      for (const el of Array.from(body.children)) {
+        for (const r of Array.from(el.getClientRects())) reach = Math.max(reach, rtl ? box.right - r.left : r.right - box.left);
+      }
+      const pages = step > 0 ? Math.max(1, Math.ceil((reach - 1) / step)) : 1;
+      page = Math.min(page, pages - 1);
+      body.style.transform = page ? `translateX(${(rtl ? 1 : -1) * page * step}px)` : "";
+      pager.hidden = pages < 2;
+      pager.querySelector("span")!.textContent = `${page + 1} / ${pages}`;
+      pager.querySelectorAll<HTMLButtonElement>("[data-er-page]").forEach((b) => {
+        b.disabled = b.dataset.erPage === "-1" ? page === 0 : page === pages - 1;
+      });
+    };
+    card.addEventListener("click", (e) => {
+      const target = e.target as Element;
+      const turn = target.closest<HTMLElement>("[data-er-page]");
+      if (turn) {
+        page += Number(turn.dataset.erPage);
+        paginate();
+        return;
+      }
+      const pick = target.closest<HTMLElement>("[data-er]");
+      if (!pick) return;
+      card.querySelectorAll<HTMLElement>("[data-er]").forEach((row) => row.setAttribute("aria-pressed", String(row === pick)));
+      card.querySelectorAll<HTMLElement>("[data-er-pane]").forEach((pane) => {
+        pane.hidden = pane.dataset.erPane !== pick.dataset.er;
+      });
+      page = 0;
+      paginate();
+    });
+    const detail = card.querySelector(".er-detail");
+    if (detail) new ResizeObserver(paginate).observe(detail);
   });
   // kev.dev's text tabs.
   root.querySelectorAll<HTMLElement>(".pcard--parts").forEach((card) => {
