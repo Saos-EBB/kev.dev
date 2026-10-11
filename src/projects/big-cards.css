@@ -153,10 +153,6 @@
   box-shadow: inset 3px 0 0 var(--pc);
 }
 
-:root[dir="rtl"] .er-row[aria-pressed="true"] {
-  box-shadow: inset -3px 0 0 var(--pc);
-}
-
 .er-row[aria-pressed="true"]::before {
   border-inline-start-color: var(--pc);
 }
@@ -184,13 +180,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Types read as code (text[]), also in RTL. */
-.er-type,
-.er-path i {
-  direction: ltr;
-  unicode-bidi: isolate;
 }
 
 .er-type {
@@ -572,10 +561,6 @@
   height: 2.2rem;
   stroke: var(--color-text-muted);
   stroke-width: 1.5;
-}
-
-:root[dir="rtl"] .er-rel svg {
-  transform: scaleX(-1);
 }
 
 /* --- mail (TschoBBo): the card in the JobBot UI's own look ------- */
@@ -1080,14 +1065,6 @@
 .parts-item[open] summary::after {
   transform: rotate(90deg);
   color: var(--pc);
-}
-
-:root[dir="rtl"] .parts-item summary::after {
-  content: "◂";
-}
-
-:root[dir="rtl"] .parts-item[open] summary::after {
-  transform: rotate(-90deg);
 }
 
 .parts-item summary:hover {

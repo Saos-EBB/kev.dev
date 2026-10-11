@@ -8,7 +8,6 @@
 // Learned! (challenge/origin) and Code + Architektur (GitHub, tags,
 // decisions, meta) — each opening in full in the shared overlay.
 
-import { RTL } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./project-cards.css";
 import { renderFacetTiles } from "./facet-overlay";
@@ -270,7 +269,7 @@ export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): st
       </h3>
       ${card.points?.length ? `<ul class="ptease-points">${card.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
       ${tags.length ? `<ul class="ptease-tags">${tags.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
-      <span class="ptease-cta" aria-hidden="true">${esc(UI.projectOpen)} ${RTL ? "←" : "→"}</span>
+      <span class="ptease-cta" aria-hidden="true">${esc(UI.projectOpen)} →</span>
     </article>
   `;
 }

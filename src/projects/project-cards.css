@@ -380,7 +380,7 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 1rem 1.25rem;
-  /* Fixed, so a script with a tall default line (Arabic) still fits. */
+  /* Fixed, so a script with a tall default line (Japanese) still fits. */
   line-height: 1.25;
 }
 

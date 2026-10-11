@@ -12,7 +12,6 @@
 
 import type Lenis from "lenis";
 import "./project-sheet.css";
-import { RTL } from "../i18n";
 import { UI } from "../i18n/ui";
 import { renderProjectSheet, type ProjectCard } from "./project-cards";
 import { mountFaceVisuals } from "./face-dots-site";
@@ -35,7 +34,7 @@ export function initProjectSheet(root: HTMLElement, cards: ProjectCard[], lenis:
   sheet.dataset.lenisPrevent = "";
   sheet.innerHTML = `
     <div class="psheet-bar">
-      <button class="psheet-back" type="button">${RTL ? "→" : "←"} ${UI.projectBack}</button>
+      <button class="psheet-back" type="button">← ${UI.projectBack}</button>
     </div>
     <div class="psheet-body"></div>
   `;

@@ -19,8 +19,8 @@ import { useWhitelabelTheme } from '@/lib/site/whitelabel/useWhitelabelTheme'
 
 // The dev-only colour-palette editor of b2b-cv is not carried over.
 const IS_DEV = false
-const B2B_LANGS: UiLang[] = ['de', 'en', 'ru', 'ja', 'ar']
-const B2B_LANG_LABELS: Partial<Record<UiLang, string>> = { de: 'DE', en: 'EN', ru: 'RU', ja: 'JA', ar: 'AR' }
+const B2B_LANGS: UiLang[] = ['de', 'en', 'ru', 'ja']
+const B2B_LANG_LABELS: Partial<Record<UiLang, string>> = { de: 'DE', en: 'EN', ru: 'RU', ja: 'JA' }
 
 
 // ─── Tier helpers ─────────────────────────────────────────────────────────────
@@ -212,7 +212,6 @@ export default function B2BPage() {
   const removeWord = (w: string) => setCustomWords(p => p.filter(x => x !== w))
 
   const isEn   = uiLang !== 'de'
-  const isRtl  = uiLang === 'ar'
 
   const techRows  = isEn ? TECH_ROWS.en : TECH_ROWS.de
 
@@ -253,7 +252,7 @@ export default function B2BPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-surface" dir={isRtl ? 'rtl' : 'ltr'} style={isDark ? DARK_BG : LIGHT_BG}>
+    <div className="min-h-screen bg-background text-on-surface" style={isDark ? DARK_BG : LIGHT_BG}>
 
       {/* ── Sticky nav ────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-surface-container-low/80 backdrop-blur-md border-b border-outline-variant">
@@ -568,7 +567,7 @@ export default function B2BPage() {
         <div className="mt-40 mb-16 flex items-center justify-center gap-3">
           <RaygunButton inline />
           <div className="flex flex-col items-start gap-0.5">
-            <span className="text-2xl leading-none text-primary-fixed-dim">{isRtl ? '→' : '←'}</span>
+            <span className="text-2xl leading-none text-primary-fixed-dim">←</span>
             <span className="text-xs font-medium text-on-surface-variant">click me</span>
           </div>
         </div>

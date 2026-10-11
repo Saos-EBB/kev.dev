@@ -419,8 +419,7 @@ function paintNameTexture(shine: number | null) {
   tctx.setTransform(TEXTURE_SUPERSAMPLE, 0, 0, TEXTURE_SUPERSAMPLE, 0, 0);
   tctx.clearRect(0, 0, nameTexture.width, nameTexture.height);
   tctx.textBaseline = "middle";
-  // Positions below are left edges (measured boxes) — keep that meaning
-  // even on the RTL page; the text itself still shapes/orders correctly.
+  // Positions below are left edges (measured boxes).
   tctx.direction = "ltr";
   tctx.textAlign = "left";
 

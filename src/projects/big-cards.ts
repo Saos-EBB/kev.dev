@@ -449,7 +449,6 @@ export function initBigCards(root: HTMLElement) {
   // YourBrand: a row shows its text in the detail box. Text that doesn't
   // fit runs on into more columns to the side; the pager slides them in a
   // box-width at a time — pages instead of a scrollbar.
-  const rtl = document.documentElement.dir === "rtl";
   root.querySelectorAll<HTMLElement>(".pcard--er").forEach((card) => {
     const pager = card.querySelector<HTMLElement>(".er-pager");
     let page = 0;
@@ -470,7 +469,7 @@ export function initBigCards(root: HTMLElement) {
         const box = body.getBoundingClientRect();
         let r = 0;
         for (const el of Array.from(body.children)) {
-          for (const rect of Array.from(el.getClientRects())) r = Math.max(r, rtl ? box.right - rect.left : rect.right - box.left);
+          for (const rect of Array.from(el.getClientRects())) r = Math.max(r, rect.right - box.left);
         }
         return r;
       };
@@ -507,7 +506,7 @@ export function initBigCards(root: HTMLElement) {
         }
       }
       page = Math.min(page, pages - 1);
-      body.style.transform = page ? `translateX(${(rtl ? 1 : -1) * page * step}px)` : "";
+      body.style.transform = page ? `translateX(${-page * step}px)` : "";
       pager.hidden = pages < 2;
       pager.querySelector("span")!.textContent = `${page + 1} / ${pages}`;
       pager.querySelectorAll<HTMLButtonElement>("[data-er-page]").forEach((b) => {

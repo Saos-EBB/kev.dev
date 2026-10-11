@@ -14,7 +14,7 @@
 // working without pulling in a router.
 import type Lenis from "lenis";
 import { UI } from "../i18n/ui";
-import { LANG, RTL } from "../i18n";
+import { LANG } from "../i18n";
 import { DATENSCHUTZ, IMPRESSUM } from "./legal-content";
 import { hasConsent, revokeConsent, type ConsentId } from "../consent";
 
@@ -63,7 +63,7 @@ export function initLegalOverlay(lenis: Lenis) {
         <article class="legal">
           ${UI.legalNote ? `<p class="legal-lang-note" lang="${LANG}">${UI.legalNote}</p>` : ""}
           <div>${route.html}</div>
-          <a class="legal-back" href="#">${RTL ? "&rarr;" : "&larr;"} ${UI.legalBack}</a>
+          <a class="legal-back" href="#">&larr; ${UI.legalBack}</a>
         </article>
       </main>
     `;

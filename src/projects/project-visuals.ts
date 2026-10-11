@@ -10,7 +10,6 @@
 
 import { esc, TENANT_MODULES, type ProjectCard, type TenantModule } from "./project-cards";
 import { UI } from "../i18n/ui";
-import { RTL } from "../i18n";
 import { NOTE_IDS, noteLabel } from "./widgets/grundlagen-i18n";
 
 // YourBrand: the four layers named in its copy (DB → Security → API, and
@@ -205,7 +204,7 @@ function storyboard(_card: ProjectCard): string {
               <b><i>${String(i + 1).padStart(2, "0")}</i> ${name}</b>
               <span>${why}</span>
             </span>
-            <span class="viz-frame-go" aria-hidden="true">${RTL ? "↖" : "↗"}</span>
+            <span class="viz-frame-go" aria-hidden="true">↗</span>
           </a>
         </li>`,
         )

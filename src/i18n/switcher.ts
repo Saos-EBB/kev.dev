@@ -1,5 +1,5 @@
 // The header's language menu: a globe button with the current code, a
-// small list of the five languages in their own script. Picking one stores
+// small list of the four languages in their own script. Picking one stores
 // it and reloads (see setLang in index.ts).
 
 import "./switcher.css";
@@ -18,7 +18,7 @@ export function renderLangSwitch(): string {
       </button>
       <ul class="lang-menu" role="menu" hidden>
         ${LANGS.map(
-          (l) => `<li role="none"><button type="button" role="menuitemradio" aria-checked="${l.code === LANG}" data-lang="${l.code}" lang="${l.code}" dir="${l.code === "ar" ? "rtl" : "ltr"}"><b>${l.label}</b> ${l.native}</button></li>`,
+          (l) => `<li role="none"><button type="button" role="menuitemradio" aria-checked="${l.code === LANG}" data-lang="${l.code}" lang="${l.code}"><b>${l.label}</b> ${l.native}</button></li>`,
         ).join("")}
       </ul>
     </div>

@@ -12,7 +12,6 @@ import { Terminal } from "./terminal";
 import type { ProjectCard } from "../project-cards";
 import { UI } from "../../i18n/ui";
 import { grantConsent, hasConsent } from "../../consent";
-import { RTL } from "../../i18n";
 import { localizeNote } from "./grundlagen-i18n";
 
 import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
@@ -183,9 +182,9 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
         ).join("")}
       </div>
       <div class="gwidget-nav">
-        <button type="button" class="gwidget-prev" aria-label="${UI.gPrev}">${RTL ? "→" : "←"}</button>
+        <button type="button" class="gwidget-prev" aria-label="${UI.gPrev}">←</button>
         <span class="gwidget-count" aria-live="polite"></span>
-        <button type="button" class="gwidget-next" aria-label="${UI.gNext}">${RTL ? "←" : "→"}</button>
+        <button type="button" class="gwidget-next" aria-label="${UI.gNext}">→</button>
       </div>
     </div>
     <div class="gwidget-info" role="tabpanel"></div>

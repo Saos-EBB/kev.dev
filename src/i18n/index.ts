@@ -3,17 +3,15 @@
 // (hero name, "PROJEKTE", contact letters); switching therefore stores the
 // choice and reloads, the same way LITE (viewport.ts) is decided once.
 //
-// Every module reads LANG / the ui() strings at render time. Arabic sets
-// dir="rtl" on <html>, so the whole page reads right to left.
+// Every module reads LANG / the ui() strings at render time.
 
-export type Lang = "de" | "en" | "ru" | "ja" | "ar";
+export type Lang = "de" | "en" | "ru" | "ja";
 
 export const LANGS: { code: Lang; label: string; native: string }[] = [
   { code: "de", label: "DE", native: "Deutsch" },
   { code: "en", label: "EN", native: "English" },
   { code: "ru", label: "RU", native: "Русский" },
   { code: "ja", label: "JA", native: "日本語" },
-  { code: "ar", label: "AR", native: "العربية" },
 ];
 
 const STORE_KEY = "kev-lang";
@@ -23,7 +21,7 @@ const B2B_STORE_KEY = "xxx-language";
 
 // The visitor's own choice wins. Without one (first visit), the browser's
 // language list decides: the first entry we support, by its primary tag
-// ("de-AT" → de). A browser in none of our five languages gets English —
+// ("de-AT" → de). A browser in none of our four languages gets English —
 // the most widely read of them. The detected language is not stored, so
 // it keeps following the browser until the visitor picks one.
 function readLang(): Lang {
@@ -46,7 +44,6 @@ function isLang(code: string): code is Lang {
 }
 
 export const LANG: Lang = readLang();
-export const RTL = LANG === "ar";
 
 // The YourBrand page (iframe) keeps its own language store — always start
 // it in the portfolio's language, so the two never disagree.
@@ -57,7 +54,6 @@ try {
 }
 
 document.documentElement.lang = LANG;
-document.documentElement.dir = RTL ? "rtl" : "ltr";
 
 export function setLang(lang: Lang) {
   if (lang === LANG) return;
