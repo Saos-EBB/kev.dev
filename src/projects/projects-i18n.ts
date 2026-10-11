@@ -334,6 +334,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       challenge: "Four APIs, four quirks: TVDB needs a login token, MangaDex a rate limit, AniList has no release dates for manga, TMDB keeps series and movies apart. The work was hiding all of that behind one narrow shared interface.",
     },
     oskalizer: {
+      modes: [["Blobs", "Every key press a colorful blob — ink, balls, slime. Retired once letters got more exciting."], ["Animals", "A to Z, big, with an animal, a voice and the animal's sound; digits are read out."], ["Typing", "Ctrl+Shift+D: letters stay as text, space makes gaps, Enter reads it out."]],
       kind: "Keyboard playground",
       learnGoal: "My son goes for my keyboard the moment I sit down at it — so I built him something he can hammer on without breaking anything, and something still happens.",
       claim: "A keyboard playground for my son — one that grows with him.",
@@ -697,6 +698,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       challenge: "Четыре API — четыре особенности: TVDB нужен токен входа, MangaDex — ограничение частоты, AniList не даёт дат выхода для манги, TMDB разделяет сериалы и фильмы. Работа была в том, чтобы спрятать всё это за одним узким общим интерфейсом.",
     },
     oskalizer: {
+      modes: [["Кляксы", "Каждое нажатие — цветная клякса: чернила, шарики, слизь. Убраны, когда буквы стали интереснее."], ["Животные", "От A до Z крупно, с животным, голосом и звуком животного; цифры зачитываются."], ["Набор", "Ctrl+Shift+D: буквы остаются текстом, пробел делает промежутки, Enter читает написанное вслух."]],
       kind: "Клавиатурная площадка",
       learnGoal: "Мой сын тянется к моей клавиатуре, как только я за неё сажусь, — поэтому я сделал ему штуку, по которой можно колотить, ничего не ломая, и при этом что-то происходит.",
       claim: "Клавиатурная площадка для моего сына — которая растёт вместе с ним.",
@@ -1061,6 +1063,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       challenge: "4つのAPIに4つのクセ：TVDBはログイントークン、MangaDexはレート制限が必要で、AniListはマンガの発売日を返さず、TMDBはドラマと映画を分けている。それを全部1つの細い共通インターフェースの裏に隠すのが仕事だった。",
     },
     oskalizer: {
+      modes: [["しみ", "キーを押すたびにカラフルなしみ — インク、ボール、スライム。文字の方が面白くなって引退。"], ["動物", "A から Z を大きく、動物と声と鳴き声つきで。数字は読み上げ。"], ["入力", "Ctrl+Shift+D：文字はテキストとして残り、スペースで間を空け、Enter で読み上げる。"]],
       kind: "キーボードの遊び場",
       learnGoal: "息子は私がキーボードの前に座るとすぐ触りたがる — だから、叩いても何も壊れず、それでいて何かが起きるものを作った。",
       claim: "息子のためのキーボードの遊び場 — 彼と一緒に成長する。",

@@ -363,8 +363,8 @@ const DEMOS = [
 // The card's texts (Why? / Learned! / Code, cardBodies) as tabs, with any
 // extra panels first — a box every big card can use. Clicks: initBigCards.
 type Panel = { kind: string; heading: string; body: string };
-function textTabs(card: ProjectCard, extra: Panel[] = []): string {
-  const panels = [...extra, ...cardBodies(card)];
+function textTabs(card: ProjectCard, extra: Panel[] = [], edit = (p: Panel) => p): string {
+  const panels = [...extra, ...cardBodies(card)].map(edit);
   const id = (kind: string) => `big-${esc(card.id)}-${kind}`;
   return `
     <section class="big-text" data-tabs>
@@ -652,9 +652,52 @@ function watchCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// Oskalizer: the playground's full screen in the animal mode, the keys
+// being hammered and Esc held to quit; beside it the modes as they came
+// (the first retired) and the texts — Learned! with the speech queue that
+// drops what's stale.
+function keysCard(card: ProjectCard, head: string): string {
+  const modes = card.modes ?? [];
+  const keys: [string, string][] = [["Q", ""], ["W", "var(--note-6)"], ["E", ""], ["A", "var(--pc)"], ["S", ""], ["D", "var(--note-3)"], ["F", ""]];
+  const queue = `
+    <ol class="keys-queue" aria-hidden="true">
+      <li><span>#41</span><span>Q</span><b>✕</b></li>
+      <li><span>#42</span><span>W</span><b>✕</b></li>
+      <li class="is-on"><span>#43</span><span>„A wie Affe“</span><b>▶</b></li>
+    </ol>`;
+  return `
+    <article class="pcard pcard--big pcard--keyscard" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="keys">
+        <section class="keys-stage" aria-hidden="true">
+          <span class="keys-mode">${esc(modes[1]?.[0] ?? "")}</span>
+          <div class="keys-show">
+            <span class="keys-letter">A</span>
+            <div class="keys-say">
+              <span class="keys-animal">🐒</span>
+              <span class="keys-voice"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>„A wie Affe“</span>
+            </div>
+          </div>
+          <div class="keys-row">
+            ${keys.map(([k, c]) => `<kbd${c ? ` class="is-hit" style="--hit: ${c}"` : ""}>${k}</kbd>`).join("")}
+            <kbd class="keys-esc">Esc<i></i></kbd>
+          </div>
+          <p class="keys-note">${esc(splitDecision(card.decisions?.[0] ?? "")[1] || (card.decisions?.[0] ?? ""))}</p>
+        </section>
+        <section class="keys-side">
+          <ol class="keys-modes">
+            ${modes.map(([name, text], i) => `<li class="${i === 0 ? "is-retired" : i === 1 ? "is-on" : ""}"><b><i>${i + 1}</i> ${esc(name)}</b><span>${esc(text)}</span></li>`).join("")}
+          </ol>
+          ${textTabs(card, [], (p) => (p.kind === "learned" ? { ...p, body: queue + p.body } : p))}
+        </section>
+      </div>
+    </article>
+  `;
+}
+
 // Which layouts have a desktop card of their own (renderBigCard). The
 // carousel centres those and sizes them to the space (data-big, main.ts).
-const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal"]);
+const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal", "keys"]);
 export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 
 // The big card for this project, or "" to fall back to the shared layout.
@@ -670,6 +713,8 @@ export function renderBigCard(card: ProjectCard, head: string): string {
       return aniCard(card, head);
     case "terminal":
       return watchCard(card, head);
+    case "keys":
+      return keysCard(card, head);
     default:
       return "";
   }

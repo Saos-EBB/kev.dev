@@ -1757,3 +1757,251 @@
   font-size: var(--fs-tiny);
   line-height: 1.4;
 }
+
+/* --- keys (Oskalizer): the playground's screen + its modes ------- */
+
+.keys {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  font-family: var(--font-mono);
+}
+
+.keys-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--pc-soft);
+  background: var(--color-terminal-bg, #050507);
+  overflow: hidden;
+}
+
+/* A few soft blobs: the retired first mode, still in the background. */
+.keys-stage::before,
+.keys-stage::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.keys-stage::before {
+  top: 12%;
+  left: 6%;
+  width: 7rem;
+  height: 7rem;
+  background: color-mix(in srgb, var(--pc) 12%, transparent);
+}
+
+.keys-stage::after {
+  right: 7%;
+  bottom: 30%;
+  width: 4rem;
+  height: 4rem;
+  background: color-mix(in srgb, var(--note-6) 14%, transparent);
+}
+
+.keys-mode {
+  position: absolute;
+  top: 0.9rem;
+  inset-inline-start: 1rem;
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pc);
+}
+
+.keys-show {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+}
+
+.keys-letter {
+  font-family: var(--font-display);
+  font-size: clamp(8rem, 18vh, 15rem);
+  line-height: 0.8;
+  color: var(--pc);
+  animation: viz-keys-pop 2.4s ease-out infinite;
+}
+
+.keys-say {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.keys-animal {
+  font-size: clamp(4rem, 9vh, 7rem);
+  line-height: 1;
+}
+
+.keys-voice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--pc);
+  font-size: var(--fs-read);
+}
+
+.keys-voice svg {
+  width: 1.2em;
+  height: 1.2em;
+  fill: none;
+  stroke: var(--pc);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.keys-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 1rem 0.8rem;
+}
+
+.keys-row kbd {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.keys-row kbd.is-hit {
+  border-color: var(--hit);
+  background: color-mix(in srgb, var(--hit) 18%, transparent);
+  color: var(--color-text);
+}
+
+/* Esc, held: its bar fills up to the five seconds. */
+.keys-row .keys-esc {
+  position: relative;
+  width: 4.2rem;
+  margin-inline-start: 1.2rem;
+}
+
+.keys-esc i {
+  position: absolute;
+  inset-inline-start: -1px;
+  bottom: -1px;
+  height: 3px;
+  width: 40%;
+  background: var(--pc);
+  animation: keys-hold 5s linear infinite;
+}
+
+@keyframes keys-hold {
+  from { width: 0; }
+  to { width: calc(100% + 2px); }
+}
+
+.keys-note {
+  position: relative;
+  z-index: 1;
+  padding: 0 1rem 0.9rem;
+  text-align: center;
+  font-size: var(--fs-tiny);
+  color: var(--color-text-muted);
+}
+
+.keys-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+.keys-side .big-text {
+  flex: 1;
+}
+
+.keys-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+.keys-modes li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+  font-size: var(--fs-small);
+}
+
+.keys-modes i {
+  font-style: normal;
+  color: var(--pc);
+}
+
+.keys-modes span {
+  color: var(--color-text-muted);
+  font-size: var(--fs-tiny);
+  line-height: 1.45;
+}
+
+.keys-modes .is-on {
+  border-color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 8%, var(--box-bg));
+}
+
+.keys-modes .is-retired {
+  opacity: 0.55;
+}
+
+.keys-modes .is-retired b {
+  text-decoration: line-through;
+}
+
+/* Learned!: newer key presses push out what's still waiting to be said. */
+.keys-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--pc-soft);
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+}
+
+.keys-queue li {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  color: color-mix(in srgb, var(--color-text-muted) 60%, transparent);
+}
+
+.keys-queue li:not(.is-on) span:nth-child(2) {
+  text-decoration: line-through;
+}
+
+.keys-queue .is-on {
+  color: var(--pc);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .keys-letter,
+  :root:not(.force-motion) .keys-esc i {
+    animation: none;
+  }
+}

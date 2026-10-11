@@ -572,6 +572,12 @@ const cards: ProjectCard[] = [
     ],
     what: "Der Oskalizer übernimmt eine externe Tastatur und die Maus exklusiv, zeigt alles im Vollbild und lässt das System in Ruhe — beenden geht nur, wenn man Esc fünf Sekunden hält. Die Modi sind mit meinem Sohn gewachsen. Am Anfang war jeder Tastendruck einfach ein bunter Klecks auf dunklem Grund, in drei Stilen (Tinte, Kugeln, Schleim), ohne Zusammenhang zwischen Taste und Bild. Als er älter wurde, kam der Modus Tiere: Jede Taste zeigt groß ihr Zeichen, A bis Z mit einem Tier dazu, eine Stimme sagt „A wie Affe“ und macht den Tierlaut, Ziffern werden vorgelesen. Mit Strg+Umschalt+D wechselt man in den Modus Tippen: Die Buchstaben bleiben als Text stehen, die Leertaste macht Wortabstände, und Enter liest ihm vor, was er geschrieben hat.",
     tags: ["Python", "pygame", "evdev", "Piper TTS"],
+    // The modes in the order they came; the first is retired (see `what`).
+    modes: [
+      ["Kleckse", "Jeder Tastendruck ein bunter Klecks — Tinte, Kugeln, Schleim. Ausgemustert, als Buchstaben spannender wurden."],
+      ["Tiere", "A bis Z groß, mit Tier, Stimme und Tierlaut; Ziffern werden vorgelesen."],
+      ["Tippen", "Strg+Umschalt+D: Buchstaben bleiben als Text stehen, die Leertaste macht Abstände, Enter liest vor."],
+    ],
     meta: "Solo · September 2026 begonnen, Oktober 2026 umgebaut · für meinen Sohn",
     links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (läuft lokal unter Linux)" }],
     decisions: [
