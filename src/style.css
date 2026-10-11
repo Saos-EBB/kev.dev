@@ -1052,14 +1052,18 @@ button:focus-visible {
 }
 
 /* Desktop bento (breakpoint: see project-cards.css): a grid line runs
-   through the viewport's horizontal center, and the group's top snaps to
-   a whole cell, so the centered 24 x 10 card's edges sit on grid lines. */
+   through the viewport's horizontal center, and the card's top edge snaps
+   to a whole cell, so the centered 24 x 13 card's edges sit on grid lines.
+   The edge, not the centre: 13 rows is an odd count, so a snapped centre
+   leaves both edges half a cell off. 6.5 = 13 / 2, keep it in sync with
+   the rows in project-cards.css. */
 @media (min-width: 1248px) {
   .projects-bg-grid {
     background-position: calc(50% + var(--grid-cell) / 2) 0;
   }
   .carousel-project {
-    top: round(calc(50% + var(--projects-title-h, 0px) / 2), var(--grid-cell));
+    --half-h: calc(6.5 * var(--grid-cell));
+    top: calc(round(calc(50% + var(--projects-title-h, 0px) / 2 - var(--half-h)), var(--grid-cell)) + var(--half-h));
   }
 }
 

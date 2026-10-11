@@ -1162,7 +1162,7 @@
 @media (min-width: 1248px) {
   .pcard {
     grid-template-columns: repeat(24, var(--grid-cell));
-    grid-template-rows: repeat(13, var(--grid-cell));
+    grid-template-rows: repeat(13, var(--grid-cell)); /* 13: style.css .carousel-project's --half-h */
     gap: 0;
     width: calc(24 * var(--grid-cell));
   }
