@@ -4,7 +4,7 @@
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
 import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard, type TenantModule } from "./project-cards";
-import { blueprint, editor, terminal } from "./project-visuals";
+import { blueprint, editor, terminal, viewport } from "./project-visuals";
 import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
@@ -695,9 +695,44 @@ function keysCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// The renderer: its climb from the first formula to the skull CT, the
+// viewport in the middle (the whole thing starts the live widget, like the
+// small card's), and how it works — the same math as widgets/renderer.ts —
+// as the first tab before the texts.
+function rendererCard(card: ProjectCard, head: string): string {
+  const steps = card.steps ?? [];
+  const live = card.facets?.includes("live-demo") ? `data-card="${esc(card.id)}" data-facet="live-demo"` : "disabled";
+  const shades = Array.from({ length: 16 }, (_, i) => `<i style="--d: ${i}"></i>`).join("");
+  const how = `
+    <div class="render-how">
+      <div><b>${esc(UI.rPerspective)}</b><code>x′ = x / z<br>y′ = y / z</code><span>${esc(UI.rPerspectiveText)}</span></div>
+      <div><b>${esc(UI.rRotation)}</b><code>x′ = x·cos θ − z·sin θ<br>z′ = x·sin θ + z·cos θ</code><span>${esc(UI.rRotationText)}</span></div>
+      <div><b>${esc(UI.rDepth)}</b><p class="render-shades" aria-hidden="true">${shades}</p><span>${esc(UI.rDepthText)}</span></div>
+    </div>`;
+  return `
+    <article class="pcard pcard--big pcard--render" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="render">
+        <section class="render-steps">
+          <ol>${steps.map((s, i) => `<li class="${i === steps.length - 1 ? "is-goal" : ""}"><b>${String(i + 1).padStart(2, "0")}</b>${esc(s)}</li>`).join("")}</ol>
+          <p>${esc(card.decisions?.[card.decisions.length - 1] ?? "")}</p>
+        </section>
+        <section class="render-view">
+          ${viewport(card)}
+          <div class="render-bar">
+            <span>${esc(UI.rModel)}: ${Object.values(UI.rModels).map(esc).join(" · ")}</span>
+            <button type="button" ${live}>${esc(UI.vizSpin)}</button>
+          </div>
+        </section>
+        ${textTabs(card, [{ kind: "how", heading: esc(UI.rHow), body: how }])}
+      </div>
+    </article>
+  `;
+}
+
 // Which layouts have a desktop card of their own (renderBigCard). The
 // carousel centres those and sizes them to the space (data-big, main.ts).
-const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal", "keys"]);
+const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal", "keys", "viewport"]);
 export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 
 // The big card for this project, or "" to fall back to the shared layout.
@@ -715,6 +750,8 @@ export function renderBigCard(card: ProjectCard, head: string): string {
       return watchCard(card, head);
     case "keys":
       return keysCard(card, head);
+    case "viewport":
+      return rendererCard(card, head);
     default:
       return "";
   }

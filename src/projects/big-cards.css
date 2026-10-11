@@ -2005,3 +2005,145 @@
     animation: none;
   }
 }
+
+/* --- render (3D renderer): climb + viewport + how it works -------- */
+
+.render {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.4fr) minmax(0, 0.85fr);
+  gap: 1.25rem;
+  font-family: var(--font-mono);
+}
+
+.render-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-height: 0;
+}
+
+.render-steps ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  list-style: none;
+}
+
+.render-steps li {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+  font-size: var(--fs-small);
+}
+
+.render-steps li b {
+  color: var(--color-text-muted);
+}
+
+.render-steps .is-goal {
+  border-color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 12%, var(--box-bg));
+}
+
+.render-steps .is-goal b {
+  color: var(--pc);
+}
+
+.render-steps > p {
+  margin-top: auto;
+  font-size: var(--fs-tiny);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.render-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.render-view .viz-viewport {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.render-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--pc-soft);
+  border-top: 0;
+  background: var(--box-bg);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.render-bar button {
+  margin-inline-start: auto;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border: 0;
+  background: var(--pc);
+  color: #08070a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.render-bar button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.render-how {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.render-how > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--pc-soft);
+}
+
+.render-how b {
+  color: var(--pc);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+}
+
+.render-how code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+}
+
+.render-how span {
+  font-size: var(--fs-tiny);
+  color: var(--color-text-muted);
+}
+
+/* The 16 depth steps: near is bright, far is dark. */
+.render-shades {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 2px;
+  height: 1rem;
+}
+
+.render-shades i {
+  background: color-mix(in srgb, var(--pc) calc(100% - var(--d) * 6%), #050507);
+}
+
+.pcard--render [data-panel="how"] {
+  padding: 0.8rem;
+}

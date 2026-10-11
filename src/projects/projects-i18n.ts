@@ -276,6 +276,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       mascot: "Tschobbo, the purple slime blob with sunglasses",
     },
     renderer: {
+      steps: ["The formula from the short", "Wireframe", "Rotation", "Depth shading", "Reading OBJ", "Reading STL", "DICOM → skull CT"],
       title: "3D Wireframe Renderer",
       kind: "3D without a library",
       learnGoal: "I wanted to see how far a simple 2D canvas can be pushed.",
@@ -640,6 +641,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       mascot: "Tschobbo, фиолетовый слизень в солнечных очках",
     },
     renderer: {
+      steps: ["Формула из шортса", "Каркас", "Вращение", "Затенение по глубине", "Чтение OBJ", "Чтение STL", "DICOM → КТ черепа"],
       title: "3D-каркасный рендерер",
       kind: "3D без библиотек",
       learnGoal: "Хотел узнать, как далеко можно зайти с простым 2D-канвасом.",
@@ -1004,6 +1006,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       mascot: "サングラスをかけた紫のスライム、Tschobbo",
     },
     renderer: {
+      steps: ["ショート動画の公式", "ワイヤーフレーム", "回転", "奥行きシェーディング", "OBJ の読み込み", "STL の読み込み", "DICOM → 頭蓋骨CT"],
       title: "3Dワイヤーフレーム・レンダラー",
       kind: "ライブラリなしの3D",
       learnGoal: "シンプルな2Dキャンバスでどこまでできるか知りたかった。",

@@ -606,6 +606,7 @@ const cards: ProjectCard[] = [
     points: ["3D auf einem simplen 2D-Canvas, ohne Grafik-Bibliothek", "Projektion, Rotation und Tiefenschattierung selbst gerechnet", "Lädt OBJ, STL und DICOM — bis zum Schädel-CT"],
     what: "Angefangen mit einer Formel aus einem YouTube-Short (Tsodings „magic formula“): Die Idee, dass ich auf einem simplen 2D-HTML-Canvas komplettes 3D rendern kann, fand ich so spannend, dass ich die Grenzen ausreizen wollte. Projektion, Rotation und Tiefenschattierung selbst gerechnet, ohne Grafik-Bibliothek — dazu zum ersten Mal OBJ- und STL-Dateien eingelesen.",
     tags: ["JavaScript", "Canvas 2D", "3D-Mathematik", "OBJ/STL/DICOM"],
+    steps: ["Formel aus dem Short", "Drahtgitter", "Rotation", "Tiefenschattierung", "OBJ einlesen", "STL einlesen", "DICOM → Schädel-CT"],
     meta: "Solo · aus Eigeninteresse · ca. 2 Wochen bis zum Ziel",
     links: [
       { label: "GitHub", href: "https://github.com/Saos-EBB/Renderder" },
