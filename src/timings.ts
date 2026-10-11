@@ -102,14 +102,17 @@ export const TIMINGS = {
 
     hold: 0.9, // total black-hold budget — grid.duration above is carved out of the front of it, the rest stays pure black before the fall-in starts
 
+    // Letter fall durations are timeline units, and the auto-scroll below
+    // plays the timeline at autoScroll.secondsPerUnit — so 1 = one second
+    // from a letter appearing to it landing.
     headline: {
-      duration: 0.9,
+      duration: 1,
       ease: "back.out(2.4)", // higher overshoot than a "plain" back.out — reads as a small bounce settling after each letter lands
       staggerEach: 0.035, // random order + small `each` = letters read as tumbling in independently, several falling at once
     },
 
     mail: {
-      duration: 0.8,
+      duration: 1,
       ease: "back.out(2.4)",
       staggerEach: 0.03,
       startOffset: 0.25, // starts this far into the headline's own fall — overlapping, not sequential
@@ -128,10 +131,14 @@ export const TIMINGS = {
     // scrolling — see the ScrollTrigger onUpdate in contact.ts.
     autoScrollAt: 0.08,
     autoScroll: {
-      duration: 2.4, // seconds, real scroll time (Lenis), not timeline units — unhurried, so the fall-in reads as a glide, not a rush
-      // ease-in-out sine: picks up softly from where the user left off and
-      // settles softly — ease-out cubic shot off at full speed and rushed.
-      easing: (t: number) => -(Math.cos(Math.PI * t) - 1) / 2,
+      // Real seconds per timeline unit while the page scrolls itself: the
+      // scroll's duration is worked out from how much timeline is left
+      // (contact.ts), so a letter's `duration: 1` really takes 1 s.
+      secondsPerUnit: 1,
+      // Linear on purpose: an eased scroll runs the middle faster than
+      // the average and would rush the letters falling there. The scrub
+      // lag above already softens the start and the stop.
+      easing: (t: number) => t,
     },
 
     // Ambient per-letter float once landed (progress 1) — killed the

@@ -37,7 +37,7 @@ interface Note {
   label: string;
   color: string; // one colour per project (--note-N in style.css); the terminal takes it over
   bullets?: string[];
-  open?: string; // shown as [OFFEN: …] where copy or code is still missing
+  open?: string; // shown as [OFFEN: …] (dev only) where copy or code is still missing
   code?: { file: string; text: string };
   run?: string; // Launcher argument; no run = no console entry point
   files?: Record<string, string>; // written to the virtual /files/ before the run
@@ -346,7 +346,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
       note.bullets
         ? card(UI.gDoes, `<ul class="gwidget-bullets">${note.bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`)
         : "",
-      note.open ? `<p class="gwidget-open">[OFFEN: ${esc(note.open)}]</p>` : "",
+      note.open && import.meta.env.DEV ? `<p class="gwidget-open">[OFFEN: ${esc(note.open)}]</p>` : "",
     ].join("");
     codeFile.textContent = note.code ? note.code.file : "";
     codeBody.textContent = note.code ? note.code.text : UI.gNoCode;

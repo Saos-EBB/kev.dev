@@ -511,8 +511,11 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
         self.progress < LANDED_PROGRESS
       ) {
         hasAutoScrolled = true;
+        // As long as the rest of the timeline takes at secondsPerUnit, so
+        // each letter's fall lasts its duration in real seconds.
+        const remaining = tl.duration() * (LANDED_PROGRESS - self.progress);
         lenis.scrollTo(getContactRevealScrollY()!, {
-          duration: TIMING.autoScroll.duration,
+          duration: remaining * TIMING.autoScroll.secondsPerUnit,
           easing: TIMING.autoScroll.easing,
           lock: true,
         });

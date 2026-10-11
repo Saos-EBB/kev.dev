@@ -1,6 +1,6 @@
 // About overlay blocks (A1–A5). Facts (A1) / story (A2) / stance (A3) /
 // way of working (A4) / taste (A5). Copy is verbatim from the handoff;
-// anything Kevin still has to decide is shown as a visible [OFFEN: …].
+// anything Kevin still has to decide is shown as a visible [OFFEN: …] (dev only).
 // The copy itself, in every language, lives in about-content.ts.
 
 import "./about-blocks.css";
