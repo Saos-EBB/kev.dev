@@ -28,6 +28,9 @@ interface CardText {
   mailbox?: Record<MailFolder, [string, string][]>;
   layers?: Detail[];
   moduleInfo?: Record<TenantModule, Detail>;
+  // Labels only, by position; the numbers stay the card's.
+  hoursChart?: string[];
+  timelineChart?: string[];
   mascot?: string;
   widget?: string;
 }
@@ -35,6 +38,8 @@ interface CardText {
 const T: Partial<Record<Lang, Record<string, CardText>>> = {
   en: {
     yourbrand: {
+      hoursChart: ["Prototype, April–June", "since then, total", "of which load tests & dashboard", "of which multi-tenant & console"],
+      timelineChart: ["DB design & backend", "Frontend", "Docker & seed generator", "Load tests & dashboard", "Scaling: Redis, storage, queue", "Multi-tenant & console", "Shop module — right now"],
       layers: [
         {
           about: "This is where I tried out ideas instead of playing it safe — the rules that turn a community platform into a product.",
@@ -393,6 +398,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
 
   ru: {
     yourbrand: {
+      hoursChart: ["Прототип, апрель–июнь", "с тех пор, всего", "из них нагрузочные тесты и дашборд", "из них мультиарендность и консоль"],
+      timelineChart: ["Проект БД и бэкенд", "Фронтенд", "Docker и генератор данных", "Нагрузочные тесты и дашборд", "Масштабирование: Redis, хранилище, очередь", "Мультиарендность и консоль", "Модуль магазина — сейчас"],
       layers: [
         {
           about: "Здесь я пробовал идеи, а не играл наверняка — правила, которые превращают платформу сообщества в продукт.",
@@ -751,6 +758,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
 
   ja: {
     yourbrand: {
+      hoursChart: ["プロトタイプ、4〜6月", "それ以降の合計", "うち負荷テストとダッシュボード", "うちマルチテナントとコンソール"],
+      timelineChart: ["DB 設計とバックエンド", "フロントエンド", "Docker とシード生成", "負荷テストとダッシュボード", "スケーリング：Redis、ストレージ、キュー", "マルチテナントとコンソール", "ショップモジュール — いま"],
       layers: [
         {
           about: "安全策を取らずにアイデアを試した場所 — コミュニティ基盤をプロダクトに変えるルール。",
@@ -1110,6 +1119,8 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
 
   ar: {
     yourbrand: {
+      hoursChart: ["النموذج الأولي، أبريل–يونيو", "منذ ذلك الحين، الإجمالي", "منها اختبارات التحمّل ولوحة المتابعة", "منها تعدد المستأجرين ووحدة التحكم"],
+      timelineChart: ["تصميم القاعدة والخادم", "الواجهة الأمامية", "Docker ومولّد البيانات", "اختبارات التحمّل ولوحة المتابعة", "التوسّع: Redis والتخزين والطوابير", "تعدد المستأجرين ووحدة التحكم", "وحدة المتجر — الآن"],
       layers: [
         {
           about: "هنا جرّبت الأفكار بدل اللعب في المضمون — القواعد التي تحوّل منصة مجتمع إلى منتج.",
@@ -1502,6 +1513,8 @@ export function localizeCard(card: ProjectCard): ProjectCard {
     mailbox: t.mailbox ?? card.mailbox,
     layers: t.layers ?? card.layers,
     moduleInfo: t.moduleInfo ?? card.moduleInfo,
+    hoursChart: card.hoursChart?.map(([label, lo, hi], i) => [t.hoursChart?.[i] ?? label, lo, hi]),
+    timelineChart: card.timelineChart?.map(([label, a, b], i) => [t.timelineChart?.[i] ?? label, a, b]),
     parts: card.parts?.map((part, i) => (t.parts?.[i] ? { ...part, ...t.parts[i] } : part)),
     mascot: card.mascot && t.mascot ? { ...card.mascot, alt: t.mascot } : card.mascot,
     widget: card.widget && t.widget ? { ...card.widget, label: t.widget } : card.widget,

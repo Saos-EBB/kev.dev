@@ -17,7 +17,7 @@ import { NOTE_IDS, noteLabel } from "./widgets/grundlagen-i18n";
 // the experimental business logic on top), plus which module each real
 // tenant has switched on (their tenant.json). Shop is being built, no
 // tenant has it yet.
-function blueprint(card: ProjectCard): string {
+export function blueprint(card: ProjectCard): string {
   const layers = UI.vizLayers;
   const wip = (m: TenantModule) => m === "shop";
   return `

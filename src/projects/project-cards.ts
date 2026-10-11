@@ -121,6 +121,11 @@ export interface ProjectCard {
   // and per module, a sentence and a few points.
   layers?: Detail[];
   moduleInfo?: Record<TenantModule, Detail>;
+  // YourBrand's desktop card, charts beside "hours" and "timeline": hours
+  // as [label, low, high] (a single estimate has low = high) and phases as
+  // [label, first month, last month], months counted from April 2026.
+  hoursChart?: [string, number, number][];
+  timelineChart?: [string, number, number][];
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
   parts?: { does: string; files: string[]; reuse: string }[];

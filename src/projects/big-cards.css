@@ -249,8 +249,17 @@
   color: var(--color-text-muted);
 }
 
+/* Text and, where the text leaves columns free, a chart beside it. */
+.er-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 2.5rem;
+}
+
 .er-body {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   columns: 4 15rem;
   column-fill: auto;
@@ -261,6 +270,208 @@
   font-size: calc(var(--fs-read) * 0.92);
   line-height: 1.5;
   color: var(--color-text-muted);
+}
+
+.er-viz {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.6rem;
+  overflow: hidden;
+  padding-inline-start: 2.5rem;
+  border-inline-start: 1px solid color-mix(in srgb, var(--pc) 14%, transparent);
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  color: var(--color-text-muted);
+  line-height: 1.25;
+}
+
+.er-viz[hidden],
+.er-viz-v[hidden] {
+  display: none;
+}
+
+.er-viz-v {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.er-stack--tight {
+  gap: 0.2rem;
+}
+
+.er-stack--tight li {
+  padding-block: 0.2rem;
+}
+
+/* Compact matrix row/column: filled square = booked. */
+.er-list {
+  display: grid;
+  gap: 0.45rem 1.5rem;
+  list-style: none;
+}
+
+.er-list--2 {
+  grid-template-columns: repeat(2, max-content);
+  grid-auto-flow: column;
+  grid-template-rows: repeat(4, auto);
+}
+
+.er-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.45;
+}
+
+.er-list li::before {
+  content: "";
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--pc-soft);
+}
+
+.er-list li.on {
+  opacity: 1;
+  color: var(--color-text);
+}
+
+.er-list li.on::before {
+  border-color: var(--pc);
+  background: var(--pc);
+}
+
+/* The card's own overview (project-visuals.ts) at the box's text size. */
+.er-viz .viz-blueprint {
+  height: auto;
+  padding: 0;
+}
+
+.er-viz .viz-stack li {
+  font-size: var(--fs-small);
+}
+
+.er-viz .viz-stack span,
+.er-viz .viz-tenants {
+  font-size: var(--fs-tiny);
+}
+
+/* At its own width, not stretched across the column. */
+.er-viz .viz-tenants,
+.er-viz .er-list {
+  align-self: flex-start;
+}
+
+.er-viz .viz-tenants td::before {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+/* Emphasis: the row's own layer / tenant / module lit, the rest dimmed. */
+.er-stack:not(.er-stack--all) li:not(.hl) {
+  opacity: 0.4;
+}
+
+.er-stack li.hl {
+  border-color: var(--pc);
+  background: color-mix(in srgb, var(--pc) 20%, transparent);
+}
+
+.er-matrix--row td:not(.hl),
+.er-matrix--col td:not(.hl),
+.er-matrix--row tbody tr:not(.hl) th,
+.er-matrix--col thead th:not(.hl) {
+  opacity: 0.3;
+}
+
+.er-matrix tbody tr.hl th,
+.er-matrix thead th.hl {
+  color: var(--color-text);
+}
+
+/* Hours: one scale, the value at each bar's tip. */
+/* Label column, then the bar on a shared scale. */
+.er-bars {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 0.6rem 0.9rem;
+}
+
+.er-bar {
+  display: contents;
+}
+
+.er-bar-track {
+  display: flex;
+  align-items: center;
+  height: 0.9rem;
+}
+
+.er-bar-track i {
+  height: 100%;
+  background: var(--pc);
+}
+
+.er-bar-track i:first-child {
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+.er-bar-track i:first-child:has(+ .er-bar-range) {
+  border-radius: 0;
+}
+
+/* The range: same hue, lighter, after a 2px gap. */
+.er-bar-track .er-bar-range {
+  margin-inline-start: 2px;
+  background: color-mix(in srgb, var(--pc) 35%, transparent);
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+}
+
+.er-bar-track b {
+  margin-inline-start: 0.5rem;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+/* Timeline: phases over months, the current one lit. */
+/* Each phase: its label on one line, its bar under it on the months. */
+.er-gantt {
+  display: grid;
+  grid-template-columns: repeat(var(--months), minmax(0, 1fr));
+  align-items: center;
+  gap: 0 2px;
+}
+
+.er-gantt-m {
+  text-align: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--pc) 14%, transparent);
+  padding-bottom: 0.2rem;
+}
+
+.er-gantt-l {
+  grid-column: 1 / -1;
+  margin-top: 0.45rem;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+}
+
+.er-gantt i {
+  height: 0.65rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pc) 35%, transparent);
+}
+
+.er-gantt i.hl {
+  background: var(--pc);
 }
 
 .er-pager {

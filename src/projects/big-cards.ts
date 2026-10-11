@@ -3,7 +3,9 @@
 // own built from the same card data — YourBrand reads as its data model.
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
-import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard } from "./project-cards";
+import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard, type TenantModule } from "./project-cards";
+import { blueprint } from "./project-visuals";
+import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
 
@@ -23,7 +25,95 @@ function relation(ends: string, label: string): string {
 // One attribute row. Its text isn't in the table: picking the row shows it
 // in the detail box under the diagram, so the tables stay as tall as their
 // rows and the text gets the card's full width.
-type ErRow = { key?: string; swatch?: string; attr: string; type?: string; body: string; hot?: boolean };
+// `viz`: the chart beside the text, largest first — the first that fits
+// the free space is shown (initBigCards), smaller ones are the fallbacks.
+type ErRow = { key?: string; swatch?: string; attr: string; type?: string; body: string; hot?: boolean; viz?: string[] };
+
+// The charts beside a row's text, shown only where the text leaves room
+// (initBigCards). One hue throughout: the row's own part in --pc, the
+// context dimmed — never a color per series.
+
+// The layer stack with one layer lit (none: -1, all at full strength).
+function vizStack(active: number, caption = true): string {
+  const layers = UI.vizLayers;
+  return `
+    ${caption ? `<p class="viz-caption">${UI.vizFig1}</p>` : ""}
+    <ol class="viz-stack er-stack${caption ? "" : " er-stack--tight"}${active < 0 ? " er-stack--all" : ""}">
+      ${layers
+        .map(([name, sub], i) => `<li class="${i === active ? "hl" : ""}" style="--i: ${layers.length - 1 - i}"><b>${esc(name)}</b><span>${esc(sub)}</span></li>`)
+        .join("")}
+    </ol>`;
+}
+
+// Tenants × modules with one tenant's row or one module's column lit.
+function vizMatrix(card: ProjectCard, hl: { tenant?: number; module?: TenantModule }): string {
+  const tenants = card.tenants ?? [];
+  const lit = (i: number, m: TenantModule) => hl.tenant === i || hl.module === m;
+  return `
+    <p class="viz-caption">${UI.vizFig2}</p>
+    <table class="viz-tenants er-matrix ${hl.module ? "er-matrix--col" : hl.tenant !== undefined ? "er-matrix--row" : ""}">
+      <thead><tr><th></th>${TENANT_MODULES.map(
+        (m) => `<th class="${m === "shop" ? "wip" : ""}${hl.module === m ? " hl" : ""}"><span>${esc(UI.vizModules[m])}</span></th>`,
+      ).join("")}</tr></thead>
+      <tbody>
+        ${tenants
+          .map(
+            (t, i) =>
+              `<tr class="${hl.tenant === i ? "hl" : ""}"><th>${esc(t.name)}</th>${TENANT_MODULES.map(
+                (m) =>
+                  `<td class="${t.modules.includes(m) ? "on" : m === "shop" ? "wip" : ""}${lit(i, m) ? " hl" : ""}" title="${esc(t.name)} · ${esc(UI.vizModules[m])}"></td>`,
+              ).join("")}</tr>`,
+          )
+          .join("")}
+      </tbody>
+    </table>`;
+}
+
+// The compact form of one matrix row or column: a square per item, filled
+// where it's booked.
+function vizList(items: { label: string; on: boolean }[]): string {
+  return `
+    <ul class="er-list${items.length > 5 ? " er-list--2" : ""}">
+      ${items.map((it) => `<li class="${it.on ? "on" : ""}">${esc(it.label)}</li>`).join("")}
+    </ul>`;
+}
+
+// Hours as bars on one scale: the solid part is the low estimate, the
+// lighter part the rest of the range. Every bar carries its value.
+function vizHours(rows: [string, number, number][]): string {
+  const max = Math.ceil(Math.max(...rows.map(([, , hi]) => hi)) / 100) * 100;
+  const pct = (v: number) => `${(v / max) * 100}%`;
+  const value = (lo: number, hi: number) => (lo === hi ? `~${lo} h` : `${lo}–${hi} h`);
+  return `
+    <div class="er-bars">
+      ${rows
+        .map(
+          ([label, lo, hi]) => `
+        <div class="er-bar" title="${esc(label)}: ${value(lo, hi)}">
+          <span class="er-bar-label">${esc(label)}</span>
+          <span class="er-bar-track"><i style="width: ${pct(lo)}"></i>${hi > lo ? `<i class="er-bar-range" style="width: ${pct(hi - lo)}"></i>` : ""}<b>${value(lo, hi)}</b></span>
+        </div>`,
+        )
+        .join("")}
+    </div>`;
+}
+
+// The timeline as phases over months (April 2026 on), the current one lit.
+function vizTimeline(rows: [string, number, number][]): string {
+  const months = Math.max(...rows.map(([, , to]) => to)) + 1;
+  const name = new Intl.DateTimeFormat(LANG, { month: "short" });
+  return `
+    <div class="er-gantt" style="--months: ${months}">
+      ${Array.from({ length: months }, (_, i) => `<span class="er-gantt-m">${esc(name.format(new Date(2026, 3 + i, 1)))}</span>`).join("")}
+      ${rows
+        .map(
+          ([label, from, to], i) => `
+        <span class="er-gantt-l">${esc(label)}</span>
+        <i class="${i === rows.length - 1 ? "hl" : ""}" style="grid-column: ${from + 1} / ${to + 2}" title="${esc(label)}"></i>`,
+        )
+        .join("")}
+    </div>`;
+}
 
 function entity(name: string, count: string, rows: ErRow[], selected: string, lead = false): string {
   return `
@@ -52,13 +142,15 @@ function erCard(card: ProjectCard, head: string): string {
     .map((l) => (l.href ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>` : esc(l.label)))
     .join(" · ");
 
+  const overview = [blueprint(card), vizMatrix(card, {}), vizStack(-1, false)];
   const project: ErRow[] = [
-    { key: "PK", attr: "why", type: "text", body: p(card.learnGoal) + p(card.what) },
-    { attr: "learned", type: "text", body: p(card.challenge) },
-    { attr: "architecture", type: "text[]", body: `<ul>${(card.decisions ?? []).map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` },
-    { attr: "hours", type: "text", body: p(card.meta) },
-    { attr: "timeline", type: "text", body: p(card.origin) },
-    { attr: "repo", type: "url", body: `<p>${links}</p><ul class="er-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` },
+    { key: "PK", attr: "why", type: "text", body: p(card.learnGoal) + p(card.what), viz: overview },
+    // The challenge: a clean base, the business logic on top experimental.
+    { attr: "learned", type: "text", body: p(card.challenge), viz: [vizStack(0), vizStack(0, false)] },
+    { attr: "architecture", type: "text[]", body: `<ul>${(card.decisions ?? []).map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`, viz: overview },
+    { attr: "hours", type: "text", body: p(card.meta), viz: card.hoursChart && [vizHours(card.hoursChart)] },
+    { attr: "timeline", type: "text", body: p(card.origin), viz: card.timelineChart && [vizTimeline(card.timelineChart)] },
+    { attr: "repo", type: "url", body: `<p>${links}</p><ul class="er-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`, viz: overview },
   ];
 
   const layers = UI.vizLayers;
@@ -66,13 +158,15 @@ function erCard(card: ProjectCard, head: string): string {
     key: `L${layers.length - i}`,
     attr: name,
     body: `<p><b>${esc(sub)}</b></p>${detail(card.layers?.[i])}`,
+    viz: [vizStack(i), vizStack(i, false)],
   }));
 
-  const tenant: ErRow[] = tenants.map((t) => ({
+  const tenant: ErRow[] = tenants.map((t, i) => ({
     swatch: t.color,
     attr: t.name,
     type: t.tier,
     body: `<p><b>${esc(t.kind)}</b></p>${p(t.about)}<p class="er-mods">${t.modules.map((m) => esc(UI.vizModules[m])).join(" · ")}</p>`,
+    viz: [vizMatrix(card, { tenant: i }), vizList(TENANT_MODULES.map((m) => ({ label: UI.vizModules[m], on: t.modules.includes(m) })))],
   }));
 
   const module: ErRow[] = TENANT_MODULES.map((m) => {
@@ -83,6 +177,7 @@ function erCard(card: ProjectCard, head: string): string {
       type: wip ? UI.vizWip : `${users.length} / ${tenants.length}`,
       hot: wip,
       body: detail(card.moduleInfo?.[m]) + `<p class="er-mods">${esc(users.length ? users.map((t) => t.name).join(" · ") : UI.vizWip)}</p>`,
+      viz: [vizMatrix(card, { module: m }), vizList(tenants.map((t) => ({ label: t.name, on: t.modules.includes(m) })))],
     };
   });
 
@@ -94,7 +189,10 @@ function erCard(card: ProjectCard, head: string): string {
         (r, i) => `
       <div class="er-pane" data-er-pane="${name}-${i}"${`${name}-${i}` === selected ? "" : " hidden"}>
         <p class="er-path"><span>${name}</span> › ${esc(r.attr)}${r.type ? ` <i>${esc(r.type)}</i>` : ""}</p>
-        <div class="er-body">${r.body}</div>
+        <div class="er-main">
+          <div class="er-body">${r.body}</div>
+          ${r.viz ? `<figure class="er-viz" hidden>${r.viz.map((v) => `<div class="er-viz-v" hidden>${v}</div>`).join("")}</figure>` : ""}
+        </div>
       </div>`,
       ),
     )
@@ -356,18 +454,58 @@ export function initBigCards(root: HTMLElement) {
     const pager = card.querySelector<HTMLElement>(".er-pager");
     let page = 0;
     const paginate = () => {
-      const body = card.querySelector<HTMLElement>(".er-pane:not([hidden]) .er-body");
+      const pane = card.querySelector<HTMLElement>(".er-pane:not([hidden])");
+      const body = pane?.querySelector<HTMLElement>(".er-body");
+      const viz = pane?.querySelector<HTMLElement>(".er-viz");
       if (!body || !pager) return;
       body.style.transform = "";
-      const gap = parseFloat(getComputedStyle(body).columnGap) || 0;
+      body.style.flex = "";
+      body.style.columnCount = "";
+      if (viz) viz.hidden = true;
+      const css = getComputedStyle(body);
+      const gap = parseFloat(css.columnGap) || 0;
       const step = body.clientWidth + gap;
       // How far the columns reach past the box's start edge.
-      const box = body.getBoundingClientRect();
-      let reach = 0;
-      for (const el of Array.from(body.children)) {
-        for (const r of Array.from(el.getClientRects())) reach = Math.max(reach, rtl ? box.right - r.left : r.right - box.left);
+      const reach = () => {
+        const box = body.getBoundingClientRect();
+        let r = 0;
+        for (const el of Array.from(body.children)) {
+          for (const rect of Array.from(el.getClientRects())) r = Math.max(r, rtl ? box.right - rect.left : rect.right - box.left);
+        }
+        return r;
+      };
+      const used = reach();
+      const pages = step > 0 ? Math.max(1, Math.ceil((used - 1) / step)) : 1;
+      // Text that leaves whole columns empty gives them to the chart: the
+      // text keeps exactly the columns it fills, same width as before.
+      if (viz && pages === 1) {
+        const count = Math.min(4, Math.max(1, Math.floor((body.clientWidth + gap) / ((parseFloat(css.columnWidth) || 240) + gap))));
+        const col = (body.clientWidth - (count - 1) * gap) / count;
+        const cols = Math.max(1, Math.ceil((used + gap - 1) / (col + gap)));
+        const free = body.clientWidth - cols * (col + gap);
+        if (cols < count && free >= 16 * parseFloat(getComputedStyle(document.documentElement).fontSize)) {
+          body.style.flex = `0 0 ${cols * col + (cols - 1) * gap}px`;
+          body.style.columnCount = String(cols);
+          viz.hidden = false;
+          // The largest chart that fits; one that doesn't fit at all stays
+          // out rather than being cut off.
+          const fits = (v: HTMLElement) => v.offsetHeight <= viz.clientHeight + 1 && v.scrollWidth <= viz.clientWidth + 1;
+          const variants = Array.from(viz.querySelectorAll<HTMLElement>(".er-viz-v"));
+          let shown = false;
+          for (const v of variants) {
+            variants.forEach((o) => (o.hidden = o !== v));
+            if (fits(v)) {
+              shown = true;
+              break;
+            }
+          }
+          if (!shown) {
+            viz.hidden = true;
+            body.style.flex = "";
+            body.style.columnCount = "";
+          }
+        }
       }
-      const pages = step > 0 ? Math.max(1, Math.ceil((reach - 1) / step)) : 1;
       page = Math.min(page, pages - 1);
       body.style.transform = page ? `translateX(${(rtl ? 1 : -1) * page * step}px)` : "";
       pager.hidden = pages < 2;

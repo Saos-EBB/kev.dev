@@ -100,6 +100,22 @@ const cards: ProjectCard[] = [
         ],
       },
     ],
+    // Same numbers as `meta` and `origin` above.
+    hoursChart: [
+      ["Prototyp, April–Juni", 450, 450],
+      ["seitdem, gesamt", 200, 300],
+      ["davon Loadtests & Dashboard", 60, 90],
+      ["davon Multi-Tenant & Console", 35, 55],
+    ],
+    timelineChart: [
+      ["DB-Entwurf & Backend", 0, 0],
+      ["Frontend", 1, 2],
+      ["Docker & Seed-Generator", 3, 3],
+      ["Loadtests & Dashboard", 3, 4],
+      ["Skalierung: Redis, Storage, Queue", 5, 5],
+      ["Multi-Tenant & Console", 6, 6],
+      ["Shop-Modul — gerade", 6, 6],
+    ],
     moduleInfo: {
       chat: {
         about: "Kontaktanfragen, Unterhaltungen und Nachrichten in Echtzeit.",
