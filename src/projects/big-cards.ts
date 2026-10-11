@@ -406,9 +406,15 @@ function partsCard(card: ProjectCard, head: string): string {
                 <dt>${esc(UI.partsDoes)}</dt><dd>${esc(p.does)}</dd>
                 <dt>${esc(UI.partsFiles)}</dt><dd>${p.files.map((f) => `<code>${esc(f)}</code>`).join(" ")}</dd>
                 <dt>${esc(UI.partsReuse)}</dt><dd>${esc(p.reuse)}</dd>
-                ${p.pros?.length ? `<dt>${esc(UI.partsPros)}</dt><dd class="parts-pro">${list(p.pros)}</dd>` : ""}
-                ${p.cons?.length ? `<dt>${esc(UI.partsCons)}</dt><dd class="parts-con">${list(p.cons)}</dd>` : ""}
               </dl>
+              ${
+                p.pros?.length || p.cons?.length
+                  ? `<div class="parts-procon">
+                <div class="parts-pro"><p>${esc(UI.partsPros)}</p>${list(p.pros)}</div>
+                <div class="parts-con"><p>${esc(UI.partsCons)}</p>${list(p.cons)}</div>
+              </div>`
+                  : ""
+              }
             </details>`,
             )
             .join("")}
@@ -551,6 +557,26 @@ export function initBigCards(root: HTMLElement) {
         panel.hidden = panel.dataset.panel !== tab.dataset.tab;
       });
     });
+    // An opened part scrolls the list until all of it is in view; one
+    // taller than the list scrolls down to its end (pro/con), the start is
+    // a wheel turn up — so the list needs no scrollbar. `toggle` doesn't
+    // bubble: listened for in the capture phase.
+    const list = card.querySelector<HTMLElement>(".parts-list");
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("force-motion");
+    card.addEventListener(
+      "toggle",
+      (e) => {
+        const item = e.target as HTMLDetailsElement;
+        if (!list || !item.matches(".parts-item") || !item.open) return;
+        requestAnimationFrame(() => {
+          const top = item.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+          const end = top + item.offsetHeight - list.clientHeight;
+          const target = item.offsetHeight > list.clientHeight ? end : Math.min(top, Math.max(list.scrollTop, end));
+          list.scrollTo({ top: Math.max(0, target), behavior: smooth ? "smooth" : "auto" });
+        });
+      },
+      true,
+    );
   });
 }
 

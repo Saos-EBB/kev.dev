@@ -1017,12 +1017,19 @@
   margin-top: 0.7rem;
 }
 
+/* Still scrolls (wheel, keyboard), but without a bar: opening a part
+   scrolls it into view by itself (initBigCards). */
 .parts-list {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
   min-height: 0;
   overflow: auto;
+  scrollbar-width: none;
+}
+
+.parts-list::-webkit-scrollbar {
+  display: none;
 }
 
 .parts-head {
@@ -1089,23 +1096,45 @@
   font-size: calc(var(--fs-small) * 0.92);
 }
 
+/* Label above its text (not beside it), so the text gets the full width
+   and an opened part stays as short as it can. */
 .parts-body {
-  display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr);
-  gap: 0.5rem 1rem;
-  padding: 0.2rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.2rem 1rem 0.8rem;
   font-size: calc(var(--fs-read) * 0.92);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
-.parts-body dt {
+.parts-body dt,
+.parts-procon p {
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-text-muted);
-  /* Long labels (Russian) break instead of running into the text. */
-  overflow-wrap: anywhere;
-  hyphens: auto;
 }
 
-.parts-body ul {
+.parts-body dd + dt {
+  margin-top: 0.45rem;
+}
+
+/* Pro and con side by side. */
+.parts-procon {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  padding: 0 1rem 1rem;
+  font-size: calc(var(--fs-read) * 0.85);
+  line-height: 1.45;
+}
+
+.parts-procon p {
+  margin-bottom: 0.3rem;
+}
+
+.parts-procon ul {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
