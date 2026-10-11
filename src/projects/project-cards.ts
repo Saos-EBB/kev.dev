@@ -42,6 +42,9 @@ export interface ProjectWidget {
 export const TENANT_MODULES = ["chat", "matching", "payments", "hidden", "board", "caretaker", "orgs", "shop"] as const;
 export type TenantModule = (typeof TENANT_MODULES)[number];
 
+export type MailFolder = "what" | "why" | "learned" | "origin";
+export type Detail = { about: string; points: string[] };
+
 // One tenant in YourBrand's Screens facet: what it is, what it booked, a
 // click-through clip (.mp4) and its screens, each as desktop and mobile.
 export interface TenantShowcase {
@@ -111,6 +114,13 @@ export interface ProjectCard {
   // TschoBBo's desktop card: its architecture as code — the pipeline's
   // stages (name, file, resulting job status) and a code excerpt.
   arch?: { steps: [string, string, string][]; code: string };
+  // TschoBBo's desktop card: extra mails per folder, [subject, body], after
+  // the one the folder opens with (built from what/learnGoal/…).
+  mailbox?: Record<MailFolder, [string, string][]>;
+  // YourBrand's desktop card: per core layer (same order as UI.vizLayers)
+  // and per module, a sentence and a few points.
+  layers?: Detail[];
+  moduleInfo?: Record<TenantModule, Detail>;
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
   parts?: { does: string; files: string[]; reuse: string }[];

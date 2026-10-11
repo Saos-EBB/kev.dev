@@ -4,7 +4,7 @@
 // notes stay German on purpose — they're Kevin's to-dos, not copy.
 
 import { LANG, type Lang } from "../i18n";
-import type { ProjectCard } from "./project-cards";
+import type { Detail, MailFolder, ProjectCard, TenantModule } from "./project-cards";
 
 interface CardText {
   title?: string;
@@ -24,6 +24,10 @@ interface CardText {
   tenants?: { kind: string; about: string; video: string; screenshots: string[] }[];
   // Matched to the card's parts by position; files stay as they are.
   parts?: { does: string; reuse: string }[];
+  // Replace the card's own as a whole (no fallback per entry).
+  mailbox?: Record<MailFolder, [string, string][]>;
+  layers?: Detail[];
+  moduleInfo?: Record<TenantModule, Detail>;
   mascot?: string;
   widget?: string;
 }
@@ -31,6 +35,123 @@ interface CardText {
 const T: Partial<Record<Lang, Record<string, CardText>>> = {
   en: {
     yourbrand: {
+      layers: [
+        {
+          about: "This is where I tried out ideas instead of playing it safe — the rules that turn a community platform into a product.",
+          points: [
+            "Matching: a swipe deck weighted by shared interests and distance, a mutual like → match plus a conversation",
+            "Moderation: from 10 different reports on, the system suspends by itself; bans with duration, strike and email",
+            "Profanity filter on bio, status, nickname and chat — the word list grows at runtime",
+            "Roles user · admin · org · owner — exactly one owner, enforced by the database",
+            "Modules talk through internal events (EventEmitter2) instead of calling each other directly",
+          ],
+        },
+        {
+          about: "I built the APIs myself because they interested me — Postman was gold for that.",
+          points: [
+            "REST under /api/v1, one NestJS module per feature: auth, profile, chat, matching, moderation, admin, GDPR …",
+            "Socket.io on the same port: every person in their own room — messages, typing, read receipts and bans in real time",
+            "Stripe Embedded Checkout with webhooks; a daily cron reminds 3 days before a subscription ends",
+            "Heavy work runs in the worker (BullMQ): shrinking images to WebP, building and mailing the GDPR PDF",
+            "A switched-off module → 404, even before the login check",
+          ],
+        },
+        {
+          about: "Protection from the bottom up: what the database doesn't hand out, no API can leak.",
+          points: [
+            "Row-level security as the baseline; every person makes bio, city, age & co. visible one by one",
+            "Email AES-256 encrypted, found through a SHA-256 hash — no plaintext in the DB",
+            "JWT for 15 minutes, refresh token for 30 days with single-use rotation in an HttpOnly cookie",
+            "bcrypt (cost 12) in its own thread pool — about 3× more logins in the load test",
+            "Rate limits in Redis (global 100/min, login 5/min) — they hold across several instances",
+            "Protected persons don't show up in any search, already at DB level",
+          ],
+        },
+        {
+          about: "Two weeks of DB brainstorming before the first line of backend existed.",
+          points: [
+            "PostgreSQL 16 + PostGIS 3.4: radius search via ST_DWithin right in the database",
+            "City autocomplete from GeoNames data, extended to Europe",
+            "Schema as numbered SQL migrations — every tenant DB catches up on start",
+            "A database of its own per tenant: GDPR data physically separated",
+            "Soft deletes: an account can be reactivated for 30 days; GDPR data access as a PDF (Art. 15)",
+          ],
+        },
+      ],
+      moduleInfo: {
+        chat: {
+          about: "Contact requests, conversations and messages in real time.",
+          points: [
+            "First the request, then the chat — nobody writes unasked",
+            "Typing and read receipts live via WebSocket",
+            "Every message goes through the profanity filter",
+            "Always stays loaded because its gateway also delivers notifications and bans — only routes and chat events are switched off",
+          ],
+        },
+        matching: {
+          about: "Meeting people by swipe.",
+          points: [
+            "The deck is sorted by shared interests and distance",
+            "Mutual like → match, and the conversation is created right away",
+            "A list of all matches, shared interests marked",
+            "From Premium on, needs chat",
+          ],
+        },
+        payments: {
+          about: "Subscriptions via Stripe.",
+          points: [
+            "Embedded Checkout — paying without leaving the page",
+            "Monthly, yearly or lifetime; the owner sets the prices",
+            "Webhooks for payment, failure and cancellation",
+            "A reminder 3 days before it runs out, then the subscription ends cleanly",
+          ],
+        },
+        hidden: {
+          about: "The playground in dark mode — engagement and monetization.",
+          points: [
+            "Beef battles: public duels from 15 minutes to 48 hours, the audience votes",
+            "Real-time games: rock-paper-scissors, tic-tac-toe, Mastermind, reaction",
+            "A coin economy with Stripe packages, collecting teeth, badges that expire",
+            "Whoever chickens out goes into exile for 24 hours",
+            "Access through rotating film passwords",
+          ],
+        },
+        board: {
+          about: "The notice board for the neighborhood.",
+          points: [
+            "Notices: looking for, offering, giving away, meetups",
+            "Visible to the street (150 m), 500 m, 1 km, the neighborhood (3 km) or everyone",
+            "\"Tear off a slip\" sends a contact request",
+            "Expire after 14 days; public only with consent and never for protected persons",
+            "Needs chat",
+          ],
+        },
+        caretaker: {
+          about: "One account looks after a few others, like a parent account.",
+          points: [
+            "The person cared for consents and can change rights or end the care",
+            "Rights: read along with messages, set protection",
+            "For protected persons, a new contact waits for approval",
+          ],
+        },
+        orgs: {
+          about: "A provider with its team.",
+          points: [
+            "Care relationships belong to the organization — all of them at a glance",
+            "Only platform admin and owner may create one",
+            "Needs care",
+          ],
+        },
+        shop: {
+          about: "The module I'm building right now — the test of whether the core keeps its promise.",
+          points: [
+            "Food (pickup or delivery), merch, license keys and unlock codes — up to ~1000 items with filters",
+            "Stripe only reserves; anything suspicious (double booking, high amount, Radar risk) is put on hold, a human decides with a reason",
+            "Only on acceptance: charge, deliver, invoice under § 14 UStG by email",
+            "Needs payments and a VAT ID or tax number on the tenant",
+          ],
+        },
+      },
       kind: "White-label SaaS",
       learnGoal: "I wanted to learn how to build software in a modular way and get a real product with business logic off the ground.",
       claim: "Proves architectural thinking — a modular white-label SaaS, truly multi-tenant, every layer built on purpose.",
@@ -88,6 +209,34 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
     },
     tschobbo: {
+      mailbox: {
+        what: [
+          ["The pipeline", "Scrape → filter → cover letter → review → Gmail draft. Every step starts from the sidebar, keeps running in the background and shows its progress even while you click elsewhere. At the end there's a short summary like \"14 new, 6 dedup\", and the list reloads."],
+          ["Five portals, one search", "karriere.at, devjobs.at, LinkedIn, AMS and jobs.at. Search terms per portal live on a settings page in the browser; every portal describes its own fields, and the same check runs in the form, in the server and in the scraper. A radius filter then applies to all five."],
+          ["A verdict, not a list", "The regex filter sorts every posting into match, off-stack or brutal. The verdict can be overridden in the UI, and several jobs can be moved, rated or deleted at once. Duplicates across portals are found and merged — a cover letter already written moves along."],
+          ["Follow-ups and calendar", "After three days without an answer, an application is due for a follow-up — in the same Gmail thread, so the reply finds its way back to the job. The calendar shows per day what went out, when I followed up and when answers came in."],
+          ["Offline archive", "While scraping, the bot checks whether stored postings are still online. Only when a single fetch confirms it does a job move to the archive — if it shows up again, the same run brings it back. Jobs with my own work in them (cover letter, sending) are never touched."],
+        ],
+        why: [
+          ["Repetitive is bot work", "Every day the same portals, the same filters, the same phrases. The searching, sorting and first draft are the bot's — reading, deciding and sending stay with me."],
+          ["My data stays here", "CV, profile and every application stay on my machine. The language model runs locally, there are no cloud costs and nobody reading along."],
+          ["Software that lives", "Tschobbo grabs postings with his many arms, filters, types and files them all at once. The pipeline shouldn't feel like dead script output, but like having someone who works for you."],
+          ["Learning on a real problem", "Scraping with and without a browser, prompts for a local model, regex for the filters — each with real use instead of as an exercise."],
+        ],
+        learned: [
+          ["Measure, don't guess", "Compared five local models on the same test jobs (good fit, wrong stack, big mismatch): one invented skills that aren't in the profile, one always ran into the timeout, one's RAM kept climbing. Later the same comparison for the switch to llama.cpp with Gemma 4 — about four times faster."],
+          ["The pipeline only runs forward", "A re-filter once reset every job to the start — 21 sent applications and 33 finished cover letters suddenly showed up as new again. Restored by script from the cover-letter files and the mail log; since then a re-filter only re-makes the verdict."],
+          ["Keep heuristics honest", "The Gmail sync matches old mails by recipient and subject, because the message ID was never stored. So: read only, never overwrite, and when in doubt set nothing at all."],
+          ["Better archive too late", "karriere.at answers an expired posting with 200 instead of 404. A live job archived silently is a missed job — so only measured offline signals count, and rate limits or timeouts leave the job alone."],
+        ],
+        origin: [
+          ["karriere.at first", "The first scraper, because the site was the easiest. Everything ran in the terminal: npm run scrape, filter, anschreiben."],
+          ["Then AMS and devjobs", "Two portals that give nothing without a real browser — that's where Playwright came in. With LinkedIn and jobs.at it became five behind one shared interface."],
+          ["UI and mascot", "Once friends saw potential: a React interface in the look of a mail client, on a bare node:http server without a framework, and Tschobbo with it."],
+          ["A different model", "First Ollama with Mistral Small, after a comparison on the same jobs llama.cpp with Gemma 4 26B — faster, fewer stock phrases, nothing made up anymore."],
+          ["On the side: Release Watcher", "From the same scraping logic, a small CLI tool that checks manga sites for new chapters. Same idea, smaller frame."],
+        ],
+      },
       kind: "Job-application bot",
       learnGoal: "No patience for repetitive job hunting — and learning scraping, LLMs and regex along the way.",
       claim: "Proves judgement — local language models instead of the cloud, sending deliberately left manual.",
@@ -244,6 +393,123 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
 
   ru: {
     yourbrand: {
+      layers: [
+        {
+          about: "Здесь я пробовал идеи, а не играл наверняка — правила, которые превращают платформу сообщества в продукт.",
+          points: [
+            "Matching: колода свайпов с весом по общим интересам и расстоянию, взаимный лайк → матч и сразу переписка",
+            "Модерация: от 10 разных жалоб система блокирует сама; баны со сроком, страйком и письмом",
+            "Фильтр брани для био, статуса, ника и чата — список слов пополняется на лету",
+            "Роли user · admin · org · owner — ровно один owner, это гарантирует сама база",
+            "Модули общаются через внутренние события (EventEmitter2), а не вызывают друг друга напрямую",
+          ],
+        },
+        {
+          about: "API я писал сам, потому что мне было интересно, — Postman тут был на вес золота.",
+          points: [
+            "REST под /api/v1, на каждую функцию свой модуль NestJS: auth, профиль, чат, matching, модерация, админка, GDPR …",
+            "Socket.io на том же порту: у каждого своя комната — сообщения, «печатает», «прочитано» и баны в реальном времени",
+            "Stripe Embedded Checkout с вебхуками; ежедневный cron напоминает за 3 дня до конца подписки",
+            "Тяжёлое — в воркере (BullMQ): ужать фото в WebP, собрать и отправить PDF по GDPR",
+            "Выключенный модуль → 404 ещё до проверки входа",
+          ],
+        },
+        {
+          about: "Защита снизу: что не отдаёт база, не выдаст ни один API.",
+          points: [
+            "Row-Level Security по умолчанию; био, город, возраст и т. д. каждый открывает по отдельности",
+            "E-mail зашифрован AES-256, ищется по хешу SHA-256 — никакого открытого текста в базе",
+            "JWT на 15 минут, refresh-токен на 30 дней с одноразовой ротацией в HttpOnly-cookie",
+            "bcrypt (cost 12) в отдельном пуле потоков — в нагрузочном тесте примерно в 3 раза больше входов",
+            "Лимиты запросов в Redis (всего 100/мин, вход 5/мин) — работают на нескольких инстансах",
+            "Защищённые люди не попадают ни в один поиск уже на уровне базы",
+          ],
+        },
+        {
+          about: "Две недели мозгового штурма по базе, прежде чем появилась первая строка бэкенда.",
+          points: [
+            "PostgreSQL 16 + PostGIS 3.4: поиск по радиусу через ST_DWithin прямо в базе",
+            "Автодополнение городов по данным GeoNames, расширенным на Европу",
+            "Схема — нумерованные SQL-миграции; каждая база арендатора догоняет их при старте",
+            "Своя база на каждого арендатора: данные GDPR разделены физически",
+            "Мягкое удаление: аккаунт можно вернуть в течение 30 дней; выписка по GDPR в PDF (ст. 15)",
+          ],
+        },
+      ],
+      moduleInfo: {
+        chat: {
+          about: "Запросы на контакт, переписки и сообщения в реальном времени.",
+          points: [
+            "Сначала запрос, потом чат — никто не пишет без спроса",
+            "«Печатает» и «прочитано» вживую через WebSocket",
+            "Каждое сообщение проходит фильтр брани",
+            "Всегда загружен, потому что его шлюз доставляет и уведомления, и баны, — выключаются только маршруты и события чата",
+          ],
+        },
+        matching: {
+          about: "Знакомство свайпом.",
+          points: [
+            "Колода сортируется по общим интересам и расстоянию",
+            "Взаимный лайк → матч, и переписка создаётся сразу",
+            "Список всех матчей, общие интересы отмечены",
+            "С тарифа Premium, нужен чат",
+          ],
+        },
+        payments: {
+          about: "Подписки через Stripe.",
+          points: [
+            "Embedded Checkout — оплата, не покидая страницу",
+            "Месяц, год или навсегда; цены owner задаёт сам",
+            "Вебхуки на оплату, сбой и отмену",
+            "Напоминание за 3 дня до конца, потом подписка аккуратно истекает",
+          ],
+        },
+        hidden: {
+          about: "Площадка в тёмном режиме — вовлечение и монетизация.",
+          points: [
+            "Beef-баттлы: публичные дуэли от 15 минут до 48 часов, голосует публика",
+            "Игры в реальном времени: камень-ножницы-бумага, крестики-нолики, Mastermind, реакция",
+            "Экономика монет с пакетами Stripe, сбор зубов, значки со сроком действия",
+            "Кто струсил — на 24 часа в изгнание",
+            "Вход по сменяющимся паролям из фильмов",
+          ],
+        },
+        board: {
+          about: "Доска объявлений для района.",
+          points: [
+            "Объявления: ищу, предлагаю, отдам даром, встречи",
+            "Видно улице (150 м), на 500 м, 1 км, району (3 км) или всем",
+            "«Оторвать листок» отправляет запрос на контакт",
+            "Истекают через 14 дней; публичные — только с согласия и никогда для защищённых людей",
+            "Нужен чат",
+          ],
+        },
+        caretaker: {
+          about: "Один аккаунт сопровождает несколько других, как родительский.",
+          points: [
+            "Сопровождаемый человек даёт согласие и может менять права или прекратить сопровождение",
+            "Права: читать сообщения, настраивать защиту",
+            "Для защищённых людей новый контакт ждёт одобрения",
+          ],
+        },
+        orgs: {
+          about: "Организация со своей командой.",
+          points: [
+            "Сопровождения принадлежат организации — все на одном экране",
+            "Создавать могут только админ платформы и owner",
+            "Нужно сопровождение",
+          ],
+        },
+        shop: {
+          about: "Модуль, который я сейчас строю, — проверка, держит ли ядро своё обещание.",
+          points: [
+            "Еда (самовывоз или доставка), мерч, лицензионные ключи и коды разблокировки — до ~1000 товаров с фильтрами",
+            "Stripe только резервирует; подозрительное (двойная бронь, крупная сумма, риск Radar) система придерживает, решает человек с обоснованием",
+            "Только после принятия: списание, выдача, счёт по § 14 UStG на почту",
+            "Нужны платежи и номер НДС или налоговый номер у арендатора",
+          ],
+        },
+      },
       kind: "White-label SaaS",
       learnGoal: "Хотел научиться строить ПО модульно и поставить на ноги настоящий продукт с бизнес-логикой.",
       claim: "Доказывает архитектурное мышление — модульный white-label SaaS, по-настоящему multi-tenant, каждый слой спроектирован осознанно.",
@@ -301,6 +567,34 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
     },
     tschobbo: {
+      mailbox: {
+        what: [
+          ["Конвейер", "Скрейп → фильтр → сопроводительное письмо → проверка → черновик в Gmail. Каждый шаг запускается из боковой панели, работает в фоне и показывает прогресс, даже если в это время кликаешь в другом месте. В конце — короткий итог вроде «14 новых, 6 дублей», и список обновляется."],
+          ["Пять порталов, один поиск", "karriere.at, devjobs.at, LinkedIn, AMS и jobs.at. Поисковые запросы для каждого портала — на странице настроек в браузере; каждый портал сам описывает свои поля, и одна и та же проверка работает в форме, на сервере и в скрейпере. Фильтр по радиусу потом действует на все пять."],
+          ["Вердикт, а не список", "Regex-фильтр раскладывает каждую вакансию на match, off-stack или brutal. Вердикт можно переопределить в интерфейсе, а несколько вакансий — разом переместить, оценить или удалить. Дубли между порталами находятся и сливаются — уже написанное письмо переезжает вместе с ними."],
+          ["Напоминания и календарь", "Через три дня без ответа заявке пора напомнить о себе — в той же ветке Gmail, чтобы ответ нашёл дорогу к вакансии. Календарь показывает по дням, что ушло, когда я напоминал и когда приходили ответы."],
+          ["Офлайн-архив", "При скрейпе бот проверяет, висят ли сохранённые вакансии ещё онлайн. Только когда это подтверждает отдельный запрос, вакансия уходит в архив, — появится снова, тот же прогон её вернёт. Вакансии с моей работой внутри (письмо, отправка) он не трогает никогда."],
+        ],
+        why: [
+          ["Рутина — работа для бота", "Каждый день те же порталы, те же фильтры, те же фразы. Поиск, сортировка и первый черновик — за ботом; читать, решать и отправлять — за мной."],
+          ["Мои данные остаются здесь", "Резюме, профиль и каждая заявка остаются на моей машине. Языковая модель работает локально — ни облачных расходов, ни тех, кто читает через плечо."],
+          ["Живой софт", "Tschobbo своими многочисленными руками одновременно хватает вакансии, фильтрует, печатает и раскладывает. Конвейер должен ощущаться не как мёртвый вывод скрипта, а как будто кто-то работает на тебя."],
+          ["Учиться на настоящей задаче", "Скрейпинг с браузером и без, промпты для локальной модели, regex для фильтров — каждое с реальной пользой, а не как упражнение."],
+        ],
+        learned: [
+          ["Мерить, а не гадать", "Сравнил пять локальных моделей на одних и тех же тестовых вакансиях (хорошее совпадение, чужой стек, сильное несовпадение): одна придумывала навыки, которых нет в профиле, одна всегда упиралась в таймаут, у одной без конца росла память. Позже то же сравнение для перехода на llama.cpp с Gemma 4 — примерно в четыре раза быстрее."],
+          ["Конвейер идёт только вперёд", "Повторная фильтрация однажды откатила все вакансии в начало — 21 отправленная заявка и 33 готовых письма вдруг снова стали новыми. Восстановил скриптом из файлов писем и журнала почты; с тех пор повторная фильтрация меняет только вердикт."],
+          ["Честная эвристика", "Синхронизация с Gmail сопоставляет старые письма по получателю и теме, потому что Message-ID так и не сохранялся. Поэтому: только чтение, никогда не перезаписывать, а при неоднозначности лучше не ставить ничего."],
+          ["Лучше архивировать поздно", "karriere.at отвечает на истёкшую вакансию кодом 200, а не 404. Живая вакансия, тихо ушедшая в архив, — упущенная вакансия, поэтому считаются только проверенные сигналы офлайна, а лимиты и таймауты вакансию не трогают."],
+        ],
+        origin: [
+          ["Сначала karriere.at", "Первый скрейпер, потому что сайт был самым простым. Всё работало в терминале: npm run scrape, filter, anschreiben."],
+          ["Потом AMS и devjobs", "Два портала, которые без настоящего браузера ничего не отдают, — там появился Playwright. С LinkedIn и jobs.at их стало пять за одним общим интерфейсом."],
+          ["Интерфейс и маскот", "Когда друзья увидели потенциал: интерфейс на React в виде почтового клиента поверх голого сервера на node:http без фреймворка — и Tschobbo в придачу."],
+          ["Другая модель", "Сначала Ollama с Mistral Small, после сравнения на тех же вакансиях — llama.cpp с Gemma 4 26B: быстрее, меньше шаблонных фраз, больше ничего не выдумывает."],
+          ["Попутно: Release Watcher", "Из той же логики скрейпинга — маленькая CLI-утилита, которая проверяет манга-сайты на новые главы. Та же идея, рамки поменьше."],
+        ],
+      },
       kind: "Бот для откликов",
       learnGoal: "Не хотелось однообразно искать вакансии — и заодно научиться скрейпингу, LLM и регулярным выражениям.",
       claim: "Доказывает здравое суждение — локальные языковые модели вместо облака, отправка сознательно вручную.",
@@ -457,6 +751,123 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
 
   ja: {
     yourbrand: {
+      layers: [
+        {
+          about: "安全策を取らずにアイデアを試した場所 — コミュニティ基盤をプロダクトに変えるルール。",
+          points: [
+            "Matching：共通の興味と距離で重み付けしたスワイプデッキ。お互いにいいね → マッチ、そのまま会話へ",
+            "モデレーション：異なる 10 件の通報でシステムが自動停止。BAN は期間・ストライク・メール付き",
+            "プロフィール・ステータス・ニックネーム・チャットに不適切語フィルター — 単語リストは実行中に追加可能",
+            "ロールは user · admin · org · owner — owner は必ず 1 人、データベースが保証",
+            "モジュール同士は直接呼び合わず、内部イベント（EventEmitter2）でやり取り",
+          ],
+        },
+        {
+          about: "API は興味があったので自分で書いた — Postman が本当に役立った。",
+          points: [
+            "/api/v1 配下の REST、機能ごとに NestJS モジュール：認証、プロフィール、チャット、Matching、モデレーション、管理、GDPR …",
+            "同じポートで Socket.io：一人ひとりに専用ルーム — メッセージ、入力中、既読、BAN をリアルタイムで",
+            "Webhook 付きの Stripe Embedded Checkout。毎日の cron がサブスク終了 3 日前に通知",
+            "重い処理はワーカー（BullMQ）へ：画像を WebP に縮小、GDPR の PDF を作ってメール送信",
+            "オフのモジュール → ログイン確認より前に 404",
+          ],
+        },
+        {
+          about: "下からの保護：データベースが出さないものは、どの API も漏らせない。",
+          points: [
+            "Row-Level Security が基本。自己紹介・都市・年齢などは本人が一つずつ公開を選ぶ",
+            "メールは AES-256 で暗号化、SHA-256 ハッシュで検索 — DB に平文なし",
+            "JWT は 15 分、リフレッシュトークンは 30 日、HttpOnly Cookie で使い捨てローテーション",
+            "bcrypt（コスト 12）を専用スレッドプールで — 負荷テストでログイン数が約 3 倍",
+            "Redis のレート制限（全体 100/分、ログイン 5/分）— 複数インスタンスでも有効",
+            "保護対象の人は DB の段階でどの検索にも出ない",
+          ],
+        },
+        {
+          about: "バックエンドの最初の 1 行の前に、DB を 2 週間考え抜いた。",
+          points: [
+            "PostgreSQL 16 + PostGIS 3.4：ST_DWithin による半径検索を DB 内で",
+            "GeoNames のデータ（ヨーロッパに拡張）による都市の自動補完",
+            "スキーマは番号付き SQL マイグレーション — 各テナント DB が起動時に追いつく",
+            "テナントごとに専用データベース：GDPR データを物理的に分離",
+            "ソフトデリート：アカウントは 30 日間復活可能。GDPR の開示は PDF で（第 15 条）",
+          ],
+        },
+      ],
+      moduleInfo: {
+        chat: {
+          about: "コンタクト申請、会話、メッセージをリアルタイムで。",
+          points: [
+            "まず申請、それからチャット — 勝手に書き込む人はいない",
+            "入力中と既読を WebSocket でライブ表示",
+            "すべてのメッセージが不適切語フィルターを通る",
+            "ゲートウェイが通知と BAN も届けるため常に読み込まれる — オフになるのはルートとチャットイベントだけ",
+          ],
+        },
+        matching: {
+          about: "スワイプで出会う。",
+          points: [
+            "デッキは共通の興味と距離で並ぶ",
+            "お互いにいいね → マッチ、会話もすぐ作られる",
+            "マッチ一覧、共通の興味に印付き",
+            "Premium から、チャットが必要",
+          ],
+        },
+        payments: {
+          about: "Stripe によるサブスクリプション。",
+          points: [
+            "Embedded Checkout — ページを離れずに支払い",
+            "月額・年額・買い切り。価格は owner が自分で設定",
+            "支払い・失敗・解約の Webhook",
+            "終了 3 日前に通知、その後きれいに失効",
+          ],
+        },
+        hidden: {
+          about: "ダークモードの遊び場 — エンゲージメントと収益化。",
+          points: [
+            "Beef バトル：15 分から 48 時間の公開対決、観客が投票",
+            "リアルタイムゲーム：じゃんけん、三目並べ、マスターマインド、反応速度",
+            "Stripe パック付きのコイン経済、歯の収集、期限付きバッジ",
+            "逃げた人は 24 時間の追放",
+            "入場は入れ替わる映画のパスワードで",
+          ],
+        },
+        board: {
+          about: "ご近所の掲示板。",
+          points: [
+            "貼り紙：探してます、譲ります、差し上げます、集まり",
+            "公開範囲は通り（150 m）、500 m、1 km、地区（3 km）、全員",
+            "「切り取る」でコンタクト申請を送る",
+            "14 日で期限切れ。全体公開は同意がある場合のみ、保護対象の人には決して不可",
+            "チャットが必要",
+          ],
+        },
+        caretaker: {
+          about: "保護者アカウントのように、一つのアカウントが数人を見守る。",
+          points: [
+            "見守られる本人が同意し、権限の変更や見守りの終了ができる",
+            "権限：メッセージの閲覧、保護設定",
+            "保護対象の人には、新しいコンタクトが承認待ちになる",
+          ],
+        },
+        orgs: {
+          about: "チームを持つ運営団体。",
+          points: [
+            "見守りは組織に属する — すべてを一目で",
+            "作成できるのはプラットフォーム管理者と owner だけ",
+            "見守りが必要",
+          ],
+        },
+        shop: {
+          about: "いま作っているモジュール — コアが約束を守れるかの試金石。",
+          points: [
+            "食べ物（受け取り・配達）、グッズ、ライセンスキー、解除コード — フィルター付きで最大 ~1000 品",
+            "Stripe は仮押さえだけ。怪しい注文（二重予約、高額、Radar のリスク）は保留し、人が理由を付けて判断",
+            "承認されて初めて：請求、提供、§ 14 UStG の請求書をメールで",
+            "決済と、テナントの VAT 番号か税番号が必要",
+          ],
+        },
+      },
       kind: "ホワイトラベルSaaS",
       learnGoal: "ソフトウェアをモジュール式に作り、ビジネスロジックを持つ本物のプロダクトを立ち上げる方法を学びたかった。",
       claim: "設計思考の証明 — モジュール式のホワイトラベルSaaS、本格的なマルチテナント、どのレイヤーも意図して設計。",
@@ -514,6 +925,34 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
     },
     tschobbo: {
+      mailbox: {
+        what: [
+          ["パイプライン", "スクレイプ → フィルター → カバーレター → レビュー → Gmail の下書き。どのステップもサイドバーから始まり、バックグラウンドで動き続け、他をクリックしている間も進捗を表示。最後に「新規 14、重複 6」のような要約が出て、リストが更新される。"],
+          ["5 つのポータル、1 つの検索", "karriere.at、devjobs.at、LinkedIn、AMS、jobs.at。ポータルごとの検索語はブラウザの設定ページに。各ポータルが自分の項目を定義し、同じチェックがフォーム・サーバー・スクレイパーで走る。その後、半径フィルターが 5 つすべてに効く。"],
+          ["リストではなく判定", "Regex フィルターが求人を match、off-stack、brutal に振り分ける。判定は UI で上書きでき、複数の求人をまとめて移動・評価・削除できる。ポータルをまたぐ重複は見つけて統合 — 書き上げたカバーレターも一緒に移る。"],
+          ["フォローアップとカレンダー", "返事がないまま 3 日経つとフォローアップの時期 — 同じ Gmail スレッドで送るので、返事が求人に戻ってくる。カレンダーには日ごとに、送ったもの、催促した日、返事が来た日が並ぶ。"],
+          ["オフラインアーカイブ", "スクレイプ中に、保存済みの求人がまだ掲載中かを確認。個別の取得で確かめられて初めてアーカイブへ — また現れたら同じ実行で戻す。自分の作業が入った求人（カバーレター、送信）には決して触れない。"],
+        ],
+        why: [
+          ["繰り返しはボットの仕事", "毎日同じポータル、同じフィルター、同じ決まり文句。探す・仕分ける・最初の下書きはボット、読む・決める・送るのは自分。"],
+          ["データは手元に", "履歴書、プロフィール、すべての応募は自分のマシンに残る。言語モデルはローカルで動き、クラウド費用も、覗き見る人もいない。"],
+          ["生きているソフト", "Tschobbo はたくさんの腕で、求人をつかみ、ふるい分け、タイプし、仕分けるのを同時にこなす。パイプラインを死んだスクリプト出力ではなく、自分のために働く誰かがいるように感じさせたかった。"],
+          ["本物の課題で学ぶ", "ブラウザあり・なしのスクレイピング、ローカルモデル用のプロンプト、フィルター用の Regex — どれも練習問題ではなく、実際に役立つ形で。"],
+        ],
+        learned: [
+          ["推測せず測る", "5 つのローカルモデルを同じテスト求人（相性良し、スタック違い、大きなミスマッチ）で比較：あるモデルはプロフィールにないスキルを作り出し、あるモデルは毎回タイムアウト、あるモデルはメモリが増え続けた。のちに llama.cpp と Gemma 4 への移行でも同じ比較 — 約 4 倍速い。"],
+          ["パイプラインは前にしか進まない", "再フィルターが一度、すべての求人を最初に戻した — 送信済み 21 件と完成したカバーレター 33 通が突然また新規扱いに。カバーレターのファイルとメールログからスクリプトで復元。それ以来、再フィルターは判定だけをやり直す。"],
+          ["ヒューリスティックは正直に", "Message-ID を保存していなかったので、Gmail 同期は古いメールを宛先と件名で照合する。だから：読むだけ、上書きしない、曖昧なら何も設定しない。"],
+          ["アーカイブは遅すぎるくらいで", "karriere.at は期限切れの求人に 404 ではなく 200 を返す。黙ってアーカイブされた生きた求人は逃した求人 — だから実測したオフラインの兆候だけを数え、レート制限やタイムアウトでは求人に触れない。"],
+        ],
+        origin: [
+          ["まずは karriere.at", "サイトがいちばん簡単だったので最初のスクレイパーに。すべてターミナルで：npm run scrape、filter、anschreiben。"],
+          ["次に AMS と devjobs", "本物のブラウザなしでは何も出さない 2 つのポータル — そこで Playwright が加わった。LinkedIn と jobs.at を足して、共通インターフェースの裏に 5 つ。"],
+          ["UI とマスコット", "友人が可能性を見てくれたので：メールクライアント風の React の画面を、フレームワークなしの素の node:http サーバーの上に。そして Tschobbo も。"],
+          ["別のモデルへ", "最初は Ollama と Mistral Small、同じ求人で比べたうえで llama.cpp と Gemma 4 26B へ — 速く、決まり文句が減り、もう何もでっち上げない。"],
+          ["ついでに：Release Watcher", "同じスクレイピングのロジックから、マンガサイトの新しい章をチェックする小さな CLI ツール。同じ発想、小さな枠。"],
+        ],
+      },
       kind: "応募ボット",
       learnGoal: "単調な求人探しが嫌で、ついでにスクレイピング、LLM、正規表現を学ぶ。",
       claim: "判断力の証明 — クラウドではなくローカルの言語モデル、送信はあえて手動。",
@@ -671,6 +1110,123 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
 
   ar: {
     yourbrand: {
+      layers: [
+        {
+          about: "هنا جرّبت الأفكار بدل اللعب في المضمون — القواعد التي تحوّل منصة مجتمع إلى منتج.",
+          points: [
+            "Matching: مجموعة سحب مرجّحة بالاهتمامات المشتركة والمسافة، إعجاب متبادل → تطابق ومحادثة فورًا",
+            "الإشراف: من 10 بلاغات مختلفة يوقف النظام الحساب بنفسه؛ الحظر بمدة ومخالفة وبريد",
+            "فلتر الألفاظ على النبذة والحالة والاسم المستعار والمحادثة — قائمة الكلمات تكبر أثناء التشغيل",
+            "الأدوار user · admin · org · owner — مالك واحد فقط، تفرضه قاعدة البيانات",
+            "الوحدات تتواصل عبر أحداث داخلية (EventEmitter2) بدل أن تستدعي بعضها مباشرة",
+          ],
+        },
+        {
+          about: "بنيت واجهات API بنفسي لأنها شدّتني — وكان Postman كنزًا في ذلك.",
+          points: [
+            "REST تحت ‎/api/v1، وحدة NestJS لكل ميزة: الدخول، الملف الشخصي، المحادثة، Matching، الإشراف، الإدارة، GDPR …",
+            "Socket.io على المنفذ نفسه: لكل شخص غرفته — الرسائل والكتابة والقراءة والحظر في الوقت الحقيقي",
+            "Stripe Embedded Checkout مع webhooks؛ مهمة cron يومية تذكّر قبل انتهاء الاشتراك بثلاثة أيام",
+            "العمل الثقيل في العامل (BullMQ): تصغير الصور إلى WebP، وبناء ملف PDF الخاص بـ GDPR وإرساله",
+            "وحدة مطفأة → 404، حتى قبل فحص تسجيل الدخول",
+          ],
+        },
+        {
+          about: "حماية من الأسفل: ما لا تسلّمه قاعدة البيانات لا يمكن لأي API أن يسرّبه.",
+          points: [
+            "Row-Level Security هي الأساس؛ كل شخص يُظهر النبذة والمدينة والعمر وغيرها واحدًا تلو الآخر",
+            "البريد مشفّر بـ AES-256 ويُبحث عنه عبر تجزئة SHA-256 — لا نص صريح في القاعدة",
+            "JWT لمدة 15 دقيقة، ورمز تحديث لمدة 30 يومًا بتدوير لمرة واحدة في ملف تعريف HttpOnly",
+            "bcrypt (كلفة 12) في مجمّع خيوط خاص — نحو 3 أضعاف تسجيلات الدخول في اختبار التحمّل",
+            "حدود الطلبات في Redis (عام 100/دقيقة، الدخول 5/دقيقة) — تصمد عبر عدة نسخ",
+            "الأشخاص المحميون لا يظهرون في أي بحث منذ مستوى قاعدة البيانات",
+          ],
+        },
+        {
+          about: "أسبوعان من العصف الذهني حول قاعدة البيانات قبل أول سطر في الخادم.",
+          points: [
+            "PostgreSQL 16 + PostGIS 3.4: بحث بالنطاق عبر ST_DWithin داخل القاعدة مباشرة",
+            "إكمال تلقائي للمدن من بيانات GeoNames، موسّعة لتشمل أوروبا",
+            "المخطط على شكل ترحيلات SQL مرقّمة — كل قاعدة مستأجر تلحق بها عند البدء",
+            "قاعدة بيانات خاصة لكل مستأجر: بيانات GDPR مفصولة فعليًا",
+            "حذف ناعم: يمكن استعادة الحساب خلال 30 يومًا؛ كشف البيانات وفق GDPR كملف PDF (المادة 15)",
+          ],
+        },
+      ],
+      moduleInfo: {
+        chat: {
+          about: "طلبات التواصل والمحادثات والرسائل في الوقت الحقيقي.",
+          points: [
+            "الطلب أولًا ثم المحادثة — لا أحد يكتب دون إذن",
+            "«يكتب الآن» و«تمت القراءة» مباشرة عبر WebSocket",
+            "كل رسالة تمر عبر فلتر الألفاظ",
+            "تبقى محمّلة دائمًا لأن بوابتها توصل الإشعارات والحظر أيضًا — ما يُطفأ هو المسارات وأحداث المحادثة فقط",
+          ],
+        },
+        matching: {
+          about: "التعارف بالسحب.",
+          points: [
+            "المجموعة مرتبة حسب الاهتمامات المشتركة والمسافة",
+            "إعجاب متبادل → تطابق، والمحادثة تُنشأ فورًا",
+            "قائمة بكل التطابقات مع تمييز الاهتمامات المشتركة",
+            "من باقة Premium، وتحتاج المحادثة",
+          ],
+        },
+        payments: {
+          about: "اشتراكات عبر Stripe.",
+          points: [
+            "Embedded Checkout — الدفع دون مغادرة الصفحة",
+            "شهري أو سنوي أو مدى الحياة؛ المالك يحدد الأسعار بنفسه",
+            "Webhooks للدفع والفشل والإلغاء",
+            "تذكير قبل الانتهاء بثلاثة أيام، ثم ينتهي الاشتراك بشكل نظيف",
+          ],
+        },
+        hidden: {
+          about: "ساحة اللعب في الوضع الداكن — تفاعل وتحقيق دخل.",
+          points: [
+            "معارك Beef: مبارزات علنية من 15 دقيقة إلى 48 ساعة، والجمهور يصوّت",
+            "ألعاب في الوقت الحقيقي: حجر ورقة مقص، إكس أو، Mastermind، سرعة رد الفعل",
+            "اقتصاد عملات مع باقات Stripe، جمع الأسنان، شارات تنتهي صلاحيتها",
+            "من يتراجع يذهب إلى المنفى 24 ساعة",
+            "الدخول بكلمات مرور من أفلام تتبدل",
+          ],
+        },
+        board: {
+          about: "لوحة إعلانات للحي.",
+          points: [
+            "إعلانات: أبحث، أعرض، أهدي، لقاءات",
+            "مرئية للشارع (150 م)، أو 500 م، أو 1 كم، أو الحي (3 كم)، أو للجميع",
+            "«اقطع قصاصة» يرسل طلب تواصل",
+            "تنتهي بعد 14 يومًا؛ العامة بموافقة فقط ولا تكون أبدًا لأشخاص محميين",
+            "تحتاج المحادثة",
+          ],
+        },
+        caretaker: {
+          about: "حساب واحد يرعى بضعة حسابات أخرى، مثل حساب الوالدين.",
+          points: [
+            "الشخص المرعيّ يوافق ويمكنه تغيير الصلاحيات أو إنهاء الرعاية",
+            "الصلاحيات: قراءة الرسائل، ضبط الحماية",
+            "عند الأشخاص المحميين ينتظر التواصل الجديد الموافقة",
+          ],
+        },
+        orgs: {
+          about: "جهة راعية مع فريقها.",
+          points: [
+            "حالات الرعاية تتبع المنظمة — كلها في لمحة",
+            "الإنشاء لمسؤول المنصة والمالك فقط",
+            "تحتاج الرعاية",
+          ],
+        },
+        shop: {
+          about: "الوحدة التي أبنيها الآن — اختبار لما إذا كانت النواة تفي بوعدها.",
+          points: [
+            "طعام (استلام أو توصيل)، بضائع، مفاتيح ترخيص ورموز فتح — حتى ~1000 منتج مع فلاتر",
+            "Stripe يحجز فقط؛ المريب (حجز مزدوج، مبلغ كبير، خطر Radar) يوقفه النظام، ويقرر إنسان مع التعليل",
+            "بعد القبول فقط: الخصم والتسليم وفاتورة وفق § 14 UStG بالبريد",
+            "تحتاج المدفوعات ورقمًا ضريبيًا أو رقم ضريبة القيمة المضافة لدى المستأجر",
+          ],
+        },
+      },
       kind: "SaaS بعلامة بيضاء",
       learnGoal: "أردت أن أتعلّم كيف تُبنى البرمجيات بشكل معياري وكيف يُطلق منتج حقيقي بمنطق أعمال.",
       claim: "يثبت التفكير المعماري — SaaS معياري بعلامة بيضاء، متعدد المستأجرين فعلًا، وكل طبقة مبنية عن قصد.",
@@ -728,6 +1284,34 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       ],
     },
     tschobbo: {
+      mailbox: {
+        what: [
+          ["خط المعالجة", "جمع ← فلترة ← خطاب تقديم ← مراجعة ← مسودة في Gmail. كل خطوة تبدأ من الشريط الجانبي وتواصل العمل في الخلفية وتعرض تقدّمها حتى وأنت تنقر في مكان آخر. في النهاية ملخص قصير مثل «14 جديدة، 6 مكررة»، وتُحدَّث القائمة."],
+          ["خمس بوابات، بحث واحد", "karriere.at وdevjobs.at وLinkedIn وAMS وjobs.at. كلمات البحث لكل بوابة في صفحة إعدادات داخل المتصفح؛ كل بوابة تصف حقولها بنفسها، والفحص نفسه يعمل في النموذج والخادم وأداة الجمع. ثم يسري فلتر النطاق على الخمس كلها."],
+          ["حكم لا قائمة", "فلتر Regex يصنّف كل إعلان إلى match أو off-stack أو brutal. يمكن تعديل الحكم من الواجهة، ونقل عدة وظائف أو تقييمها أو حذفها دفعة واحدة. التكرارات بين البوابات تُكتشف وتُدمج — والخطاب المكتوب ينتقل معها."],
+          ["المتابعة والتقويم", "بعد ثلاثة أيام بلا رد يحين وقت المتابعة — في سلسلة Gmail نفسها، كي يجد الرد طريقه إلى الوظيفة. التقويم يعرض لكل يوم ما أُرسل، ومتى تابعت، ومتى وصلت الردود."],
+          ["أرشيف غير المتاح", "أثناء الجمع يتحقق البوت من أن الإعلانات المحفوظة ما زالت منشورة. لا تنتقل الوظيفة إلى الأرشيف إلا إذا أكّد ذلك طلب منفرد — وإن ظهرت مجددًا يعيدها التشغيل نفسه. الوظائف التي فيها عملي (خطاب، إرسال) لا يلمسها أبدًا."],
+        ],
+        why: [
+          ["المتكرر عمل للبوت", "كل يوم البوابات نفسها والفلاتر نفسها والعبارات نفسها. البحث والفرز والمسودة الأولى على البوت — والقراءة والقرار والإرسال عليّ."],
+          ["بياناتي تبقى هنا", "السيرة الذاتية والملف وكل طلب تبقى على جهازي. النموذج اللغوي يعمل محليًا، بلا تكاليف سحابية ولا أحد يقرأ من خلف الكتف."],
+          ["برنامج ينبض بالحياة", "Tschobbo بأذرعه الكثيرة يلتقط الإعلانات ويفلترها ويكتب ويرتّب في آن واحد. أردت ألا يبدو خط المعالجة كمخرجات سكربت ميتة، بل كأن هناك من يعمل لأجلك."],
+          ["التعلّم على مشكلة حقيقية", "الجمع مع متصفح ومن دونه، وتعليمات لنموذج محلي، وRegex للفلاتر — كلها بفائدة حقيقية لا كتمرين."],
+        ],
+        learned: [
+          ["القياس لا التخمين", "قارنت خمسة نماذج محلية على وظائف الاختبار نفسها (توافق جيد، تقنيات مختلفة، عدم توافق كبير): أحدها اختلق مهارات ليست في الملف، وآخر انتهى دائمًا بانقضاء المهلة، وثالث ظلت ذاكرته ترتفع. لاحقًا المقارنة نفسها للانتقال إلى llama.cpp مع Gemma 4 — أسرع بنحو أربع مرات."],
+          ["خط المعالجة يسير إلى الأمام فقط", "أعادت فلترة جديدة مرة كل الوظائف إلى البداية — 21 طلبًا مُرسلًا و33 خطابًا جاهزًا ظهرت فجأة كجديدة. استعدتها بسكربت من ملفات الخطابات وسجل البريد؛ ومنذ ذلك الحين لا تعيد الفلترة إلا الحكم."],
+          ["إبقاء الاستدلال صادقًا", "مزامنة Gmail تطابق الرسائل القديمة بالمستلم والموضوع، لأن معرّف الرسالة لم يُحفظ قط. لذلك: قراءة فقط، لا كتابة فوق شيء، وعند الالتباس لا يُضبط شيء."],
+          ["الأرشفة متأخرًا أفضل", "karriere.at يرد على الإعلان المنتهي بـ 200 بدل 404. وظيفة حية أُرشفت بصمت هي فرصة ضائعة — لذا لا تُحسب إلا إشارات عدم الإتاحة المقيسة، وحدود الطلبات أو انقضاء المهلة لا تمس الوظيفة."],
+        ],
+        origin: [
+          ["karriere.at أولًا", "أول أداة جمع، لأن الموقع كان الأسهل. كل شيء في الطرفية: npm run scrape وfilter وanschreiben."],
+          ["ثم AMS وdevjobs", "بوابتان لا تعطيان شيئًا دون متصفح حقيقي — وهنا دخل Playwright. ومع LinkedIn وjobs.at صارت خمسًا خلف واجهة مشتركة واحدة."],
+          ["الواجهة والتميمة", "حين رأى الأصدقاء إمكانات: واجهة React بشكل عميل بريد، فوق خادم node:http عارٍ بلا إطار عمل، ومعها Tschobbo."],
+          ["نموذج آخر", "أولًا Ollama مع Mistral Small، ثم بعد مقارنة على الوظائف نفسها llama.cpp مع Gemma 4 26B — أسرع، عبارات جاهزة أقل، ولا اختلاق بعد الآن."],
+          ["على الهامش: Release Watcher", "من منطق الجمع نفسه، أداة سطر أوامر صغيرة تفحص مواقع المانغا بحثًا عن فصول جديدة. الفكرة نفسها، بإطار أصغر."],
+        ],
+      },
       kind: "بوت للتقديم على الوظائف",
       learnGoal: "لا رغبة في البحث المتكرر عن الوظائف — وتعلّم الكشط والنماذج اللغوية والتعابير النمطية في الطريق.",
       claim: "يثبت حسن التقدير — نماذج لغوية محلية بدل السحابة، والإرسال يدوي عن قصد.",
@@ -915,6 +1499,9 @@ export function localizeCard(card: ProjectCard): ProjectCard {
         screenshots: tenant.screenshots.map((s, j) => ({ ...s, alt: tt.screenshots[j] ?? s.alt })),
       };
     }),
+    mailbox: t.mailbox ?? card.mailbox,
+    layers: t.layers ?? card.layers,
+    moduleInfo: t.moduleInfo ?? card.moduleInfo,
     parts: card.parts?.map((part, i) => (t.parts?.[i] ? { ...part, ...t.parts[i] } : part)),
     mascot: card.mascot && t.mascot ? { ...card.mascot, alt: t.mascot } : card.mascot,
     widget: card.widget && t.widget ? { ...card.widget, label: t.widget } : card.widget,

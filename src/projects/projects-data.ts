@@ -55,6 +55,125 @@ const cards: ProjectCard[] = [
       "Bewusst nicht alles gebaut, was ginge: manche Mechaniken aus ethischen Gründen zurückgehalten",
       "Architektur, Datenmodell und Businesslogik von mir. Die APIs habe ich selbst gebaut, weil sie mich interessiert haben — den Rest der Umsetzung mit CC als Implementierungs-Agent.",
     ],
+    // Desktop ER card: the core's layers (UI.vizLayers order, top to
+    // bottom) and every module, from the YourBrand repo's READMEs.
+    layers: [
+      {
+        about: "Hier habe ich Ideen ausprobiert, statt auf Nummer sicher zu gehen — die Regeln, die aus einer Community-Plattform ein Produkt machen.",
+        points: [
+          "Matching: Swipe-Deck nach gemeinsamen Interessen und Entfernung gewichtet, gegenseitiges Like → Match plus Unterhaltung",
+          "Moderation: ab 10 verschiedenen Meldungen sperrt das System selbst, Bans mit Dauer, Strike und Mail",
+          "Profanity-Filter auf Bio, Status, Nickname und Chat — die Wortliste wächst zur Laufzeit",
+          "Rollen user · admin · org · owner — genau ein Owner, von der Datenbank erzwungen",
+          "Module reden über interne Events (EventEmitter2) statt sich direkt aufzurufen",
+        ],
+      },
+      {
+        about: "Die APIs habe ich selbst gebaut, weil sie mich interessiert haben — Postman war dabei Gold.",
+        points: [
+          "REST unter /api/v1, je Feature ein NestJS-Modul: Auth, Profil, Chat, Matching, Moderation, Admin, DSGVO …",
+          "Socket.io auf demselben Port: jede Person in ihrem eigenen Raum — Nachrichten, Tippen, Gelesen und Bans in Echtzeit",
+          "Stripe Embedded Checkout mit Webhooks; ein täglicher Cron erinnert 3 Tage vor Abo-Ende",
+          "Schweres läuft im Worker (BullMQ): Bilder auf WebP verkleinern, DSGVO-PDF bauen und mailen",
+          "Abgeschaltetes Modul → 404, noch vor dem Login-Check",
+        ],
+      },
+      {
+        about: "Schutz von unten: Was die Datenbank nicht herausgibt, kann keine API verraten.",
+        points: [
+          "Row-Level Security als Grundzustand; Bio, Stadt, Alter & Co. schaltet jede Person einzeln sichtbar",
+          "E-Mail AES-256-verschlüsselt, gefunden über einen SHA-256-Hash — kein Klartext in der DB",
+          "JWT 15 Minuten, Refresh-Token 30 Tage mit Einmal-Rotation im HttpOnly-Cookie",
+          "bcrypt (Kosten 12) im eigenen Thread-Pool — im Loadtest rund 3× mehr Logins",
+          "Rate-Limits in Redis (global 100/min, Login 5/min) — halten über mehrere Instanzen",
+          "Geschützte Personen tauchen schon auf DB-Ebene in keiner Suche auf",
+        ],
+      },
+      {
+        about: "Zwei Wochen DB-Brainstorm, bevor die erste Zeile Backend stand.",
+        points: [
+          "PostgreSQL 16 + PostGIS 3.4: Umkreissuche per ST_DWithin direkt in der Datenbank",
+          "Städte-Autocomplete aus GeoNames-Daten, auf Europa erweitert",
+          "Schema als nummerierte SQL-Migrationen — jede Mandanten-DB zieht sie beim Start nach",
+          "Eine eigene Datenbank pro Mandant: DSGVO-Daten physisch getrennt",
+          "Soft-Deletes: ein Konto ist 30 Tage reaktivierbar; DSGVO-Auskunft als PDF (Art. 15)",
+        ],
+      },
+    ],
+    moduleInfo: {
+      chat: {
+        about: "Kontaktanfragen, Unterhaltungen und Nachrichten in Echtzeit.",
+        points: [
+          "Erst die Anfrage, dann der Chat — niemand schreibt ungefragt",
+          "Tippt gerade und Gelesen live per WebSocket",
+          "Jede Nachricht läuft durch den Profanity-Filter",
+          "Bleibt immer geladen, weil das Gateway auch Benachrichtigungen und Bans zustellt — abgeschaltet sind nur Routen und Chat-Events",
+        ],
+      },
+      matching: {
+        about: "Kennenlernen per Swipe.",
+        points: [
+          "Das Deck sortiert nach gemeinsamen Interessen und Entfernung",
+          "Gegenseitiges Like → Match, und die Unterhaltung ist gleich angelegt",
+          "Liste aller Matches; gemeinsame Interessen sind markiert",
+          "Ab Premium, braucht Chat",
+        ],
+      },
+      payments: {
+        about: "Abos über Stripe.",
+        points: [
+          "Embedded Checkout — bezahlt wird, ohne die Seite zu verlassen",
+          "Monat, Jahr oder Lifetime; die Preise stellt der Owner selbst ein",
+          "Webhooks für Zahlung, Fehlschlag und Kündigung",
+          "Erinnerung 3 Tage vor Ablauf, danach läuft das Abo sauber aus",
+        ],
+      },
+      hidden: {
+        about: "Die Spielwiese im Dark Mode — Engagement und Monetarisierung.",
+        points: [
+          "Beef-Battles: öffentliche Duelle von 15 Minuten bis 48 Stunden, das Publikum stimmt ab",
+          "Echtzeit-Spiele: Schere-Stein-Papier, TicTacToe, Mastermind, Reaktion",
+          "Coin-Wirtschaft mit Stripe-Paketen, Zähne sammeln, Abzeichen mit Ablaufdatum",
+          "Wer kneift, geht 24 Stunden ins Exil",
+          "Zugang über wechselnde Film-Passwörter",
+        ],
+      },
+      board: {
+        about: "Das Schwarze Brett für den Kiez.",
+        points: [
+          "Aushänge: Suche, Biete, Verschenke, Treffen",
+          "Sichtbar für die Straße (150 m), 500 m, 1 km, den Kiez (3 km) oder alle",
+          "„Zettel abreißen“ schickt eine Kontaktanfrage",
+          "Laufen nach 14 Tagen ab; öffentlich nur mit Zustimmung und nie für geschützte Personen",
+          "Braucht Chat",
+        ],
+      },
+      caretaker: {
+        about: "Ein Konto betreut wenige andere, wie ein Eltern-Konto.",
+        points: [
+          "Die betreute Person stimmt zu und kann Rechte ändern oder die Betreuung beenden",
+          "Rechte: Nachrichten mitlesen, Schutz einstellen",
+          "Bei geschützten Personen wartet ein neuer Kontakt auf die Freigabe",
+        ],
+      },
+      orgs: {
+        about: "Ein Träger mit seinem Team.",
+        points: [
+          "Betreuungen gehören zur Organisation — alle auf einen Blick",
+          "Anlegen dürfen nur Plattform-Admin und Owner",
+          "Braucht Betreuung",
+        ],
+      },
+      shop: {
+        about: "Das Modul, an dem ich gerade baue — der Test, ob der Kern hält, was er verspricht.",
+        points: [
+          "Essen (abholen oder liefern), Merch, Lizenz-Keys und Freischalt-Codes — bis ~1000 Artikel mit Filtern",
+          "Stripe reserviert nur; Auffälliges (Doppelbuchung, hoher Betrag, Radar-Risiko) hält das System an, ein Mensch entscheidet mit Begründung",
+          "Erst mit der Annahme: abbuchen, ausliefern, Rechnung nach § 14 UStG per Mail",
+          "Braucht Bezahlung und eine USt-IdNr. oder Steuernummer im Mandanten",
+        ],
+      },
+    },
     challenge:
       "Die eigentliche Herausforderung war der Umfang: kompletter Fullstack solo in zwei Monaten. Die Basis — DB, Security, API — ist sauber und bewusst gebaut. Der Business-Logic-Layer darüber ist der experimentelle Teil: hier habe ich Ideen ausprobiert, statt auf Nummer sicher zu gehen — und dabei am meisten gelernt.",
     origin:
@@ -231,6 +350,35 @@ const cards: ProjectCard[] = [
         "",
         "// test/ — ~575 tests, node:test, temp dirs + mock server",
       ].join("\n"),
+    },
+    // Desktop card: the mails behind each folder, from the JoBBoT README.
+    mailbox: {
+      what: [
+        ["Die Pipeline", "Scrape → Filter → Anschreiben → Review → Gmail-Entwurf. Jeder Schritt startet aus der Seitenleiste, läuft im Hintergrund weiter und zeigt seinen Fortschritt, auch wenn man währenddessen woanders klickt. Am Ende kommt eine Kurzbilanz wie „14 neu, 6 dedup“, und die Liste lädt neu."],
+        ["Fünf Portale, eine Suche", "karriere.at, devjobs.at, LinkedIn, AMS und jobs.at. Suchbegriffe pro Portal stehen auf einer Einstellungsseite im Browser; jedes Portal beschreibt seine Felder selbst, und dieselbe Prüfung läuft im Formular, im Server und im Scraper. Ein Umkreisfilter wirkt danach auf alle fünf."],
+        ["Urteil statt Liste", "Der Regex-Filter sortiert jede Stelle in Match, Offstack oder Brutal. Das Urteil lässt sich in der UI überschreiben, mehrere Jobs auf einmal verschieben, bewerten oder löschen. Duplikate quer über die Portale werden gefunden und zusammengeführt — ein schon geschriebenes Anschreiben wandert mit."],
+        ["Nachfassen und Kalender", "Nach drei Tagen ohne Antwort ist eine Bewerbung fällig zum Nachfassen — im selben Gmail-Thread, damit die Antwort wieder zum Job findet. Der Kalender zeigt pro Tag, was rausging, wann nachgehakt wurde und wann Antworten kamen."],
+        ["Offline-Archiv", "Beim Scrapen prüft der Bot, ob gespeicherte Inserate noch online sind. Erst wenn ein Einzelabruf es bestätigt, wandert ein Job ins Archiv — taucht er wieder auf, holt ihn derselbe Lauf zurück. Jobs mit eigener Arbeit drin (Anschreiben, Versand) fasst er nie an."],
+      ],
+      why: [
+        ["Repetitiv ist Bot-Arbeit", "Jeden Tag dieselben Portale, dieselben Filter, dieselben Floskeln. Das Suchen, Sortieren und den ersten Entwurf macht der Bot — lesen, entscheiden und abschicken bleibt bei mir."],
+        ["Meine Daten bleiben hier", "Lebenslauf, Profil und jede Bewerbung bleiben auf meiner Maschine. Das Sprachmodell läuft lokal, es gibt keine Cloud-Kosten und niemanden, der mitliest."],
+        ["Software, die lebt", "Tschobbo greift mit seinen vielen Armen gleichzeitig Inserate, filtert, tippt und sortiert ein. Die Pipeline soll sich nicht wie totes Skript-Output anfühlen, sondern als hätte man jemanden, der für einen arbeitet."],
+        ["Lernen am echten Problem", "Scraping mit und ohne Browser, Prompts für ein lokales Modell, Regex für die Filter — jedes davon mit echtem Nutzen statt als Übungsaufgabe."],
+      ],
+      learned: [
+        ["Messen statt raten", "Fünf lokale Modelle auf denselben Testjobs verglichen (guter Fit, falscher Stack, großer Mismatch): eines erfand Skills, die nicht im Profil stehen, eines lief immer in den Timeout, bei einem stieg der RAM ohne Ende. Später derselbe Vergleich für den Wechsel auf llama.cpp mit Gemma 4 — rund viermal schneller."],
+        ["Die Pipeline läuft nur vorwärts", "Ein Neu-Filtern hat einmal jeden Job auf Anfang gesetzt — 21 versendete Bewerbungen und 33 fertige Anschreiben standen plötzlich wieder als neu da. Per Skript aus Anschreiben-Dateien und Mail-Log wiederhergestellt; seitdem fällt ein Neu-Filtern nur noch das Urteil."],
+        ["Heuristik ehrlich halten", "Der Gmail-Sync ordnet alte Mails über Empfänger und Betreff zu, weil die Message-ID nie gespeichert wurde. Darum: nur lesen, nie überschreiben, und bei Mehrdeutigkeit lieber gar nichts setzen."],
+        ["Lieber zu spät archivieren", "karriere.at antwortet auf ein abgelaufenes Inserat mit 200 statt 404. Ein still archivierter lebender Job ist ein verpasster Job — also zählen nur nachgemessene Offline-Signale, und Rate-Limits oder Timeouts lassen den Job in Ruhe."],
+      ],
+      origin: [
+        ["Erst karriere.at", "Der erste Scraper, weil die Seite am leichtesten war. Alles lief im Terminal: npm run scrape, filter, anschreiben."],
+        ["Dann AMS und devjobs", "Zwei Portale, die ohne echten Browser nichts hergeben — dort kam Playwright dazu. Mit LinkedIn und jobs.at wurden es fünf hinter einem gemeinsamen Interface."],
+        ["UI und Maskottchen", "Als Freunde Potenzial gesehen haben: eine React-Oberfläche im Look eines Mail-Clients, auf einem nackten node:http-Server ohne Framework, und Tschobbo dazu."],
+        ["Ein anderes Modell", "Erst Ollama mit Mistral Small, nach einem Vergleich auf denselben Jobs llama.cpp mit Gemma 4 26B — schneller, weniger Floskeln, nichts mehr erfunden."],
+        ["Nebenbei: Release Watcher", "Aus derselben Scraping-Logik ein kleines CLI-Tool, das Manga-Seiten auf neue Kapitel prüft. Gleiche Idee, kleiner Rahmen."],
+      ],
     },
     challenge:
       "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern.",

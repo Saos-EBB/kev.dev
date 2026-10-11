@@ -381,6 +381,15 @@
   border-inline-end: 1px solid var(--jb-line);
 }
 
+.mail-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.mail-group[hidden] {
+  display: none;
+}
+
 .mail-list-head {
   padding: 0.75rem 0.8rem 0.4rem;
   font-family: var(--font-mono);

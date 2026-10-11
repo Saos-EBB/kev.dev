@@ -3,7 +3,7 @@
 // own built from the same card data — YourBrand reads as its data model.
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
-import { cardBodies, esc, TENANT_MODULES, type ProjectCard } from "./project-cards";
+import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard } from "./project-cards";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
 
@@ -46,6 +46,7 @@ function entity(name: string, count: string, rows: string, lead = false): string
 function erCard(card: ProjectCard, head: string): string {
   const tenants = card.tenants ?? [];
   const p = (s?: string) => (s ? `<p>${esc(s)}</p>` : "");
+  const detail = (d?: Detail) => (d ? p(d.about) + `<ul>${d.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
   const links = (card.links ?? [])
     .map((l) => (l.href ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>` : esc(l.label)))
     .join(" · ");
@@ -69,7 +70,9 @@ function erCard(card: ProjectCard, head: string): string {
 
   const layers = UI.vizLayers;
   const core = layers
-    .map(([name, sub], i) => row("core", { key: `L${layers.length - i}`, attr: name, open: i === 1, body: p(sub) }))
+    .map(([name, sub], i) =>
+      row("core", { key: `L${layers.length - i}`, attr: name, open: i === 1, body: `<p><b>${esc(sub)}</b></p>${detail(card.layers?.[i])}` }),
+    )
     .join("");
 
   const tenant = tenants
@@ -92,7 +95,7 @@ function erCard(card: ProjectCard, head: string): string {
       type: wip ? UI.vizWip : `${users.length} / ${tenants.length}`,
       hot: wip,
       open: i === 1,
-      body: users.length ? p(users.map((t) => t.name).join(" · ")) : p(UI.vizWip),
+      body: detail(card.moduleInfo?.[m]) + `<p class="er-mods">${esc(users.length ? users.map((t) => t.name).join(" · ") : UI.vizWip)}</p>`,
     });
   }).join("");
 
@@ -157,25 +160,22 @@ function archPane(card: ProjectCard): string {
 const FIT = ["#5B8CFF", "#E8B04B", "#E8622A"];
 
 // TschoBBo: the card as the bot's own mail client — folders on the left,
-// the decisions as the inbox, and whatever is picked as a letter on paper.
+// the picked folder's mails in the middle, the picked mail as a letter on
+// paper. "Code + Architektur" lists the decisions and opens on the code.
 // Clicks are wired in initBigCards.
 function mailCard(card: ProjectCard, head: string): string {
-  const decisions = (card.decisions ?? []).map(splitDecision);
-  const panes: { id: string; kicker: string; title: string; body: string }[] = [
-    { id: "what", kicker: UI.lblWhat, title: card.claim, body: card.what ?? "" },
-    { id: "why", kicker: UI.boxWhy, title: card.learnGoal, body: "" },
-    { id: "learned", kicker: UI.boxLearned, title: UI.lblChallenge, body: card.challenge ?? "" },
-    { id: "origin", kicker: UI.lblOrigin, title: card.title, body: card.origin ?? "" },
-    ...decisions.map(([title], i) => ({ id: `d${i}`, kicker: UI.boxCode, title, body: card.decisions![i] })),
-  ];
-  const folders: [string, string, number][] = [
-    ["what", UI.lblWhat, 1],
-    ["why", UI.boxWhy, 1],
-    ["learned", UI.boxLearned, 1],
-    [card.arch ? "arch" : "d0", UI.boxCode, decisions.length],
-    ["origin", UI.lblOrigin, 1],
+  const box = card.mailbox;
+  const mails = (folder: MailFolder, first: [string, string]) => [first, ...(box?.[folder] ?? [])];
+  const folders: { id: string; label: string; mails: [string, string][] }[] = [
+    { id: "what", label: UI.lblWhat, mails: mails("what", [card.title, card.what ?? ""]) },
+    { id: "why", label: UI.boxWhy, mails: mails("why", [card.learnGoal, ""]) },
+    { id: "learned", label: UI.boxLearned, mails: mails("learned", [UI.lblChallenge, card.challenge ?? ""]) },
+    { id: "arch", label: UI.boxCode, mails: (card.decisions ?? []).map((d) => splitDecision(d)) },
+    { id: "origin", label: UI.lblOrigin, mails: mails("origin", [UI.lblOrigin, card.origin ?? ""]) },
   ];
   const gh = card.links?.find((l) => l.href);
+  // The decisions' letters show the whole decision, not just its tail.
+  const body = (f: string, i: number, text: string) => (f === "arch" ? card.decisions![i] : text);
 
   return `
     <article class="pcard pcard--big pcard--mail" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
@@ -187,21 +187,28 @@ function mailCard(card: ProjectCard, head: string): string {
             <p class="mail-logo" aria-hidden="true">jobbot <span>://</span></p>
             ${folders
               .map(
-                ([id, label, n]) =>
-                  `<button type="button" class="mail-folder" data-mail="${id}" aria-pressed="${id === "what"}"><span>${esc(label)}</span><span class="mail-n">${n}</span></button>`,
+                (f, i) =>
+                  `<button type="button" class="mail-folder" data-folder="${f.id}" aria-pressed="${i === 0}"><span>${esc(f.label)}</span><span class="mail-n">${f.mails.length}</span></button>`,
               )
               .join("")}
             ${card.mascot ? `<img class="mail-mascot" src="${esc(card.mascot.src)}" alt="${esc(card.mascot.alt)}" loading="lazy" decoding="async" />` : ""}
           </nav>
           <div class="mail-list">
-            <p class="mail-list-head">${esc(UI.boxCode)}</p>
-            ${decisions
+            ${folders
               .map(
-                ([title, sub], i) => `
-              <button type="button" class="mail-row" data-mail="d${i}" aria-pressed="false">
-                <i style="background: ${FIT[i % FIT.length]}"></i>
-                <span><b>${esc(title)}</b><span>${esc(sub)}</span></span>
-              </button>`,
+                (f, fi) => `
+              <div class="mail-group" data-list="${f.id}"${fi === 0 ? "" : " hidden"}>
+                <p class="mail-list-head">${esc(f.label)}</p>
+                ${f.mails
+                  .map(
+                    ([title, text], i) => `
+                <button type="button" class="mail-row" data-mail="${f.id}-${i}" aria-pressed="${fi === 0 && i === 0}">
+                  <i style="background: ${FIT[i % FIT.length]}"></i>
+                  <span><b>${esc(title)}</b><span>${esc(text)}</span></span>
+                </button>`,
+                  )
+                  .join("")}
+              </div>`,
               )
               .join("")}
             <ul class="mail-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
@@ -213,14 +220,16 @@ function mailCard(card: ProjectCard, head: string): string {
                 ${card.mascot ? `<img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" />` : ""}
                 <span>${esc(UI.touchStamp)}</span>
               </div>
-              ${panes
-                .map(
-                  (p) => `
-                <div class="mail-pane" data-pane="${p.id}"${p.id === "what" ? "" : " hidden"}>
-                  <p class="mail-kicker">${esc(p.kicker)}</p>
-                  <h4>${esc(p.title)}</h4>
-                  ${p.body ? `<p>${esc(p.body)}</p>` : ""}
+              ${folders
+                .flatMap((f, fi) =>
+                  f.mails.map(
+                    ([title, text], i) => `
+                <div class="mail-pane" data-pane="${f.id}-${i}"${fi === 0 && i === 0 ? "" : " hidden"}>
+                  <p class="mail-kicker">${esc(f.label)}</p>
+                  <h4>${esc(title)}</h4>
+                  ${body(f.id, i, text) ? `<p>${esc(body(f.id, i, text))}</p>` : ""}
                 </div>`,
+                  ),
                 )
                 .join("")}
             </article>
@@ -294,29 +303,40 @@ function partsCard(card: ProjectCard, head: string): string {
   `;
 }
 
-// Picking a folder or an inbox row shows its letter. One listener per
+// A folder shows its mails and opens the first (the architecture folder
+// opens on its code instead); a mail shows its letter. One listener per
 // big card; the cards are rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement) {
   root.querySelectorAll<HTMLElement>(".pcard--mail").forEach((card) => {
-    card.addEventListener("click", (e) => {
-      const pick = (e.target as Element).closest<HTMLElement>("[data-mail]");
-      if (!pick) return;
-      const id = pick.dataset.mail!;
-      card.querySelectorAll<HTMLElement>("[data-pane]").forEach((pane) => {
-        pane.hidden = pane.dataset.pane !== id;
+    const paper = card.querySelector<HTMLElement>(".mail-paper");
+    const show = (pane: string) => {
+      card.querySelectorAll<HTMLElement>("[data-pane]").forEach((el) => {
+        el.hidden = el.dataset.pane !== pane;
       });
       // The architecture is code, not a letter: no paper behind it.
-      const paper = card.querySelector<HTMLElement>(".mail-paper");
       if (paper) {
-        paper.hidden = id === "arch";
+        paper.hidden = pane === "arch";
         paper.scrollTo(0, 0);
       }
-      // Its folder stays lit while one of its decisions is open.
-      const folder = card.querySelector<HTMLElement>(".mail-folder[data-mail='arch'], .mail-folder[data-mail='d0']");
-      card.querySelectorAll<HTMLElement>("[data-mail]").forEach((btn) => {
-        const on = btn.dataset.mail === id || (btn === folder && /^d\d/.test(id));
-        btn.setAttribute("aria-pressed", String(on));
+      card.querySelectorAll<HTMLElement>(".mail-row").forEach((row) => {
+        row.setAttribute("aria-pressed", String(row.dataset.mail === pane));
       });
+    };
+    card.addEventListener("click", (e) => {
+      const target = e.target as Element;
+      const folder = target.closest<HTMLElement>("[data-folder]");
+      if (folder) {
+        const id = folder.dataset.folder!;
+        card.querySelectorAll<HTMLElement>("[data-folder]").forEach((btn) => btn.setAttribute("aria-pressed", String(btn === folder)));
+        card.querySelectorAll<HTMLElement>("[data-list]").forEach((list) => {
+          list.hidden = list.dataset.list !== id;
+        });
+        card.querySelector(".mail-list")?.scrollTo(0, 0);
+        show(id === "arch" && card.querySelector("[data-pane='arch']") ? "arch" : `${id}-0`);
+        return;
+      }
+      const mail = target.closest<HTMLElement>("[data-mail]");
+      if (mail) show(mail.dataset.mail!);
     });
   });
   // kev.dev's text tabs.
