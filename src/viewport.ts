@@ -35,8 +35,11 @@ export function makeHeightOnlyResizeFilter() {
 // frame on a phone GPU (the elevator's walls alone are layers as tall as
 // the whole About section). Instead About → Projekte → Kontakt sit on one
 // continuous flat grid, and the projects are a native swipe gallery.
-// Decided once at load (the scroll scenes are built for one mode), so
-// crossing the breakpoint later reloads the page — see main.ts. Keep in
-// sync with the `html.lite` rules in style.css / project-cards.css.
-export const LITE_QUERY = "(max-width: 900px)";
+// Short windows too (a 1280×720 laptop): the pinned scenes and the big
+// project cards need the height under the fixed headline, and below ~760px
+// they don't get it. Decided once at load (the scroll scenes are built for
+// one mode), so crossing the breakpoint later reloads the page — see
+// main.ts. Keep in sync with the `html.lite` rules in style.css /
+// project-cards.css.
+export const LITE_QUERY = "(max-width: 900px), (max-height: 760px)";
 export const LITE = window.matchMedia(LITE_QUERY).matches;
