@@ -1632,3 +1632,128 @@
 .ani-fix b {
   color: var(--pc);
 }
+
+/* --- watch (ReleaseWatcher): terminal + adapters ----------------- */
+
+.watch {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  font-family: var(--font-mono);
+}
+
+.watch-term,
+.watch-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+.watch-term .viz-editor {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.watch-term .viz-code {
+  font-size: var(--fs-read);
+  line-height: 1.9;
+}
+
+.watch-story {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+}
+
+.watch-side .big-text {
+  flex: 1;
+}
+
+/* One interface on top, the adapters hanging off it. */
+.watch-arch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+}
+
+.watch-caption {
+  align-self: stretch;
+  margin-bottom: 0.8rem;
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.watch-iface {
+  position: relative;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid var(--pc);
+  color: var(--pc);
+  font-size: var(--fs-small);
+  font-weight: 700;
+}
+
+/* A stub down from the interface, a bar across, a stub to each adapter. */
+.watch-iface::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  height: 0.7rem;
+  border-inline-start: 1px solid var(--pc);
+}
+
+.watch-adapters {
+  position: relative;
+  align-self: stretch;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: 0.6rem;
+  list-style: none;
+}
+
+.watch-adapters li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.7rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--projects-bg);
+  font-size: var(--fs-small);
+}
+
+.watch-adapters::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: calc((100% - (var(--n) - 1) * 0.6rem) / var(--n) / 2);
+  border-top: 1px solid var(--pc);
+}
+
+.watch-adapters li::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  height: 0.7rem;
+  border-inline-start: 1px solid var(--pc);
+}
+
+.watch-adapters span {
+  color: var(--color-text-muted);
+  font-size: var(--fs-tiny);
+  line-height: 1.4;
+}

@@ -534,6 +534,13 @@ const cards: ProjectCard[] = [
     ],
     what: "Ich schaue Serien, Anime und Manga quer über mehrere Plattformen und wollte nicht mehr selbst nachsehen, wo es was Neues gibt. Angefangen hat es im April als kleines Node-Script, das mit Puppeteer Manga-Seiten abgegrast hat. Im September habe ich es durch einen richtigen Media-Tracker ersetzt: Bun und SQLite, Quellen nur noch über offizielle APIs (TMDB, AniList, MangaDex, TVDB), jede als Adapter hinter derselben Schnittstelle. „check-new“ fragt alle Titel der Watchlist ab und listet, was neu erschienen ist, samt Link. Dazu manuelles Progress-Tracking und eine Web-UI mit Suche, Kalender-Ansicht und „Check new“-Button.",
     tags: ["TypeScript", "Bun", "SQLite", "REST-APIs"],
+    // The four adapters and what each API needs (same facts as `challenge`).
+    sources: [
+      ["TMDB", "trennt Serien und Filme"],
+      ["AniList", "keine Release-Termine für Manga"],
+      ["MangaDex", "Rate-Limit: fester 250-ms-Takt"],
+      ["TVDB", "braucht einen Login-Token"],
+    ],
     meta: "Solo · April 2026 als Scraper, September 2026 neu gebaut · für den eigenen Gebrauch",
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/ReleaseWatcher" }, { label: "kein Live-Widget (braucht API-Keys)" }],
     decisions: [

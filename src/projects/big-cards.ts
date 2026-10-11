@@ -4,7 +4,7 @@
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
 import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard, type TenantModule } from "./project-cards";
-import { blueprint, editor } from "./project-visuals";
+import { blueprint, editor, terminal } from "./project-visuals";
 import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
@@ -624,9 +624,37 @@ function aniCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// ReleaseWatcher: its CLI as the terminal it runs in, next to the one
+// interface its four API adapters sit behind (each with its quirk), and
+// the texts as tabs.
+function watchCard(card: ProjectCard, head: string): string {
+  const sources = card.sources ?? [];
+  return `
+    <article class="pcard pcard--big pcard--watch" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="watch">
+        <section class="watch-term">
+          ${terminal(card)}
+          <p class="watch-story">${esc(card.points?.[2] ?? "")}</p>
+        </section>
+        <section class="watch-side">
+          <div class="watch-arch">
+            <p class="watch-caption">${esc(splitDecision(card.decisions?.[1] ?? "")[0])}</p>
+            <p class="watch-iface">interface Source</p>
+            <ul class="watch-adapters" style="--n: ${sources.length}">
+              ${sources.map(([name, quirk]) => `<li><b>${esc(name)}</b><span>${esc(quirk)}</span></li>`).join("")}
+            </ul>
+          </div>
+          ${textTabs(card)}
+        </section>
+      </div>
+    </article>
+  `;
+}
+
 // Which layouts have a desktop card of their own (renderBigCard). The
 // carousel centres those and sizes them to the space (data-big, main.ts).
-const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor"]);
+const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal"]);
 export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 
 // The big card for this project, or "" to fall back to the shared layout.
@@ -640,6 +668,8 @@ export function renderBigCard(card: ProjectCard, head: string): string {
       return partsCard(card, head);
     case "editor":
       return aniCard(card, head);
+    case "terminal":
+      return watchCard(card, head);
     default:
       return "";
   }

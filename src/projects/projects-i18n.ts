@@ -313,6 +313,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       challenge: "For a long time a render bug with display glitches — the cause wasn't the script but the userscript manager during Brave's switch from Manifest V2 to V3. Switching from Violentmonkey to ScriptCat, which handled MV3 cleanly, fixed it.",
     },
     releasewatcher: {
+      sources: ["separates series and movies", "no release dates for manga", "rate limit: a fixed 250 ms pace", "needs a login token"],
       learnGoal: "Know when something new comes out without checking five sites — and learn to put several third-party APIs behind one shared interface.",
       claim: "A release radar for series, anime and manga — four APIs, one watchlist.",
       points: [
@@ -675,6 +676,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       challenge: "Долгое время был баг с искажённым отображением — причиной был не скрипт, а менеджер юзерскриптов при переходе Brave с Manifest V2 на V3. Помог переход с Violentmonkey на ScriptCat, который нормально работал с MV3.",
     },
     releasewatcher: {
+      sources: ["разделяет сериалы и фильмы", "нет дат выхода для манги", "лимит: фиксированный шаг 250 мс", "нужен токен входа"],
       learnGoal: "Знать, когда выходит что-то новое, не обходя пять сайтов, — и научиться прятать несколько чужих API за одним общим интерфейсом.",
       claim: "Радар релизов для сериалов, аниме и манги — четыре API, один список.",
       points: [
@@ -1038,6 +1040,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       challenge: "長い間、表示が崩れるレンダリングのバグがありました。原因はスクリプトではなく、BraveのManifest V2からV3への移行時のユーザースクリプトマネージャー。MV3にきちんと対応したScriptCatへViolentmonkeyから乗り換えて解決。",
     },
     releasewatcher: {
+      sources: ["シリーズと映画が別", "マンガの配信日がない", "レート制限：250 ms 固定間隔", "ログイントークンが必要"],
       learnGoal: "5つのサイトを見て回らなくても新作が出たとわかるように — そして複数の外部APIを1つの共通インターフェースの裏にまとめる方法を学ぶため。",
       claim: "ドラマ・アニメ・マンガのリリースレーダー — 4つのAPI、1つのウォッチリスト。",
       points: [
