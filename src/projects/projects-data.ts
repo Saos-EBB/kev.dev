@@ -507,6 +507,7 @@ const cards: ProjectCard[] = [
     ],
     what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Als Brave von Manifest V2 auf V3 umgestiegen ist, habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
     tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
+    features: ["Autoplay", "Intro-Skip", "Auto-nächste-Folge", "Skip-Hotkeys X/C/V/B", "Fortschritt pro Folge", "Theater-Modus"],
     meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/AniScript" }, { label: "kein Live-Widget (Userscript)" }],
     decisions: [

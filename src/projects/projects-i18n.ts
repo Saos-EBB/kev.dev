@@ -28,6 +28,11 @@ interface CardText {
   mailbox?: Record<MailFolder, [string, string][]>;
   layers?: Detail[];
   moduleInfo?: Record<TenantModule, Detail>;
+  // Whole lists; sources: the quirks only, by position (names stay).
+  features?: string[];
+  steps?: string[];
+  sources?: string[];
+  modes?: [string, string][];
   // Labels only, by position; the numbers stay the card's.
   hoursChart?: string[];
   timelineChart?: string[];
@@ -289,6 +294,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       widget: "3D models, rotate them with the mouse",
     },
     aniscript: {
+      features: ["Autoplay", "Intro skip", "Auto next episode", "Skip hotkeys X/C/V/B", "Progress per episode", "Theater mode"],
       learnGoal: "Learn userscripts and DOM manipulation — and find out whether I can rebuild a big script by someone else leaner and easier to understand.",
       claim: "A userscript for my own use — rewritten from scratch, lean and thoroughly commented.",
       points: [
@@ -650,6 +656,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       widget: "3D-модели, вращаются мышью",
     },
     aniscript: {
+      features: ["Автовоспроизведение", "Пропуск заставки", "Следующая серия", "Горячие клавиши X/C/V/B", "Прогресс по серии", "Театральный режим"],
       learnGoal: "Освоить юзерскрипты и работу с DOM — и проверить, смогу ли я переписать большой чужой скрипт компактнее и понятнее.",
       claim: "Юзерскрипт для себя — переписан с нуля, компактный и подробно прокомментированный.",
       points: [
@@ -1011,6 +1018,7 @@ const T: Partial<Record<Lang, Record<string, CardText>>> = {
       widget: "マウスで回せる3Dモデル",
     },
     aniscript: {
+      features: ["自動再生", "イントロスキップ", "次話へ自動移動", "スキップキー X/C/V/B", "話ごとの進捗", "シアターモード"],
       kind: "ユーザースクリプト",
       learnGoal: "ユーザースクリプトとDOM操作を学ぶ — そして他人の大きなスクリプトを、もっと小さく分かりやすく作り直せるか試す。",
       claim: "自分用のユーザースクリプト — ゼロから書き直し、コンパクトでコメントたっぷり。",
@@ -1156,6 +1164,10 @@ export function localizeCard(card: ProjectCard): ProjectCard {
     mailbox: t.mailbox ?? card.mailbox,
     layers: t.layers ?? card.layers,
     moduleInfo: t.moduleInfo ?? card.moduleInfo,
+    features: t.features ?? card.features,
+    steps: t.steps ?? card.steps,
+    sources: card.sources?.map(([name, quirk], i) => [name, t.sources?.[i] ?? quirk]),
+    modes: t.modes ?? card.modes,
     hoursChart: card.hoursChart?.map(([label, lo, hi], i) => [t.hoursChart?.[i] ?? label, lo, hi]),
     timelineChart: card.timelineChart?.map(([label, a, b], i) => [t.timelineChart?.[i] ?? label, a, b]),
     parts: card.parts?.map((part, i) => (t.parts?.[i] ? { ...part, ...t.parts[i] } : part)),

@@ -70,7 +70,7 @@ function inbox(card: ProjectCard): string {
 
 // Renderer: a 3D app viewport — wireframe cube in a cube, HUD corners.
 // The whole viewport is the Live-Demo button.
-function viewport(card: ProjectCard): string {
+export function viewport(card: ProjectCard): string {
   const faces = ["front", "back", "left", "right", "top", "bottom"]
     .map((f) => `<i class="f-${f}"></i>`)
     .join("");
@@ -92,7 +92,7 @@ function viewport(card: ProjectCard): string {
 }
 
 // AniScript: the userscript's own header block, then its features as a diff.
-function editor(card: ProjectCard): string {
+export function editor(card: ProjectCard): string {
   const lines: [string, string][] = [
     ["c", "// ==UserScript=="],
     ["c", `// @name        ${card.title}`],
@@ -120,7 +120,7 @@ function editor(card: ProjectCard): string {
 
 // ReleaseWatcher: its own CLI in the editor's window chrome — the
 // commands as its README lists them, no made-up output.
-function terminal(card: ProjectCard): string {
+export function terminal(card: ProjectCard): string {
   const lines: [string, string][] = [
     ["c", "# release-watcher · Bun + SQLite"],
     ["", "$ bun run start add --source mangadex <query>"],

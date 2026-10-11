@@ -4,7 +4,7 @@
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
 import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard, type TenantModule } from "./project-cards";
-import { blueprint } from "./project-visuals";
+import { blueprint, editor } from "./project-visuals";
 import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
@@ -582,9 +582,51 @@ export function initBigCards(root: HTMLElement) {
   });
 }
 
+// AniScript: a player with its six features pinned where they act, and
+// the script as an editor — its real header first, then the texts as tabs.
+function aniCard(card: ProjectCard, head: string): string {
+  const f = card.features ?? [];
+  const pin = (n: number) => `<b class="ani-pin">${n}</b>${esc(f[n - 1] ?? "")}`;
+  const lines = (card.points?.[0] ?? "").trim();
+  return `
+    <article class="pcard pcard--big pcard--ani" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="ani">
+        <section class="ani-side">
+          <div class="ani-player" aria-hidden="true">
+            <span class="ani-theater">${pin(6)}</span>
+            <span class="ani-next">${pin(3)}</span>
+            <span class="ani-skip"><svg viewBox="0 0 24 24"><path d="M5 5l9 7-9 7z"/><path d="M19 5v14"/></svg>${pin(2)}</span>
+            <span class="ani-keys">${pin(4).replace(/ ?X\/C\/V\/B/, "")}<kbd>X</kbd><kbd>C</kbd><kbd>V</kbd><kbd>B</kbd></span>
+            <div class="ani-bar">
+              <div class="ani-track"><i class="ani-intro"></i><i class="ani-seen"></i><i class="ani-head"></i></div>
+              <p><span><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>${pin(1)}</span><span>${pin(5)}</span></p>
+            </div>
+          </div>
+          <ol class="ani-legend">${f.map((x, i) => `<li><b>${i + 1}</b>${esc(x)}</li>`).join("")}</ol>
+        </section>
+        <section class="ani-side">
+          ${textTabs(card, [{ kind: "script", heading: "aniscript.user.js", body: editor(card) }])}
+          <div class="ani-facts">
+            <div class="ani-fact">
+              <p>${esc(lines)}</p>
+              <div class="ani-lines" aria-hidden="true"><span>~5000</span><i style="width: 100%"></i><span>~800</span><i class="is-now" style="width: 16%"></i></div>
+            </div>
+            <div class="ani-fact">
+              <p>${esc(UI.boxLearned)}</p>
+              <p class="ani-fix">Violentmonkey → ScriptCat <b>✓</b></p>
+              <p>Manifest V2 → V3</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </article>
+  `;
+}
+
 // Which layouts have a desktop card of their own (renderBigCard). The
 // carousel centres those and sizes them to the space (data-big, main.ts).
-const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard"]);
+const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor"]);
 export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 
 // The big card for this project, or "" to fall back to the shared layout.
@@ -596,6 +638,8 @@ export function renderBigCard(card: ProjectCard, head: string): string {
       return mailCard(card, head);
     case "storyboard":
       return partsCard(card, head);
+    case "editor":
+      return aniCard(card, head);
     default:
       return "";
   }

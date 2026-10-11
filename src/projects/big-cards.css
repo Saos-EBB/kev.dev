@@ -1381,3 +1381,254 @@
     animation: none;
   }
 }
+
+/* --- ani (AniScript): player + editor ---------------------------- */
+
+.ani {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  font-family: var(--font-mono);
+}
+
+.ani-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-height: 0;
+}
+
+.ani-side .big-text {
+  flex: 1;
+}
+
+/* A player frame with the features pinned where they act. */
+.ani-player {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--pc-soft);
+  background:
+    linear-gradient(color-mix(in srgb, var(--pc) 7%, transparent) 1px, transparent 1px) 0 0 / 100% 2rem,
+    var(--color-terminal-bg, #0d0c10);
+  font-size: var(--fs-small);
+}
+
+.ani-pin {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  margin-inline-end: 0.45em;
+  border-radius: 50%;
+  background: var(--pc);
+  color: #08070a;
+  font-size: 0.8em;
+}
+
+.ani-player > span,
+.ani-bar p span {
+  display: flex;
+  align-items: center;
+}
+
+.ani-theater {
+  position: absolute;
+  top: 0.9rem;
+  inset-inline-end: 1rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--pc);
+  color: var(--pc);
+}
+
+.ani-next {
+  position: absolute;
+  inset-inline-start: 1rem;
+  bottom: 5.2rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--pc-soft);
+  background: color-mix(in srgb, #08070a 85%, transparent);
+}
+
+.ani-skip {
+  position: absolute;
+  inset-inline-end: 1rem;
+  bottom: 5.2rem;
+  gap: 0.2rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--pc);
+  color: #08070a;
+  font-weight: 700;
+}
+
+.ani-skip .ani-pin {
+  background: #08070a;
+  color: var(--pc);
+}
+
+.ani-skip svg,
+.ani-bar svg {
+  width: 1em;
+  height: 1em;
+  margin-inline-end: 0.5em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ani-keys {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  translate: -50% -50%;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+}
+
+.ani-keys kbd {
+  display: inline-grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--pc-soft);
+  font: inherit;
+  color: var(--color-text);
+}
+
+.ani-bar {
+  position: absolute;
+  inset-inline: 1rem;
+  bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ani-track {
+  position: relative;
+  height: 6px;
+  background: color-mix(in srgb, var(--color-text-muted) 30%, transparent);
+}
+
+.ani-track i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.ani-intro {
+  inset-inline-start: 4%;
+  width: 9%;
+  background: color-mix(in srgb, var(--pc) 40%, transparent);
+}
+
+.ani-seen {
+  inset-inline-start: 0;
+  width: 46%;
+  background: var(--pc);
+}
+
+.ani-track .ani-head {
+  inset-inline-start: calc(46% - 7px);
+  top: -4px;
+  bottom: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-text);
+}
+
+.ani-bar p {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-text-muted);
+}
+
+.ani-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  list-style: none;
+  font-size: var(--fs-small);
+}
+
+.ani-legend li {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+}
+
+.ani-legend b {
+  color: var(--pc);
+}
+
+/* The script's own header as the first tab, edge to edge. */
+.pcard--ani [data-panel="script"] {
+  padding: 0;
+}
+
+.pcard--ani [data-panel="script"] .viz-editor {
+  border: 0;
+}
+
+/* The tab above already names the file. */
+.pcard--ani [data-panel="script"] .viz-tabs {
+  display: none;
+}
+
+.pcard--ani [data-panel="script"] .viz-code {
+  font-size: var(--fs-tiny);
+  line-height: 1.6;
+}
+
+.ani-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.ani-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+  font-size: var(--fs-small);
+  line-height: 1.45;
+}
+
+.ani-fact > p:first-child {
+  color: var(--color-text-muted);
+}
+
+.ani-lines {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  font-size: var(--fs-tiny);
+  color: var(--color-text-muted);
+}
+
+.ani-lines i {
+  height: 0.6rem;
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+  background: color-mix(in srgb, var(--color-text-muted) 45%, transparent);
+}
+
+.ani-lines i.is-now {
+  background: var(--pc);
+}
+
+.ani-fix b {
+  color: var(--pc);
+}

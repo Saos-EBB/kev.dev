@@ -125,6 +125,14 @@ export interface ProjectCard {
   // [label, first month, last month], months counted from April 2026.
   hoursChart?: [string, number, number][];
   timelineChart?: [string, number, number][];
+  // The tools' and the renderer's desktop cards (big-cards.ts): short labels
+  // they lay out on their own — AniScript's features, the renderer's steps
+  // from the first formula to the skull CT, ReleaseWatcher's sources with
+  // each one's quirk, Oskalizer's modes as [name, what it does].
+  features?: string[];
+  steps?: string[];
+  sources?: [string, string][];
+  modes?: [string, string][];
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
   // Past UI.vizStory's sections a part brings its own name and line (the
