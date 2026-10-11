@@ -244,7 +244,7 @@ export function initCarousel(section: HTMLElement) {
     // separate from xPercent on purpose since GSAP can't mix two units
     // in one value the way CSS calc() can — and opacity animate for the
     // small entry slide.
-    const big = group.dataset.group === "big";
+    const big = group.dataset.big !== undefined;
     cards.forEach((card, ci) => {
       const slot = big ? CENTERED : preset[ci];
       gsap.set(card, {

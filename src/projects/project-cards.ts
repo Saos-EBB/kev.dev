@@ -239,8 +239,8 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
         <p class="pcard-claim">${esc(card.claim)}</p>
         ${renderFacetTiles(card)}
       </header>`;
-  // The big three have a desktop card of their own (big-cards.ts).
-  const big = card.group === "big" ? renderBigCard(card, head) : "";
+  // Some layouts have a desktop card of their own (big-cards.ts).
+  const big = renderBigCard(card, head);
   if (big) return big;
   return `
     <article class="pcard pcard--${card.layout}" data-card="${esc(card.id)}" style="--pc: ${card.accent}">

@@ -17,7 +17,7 @@ import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
-import { initBigCards } from "./projects/big-cards";
+import { hasBigCard, initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
@@ -200,7 +200,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             ${projectCards
               .map(
                 (card, i) => `
-              <div class="carousel-project" data-project="${i}" data-group="${card.group}" data-count="1">
+              <div class="carousel-project" data-project="${i}" data-group="${card.group}" data-count="1"${hasBigCard(card) ? " data-big" : ""}>
                 ${renderProjectCard(card, i, projectCards.length)}
               </div>
             `,

@@ -10,7 +10,7 @@
    exactly, without the desk presets' offset, tilt or scale (carousel.ts).
    Doubled class: wins over .pcard's own grid/width rules regardless of
    which stylesheet loads first. */
-.carousel-project[data-group="big"],
+.carousel-project[data-big],
 .pcard.pcard--big {
   --big-gap-y: clamp(1.25rem, 3.5vh, 2.75rem);
   --big-gap-x: calc(var(--big-gap-y) * 0.8);
@@ -32,7 +32,7 @@
   /* On the bento grid like the other cards: the size rounds down to whole
      cells (the width to an even count, so it stays centred on the grid
      line through the middle) and the top edge snaps to a cell. */
-  .carousel-project[data-group="big"] {
+  .carousel-project[data-big] {
     --big-w: round(down, calc(100vw - 2 * var(--big-gap-x)), calc(2 * var(--grid-cell)));
     --big-h: max(
       calc(9 * var(--grid-cell)),
@@ -962,7 +962,7 @@
   gap: 1.5rem;
 }
 
-.parts-text {
+.big-text {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -970,12 +970,12 @@
   background: var(--box-bg);
 }
 
-.parts-tabs {
+.big-tabs {
   display: flex;
   border-bottom: 1px solid var(--pc-soft);
 }
 
-.parts-tabs button {
+.big-tabs button {
   flex: 1;
   min-height: 2.75rem;
   padding: 0.5rem;
@@ -990,30 +990,36 @@
   cursor: pointer;
 }
 
-.parts-tabs button[aria-selected="true"] {
+.big-tabs button[aria-selected="true"] {
   background: var(--pc-faint);
   color: var(--pc);
   box-shadow: inset 0 -2px 0 var(--pc);
 }
 
-.parts-tabs button:focus-visible,
+.big-tabs button:focus-visible,
 .parts-item summary:focus-visible {
   outline: 2px solid var(--pc);
   outline-offset: -2px;
 }
 
-.parts-panel {
+/* Long text scrolls (wheel, keys) without a bar, like the parts list. */
+.big-panel {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  scrollbar-width: none;
   padding: 1rem 1.2rem;
   font-size: var(--fs-read);
   line-height: 1.6;
 }
 
-.parts-panel p + p,
-.parts-panel ul + p,
-.parts-panel p + ul {
+.big-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.big-panel p + p,
+.big-panel ul + p,
+.big-panel p + ul {
   margin-top: 0.7rem;
 }
 

@@ -360,38 +360,46 @@ const DEMOS = [
   `<span class="demo-lang"><b>Hallo</b><b>Hello</b><b>Привет</b><b>こんにちは</b></span>`,
 ];
 
+// The card's texts (Why? / Learned! / Code, cardBodies) as tabs, with any
+// extra panels first — a box every big card can use. Clicks: initBigCards.
+type Panel = { kind: string; heading: string; body: string };
+function textTabs(card: ProjectCard, extra: Panel[] = []): string {
+  const panels = [...extra, ...cardBodies(card)];
+  const id = (kind: string) => `big-${esc(card.id)}-${kind}`;
+  return `
+    <section class="big-text" data-tabs>
+      <div class="big-tabs" role="tablist">
+        ${panels
+          .map(
+            (b, i) =>
+              `<button type="button" role="tab" id="${id(b.kind)}-tab" aria-controls="${id(b.kind)}" aria-selected="${i === 0}" data-tab="${b.kind}">${b.heading}</button>`,
+          )
+          .join("")}
+      </div>
+      ${panels
+        .map(
+          (b, i) =>
+            `<div class="big-panel" role="tabpanel" id="${id(b.kind)}" aria-labelledby="${id(b.kind)}-tab" data-panel="${b.kind}"${i === 0 ? "" : " hidden"}>${b.body}</div>`,
+        )
+        .join("")}
+    </section>`;
+}
+
 // kev.dev: Why? / Learned! / Code as tabs on the left, the page's own
 // sections on the right as accordions — each with a mini demo, and opened,
 // what it does, the files behind it and what of it is reusable.
 function partsCard(card: ProjectCard, head: string): string {
-  const bodies = cardBodies(card);
   const story = UI.vizStory;
   const parts = Array.from({ length: Math.max(story.length, card.parts?.length ?? 0) }, (_, i) => {
     const part = card.parts?.[i] ?? { does: "", files: [], reuse: "" };
     return { ...part, name: part.name ?? story[i]?.[0] ?? "", line: part.line ?? story[i]?.[1] ?? "" };
   });
   const list = (items?: string[]) => (items?.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
-  const id = (kind: string) => `parts-${esc(card.id)}-${kind}`;
   return `
     <article class="pcard pcard--big pcard--parts" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       ${head.replace("</header>", `<span class="parts-here" aria-hidden="true">${esc(UI.touchHere)}</span></header>`)}
       <div class="parts">
-        <section class="parts-text">
-          <div class="parts-tabs" role="tablist">
-            ${bodies
-              .map(
-                (b, i) =>
-                  `<button type="button" role="tab" id="${id(b.kind)}-tab" aria-controls="${id(b.kind)}" aria-selected="${i === 0}" data-tab="${b.kind}">${b.heading}</button>`,
-              )
-              .join("")}
-          </div>
-          ${bodies
-            .map(
-              (b, i) =>
-                `<div class="parts-panel" role="tabpanel" id="${id(b.kind)}" aria-labelledby="${id(b.kind)}-tab" data-panel="${b.kind}"${i === 0 ? "" : " hidden"}>${b.body}</div>`,
-            )
-            .join("")}
-        </section>
+        ${textTabs(card)}
         <div class="parts-list">
           <p class="parts-head">${esc(UI.partsHead)}</p>
           ${parts
@@ -547,16 +555,18 @@ export function initBigCards(root: HTMLElement) {
     const detail = card.querySelector(".er-detail");
     if (detail) new ResizeObserver(paginate).observe(detail);
   });
-  // kev.dev's text tabs.
-  root.querySelectorAll<HTMLElement>(".pcard--parts").forEach((card) => {
-    card.addEventListener("click", (e) => {
-      const tab = (e.target as Element).closest<HTMLElement>("[data-tab]");
-      if (!tab) return;
-      card.querySelectorAll<HTMLElement>("[data-tab]").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
-      card.querySelectorAll<HTMLElement>("[data-panel]").forEach((panel) => {
-        panel.hidden = panel.dataset.panel !== tab.dataset.tab;
-      });
+  // Every tab box (textTabs and the like): a tab shows its panel within
+  // its own [data-tabs] box.
+  root.addEventListener("click", (e) => {
+    const tab = (e.target as Element).closest<HTMLElement>(".pcard--big [data-tab]");
+    const box = tab?.closest<HTMLElement>("[data-tabs]");
+    if (!tab || !box) return;
+    box.querySelectorAll<HTMLElement>(":scope > [role=tablist] [data-tab]").forEach((t) => t.setAttribute("aria-selected", String(t === tab)));
+    box.querySelectorAll<HTMLElement>(":scope > [data-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== tab.dataset.tab;
     });
+  });
+  root.querySelectorAll<HTMLElement>(".pcard--parts").forEach((card) => {
     // An opened part scrolls the list until all of it is in view; one
     // taller than the list scrolls down to its end (pro/con), the start is
     // a wheel turn up — so the list needs no scrollbar. `toggle` doesn't
@@ -579,6 +589,11 @@ export function initBigCards(root: HTMLElement) {
     );
   });
 }
+
+// Which layouts have a desktop card of their own (renderBigCard). The
+// carousel centres those and sizes them to the space (data-big, main.ts).
+const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard"]);
+export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 
 // The big card for this project, or "" to fall back to the shared layout.
 export function renderBigCard(card: ProjectCard, head: string): string {
