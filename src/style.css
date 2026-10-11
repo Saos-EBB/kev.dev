@@ -1699,9 +1699,30 @@ button:focus-visible {
   gap: 0.75rem;
 }
 
+/* The AI-translation note (ru/ja): the short form on phones, where the
+   sentence would push the links out of the footer. */
+.footer-ai-short {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .footer-copy-name {
     display: none;
+  }
+
+  .footer-ai-long {
+    display: none;
+  }
+
+  .footer-ai-short {
+    display: inline;
+  }
+
+  /* Long link labels (Russian) take a second line instead of running out
+     of the screen; the others still fit on one. */
+  .lite .footer-inner {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
   }
 }
 

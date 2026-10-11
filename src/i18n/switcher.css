@@ -79,6 +79,16 @@
   outline: none;
 }
 
+/* "AI-translated" after a language's name. */
+.lang-menu button small {
+  margin-inline-start: auto;
+  padding-inline-start: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 .lang-menu button[aria-checked="true"] b {
   color: var(--color-line);
 }

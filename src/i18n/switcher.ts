@@ -18,7 +18,7 @@ export function renderLangSwitch(): string {
       </button>
       <ul class="lang-menu" role="menu" hidden>
         ${LANGS.map(
-          (l) => `<li role="none"><button type="button" role="menuitemradio" aria-checked="${l.code === LANG}" data-lang="${l.code}" lang="${l.code}"><b>${l.label}</b> ${l.native}</button></li>`,
+          (l) => `<li role="none"><button type="button" role="menuitemradio" aria-checked="${l.code === LANG}" data-lang="${l.code}" lang="${l.code}"><b>${l.label}</b> ${l.native}${l.ai ? ` <small>${UI.langAi}</small>` : ""}</button></li>`,
         ).join("")}
       </ul>
     </div>

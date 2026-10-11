@@ -7,11 +7,13 @@
 
 export type Lang = "de" | "en" | "ru" | "ja";
 
-export const LANGS: { code: Lang; label: string; native: string }[] = [
+// `ai`: translated with AI, not by a native speaker — the menu and the
+// footer say so (switcher.ts, main.ts).
+export const LANGS: { code: Lang; label: string; native: string; ai?: true }[] = [
   { code: "de", label: "DE", native: "Deutsch" },
   { code: "en", label: "EN", native: "English" },
-  { code: "ru", label: "RU", native: "Русский" },
-  { code: "ja", label: "JA", native: "日本語" },
+  { code: "ru", label: "RU", native: "Русский", ai: true },
+  { code: "ja", label: "JA", native: "日本語", ai: true },
 ];
 
 const STORE_KEY = "kev-lang";
@@ -44,6 +46,7 @@ function isLang(code: string): code is Lang {
 }
 
 export const LANG: Lang = readLang();
+export const LANG_AI = LANGS.some((l) => l.code === LANG && l.ai);
 
 // The YourBrand page (iframe) keeps its own language store — always start
 // it in the portfolio's language, so the two never disagree.

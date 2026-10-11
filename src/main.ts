@@ -1,4 +1,5 @@
 // First: sets <html lang/dir> from the stored language before anything renders.
+import { LANG_AI } from "./i18n";
 import { UI } from "./i18n/ui";
 import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
@@ -244,7 +245,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <footer class="footer footer--floating">
     <div class="footer-inner">
-      <p class="footer-copy">© 2026 <span class="footer-copy-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span></p>
+      <p class="footer-copy">© 2026 <span class="footer-copy-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span>${LANG_AI ? `<span class="footer-ai"> · <span class="footer-ai-long">${UI.langAiNote}</span><span class="footer-ai-short">${UI.langAi}</span></span>` : ""}</p>
       <nav class="footer-links" aria-label="${UI.legalAria}">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>

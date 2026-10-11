@@ -13,6 +13,8 @@ const de = {
   navContact: "Contact",
   navAria: "Hauptnavigation",
   langAria: "Sprache wählen",
+  langAi: "KI-übersetzt",
+  langAiNote: "", // shown in the footer on an AI-translated page
   musicPlay: "Musik abspielen",
   musicPause: "Musik pausieren",
   ytConsentText: "Die Musik kommt von YouTube. Mit „Abspielen“ wird der Player von Google geladen und dabei werden Daten (u. a. deine IP-Adresse) an Google übertragen.",
@@ -186,6 +188,8 @@ const en: Ui = {
   navContact: "Contact",
   navAria: "Main navigation",
   langAria: "Choose language",
+  langAi: "AI-translated",
+  langAiNote: "", // shown in the footer on an AI-translated page
   musicPlay: "Play music",
   musicPause: "Pause music",
   ytConsentText: "The music comes from YouTube. \u201cPlay\u201d loads Google's player, which sends data (including your IP address) to Google.",
@@ -350,6 +354,8 @@ const ru: Ui = {
   navContact: "Контакт",
   navAria: "Главная навигация",
   langAria: "Выбрать язык",
+  langAi: "перевод ИИ",
+  langAiNote: "Страница переведена с помощью ИИ", // shown in the footer on an AI-translated page
   musicPlay: "Включить музыку",
   musicPause: "Поставить музыку на паузу",
   ytConsentText: "Музыка идёт с YouTube. По нажатию «Воспроизвести» загружается плеер Google, и данные (в том числе ваш IP-адрес) передаются Google.",
@@ -514,6 +520,8 @@ const ja: Ui = {
   navContact: "連絡",
   navAria: "メインナビゲーション",
   langAria: "言語を選択",
+  langAi: "AI翻訳",
+  langAiNote: "このページはAIで翻訳されています", // shown in the footer on an AI-translated page
   musicPlay: "音楽を再生",
   musicPause: "音楽を一時停止",
   ytConsentText: "音楽は YouTube から再生されます。「再生」を押すと Google のプレーヤーが読み込まれ、IP アドレスなどのデータが Google に送信されます。",
