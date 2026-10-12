@@ -259,7 +259,10 @@ function archPane(card: ProjectCard): string {
     <div class="mail-code" data-pane="arch" hidden>
       <p class="mail-code-head"><span>pipeline</span><span>${esc(UI.boxCode)}</span></p>
       <pre><code>${steps}</code></pre>
-      <pre><code>${highlight(card.arch.code)}</code></pre>
+      <div class="mail-code-blocks">${card.arch.code
+        .split("\n\n")
+        .map((block) => `<pre><code>${highlight(block)}</code></pre>`)
+        .join("")}</div>
     </div>`;
 }
 
@@ -446,10 +449,35 @@ function partsCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// Text boxes never scroll: each one shrinks its type in small steps until
+// its text fits (no further than MIN_FIT). The box's content zooms by the
+// --fit factor (big-cards.css). A ResizeObserver refits on resize
+// and when a hidden tab panel shows (its size goes from 0); content that
+// changes in place (TschoBBo's letters) calls fitText itself.
+const FIT_BOXES = ".big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code";
+const MIN_FIT = 0.65;
+
+function fitText(el: HTMLElement) {
+  if (el.hidden || !el.clientHeight) return;
+  let fit = 1;
+  el.style.setProperty("--fit", "1");
+  const over = () => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+  while (over() && fit > MIN_FIT) {
+    fit = Math.round((fit - 0.04) * 100) / 100;
+    el.style.setProperty("--fit", String(fit));
+  }
+}
+
 // A folder shows its mails and opens the first (the architecture folder
 // opens on its code instead); a mail shows its letter. One listener per
 // big card; the cards are rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement) {
+  const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
+  const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
+  boxes.forEach((box) => sizes.observe(box));
+  // The web fonts change every line's width once they're in.
+  document.fonts?.ready.then(() => boxes.forEach(fitText));
+
   root.querySelectorAll<HTMLElement>(".pcard--mail").forEach((card) => {
     const paper = card.querySelector<HTMLElement>(".mail-paper");
     const show = (pane: string) => {
@@ -463,6 +491,11 @@ export function initBigCards(root: HTMLElement) {
       }
       card.querySelectorAll<HTMLElement>(".mail-row").forEach((row) => {
         row.setAttribute("aria-pressed", String(row.dataset.mail === pane));
+      });
+      // The reading side first: its size settles the row the list sits in.
+      [".mail-code", ".mail-paper", ".mail-list"].forEach((sel) => {
+        const box = card.querySelector<HTMLElement>(sel);
+        if (box) fitText(box);
       });
     };
     card.addEventListener("click", (e) => {
@@ -624,9 +657,9 @@ function aniCard(card: ProjectCard, head: string): string {
   `;
 }
 
-// ReleaseWatcher: its CLI as the terminal it runs in, next to the one
-// interface its four API adapters sit behind (each with its quirk), and
-// the texts as tabs.
+// ReleaseWatcher: its CLI as the terminal it runs in, under it the one
+// interface its four API adapters sit behind (each with its quirk); the
+// texts as tabs beside them, the whole height.
 function watchCard(card: ProjectCard, head: string): string {
   const sources = card.sources ?? [];
   return `
@@ -635,16 +668,14 @@ function watchCard(card: ProjectCard, head: string): string {
       <div class="watch">
         <section class="watch-term">
           ${terminal(card)}
-          <p class="watch-story">${esc(card.points?.[2] ?? "")}</p>
-        </section>
-        <section class="watch-side">
           <div class="watch-arch">
-            <p class="watch-caption">${esc(splitDecision(card.decisions?.[1] ?? "")[0])}</p>
             <p class="watch-iface">interface Source</p>
             <ul class="watch-adapters" style="--n: ${sources.length}">
               ${sources.map(([name, quirk]) => `<li><b>${esc(name)}</b><span>${esc(quirk)}</span></li>`).join("")}
             </ul>
           </div>
+        </section>
+        <section class="watch-side">
           ${textTabs(card)}
         </section>
       </div>
@@ -685,10 +716,19 @@ function keysCard(card: ProjectCard, head: string): string {
           <p class="keys-note">${esc(splitDecision(card.decisions?.[0] ?? "")[1] || (card.decisions?.[0] ?? ""))}</p>
         </section>
         <section class="keys-side">
-          <ol class="keys-modes">
-            ${modes.map(([name, text], i) => `<li class="${i === 0 ? "is-retired" : i === 1 ? "is-on" : ""}"><b><i>${i + 1}</i> ${esc(name)}</b><span>${esc(text)}</span></li>`).join("")}
-          </ol>
-          ${textTabs(card, [], (p) => (p.kind === "learned" ? { ...p, body: queue + p.body } : p))}
+          ${textTabs(
+            card,
+            [
+              {
+                kind: "modes",
+                heading: esc(UI.keysModes),
+                body: `<ol class="keys-modes">${modes
+                  .map(([name, text], i) => `<li class="${i === 0 ? "is-retired" : i === 1 ? "is-on" : ""}"><b><i>${i + 1}</i> ${esc(name)}</b><span>${esc(text)}</span></li>`)
+                  .join("")}</ol>`,
+              },
+            ],
+            (p) => (p.kind === "learned" ? { ...p, body: queue + p.body } : p),
+          )}
         </section>
       </div>
     </article>

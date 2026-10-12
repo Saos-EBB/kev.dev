@@ -351,7 +351,7 @@ const cards: ProjectCard[] = [
         "  | 'geloescht' | 'fehler' | 'offline';",
         "type Fit = 'matched' | 'offstack' | 'brutal';",
         "",
-        "// storage/json-store.ts — one job, one file; temp file + rename",
+        "// storage/json-store.ts — one job, one file",
         "interface Storage {",
         "  save(job: Job): Promise<void>;",
         "  updateStatus(id: string, status: JobStatus): Promise<Job>;",
@@ -364,7 +364,7 @@ const cards: ProjectCard[] = [
         "  ensureReady(host?: string): Promise<void>;",
         "}",
         "",
-        "// test/ — ~575 tests, node:test, temp dirs + mock server",
+        "// test/ — ~575 tests, node:test, offline",
       ].join("\n"),
     },
     // Desktop card: the mails behind each folder, from the JoBBoT README.

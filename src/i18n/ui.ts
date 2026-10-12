@@ -115,6 +115,7 @@ const de = {
   touchStamp: "lokal per llama.cpp",
   touchHere: "Du bist hier",
   vizKeysModes: ["Kleckse", "Tiere", "Tippen"],
+  keysModes: "Modi",
   vizEditorFeatures: [
     ["add", "+ Autoplay"],
     ["add", "+ Intro-Skip"],
@@ -288,6 +289,7 @@ const en: Ui = {
   touchStamp: "local via llama.cpp",
   touchHere: "You are here",
   vizKeysModes: ["Blobs", "Animals", "Typing"],
+  keysModes: "Modes",
   vizEditorFeatures: [
     ["add", "+ Autoplay"],
     ["add", "+ Intro skip"],
@@ -456,6 +458,7 @@ const ru: Ui = {
   touchStamp: "локально через llama.cpp",
   touchHere: "Вы здесь",
   vizKeysModes: ["Кляксы", "Животные", "Набор"],
+  keysModes: "Режимы",
   vizEditorFeatures: [
     ["add", "+ Автовоспроизведение"],
     ["add", "+ Пропуск заставки"],
@@ -624,6 +627,7 @@ const ja: Ui = {
   touchStamp: "llama.cppでローカル",
   touchHere: "現在地",
   vizKeysModes: ["しみ", "どうぶつ", "タイプ"],
+  keysModes: "モード",
   vizEditorFeatures: [
     ["add", "+ 自動再生"],
     ["add", "+ イントロスキップ"],

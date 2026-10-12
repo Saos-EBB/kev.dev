@@ -761,7 +761,8 @@
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  /* One line of preview, like a mail client; the letter has it all. */
+  -webkit-line-clamp: 1;
   color: var(--jb-muted);
   font-size: calc(var(--fs-small) * 0.92);
 }
@@ -866,10 +867,18 @@
   color: var(--jb-text);
 }
 
-.mail-code pre + pre {
+.mail-code pre + .mail-code-blocks {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px dashed var(--jb-line);
+}
+
+/* The type blocks wrap: side by side where the width allows, so the
+   fitting (initBigCards) settles on whichever keeps the type largest. */
+.mail-code-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
 }
 
 .mail-code .n { color: var(--jb-dim); }
@@ -1660,15 +1669,7 @@
 
 .watch-term .viz-code {
   font-size: var(--fs-read);
-  line-height: 1.9;
-}
-
-.watch-story {
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--pc-soft);
-  background: var(--box-bg);
-  font-size: var(--fs-small);
-  color: var(--color-text-muted);
+  line-height: 1.7;
 }
 
 .watch-side .big-text {
@@ -1680,18 +1681,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
+  padding: 0.8rem;
   border: 1px solid var(--pc-soft);
   background: var(--box-bg);
-}
-
-.watch-caption {
-  align-self: stretch;
-  margin-bottom: 0.8rem;
-  font-size: var(--fs-tiny);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
 }
 
 .watch-iface {
@@ -1728,8 +1720,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.7rem;
+  gap: 0.2rem;
+  padding: 0.5rem 0.6rem;
   border: 1px solid var(--pc-soft);
   background: var(--projects-bg);
   font-size: var(--fs-small);
@@ -1934,7 +1926,7 @@
 .keys-modes {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
   list-style: none;
 }
 
@@ -1955,8 +1947,8 @@
 
 .keys-modes span {
   color: var(--color-text-muted);
-  font-size: var(--fs-tiny);
-  line-height: 1.45;
+  font-size: var(--fs-small);
+  line-height: 1.5;
 }
 
 .keys-modes .is-on {
@@ -2146,4 +2138,11 @@
 
 .pcard--render [data-panel="how"] {
   padding: 0.8rem;
+}
+
+/* Text boxes fit their text instead of scrolling: initBigCards sets --fit
+   (1 down to MIN_FIT) per box, and its content zooms by it — type, gaps
+   and the few fixed rem sizes (tags, meta) alike; the box keeps its size. */
+.pcard--big :is(.big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code) > * {
+  zoom: var(--fit, 1);
 }
