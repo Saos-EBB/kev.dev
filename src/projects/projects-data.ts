@@ -314,7 +314,7 @@ const cards: ProjectCard[] = [
     title: "TschoBBo",
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
-    points: ["Scrapt österreichische Jobbörsen, filtert per Regex", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
+    points: ["Scrapt österreichische Jobbörsen, filtert per Regex oder JEV, einem kleinen lokalen Modell", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
     what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; per Knopf läuft die ganze Kette bis zum Entwurf automatisch, abgeschickt wird immer von mir. Ein Gmail-Sync sortiert Gesendetes und Absagen ein, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
     tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
@@ -326,12 +326,12 @@ const cards: ProjectCard[] = [
       "Lokal statt Cloud: llama.cpp auf der eigenen Maschine — meine Daten bleiben hier",
       "Modell nach Messung gewählt: von Ollama/Mistral auf llama.cpp mit Gemma 4 26B (MoE) — gleicher Prompt, gleiche Jobs: Anschreiben rund viermal schneller, weniger Floskeln, keine erfundenen Behauptungen mehr",
       "Versand bleibt manuell: der Bot generiert, feuert aber nie selbst eine Bewerbung ab",
-      "Filter über Regex, nicht LLM: was ein Regex in Sekunden macht, muss kein Sprachmodell langsam erledigen — LLM nur noch fürs Anschreiben",
+      "Filter über Regex als Standard: was ein Regex in Sekunden macht, muss kein großes Sprachmodell langsam erledigen. Wahlweise JEV — ein kleines lokales Modell (Bespoke Nimble 9B), das pro Kriterium nur einen Buchstaben antwortet: rund 7 s pro Job, im Test bis 92 % richtig",
       "Mail-Client-UI (Gmail/Proton als Referenz) für maximale Übersicht",
       "Fünf Portale hinter einem Scraper-Interface: karriere.at, devjobs.at, LinkedIn, AMS, jobs.at — Playwright nur dort, wo eine Seite ohne Browser nichts hergibt (AMS, devjobs.at)",
       "Eigene JSON-Ablage statt Datenbank: ein Job = eine Datei, das Anschreiben als .md daneben, geschrieben über Temp-Datei + rename — nie halb geschriebene Daten",
-      "Das Modell hinter einer Schnittstelle (LlmProvider): llama.cpp oder OpenAI-kompatibel, Modelle als Presets — Wechsel ohne Codeänderung",
-      "Rund 575 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
+      "Das Modell hinter einer Schnittstelle (LlmProvider): heute nur llama.cpp im Router-Modus, Modelle als Presets — ein neues Backend ist eine Datei plus ein Eintrag",
+      "Rund 580 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
     ],
     // The architecture as code on the desktop card: the pipeline (stage,
     // file, the job status it leaves behind) and an excerpt of the real
@@ -358,13 +358,13 @@ const cards: ProjectCard[] = [
         "  getBrief(job: { id: string }): Promise<string | null>;",
         "}",
         "",
-        "// lib/llm/types.ts — llama.cpp or OpenAI-compatible",
+        "// lib/llm/types.ts — one interface, llama.cpp behind it",
         "interface LlmProvider {",
         "  chat(req: ChatRequest): Promise<string>;",
         "  ensureReady(host?: string): Promise<void>;",
         "}",
         "",
-        "// test/ — ~575 tests, node:test, offline",
+        "// test/ — ~580 tests, node:test, offline",
       ].join("\n"),
     },
     // Desktop card: the mails behind each folder, from the JoBBoT README.
@@ -372,7 +372,7 @@ const cards: ProjectCard[] = [
       what: [
         ["Die Pipeline", "Scrape → Filter → Anschreiben → Review → Gmail-Entwurf. Jeder Schritt startet aus der Seitenleiste, läuft im Hintergrund weiter und zeigt seinen Fortschritt, auch wenn man währenddessen woanders klickt. Am Ende kommt eine Kurzbilanz wie „14 neu, 6 dedup“, und die Liste lädt neu."],
         ["Fünf Portale, eine Suche", "karriere.at, devjobs.at, LinkedIn, AMS und jobs.at. Suchbegriffe pro Portal stehen auf einer Einstellungsseite im Browser; jedes Portal beschreibt seine Felder selbst, und dieselbe Prüfung läuft im Formular, im Server und im Scraper. Ein Umkreisfilter wirkt danach auf alle fünf."],
-        ["Urteil statt Liste", "Der Regex-Filter sortiert jede Stelle in Match, Offstack oder Brutal. Das Urteil lässt sich in der UI überschreiben, mehrere Jobs auf einmal verschieben, bewerten oder löschen. Duplikate quer über die Portale werden gefunden und zusammengeführt — ein schon geschriebenes Anschreiben wandert mit."],
+        ["Urteil statt Liste", "Der Regex-Filter (oder wahlweise JEV) sortiert jede Stelle in Match, Offstack oder Brutal. Das Urteil lässt sich in der UI überschreiben, mehrere Jobs auf einmal verschieben, bewerten oder löschen. Duplikate quer über die Portale werden gefunden und zusammengeführt — ein schon geschriebenes Anschreiben wandert mit."],
         ["Nachfassen und Kalender", "Nach drei Tagen ohne Antwort ist eine Bewerbung fällig zum Nachfassen — im selben Gmail-Thread, damit die Antwort wieder zum Job findet. Der Kalender zeigt pro Tag, was rausging, wann nachgehakt wurde und wann Antworten kamen."],
         ["Offline-Archiv", "Beim Scrapen prüft der Bot, ob gespeicherte Inserate noch online sind. Erst wenn ein Einzelabruf es bestätigt, wandert ein Job ins Archiv — taucht er wieder auf, holt ihn derselbe Lauf zurück. Jobs mit eigener Arbeit drin (Anschreiben, Versand) fasst er nie an."],
       ],
@@ -397,7 +397,7 @@ const cards: ProjectCard[] = [
       ],
     },
     challenge:
-      "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern.",
+      "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern. Später kam doch ein Modell-Filter dazu, aber anders gebaut: JEV, ein kleines Modell, das pro Kriterium nur einen Buchstaben antwortet — rund 7 s pro Job. Regex bleibt der Standard.",
     origin:
       "Angefangen als reiner Scraper (karriere.at zuerst, weil am leichtesten), dann AMS und devjobs dazu. Erst alles CLI; UI und Maskottchen kamen später, nachdem Freunde Potenzial gesehen haben. Aus derselben Logik ist nebenbei ein kleines CLI-Tool entstanden — Release Watcher, das Manga-Seiten auf neue Kapitel prüft, weil ich zu oft gespoilert wurde. Gleiche Idee, kleiner Rahmen.",
     // UI screenshots: the real JoBBoT UI, fed offline with the real
@@ -501,11 +501,11 @@ const cards: ProjectCard[] = [
     title: "AniScript",
     claim: "Ein Userscript für den eigenen Gebrauch — von Grund auf neu geschrieben, schlank und durchkommentiert.",
     points: [
-      "Komplett neu geschrieben: ~800 statt ~5000 Zeilen",
+      "Komplett neu geschrieben: ~1000 statt ~5000 Zeilen",
       "Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt",
       "Jede Debug-Erkenntnis als Kommentar direkt im Code",
     ],
-    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Als Brave von Manifest V2 auf V3 umgestiegen ist, habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
+    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Als Brave von Manifest V2 auf V3 umgestiegen ist, habe ich es komplett neu geschrieben: rund 1000 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
     tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
     features: ["Autoplay", "Intro-Skip", "Auto-nächste-Folge", "Skip-Hotkeys X/C/V/B", "Fortschritt pro Folge", "Theater-Modus"],
     meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
