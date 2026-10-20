@@ -315,7 +315,7 @@ const cards: ProjectCard[] = [
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
     points: ["Scrapt österreichische Jobbörsen, filtert per Regex oder JEV, einem kleinen lokalen Modell", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
-    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; per Knopf läuft die ganze Kette bis zum Entwurf automatisch, abgeschickt wird immer von mir. Ein Gmail-Sync sortiert Gesendetes und Absagen ein, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
+    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; per Knopf läuft die ganze Kette bis zum Entwurf automatisch, abgeschickt wird immer von mir. Ein Gmail-Sync erkennt Abgeschicktes von selbst, JEV liest die Antworten und erkennt Absage, Zusage oder „bitte übers Portal bewerben“, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
     tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
     links: [
@@ -326,12 +326,12 @@ const cards: ProjectCard[] = [
       "Lokal statt Cloud: llama.cpp auf der eigenen Maschine — meine Daten bleiben hier",
       "Modell nach Messung gewählt: von Ollama/Mistral auf llama.cpp mit Gemma 4 26B (MoE) — gleicher Prompt, gleiche Jobs: Anschreiben rund viermal schneller, weniger Floskeln, keine erfundenen Behauptungen mehr",
       "Versand bleibt manuell: der Bot generiert, feuert aber nie selbst eine Bewerbung ab",
-      "Filter über Regex als Standard: was ein Regex in Sekunden macht, muss kein großes Sprachmodell langsam erledigen. Wahlweise JEV — ein kleines lokales Modell (Bespoke Nimble 9B), das pro Kriterium nur einen Buchstaben antwortet: rund 7 s pro Job, im Test bis 92 % richtig",
+      "Filter über Regex als Standard: was ein Regex in Sekunden macht, muss kein großes Sprachmodell langsam erledigen. Wahlweise JEV — ein kleines lokales Modell (Bespoke Nimble 9B), das pro Kriterium nur einen Buchstaben antwortet: rund 7 s pro Job, im Test bis 92 % richtig. Derselbe JEV ordnet im Gmail-Sync auch die Antworten ein",
       "Mail-Client-UI (Gmail/Proton als Referenz) für maximale Übersicht",
       "Fünf Portale hinter einem Scraper-Interface: karriere.at, devjobs.at, LinkedIn, AMS, jobs.at — Playwright nur dort, wo eine Seite ohne Browser nichts hergibt (AMS, devjobs.at)",
       "Eigene JSON-Ablage statt Datenbank: ein Job = eine Datei, das Anschreiben als .md daneben, geschrieben über Temp-Datei + rename — nie halb geschriebene Daten",
       "Das Modell hinter einer Schnittstelle (LlmProvider): heute nur llama.cpp im Router-Modus, Modelle als Presets — ein neues Backend ist eine Datei plus ein Eintrag",
-      "Rund 580 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
+      "Rund 600 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
     ],
     // The architecture as code on the desktop card: the pipeline (stage,
     // file, the job status it leaves behind) and an excerpt of the real
@@ -364,7 +364,7 @@ const cards: ProjectCard[] = [
         "  ensureReady(host?: string): Promise<void>;",
         "}",
         "",
-        "// test/ — ~580 tests, node:test, offline",
+        "// test/ — ~600 tests, node:test, offline",
       ].join("\n"),
     },
     // Desktop card: the mails behind each folder, from the JoBBoT README.
@@ -373,7 +373,7 @@ const cards: ProjectCard[] = [
         ["Die Pipeline", "Scrape → Filter → Anschreiben → Review → Gmail-Entwurf. Jeder Schritt startet aus der Seitenleiste, läuft im Hintergrund weiter und zeigt seinen Fortschritt, auch wenn man währenddessen woanders klickt. Am Ende kommt eine Kurzbilanz wie „14 neu, 6 dedup“, und die Liste lädt neu."],
         ["Fünf Portale, eine Suche", "karriere.at, devjobs.at, LinkedIn, AMS und jobs.at. Suchbegriffe pro Portal stehen auf einer Einstellungsseite im Browser; jedes Portal beschreibt seine Felder selbst, und dieselbe Prüfung läuft im Formular, im Server und im Scraper. Ein Umkreisfilter wirkt danach auf alle fünf."],
         ["Urteil statt Liste", "Der Regex-Filter (oder wahlweise JEV) sortiert jede Stelle in Match, Offstack oder Brutal. Das Urteil lässt sich in der UI überschreiben, mehrere Jobs auf einmal verschieben, bewerten oder löschen. Duplikate quer über die Portale werden gefunden und zusammengeführt — ein schon geschriebenes Anschreiben wandert mit."],
-        ["Nachfassen und Kalender", "Nach drei Tagen ohne Antwort ist eine Bewerbung fällig zum Nachfassen — im selben Gmail-Thread, damit die Antwort wieder zum Job findet. Der Kalender zeigt pro Tag, was rausging, wann nachgehakt wurde und wann Antworten kamen."],
+        ["Nachfassen und Kalender", "Nach drei Tagen ohne Antwort ist eine Bewerbung fällig zum Nachfassen — im selben Gmail-Thread, damit die Antwort wieder zum Job findet. Der Kalender zeigt pro Tag, was rausging, wann nachgehakt wurde und wann Antworten kamen. Jede Antwort ordnet JEV ein: Absage, Zusage, Datenschutz zustimmen, übers Portal bewerben oder nur Eingangsbestätigung."],
         ["Offline-Archiv", "Beim Scrapen prüft der Bot, ob gespeicherte Inserate noch online sind. Erst wenn ein Einzelabruf es bestätigt, wandert ein Job ins Archiv — taucht er wieder auf, holt ihn derselbe Lauf zurück. Jobs mit eigener Arbeit drin (Anschreiben, Versand) fasst er nie an."],
       ],
       why: [
@@ -393,6 +393,7 @@ const cards: ProjectCard[] = [
         ["Dann AMS und devjobs", "Zwei Portale, die ohne echten Browser nichts hergeben — dort kam Playwright dazu. Mit LinkedIn und jobs.at wurden es fünf hinter einem gemeinsamen Interface."],
         ["UI und Maskottchen", "Als Freunde Potenzial gesehen haben: eine React-Oberfläche im Look eines Mail-Clients, auf einem nackten node:http-Server ohne Framework, und Tschobbo dazu."],
         ["Ein anderes Modell", "Erst Ollama mit Mistral Small, nach einem Vergleich auf denselben Jobs llama.cpp mit Gemma 4 26B — schneller, weniger Floskeln, nichts mehr erfunden."],
+        ["Dann JEV", "Ein kleines Modell nur für Ja/Nein-Fragen: Bespoke Nimble 9B, ein Buchstabe pro Kriterium. Erst als Filter neben Regex, dann auch für die Antworten im Gmail-Sync. Der alte LLM-Filter mit Gemma ist dafür rausgeflogen."],
         ["Nebenbei: Release Watcher", "Aus derselben Scraping-Logik ein kleines CLI-Tool, das Manga-Seiten auf neue Kapitel prüft. Gleiche Idee, kleiner Rahmen."],
       ],
     },
