@@ -4,9 +4,10 @@ import { fileURLToPath, URL } from "node:url";
 
 const root = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
-// Impressum/Datenschutz are separate static pages (full reload, no
-// client-side router in this project), so they need their own entries —
-// Vite only builds index.html by default.
+// Impressum/Datenschutz and the three highlight graphs (graph/) are
+// separate static pages (full reload, no client-side router in this
+// project), so they need their own entries — Vite only builds index.html
+// by default.
 export default defineConfig({
   // Tailwind only matters for the YourBrand sub-app (yourbrand/), whose
   // stylesheet is the only one importing it.
@@ -31,6 +32,9 @@ export default defineConfig({
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
+        "graph-yourbrand": root("graph/yourbrand.html"),
+        "graph-tschobbo": root("graph/tschobbo.html"),
+        "graph-kevdev": root("graph/kevdev.html"),
       },
     },
   },
