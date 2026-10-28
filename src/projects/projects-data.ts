@@ -13,6 +13,7 @@ const cards: ProjectCard[] = [
   {
     id: "yourbrand",
     group: "big",
+    graph: "yourbrand",
     layout: "blueprint",
     kind: "White-Label-SaaS",
     // YourBrand's own brand pink (its default tenant's primary color).
@@ -307,6 +308,7 @@ const cards: ProjectCard[] = [
   {
     id: "tschobbo",
     group: "big",
+    graph: "tschobbo",
     layout: "inbox",
     kind: "Bewerbungs-Bot",
     accent: "var(--note-5)",
@@ -332,7 +334,7 @@ const cards: ProjectCard[] = [
       "Fünf Portale hinter einem Scraper-Interface: karriere.at, devjobs.at, LinkedIn, AMS, jobs.at — Playwright nur dort, wo eine Seite ohne Browser nichts hergibt (AMS, devjobs.at)",
       "Eigene JSON-Ablage statt Datenbank: ein Job = eine Datei, das Anschreiben als .md daneben, geschrieben über Temp-Datei + rename — nie halb geschriebene Daten",
       "Das Modell hinter einer Schnittstelle (LlmProvider): heute nur llama.cpp im Router-Modus, Modelle als Presets — ein neues Backend ist eine Datei plus ein Eintrag",
-      "Rund 600 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
+      "681 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
     ],
     // The architecture as code on the desktop card: the pipeline (stage,
     // file, the job status it leaves behind) and an excerpt of the real
@@ -365,7 +367,7 @@ const cards: ProjectCard[] = [
         "  ensureReady(host?: string): Promise<void>;",
         "}",
         "",
-        "// test/ — ~600 tests, node:test, offline",
+        "// test/ — 681 tests, node:test, offline",
       ].join("\n"),
     },
     // Desktop card: the mails behind each folder, from the JoBBoT README.
@@ -417,6 +419,7 @@ const cards: ProjectCard[] = [
   {
     id: "kevdev",
     group: "big",
+    graph: "kevdev",
     layout: "storyboard",
     kind: "Dieses Portfolio",
     accent: "var(--note-9)",

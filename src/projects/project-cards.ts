@@ -133,6 +133,9 @@ export interface ProjectCard {
   steps?: string[];
   sources?: [string, string][];
   modes?: [string, string][];
+  // The big three's highlight graph (graph/<id>.html): a link tile beside
+  // the facet buttons.
+  graph?: string;
   // Loadtest's visual: the latest ramp as [req/s, p95 ms, within budget].
   ramp?: [number, number, boolean][];
   // kev.dev's desktop card: per section of this page (same order as
