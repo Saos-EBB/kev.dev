@@ -4,7 +4,7 @@
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
 import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard, type TenantModule } from "./project-cards";
-import { blueprint, editor, terminal, viewport } from "./project-visuals";
+import { blueprint, editor, orders, ramp, terminal, viewport } from "./project-visuals";
 import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
@@ -770,9 +770,68 @@ function rendererCard(card: ProjectCard, head: string): string {
   `;
 }
 
+// Loadtest: the latest ramp as the check reads it, under it the engine
+// with the targets it runs against (each with the files that describe
+// it); the texts as tabs beside them, the whole height.
+function rampCard(card: ProjectCard, head: string): string {
+  const targets: [string, string][] = [
+    ["yourbrand", "endpoints.tsv · weights.tsv"],
+    ["shop", "target.sh · actions.sh"],
+  ];
+  return `
+    <article class="pcard pcard--big pcard--rampcard" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="watch">
+        <section class="watch-term">
+          ${ramp(card)}
+          <div class="watch-arch">
+            <p class="watch-iface">engine · loadgen (C++17)</p>
+            <ul class="watch-adapters" style="--n: ${targets.length}">
+              ${targets.map(([name, files]) => `<li><b>${esc(name)}</b><span>${esc(files)}</span></li>`).join("")}
+            </ul>
+          </div>
+        </section>
+        <section class="watch-side">
+          ${textTabs(card)}
+        </section>
+      </div>
+    </article>
+  `;
+}
+
+// Shop: an order's way through its status machine, under it the risk
+// rules that decide which way it goes (names and defaults as the shop's
+// system settings have them); the texts as tabs beside them.
+function ordersCard(card: ProjectCard, head: string): string {
+  const rules: [string, string][] = [
+    ["amount_high", "≥ 150 €"],
+    ["new_buyer", "≥ 50 €"],
+    ["velocity", "≥ 3 / h"],
+    ["card_reuse", "≥ 2"],
+    ["previous_dispute", ""],
+    ["radar_elevated", ""],
+  ];
+  return `
+    <article class="pcard pcard--big pcard--orderscard" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+      ${head}
+      <div class="watch">
+        <section class="watch-term">
+          ${orders()}
+          <ul class="orders-rules">
+            ${rules.map(([name, at]) => `<li><code>${esc(name)}</code>${at ? `<span>${esc(at)}</span>` : ""}</li>`).join("")}
+          </ul>
+        </section>
+        <section class="watch-side">
+          ${textTabs(card)}
+        </section>
+      </div>
+    </article>
+  `;
+}
+
 // Which layouts have a desktop card of their own (renderBigCard). The
 // carousel centres those and sizes them to the space (data-big, main.ts).
-const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal", "keys", "viewport"]);
+const BIG_LAYOUTS = new Set(["blueprint", "inbox", "storyboard", "editor", "terminal", "keys", "viewport", "ramp", "orders"]);
 export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 
 // The big card for this project, or "" to fall back to the shared layout.
@@ -792,6 +851,10 @@ export function renderBigCard(card: ProjectCard, head: string): string {
       return keysCard(card, head);
     case "viewport":
       return rendererCard(card, head);
+    case "ramp":
+      return rampCard(card, head);
+    case "orders":
+      return ordersCard(card, head);
     default:
       return "";
   }

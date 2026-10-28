@@ -1750,6 +1750,56 @@
   line-height: 1.4;
 }
 
+/* --- rampcard (Loadtest), orderscard (Shop): on the watch grid ---- */
+
+/* The visual fills the left column like ReleaseWatcher's terminal; its
+   own sizes follow the bigger box. */
+.watch-term .viz-ramp,
+.watch-term .viz-orders {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  font-size: var(--fs-small);
+}
+
+.watch-term .viz-orders {
+  font-size: var(--fs-read);
+  gap: 1.2rem;
+}
+
+/* The shop's risk rules: what puts an order on hold, with its default. */
+.orders-rules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--box-bg);
+  list-style: none;
+  font-size: var(--fs-small);
+}
+
+.orders-rules li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--projects-bg);
+  min-width: 0;
+}
+
+.orders-rules code {
+  font-family: inherit;
+  color: var(--pc);
+  overflow-wrap: anywhere;
+}
+
+.orders-rules span {
+  color: var(--color-text-muted);
+  font-size: var(--fs-tiny);
+}
+
 /* --- keys (Oskalizer): the playground's screen + its modes ------- */
 
 .keys {

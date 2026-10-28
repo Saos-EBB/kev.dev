@@ -227,7 +227,7 @@ function portrait(card: ProjectCard): string {
 // Loadtest: the latest ramp against YourBrand as the check reads it —
 // fast-route p95 per rate against the 100 ms budget; a bar past the top
 // of the plot is cut off there. The numbers are the card's own (`ramp`).
-function ramp(card: ProjectCard): string {
+export function ramp(card: ProjectCard): string {
   const rows = card.ramp ?? [];
   const top = 150; // ms at the top of the plot
   const clean = Math.max(0, ...rows.filter(([, , ok]) => ok).map(([rate]) => rate));
@@ -251,7 +251,7 @@ function ramp(card: ProjectCard): string {
 // Shop: an order's way through its status machine (the shop's own
 // backend/docs/shop.md) — Stripe only reserves, the rules either let the
 // system approve or hold the order for a person.
-function orders(): string {
+export function orders(): string {
   return `
     <div class="viz-orders">
       <p class="viz-orders-head"><code>pending</code><i>→</i><code>authorized</code></p>
