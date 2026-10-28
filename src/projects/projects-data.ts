@@ -54,7 +54,7 @@ const cards: ProjectCard[] = [
       "Moderation, die trägt: Melde-System, Sofort-Sperren/Entsperren, alles mit Notizen",
       "DSGVO-konform durchgezogen (Kopfweh ohne Ende)",
       "Bewusst nicht alles gebaut, was ginge: manche Mechaniken aus ethischen Gründen zurückgehalten",
-      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 600 req/s in allen Budgets, grob 3.000–4.000 gleichzeitige Nutzer. Gemessen auf einem Laptop (8 Kerne, 32 GB), auf einem Server dürfte mehr gehen. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Die Uhren-Race im Chat ist behoben: Auch bei 800 req/s bricht nichts mehr zusammen. Nächstes Ziel: 1000 req/s",
+      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 800 req/s in allen Budgets, grob 4.000–5.300 gleichzeitige Nutzer. Gemessen auf einem Laptop (8 Kerne, 32 GB), auf einem Server dürfte mehr gehen. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Die Uhren-Race im Chat ist behoben, und ein Lastabwurf verhindert, dass sich Überlast zum Kollaps aufschaukelt: 900 req/s wird langsamer, bricht aber nicht zusammen. Nächstes Ziel: 1000 req/s",
       "Architektur, Datenmodell und Businesslogik von mir. Die APIs habe ich selbst gebaut, weil sie mich interessiert haben — den Rest der Umsetzung mit CC als Implementierungs-Agent.",
     ],
     // Desktop ER card: the core's layers (UI.vizLayers order, top to
@@ -86,7 +86,7 @@ const cards: ProjectCard[] = [
           "Row-Level Security als Grundzustand; Bio, Stadt, Alter & Co. schaltet jede Person einzeln sichtbar",
           "E-Mail AES-256-verschlüsselt, gefunden über einen SHA-256-Hash — kein Klartext in der DB",
           "JWT 15 Minuten, Refresh-Token 30 Tage mit Einmal-Rotation im HttpOnly-Cookie",
-          "bcrypt (Kosten 12) im eigenen Thread-Pool — im Loadtest rund 3× mehr Logins",
+          "bcrypt (Kosten 10) im eigenen Thread-Pool — im Loadtest rund 3× mehr Logins",
           "Rate-Limits in Redis (global 100/min, Login 5/min) — halten über mehrere Instanzen",
           "Geschützte Personen tauchen schon auf DB-Ebene in keiner Suche auf",
         ],
@@ -612,16 +612,18 @@ const cards: ProjectCard[] = [
       "Gewichteter Nutzer-Mix über einen Katalog von 200 YourBrand-Endpunkten, 101 davon unter Last",
       "„check“ als Regel vor jeder größeren Änderung: bestanden nur ohne 5xx und in jedem p95-Budget",
     ],
-    what: "Angefangen hat es Ende Juli als Bash-Skript im YourBrand-Repo: viele Worker, jeder ein eigener Prozess mit curl. Bei etwa 75 Requests pro Sekunde war mein eigener Rechner am Limit, nicht die App. Also habe ich einen Lastgenerator in C++ geschrieben: wenige Threads, jeder mit einer eigenen epoll-Schleife über viele keep-alive-Verbindungen, nur Standardbibliothek und Linux-Syscalls. Im Oktober habe ich das Ganze aus YourBrand herausgelöst: eine allgemeine Engine, die nichts über die App weiß, und austauschbare Ziele, die beschreiben, wie eine App angesprochen wird (Adresse, Login, Test-User, Endpunkte). Aktuell gibt es zwei Ziele, YourBrand und den Shop. Dazu ein Dashboard und eine UI für den Generator mit Durchsatz, p50/p95 und Statuscodes pro Sekunde. Letzte Messung gegen YourBrand: 600 Requests pro Sekunde sauber, bis 800 kein Kollaps, alles auf meinem Laptop.",
+    what: "Angefangen hat es Ende Juli als Bash-Skript im YourBrand-Repo: viele Worker, jeder ein eigener Prozess mit curl. Bei etwa 75 Requests pro Sekunde war mein eigener Rechner am Limit, nicht die App. Also habe ich einen Lastgenerator in C++ geschrieben: wenige Threads, jeder mit einer eigenen epoll-Schleife über viele keep-alive-Verbindungen, nur Standardbibliothek und Linux-Syscalls. Im Oktober habe ich das Ganze aus YourBrand herausgelöst: eine allgemeine Engine, die nichts über die App weiß, und austauschbare Ziele, die beschreiben, wie eine App angesprochen wird (Adresse, Login, Test-User, Endpunkte). Aktuell gibt es zwei Ziele, YourBrand und den Shop. Dazu ein Dashboard und eine UI für den Generator mit Durchsatz, p50/p95 und Statuscodes pro Sekunde. Letzte Messung gegen YourBrand: 800 Requests pro Sekunde sauber, 900 langsamer, aber ohne Kollaps, alles auf meinem Laptop.",
     tags: ["C++17", "epoll", "Bash", "Node.js", "nginx", "Docker"],
-    // Fast-route p95 per rate from the latest YourBrand run (27.10.2026):
+    // Fast-route p95 per rate from the latest YourBrand run (28.10.2026):
     // [req/s, p95 in ms, within the 100 ms budget].
     ramp: [
-      [400, 20, true],
-      [500, 21, true],
-      [600, 27, true],
-      [700, 119, false],
-      [800, 1069, false],
+      [400, 25, true],
+      [500, 23, true],
+      [600, 55, true],
+      [700, 44, true],
+      [800, 35, true],
+      [900, 857, false],
+      [1000, 5002, false],
     ],
     meta: "Solo · seit Juli 2026 als Teil von YourBrand, seit Oktober 2026 eigenständig · ~1.300 Zeilen C++",
     links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (läuft lokal gegen den eigenen Stack)" }],
@@ -633,7 +635,7 @@ const cards: ProjectCard[] = [
       "Bestanden heißt: kein Timeout, kein 5xx außer 503 vom Gate, jede Routen-Klasse (fast, heavy, auth) im p95-Budget",
     ],
     challenge:
-      "Die Engpässe lagen selten dort, wo ich sie vermutet habe. bcrypt beim Login blockierte den Thread-Pool und bremste alle anderen Routen mit, eine Admin-Route lieferte 34 MB pro Aufruf, und im Chat stellte die Node-Uhr Zeitstempel vor dem Datenbank-Commit aus, was unter Last Hunderte 500er erzeugte. Jeder Fix kam erst, nachdem der Lasttest das Problem sichtbar gemacht hatte: eigener Auth-Pool, seitenweise Abfragen, Zeitstempel aus der Datenbank.",
+      "Die Engpässe lagen selten dort, wo ich sie vermutet habe. bcrypt beim Login blockierte den Thread-Pool und bremste alle anderen Routen mit, eine Admin-Route lieferte 34 MB pro Aufruf, und im Chat stellte die Node-Uhr Zeitstempel vor dem Datenbank-Commit aus, was unter Last Hunderte 500er erzeugte. Jeder Fix kam erst, nachdem der Lasttest das Problem sichtbar gemacht hatte: eigener Auth-Pool, seitenweise Abfragen, Zeitstempel aus der Datenbank. Die letzte Lektion: Die Grenze war nicht die CPU, sondern das Kippen. Ohne Lastabwurf schaukelte sich eine kurze Spitze zu einem Stau bis zum Timeout auf; mit ihm hält dieselbe Maschine 800 statt knapp 600 req/s.",
     open: [
       "Texte in Kevins Worten nachschärfen",
     ],
