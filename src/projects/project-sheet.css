@@ -33,10 +33,16 @@
 
 /* Same height as FaceDots' face (.ptease-face) — the big three stand as
    tall as it in the list. */
-.lite .ptease.ptease--big .ptease-visual {
+.lite .ptease.ptease--visual .ptease-visual {
   height: 20rem;
   margin: -0.25rem 0 0.25rem;
   overflow: hidden;
+}
+
+/* Loadtest's ramp and the shop's order flow need less height. */
+.lite .ptease.pcard--ramp .ptease-visual,
+.lite .ptease.pcard--orders .ptease-visual {
+  height: 16rem;
 }
 
 /* YourBrand's layers + tenant matrix don't both fit that height: the list

@@ -265,6 +265,9 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
   `;
 }
 
+// Layouts outside the big three whose visual also tops their phone list entry.
+const TEASER_VISUALS = new Set<CardLayout>(["ramp", "orders"]);
+
 // Phone list entry (lite): index, title, three bullet points, a few tags.
 // The title's button is stretched over the whole entry (project-sheet.css)
 // and opens the project sheet.
@@ -272,11 +275,14 @@ export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): st
   const tags = card.tags?.slice(0, 4) ?? [];
   // The big three show their signature visual on top, as tall as FaceDots'
   // face — a look only (inert): a tap anywhere still opens the sheet.
+  // Loadtest's ramp and the shop's order flow are small enough to show
+  // too, a bit shorter.
   const big = card.group === "big";
+  const visual = big || TEASER_VISUALS.has(card.layout);
   return `
-    <article class="ptease${big ? ` ptease--big pcard--${card.layout}` : ""}" data-card="${esc(card.id)}" data-group="${card.group}" style="--pc: ${card.accent}">
+    <article class="ptease${big ? " ptease--big" : ""}${visual ? ` ptease--visual pcard--${card.layout}` : ""}" data-card="${esc(card.id)}" data-group="${card.group}" style="--pc: ${card.accent}">
       ${card.layout === "portrait" ? `<canvas class="ptease-face" data-face-dots aria-hidden="true"></canvas>` : ""}
-      ${big ? `<div class="pcard-visual ptease-visual" aria-hidden="true" inert>${renderVisual(card)}</div>` : ""}
+      ${visual ? `<div class="pcard-visual ptease-visual" aria-hidden="true" inert>${renderVisual(card)}</div>` : ""}
       <p class="pcard-index">${indexLine(card, index, total)}</p>
       <h3 class="ptease-title">
         <button type="button" data-open-project="${esc(card.id)}" aria-label="${esc(card.title)} — ${esc(UI.projectOpen)}">${displayText(card.title)}</button>
