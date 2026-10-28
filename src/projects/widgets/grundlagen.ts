@@ -85,6 +85,15 @@ const NOTES: Note[] = [
   },
 ].map(localizeNote); // texts in the visitor's language (grundlagen-i18n.ts)
 
+// The arcade's own keys, per game: what the program accepts, nothing else.
+// max = longest valid input (Mastermind: 4 digits, Minesweeper: "C5");
+// a token key (true/false) replaces the whole line instead of appending.
+const KEYPADS: Record<string, { keys: string[]; max?: number; typing?: boolean }> = {
+  mastermind: { keys: ["1", "2", "3", "4", "5", "6"], max: 4 },
+  minesweeper: { keys: [..."ABCDEFGHIJ", ..."0123456789"], max: 2 },
+  pokemon: { keys: [..."1234567890", "true", "false"], typing: true },
+};
+
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -118,6 +127,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
           <input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${UI.gInput}" disabled />
         </label>
       </form>
+      <div class="gwidget-keys" role="group" aria-label="${UI.gKeys}"></div>
       <p class="gwidget-status" aria-live="polite"></p>
       <div class="gwidget-consent" hidden>
         <p>${UI.gConsentText}</p>
@@ -155,6 +165,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   const next = q<HTMLButtonElement>(".gwidget-next");
   const count = q<HTMLElement>(".gwidget-count");
   const term = new Terminal(out);
+  const keys = q<HTMLElement>(".gwidget-keys");
 
   let active: Note | null = null;
   let process: JavaProcess | null = null;
@@ -163,7 +174,38 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
   const setInputEnabled = (on: boolean) => {
     input.disabled = !on;
     if (!on) input.value = "";
+    keys.querySelectorAll("button").forEach((b) => (b.disabled = !on));
   };
+
+  const renderKeys = (note: Note) => {
+    const pad = KEYPADS[note.id];
+    keys.hidden = !pad;
+    // Games with keys of their own don't pull up the phone's keyboard;
+    // Pokémon still needs it once, for the trainer's name.
+    input.inputMode = pad && !pad.typing ? "none" : "text";
+    if (!pad) return;
+    keys.dataset.pad = note.id;
+    keys.innerHTML =
+      pad.keys.map((k) => `<button type="button" class="gk${k.length > 1 ? " gk--word" : ""}" data-key="${k}">${k}</button>`).join("") +
+      `<button type="button" class="gk gk--ctl" data-key="back" aria-label="${UI.gKeyBack}">⌫</button>` +
+      `<button type="button" class="gk gk--ctl" data-key="clear">${UI.gKeyClear}</button>` +
+      `<button type="button" class="gk gk--enter" data-key="enter">${UI.gKeyEnter} ↵</button>`;
+    keys.querySelectorAll("button").forEach((b) => (b.disabled = input.disabled));
+  };
+
+  keys.addEventListener("click", (e) => {
+    const key = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-key]")?.dataset.key;
+    if (!key || input.disabled || !active) return;
+    const pad = KEYPADS[active.id];
+    if (key === "enter") {
+      if (input.value) form.requestSubmit();
+      return;
+    }
+    if (key === "back") input.value = input.value.slice(0, -1);
+    else if (key === "clear") input.value = "";
+    else if (key.length > 1) input.value = key;
+    else if (!pad?.max || input.value.length < pad.max) input.value += key;
+  });
 
   async function start(note: Note) {
     const id = ++runId;
@@ -250,6 +292,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     });
     host.style.setProperty("--pc", note.color);
     count.textContent = `${i + 1} / ${NOTES.length}`;
+    renderKeys(note);
 
     const card = (heading: string, body: string, extra = "") =>
       `<section class="ws-card ${extra}"><h5 class="ws-card-heading">${heading}</h5>${body}</section>`;
@@ -289,6 +332,7 @@ export function mount(host: HTMLElement, _card?: ProjectCard) {
     const line = input.value;
     input.value = "";
     term.write(line + "\n");
+    term.follow();
     process.sendLine(line);
   });
 

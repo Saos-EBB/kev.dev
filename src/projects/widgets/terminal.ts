@@ -52,6 +52,18 @@ export class Terminal {
     if (!this.frame) this.frame = requestAnimationFrame(() => this.flush());
   }
 
+  // After an input: whatever the program prints next is pulled into view,
+  // even if the visitor had scrolled up (the new board must be visible).
+  // The new output is shown from its first line (the echoed input), so a
+  // board that's taller than the box shows its top, not just its tail.
+  private followUntil = 0;
+  private followFrom = -1;
+  private followArm = false;
+  follow() {
+    this.followUntil = performance.now() + 2000;
+    this.followArm = true;
+  }
+
   clear() {
     this.out.textContent = "";
     this.queue = "";
@@ -109,6 +121,10 @@ export class Terminal {
 
     const nearBottom =
       this.out.scrollHeight - this.out.scrollTop - this.out.clientHeight < 40;
+    if (this.followArm) {
+      this.followFrom = this.out.scrollHeight;
+      this.followArm = false;
+    }
     const fragment = document.createDocumentFragment();
     let plain = "";
     const emit = () => {
@@ -149,7 +165,9 @@ export class Terminal {
     this.out.appendChild(fragment);
     this.fit();
     while (this.out.childNodes.length > MAX_NODES) this.out.firstChild!.remove();
-    if (nearBottom) this.out.scrollTop = this.out.scrollHeight;
+    if (performance.now() < this.followUntil)
+      this.out.scrollTop = Math.min(this.followFrom, this.out.scrollHeight - this.out.clientHeight);
+    else if (nearBottom) this.out.scrollTop = this.out.scrollHeight;
   }
 
   private applySgr(codes: number[]) {

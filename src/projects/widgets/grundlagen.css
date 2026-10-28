@@ -496,3 +496,94 @@
   color: #a8ff57;
   text-shadow: 0 0 0.4em rgba(168, 255, 87, 0.45);
 }
+
+/* The arcade's own keys (KEYPADS in grundlagen.ts): square, mono, in the
+   game's colour; Enter filled. 44px high so they're easy to hit on a phone. */
+.gwidget-keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--pc) 30%, transparent);
+}
+
+.gwidget-keys[data-pad="mastermind"] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+/* Minesweeper: A–J, then 0–9, then the controls. Pokémon: 1–0, then
+   true/false and the controls. Ten columns, one row per kind of key. */
+.gwidget-keys[data-pad="minesweeper"],
+.gwidget-keys[data-pad="pokemon"] {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.gwidget-keys[data-pad="minesweeper"] .gk--ctl {
+  grid-column: span 3;
+}
+
+.gwidget-keys[data-pad="minesweeper"] .gk--enter {
+  grid-column: span 4;
+}
+
+.gk {
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.gk:active:not(:disabled) {
+  background: color-mix(in srgb, var(--pc) 30%, transparent);
+}
+
+.gk:focus-visible {
+  outline: 2px solid var(--pc);
+  outline-offset: 2px;
+}
+
+.gk:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.gk--word,
+.gk--ctl {
+  grid-column: span 2;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gk--enter {
+  grid-column: span 2;
+  background: var(--pc);
+  border-color: var(--pc);
+  color: #0d0d0f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gwidget-term.is-gated .gwidget-keys {
+  display: none;
+}
+
+/* Phone: the keys must stay on screen without scrolling, and a whole
+   Mastermind board (23 lines) should still fit above them — the terminal
+   takes what's left of the screen, lines a bit tighter, and the prev/next
+   arrows go (the three game buttons above do the same job). */
+@media (max-width: 640px) {
+  .gwidget-out {
+    height: clamp(13rem, calc(100dvh - 29rem), 26rem);
+    line-height: 1.15;
+  }
+  .facet-overlay--workspace .gwidget-nav {
+    display: none;
+  }
+}
