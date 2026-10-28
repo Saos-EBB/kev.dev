@@ -1365,6 +1365,11 @@ button:focus-visible {
   color: var(--color-line);
 }
 
+/* The three kev.dev sites; the one you're on is marked, not linked away. */
+.footer-sites a[aria-current="page"] {
+  color: var(--color-text);
+}
+
 /* Only on the main SPA page (see main.ts) — edge-nav.ts toggles
    .is-visible from scroll progress, only shown near the very bottom of
    the page. The legal pages keep the plain, always-in-flow .footer
@@ -1716,6 +1721,11 @@ button:focus-visible {
 
   .footer-ai-short {
     display: inline;
+  }
+
+  /* phones: the current site needs no link to itself */
+  .footer-sites a[aria-current="page"] {
+    display: none;
   }
 
   /* Long link labels (Russian) take a second line instead of running out

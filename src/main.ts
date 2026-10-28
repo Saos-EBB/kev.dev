@@ -246,6 +246,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <footer class="footer footer--floating">
     <div class="footer-inner">
       <p class="footer-copy">© 2026 <span class="footer-copy-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span>${LANG_AI ? `<span class="footer-ai"> · <span class="footer-ai-long">${UI.langAiNote}</span><span class="footer-ai-short">${UI.langAi}</span></span>` : ""}</p>
+      <nav class="footer-links footer-sites" aria-label="${UI.sitesAria}">
+        <a href="https://kev-dev-gamma.vercel.app" aria-current="page">Portfolio</a>
+        <a href="https://kevdev-engineering.vercel.app">Engineering</a>
+        <a href="https://kevdev-casual.vercel.app">Casual</a>
+      </nav>
       <nav class="footer-links" aria-label="${UI.legalAria}">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>
