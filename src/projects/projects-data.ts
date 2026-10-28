@@ -596,6 +596,77 @@ const cards: ProjectCard[] = [
     ],
   },
   {
+    id: "loadtest",
+    group: "tools",
+    layout: "ramp",
+    kind: "Lasttest-Werkzeug",
+    accent: "var(--note-2)",
+    learnGoal: "Wissen statt raten, wie viel YourBrand aushält — und dabei lernen, wo ein Backend unter Last wirklich einknickt.",
+    title: "Loadtest",
+    claim: "Misst, wo ein Backend einknickt — mit einem eigenen C++-Lastgenerator ohne Libraries.",
+    points: [
+      "Eigener Lastgenerator in C++17: feste Rate, epoll, keep-alive, keine Libraries",
+      "Gewichteter Nutzer-Mix über einen Katalog von 200 YourBrand-Endpunkten, 101 davon unter Last",
+      "„check“ als Regel vor jeder größeren Änderung: bestanden nur ohne 5xx und in jedem p95-Budget",
+    ],
+    what: "Angefangen hat es Ende Juli als Bash-Skript im YourBrand-Repo: viele Worker, jeder ein eigener Prozess mit curl. Bei etwa 75 Requests pro Sekunde war mein eigener Rechner am Limit, nicht die App. Also habe ich einen Lastgenerator in C++ geschrieben: wenige Threads, jeder mit einer eigenen epoll-Schleife über viele keep-alive-Verbindungen, nur Standardbibliothek und Linux-Syscalls. Im Oktober habe ich das Ganze aus YourBrand herausgelöst: eine allgemeine Engine, die nichts über die App weiß, und austauschbare Ziele, die beschreiben, wie eine App angesprochen wird (Adresse, Login, Test-User, Endpunkte). Aktuell gibt es zwei Ziele, YourBrand und den Shop. Dazu ein Dashboard und eine UI für den Generator mit Durchsatz, p50/p95 und Statuscodes pro Sekunde. Letzte Messung gegen YourBrand: 600 Requests pro Sekunde sauber, bis 800 kein Kollaps, alles auf meinem Laptop.",
+    tags: ["C++17", "epoll", "Bash", "Node.js", "nginx", "Docker"],
+    // Fast-route p95 per rate from the latest YourBrand run (27.10.2026):
+    // [req/s, p95 in ms, within the 100 ms budget].
+    ramp: [
+      [400, 20, true],
+      [500, 21, true],
+      [600, 27, true],
+      [700, 119, false],
+      [800, 1069, false],
+    ],
+    meta: "Solo · seit Juli 2026 als Teil von YourBrand, seit Oktober 2026 eigenständig · ~1.300 Zeilen C++",
+    links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (läuft lokal gegen den eigenen Stack)" }],
+    decisions: [
+      "Eigener Generator statt Bash-Prozessen: ab ~75 req/s hat der Bash-Modus den eigenen Rechner gemessen, nicht die App",
+      "Engine und Ziel getrennt: eine neue App ist ein Ordner mit target.sh und actions.sh, die Engine bleibt unverändert",
+      "Loadtest-Schlüssel als Handshake: nur Requests mit X-Loadtest-Key umgehen das Rate-Limit, ohne verhält sich das Backend normal",
+      "Gewichteter Mix statt Gleichverteilung: viel Chat und Discover, Admin-Routen zusammen unter 1 %, wie echte Nutzer",
+      "Bestanden heißt: kein Timeout, kein 5xx außer 503 vom Gate, jede Routen-Klasse (fast, heavy, auth) im p95-Budget",
+    ],
+    challenge:
+      "Die Engpässe lagen selten dort, wo ich sie vermutet habe. bcrypt beim Login blockierte den Thread-Pool und bremste alle anderen Routen mit, eine Admin-Route lieferte 34 MB pro Aufruf, und im Chat stellte die Node-Uhr Zeitstempel vor dem Datenbank-Commit aus, was unter Last Hunderte 500er erzeugte. Jeder Fix kam erst, nachdem der Lasttest das Problem sichtbar gemacht hatte: eigener Auth-Pool, seitenweise Abfragen, Zeitstempel aus der Datenbank.",
+    open: [
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
+    id: "shop",
+    group: "along",
+    layout: "orders",
+    kind: "Shop-Modul",
+    accent: "var(--note-1)",
+    learnGoal: "YourBrand-Mandanten sollen etwas verkaufen können — und ich wollte lernen, einen Bestellablauf zu bauen, bei dem kein Geld fließt, bevor ein Verdacht geklärt ist.",
+    title: "Shop",
+    claim: "Das System hält an, ein Mensch entscheidet — ein Shop, der bei Verdacht nicht einfach abbucht.",
+    points: [
+      "Essen, Merch, Lizenz-Keys und Freischalt-Codes, bis ~1000 Artikel mit Filtern und Suche",
+      "Stripe reserviert nur: Auffälliges wartet auf einen Menschen, Unauffälliges bucht das System ab",
+      "Lückenlose Rechnungsnummern, Stornorechnungen und ein Protokoll, das sich nicht ändern lässt",
+    ],
+    what: "Ein Mandanten-Modul für YourBrand, seit Oktober auch als eigenständiges Projekt herausgelöst, damit ich es ohne den Rest der App entwickeln kann. Ein Mandant verkauft darüber Essen zum Abholen oder Liefern, Merch mit Versand, Lizenz-Keys und Freischalt-Codes, die in der App Premium oder Coins freischalten. Der Kern ist der Bestellablauf: Stripe reserviert den Betrag nur. Dann prüfen Risiko-Regeln die Bestellung, etwa Betrag, neuer Käufer, viele Bestellungen in einer Stunde, dieselbe Karte bei mehreren Konten, frühere Rückbuchungen und Stripe Radar. Ist alles unauffällig, nimmt das System an und bucht ab. Ist etwas auffällig, hält es an und alarmiert die Admins. Ein Mensch nimmt an oder lehnt mit Begründung ab; läuft die Frist ab, verfällt die Reservierung und der Kunde zahlt nichts. Danach werden Keys zugeteilt, Codes erzeugt und die Rechnung per Mail verschickt.",
+    tags: ["TypeScript", "NestJS", "Next.js", "PostgreSQL", "Stripe", "BullMQ", "Redis"],
+    meta: "Solo · seit Oktober 2026, zuerst als Modul in YourBrand, seit 22. Oktober eigenständig · 132 Tests im Backend",
+    links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (braucht Stripe-Keys)" }],
+    decisions: [
+      "Reservieren statt sofort abbuchen (capture_method: manual): bis Regeln oder ein Mensch entschieden haben, fließt kein Geld",
+      "Ablehnen, Erstatten und Sperren macht nur ein Mensch, immer mit Begründung",
+      "Module reden nur über einen Broker: der Shop importiert weder Stripe noch das Zahlungs- oder Coin-Modul",
+      "Bestellprotokoll nur zum Anhängen: ein Datenbank-Trigger blockt UPDATE und DELETE",
+      "Keys verschlüsselt in der Datenbank, Zuteilung mit FOR UPDATE SKIP LOCKED, damit kein Key doppelt rausgeht",
+    ],
+    challenge:
+      "Geld und Recht verzeihen nichts. Stripe darf Webhooks doppelt und in beliebiger Reihenfolge schicken, also prüft jeder Zweig zuerst den Status. Nehmen zwei Admins dieselbe Bestellung gleichzeitig an, bekommt der zweite 409. Rechnungsnummern müssen lückenlos fortlaufen, Bestellungen zehn Jahre aufbewahrt werden, und digitale Ware braucht vor der Auslieferung den Widerrufs-Verzicht nach § 356 Abs. 5 BGB.",
+    open: [
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
     id: "renderer",
     group: "along",
     layout: "viewport",

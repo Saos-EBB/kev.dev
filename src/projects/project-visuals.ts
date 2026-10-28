@@ -224,6 +224,53 @@ function portrait(card: ProjectCard): string {
   `;
 }
 
+// Loadtest: the latest ramp against YourBrand as the check reads it —
+// fast-route p95 per rate against the 100 ms budget; a bar past the top
+// of the plot is cut off there. The numbers are the card's own (`ramp`).
+function ramp(card: ProjectCard): string {
+  const rows = card.ramp ?? [];
+  const top = 150; // ms at the top of the plot
+  const clean = Math.max(0, ...rows.filter(([, , ok]) => ok).map(([rate]) => rate));
+  return `
+    <div class="viz-ramp">
+      <p class="viz-ramp-cmd"><span>$</span> ./lt yourbrand check</p>
+      <div class="viz-ramp-plot" style="--budget: ${100 / top}">
+        <span class="viz-ramp-budget">p95 budget · 100 ms</span>
+        ${rows
+          .map(
+            ([rate, ms, ok]) =>
+              `<div class="viz-ramp-col${ok ? "" : " is-over"}${ms > top ? " is-cut" : ""}"><b style="--h: ${Math.min(ms / top, 1)}"><span>${ms} ms</span></b><i>${rate}</i></div>`,
+          )
+          .join("")}
+      </div>
+      <p class="viz-ramp-axis"><span>req/s · fast p95</span><b>${clean} req/s ✓</b></p>
+    </div>
+  `;
+}
+
+// Shop: an order's way through its status machine (the shop's own
+// backend/docs/shop.md) — Stripe only reserves, the rules either let the
+// system approve or hold the order for a person.
+function orders(): string {
+  return `
+    <div class="viz-orders">
+      <p class="viz-orders-head"><code>pending</code><i>→</i><code>authorized</code></p>
+      <div class="viz-orders-paths">
+        <div class="viz-orders-path">
+          <small>rules ✓ · system</small>
+          <code>approved</code><i>↓</i><code>fulfilled</code><i>↓</i><code>invoice</code>
+        </div>
+        <div class="viz-orders-path is-held">
+          <small>rules ⚑ · human</small>
+          <code class="is-hold">held</code><i>↓</i>
+          <span class="viz-orders-pick"><code>approved</code><code>rejected</code><code>expired</code></span>
+        </div>
+      </div>
+      <p class="viz-orders-foot">capture_method: manual</p>
+    </div>
+  `;
+}
+
 export function renderVisual(card: ProjectCard): string {
   switch (card.layout) {
     case "blueprint":
@@ -244,5 +291,9 @@ export function renderVisual(card: ProjectCard): string {
       return storyboard(card);
     case "portrait":
       return portrait(card);
+    case "ramp":
+      return ramp(card);
+    case "orders":
+      return orders();
   }
 }

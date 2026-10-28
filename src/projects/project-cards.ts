@@ -62,7 +62,7 @@ export interface TenantShowcase {
 export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
-export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "keys" | "pinboard" | "storyboard" | "portrait";
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "keys" | "pinboard" | "storyboard" | "portrait" | "ramp" | "orders";
 
 // Which of the three project groups a card belongs to. The cards are
 // ordered by group (projects-data.ts); the group's word shows up around
@@ -133,6 +133,8 @@ export interface ProjectCard {
   steps?: string[];
   sources?: [string, string][];
   modes?: [string, string][];
+  // Loadtest's visual: the latest ramp as [req/s, p95 ms, within budget].
+  ramp?: [number, number, boolean][];
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
   // Past UI.vizStory's sections a part brings its own name and line (the
@@ -188,6 +190,8 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
   pinboard: ["why"],
   storyboard: ["why", "learned", "code"],
   portrait: ["why", "learned", "code"],
+  ramp: ["why", "learned", "code"],
+  orders: ["why", "learned", "code"],
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");

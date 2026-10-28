@@ -59,13 +59,17 @@
 .pcard--inbox .pcard-visual,
 .pcard--editor .pcard-visual,
 .pcard--terminal .pcard-visual,
-.pcard--keys .pcard-visual {
+.pcard--keys .pcard-visual,
+.pcard--ramp .pcard-visual,
+.pcard--orders .pcard-visual {
   grid-area: 2 / 6 / 3 / 13;
 }
 .pcard--inbox .pcard-part--why,
 .pcard--editor .pcard-part--why,
 .pcard--terminal .pcard-part--why,
-.pcard--keys .pcard-part--why {
+.pcard--keys .pcard-part--why,
+.pcard--ramp .pcard-part--why,
+.pcard--orders .pcard-part--why {
   grid-area: 2 / 1 / 3 / 6;
 }
 .pcard--pinboard .pcard-visual {
@@ -745,6 +749,203 @@
   color: var(--pc);
 }
 
+/* --- ramp (Loadtest) --------------------------------------------- */
+
+/* The check's console: the command, then fast p95 per rate as bars
+   against the budget line; over budget in the warning red, a bar past
+   the top of the plot fades out there. */
+.viz-ramp {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--pc-soft);
+  background: var(--color-terminal-bg);
+  font-family: var(--font-mono);
+  font-size: clamp(0.68rem, 2.3cqw, 0.95rem);
+}
+
+.viz-ramp-cmd span {
+  color: var(--pc);
+}
+
+.viz-ramp-plot {
+  position: relative;
+  flex: 1;
+  min-height: 6rem;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--pc-soft);
+}
+
+.viz-ramp-budget {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--budget) * 100%);
+  z-index: 1;
+  border-bottom: 1px dashed var(--pc);
+  color: var(--pc);
+  font-size: 0.85em;
+  line-height: 1.6;
+  pointer-events: none;
+}
+
+.viz-ramp-col {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+.viz-ramp-col b {
+  position: relative;
+  width: 100%;
+  height: calc(var(--h) * 100%);
+  background: color-mix(in srgb, var(--pc) 55%, transparent);
+  font-weight: 400;
+}
+
+.viz-ramp-col.is-over b {
+  background: color-mix(in srgb, #ff5c6c 60%, transparent);
+}
+
+.viz-ramp-col.is-cut b {
+  border-top: 2px dashed var(--color-text);
+}
+
+.viz-ramp-col b span {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding-bottom: 0.2rem;
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+.viz-ramp-col.is-cut b span {
+  bottom: auto;
+  top: 0.4rem;
+  color: var(--color-text);
+}
+
+.viz-ramp-col i {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding-top: 0.25rem;
+  font-style: normal;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.viz-ramp-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.1rem;
+  color: var(--color-text-muted);
+}
+
+.viz-ramp-axis b {
+  color: var(--pc);
+  font-weight: 400;
+}
+
+/* --- orders (Shop) ----------------------------------------------- */
+
+/* The order's status machine: reserved first, then two ways down —
+   the system's on the left, the one that waits for a person on the
+   right, held in the card's color. */
+.viz-orders {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--pc-soft);
+  font-family: var(--font-mono);
+  font-size: clamp(0.68rem, 3.1cqw, 1.1rem);
+}
+
+.viz-orders code {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--pc-soft);
+  font-family: inherit;
+}
+
+.viz-orders i {
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+
+.viz-orders-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.viz-orders-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.viz-orders-path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.6rem 0.4rem;
+  border-top: 1px solid var(--pc-soft);
+}
+
+.viz-orders-path small {
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.viz-orders-path.is-held {
+  border-top-color: var(--pc);
+}
+
+.viz-orders .is-hold {
+  border-color: var(--pc);
+  color: var(--pc);
+  animation: viz-orders-hold 2.4s ease-in-out infinite;
+}
+
+@keyframes viz-orders-hold {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 0.3rem var(--pc-faint); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viz-orders .is-hold { animation: none; }
+}
+
+.viz-orders-pick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.viz-orders-foot {
+  text-align: center;
+  color: var(--pc);
+}
+
 /* --- editor (AniScript), terminal (ReleaseWatcher) ------------- */
 
 .pcard--editor .pcard-part,
@@ -1225,11 +1426,11 @@
   .pcard--terminal .viz-code { font-size: 0.9rem; line-height: 1.85; }
 
   /* editor: full-height script on the left */
-  .pcard--editor .pcard-visual, .pcard--terminal .pcard-visual, .pcard--keys .pcard-visual { grid-area: 1 / 1 / 14 / 12; }
-  .pcard--editor .pcard-head, .pcard--terminal .pcard-head, .pcard--keys .pcard-head { grid-area: 1 / 13 / 4 / 25; }
-  .pcard--editor .pcard-part--why, .pcard--terminal .pcard-part--why, .pcard--keys .pcard-part--why { grid-area: 5 / 13 / 9 / 25; }
-  .pcard--editor .pcard-part--learned, .pcard--terminal .pcard-part--learned, .pcard--keys .pcard-part--learned { grid-area: 10 / 13 / 14 / 18; }
-  .pcard--editor .pcard-part--code, .pcard--terminal .pcard-part--code, .pcard--keys .pcard-part--code { grid-area: 10 / 19 / 14 / 25; }
+  .pcard--editor .pcard-visual, .pcard--terminal .pcard-visual, .pcard--keys .pcard-visual, .pcard--ramp .pcard-visual, .pcard--orders .pcard-visual { grid-area: 1 / 1 / 14 / 12; }
+  .pcard--editor .pcard-head, .pcard--terminal .pcard-head, .pcard--keys .pcard-head, .pcard--ramp .pcard-head, .pcard--orders .pcard-head { grid-area: 1 / 13 / 4 / 25; }
+  .pcard--editor .pcard-part--why, .pcard--terminal .pcard-part--why, .pcard--keys .pcard-part--why, .pcard--ramp .pcard-part--why, .pcard--orders .pcard-part--why { grid-area: 5 / 13 / 9 / 25; }
+  .pcard--editor .pcard-part--learned, .pcard--terminal .pcard-part--learned, .pcard--keys .pcard-part--learned, .pcard--ramp .pcard-part--learned, .pcard--orders .pcard-part--learned { grid-area: 10 / 13 / 14 / 18; }
+  .pcard--editor .pcard-part--code, .pcard--terminal .pcard-part--code, .pcard--keys .pcard-part--code, .pcard--ramp .pcard-part--code, .pcard--orders .pcard-part--code { grid-area: 10 / 19 / 14 / 25; }
 
   /* storyboard: story left, the page's frames down the right (portrait:
      the face down the right) */
@@ -1307,6 +1508,8 @@
 }
 
 .lite .pcard--keys .pcard-visual,
+.lite .pcard--ramp .pcard-visual,
+.lite .pcard--orders .pcard-visual,
 .lite .pcard--viewport .pcard-visual {
   aspect-ratio: 4 / 3;
 }
