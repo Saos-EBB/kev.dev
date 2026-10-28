@@ -1511,6 +1511,24 @@ button:focus-visible {
   opacity: 0.8;
 }
 
+/* "Nothing is sold here" — the one loud thing on the legal pages. Its own
+   colour, the complement of the site accent, so it can't be missed: a solid
+   box, a frame that blinks a few times (then stays, WCAG 2.2.2) and an arrow
+   poking at it. */
+.nosale {
+  --ns: #3cf58a; /* complement of --color-accent (#cd57a6) */ position: relative; margin: 1.5rem 0 2.5rem; padding-left: 68px; }
+.nosale-box { position: relative; background: var(--ns); color: #0b0c0e; padding: 18px 22px; border-radius: 8px; outline: 4px solid var(--ns); outline-offset: 6px; animation: nosale-blink 1s steps(1, end) 8; }
+.nosale-box strong { display: block; font-size: clamp(1.35rem, 4vw, 1.75rem); line-height: 1.15; letter-spacing: -.01em; color: #0b0c0e; margin: 0 0 .45rem; }
+.nosale-box p { margin: 0; color: #0b0c0e; opacity: 1; font-size: 1rem; line-height: 1.5; }
+.nosale-arrow { position: absolute; left: 0; top: 50%; width: 54px; height: 54px; margin-top: -27px; color: var(--ns); animation: nosale-poke .7s ease-in-out infinite alternate; }
+@keyframes nosale-blink { 50% { outline-color: transparent; } }
+@keyframes nosale-poke { to { transform: translateX(10px); } }
+@media (max-width: 560px) {
+  .nosale { padding-left: 0; padding-top: 62px; }
+  .nosale-arrow { left: 28px; top: 0; margin-top: 0; rotate: 90deg; animation-name: nosale-poke-down; }
+  @keyframes nosale-poke-down { to { transform: translateX(8px); } }
+}
+
 /* "Withdraw consent" rows in the privacy policy (legal-overlay.ts). */
 .legal-consents {
   display: flex;
