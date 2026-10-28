@@ -54,7 +54,7 @@ const cards: ProjectCard[] = [
       "Moderation, die trägt: Melde-System, Sofort-Sperren/Entsperren, alles mit Notizen",
       "DSGVO-konform durchgezogen (Kopfweh ohne Ende)",
       "Bewusst nicht alles gebaut, was ginge: manche Mechaniken aus ethischen Gründen zurückgehalten",
-      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 800 req/s in allen Budgets, grob 4.000–5.300 gleichzeitige Nutzer. Gemessen auf einem Laptop (8 Kerne, 32 GB), auf einem Server dürfte mehr gehen. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Die Uhren-Race im Chat ist behoben, und ein Lastabwurf verhindert, dass sich Überlast zum Kollaps aufschaukelt: 900 req/s wird langsamer, bricht aber nicht zusammen. Nächstes Ziel: 1000 req/s",
+      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 1.200 req/s in allen Budgets, grob 6.000–8.000 gleichzeitige Nutzer. Gemessen auf einem Laptop (8 Kerne, 32 GB), auf einem Server dürfte mehr gehen. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Die Uhren-Race im Chat ist behoben. Ein CPU-Profil zeigte, dass die JWT-Prüfung das Secret bei jedem Request neu einlas (rund 30 % CPU), und das Discover-Deck wird jetzt einmal pro Nutzer gerankt statt bei jedem Aufruf. Über der Grenze wird es nur langsamer: Ein Lastabwurf verhindert, dass sich Überlast zum Kollaps aufschaukelt",
       "Architektur, Datenmodell und Businesslogik von mir. Die APIs habe ich selbst gebaut, weil sie mich interessiert haben — den Rest der Umsetzung mit CC als Implementierungs-Agent.",
     ],
     // Desktop ER card: the core's layers (UI.vizLayers order, top to
@@ -612,18 +612,16 @@ const cards: ProjectCard[] = [
       "Gewichteter Nutzer-Mix über einen Katalog von 200 YourBrand-Endpunkten, 101 davon unter Last",
       "„check“ als Regel vor jeder größeren Änderung: bestanden nur ohne 5xx und in jedem p95-Budget",
     ],
-    what: "Angefangen hat es Ende Juli als Bash-Skript im YourBrand-Repo: viele Worker, jeder ein eigener Prozess mit curl. Bei etwa 75 Requests pro Sekunde war mein eigener Rechner am Limit, nicht die App. Also habe ich einen Lastgenerator in C++ geschrieben: wenige Threads, jeder mit einer eigenen epoll-Schleife über viele keep-alive-Verbindungen, nur Standardbibliothek und Linux-Syscalls. Im Oktober habe ich das Ganze aus YourBrand herausgelöst: eine allgemeine Engine, die nichts über die App weiß, und austauschbare Ziele, die beschreiben, wie eine App angesprochen wird (Adresse, Login, Test-User, Endpunkte). Aktuell gibt es zwei Ziele, YourBrand und den Shop. Dazu ein Dashboard und eine UI für den Generator mit Durchsatz, p50/p95 und Statuscodes pro Sekunde. Letzte Messung gegen YourBrand: 800 Requests pro Sekunde sauber, 900 langsamer, aber ohne Kollaps, alles auf meinem Laptop.",
+    what: "Angefangen hat es Ende Juli als Bash-Skript im YourBrand-Repo: viele Worker, jeder ein eigener Prozess mit curl. Bei etwa 75 Requests pro Sekunde war mein eigener Rechner am Limit, nicht die App. Also habe ich einen Lastgenerator in C++ geschrieben: wenige Threads, jeder mit einer eigenen epoll-Schleife über viele keep-alive-Verbindungen, nur Standardbibliothek und Linux-Syscalls. Im Oktober habe ich das Ganze aus YourBrand herausgelöst: eine allgemeine Engine, die nichts über die App weiß, und austauschbare Ziele, die beschreiben, wie eine App angesprochen wird (Adresse, Login, Test-User, Endpunkte). Aktuell gibt es zwei Ziele, YourBrand und den Shop. Dazu ein Dashboard und eine UI für den Generator mit Durchsatz, p50/p95 und Statuscodes pro Sekunde. Letzte Messung gegen YourBrand: 1.200 Requests pro Sekunde sauber, 1.300 langsamer, aber ohne Kollaps, alles auf meinem Laptop.",
     tags: ["C++17", "epoll", "Bash", "Node.js", "nginx", "Docker"],
     // Fast-route p95 per rate from the latest YourBrand run (28.10.2026):
     // [req/s, p95 in ms, within the 100 ms budget].
     ramp: [
-      [400, 25, true],
-      [500, 23, true],
-      [600, 55, true],
-      [700, 44, true],
-      [800, 35, true],
-      [900, 857, false],
-      [1000, 5002, false],
+      [600, 20, true],
+      [1000, 19, true],
+      [1100, 49, true],
+      [1200, 99, true],
+      [1300, 225, false],
     ],
     meta: "Solo · seit Juli 2026 als Teil von YourBrand, seit Oktober 2026 eigenständig · ~1.300 Zeilen C++",
     links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (läuft lokal gegen den eigenen Stack)" }],
@@ -635,7 +633,7 @@ const cards: ProjectCard[] = [
       "Bestanden heißt: kein Timeout, kein 5xx außer 503 vom Gate, jede Routen-Klasse (fast, heavy, auth) im p95-Budget",
     ],
     challenge:
-      "Die Engpässe lagen selten dort, wo ich sie vermutet habe. bcrypt beim Login blockierte den Thread-Pool und bremste alle anderen Routen mit, eine Admin-Route lieferte 34 MB pro Aufruf, und im Chat stellte die Node-Uhr Zeitstempel vor dem Datenbank-Commit aus, was unter Last Hunderte 500er erzeugte. Jeder Fix kam erst, nachdem der Lasttest das Problem sichtbar gemacht hatte: eigener Auth-Pool, seitenweise Abfragen, Zeitstempel aus der Datenbank. Die letzte Lektion: Die Grenze war nicht die CPU, sondern das Kippen. Ohne Lastabwurf schaukelte sich eine kurze Spitze zu einem Stau bis zum Timeout auf; mit ihm hält dieselbe Maschine 800 statt knapp 600 req/s.",
+      "Die Engpässe lagen selten dort, wo ich sie vermutet habe. bcrypt beim Login blockierte den Thread-Pool und bremste alle anderen Routen mit, eine Admin-Route lieferte 34 MB pro Aufruf, und im Chat stellte die Node-Uhr Zeitstempel vor dem Datenbank-Commit aus, was unter Last Hunderte 500er erzeugte. Jeder Fix kam erst, nachdem der Lasttest das Problem sichtbar gemacht hatte: eigener Auth-Pool, seitenweise Abfragen, Zeitstempel aus der Datenbank. Die letzte Lektion: jede Verbesserung einzeln gegenprüfen. Den Sprung von 600 auf 800 req/s hatte ich erst dem Lastabwurf zugeschrieben; ein A/B-Vergleich zeigte, dass er vom Produktions-Build kam, der Test-Stack lief vorher im Dev-Modus. Der Lastabwurf hebt die Grenze nicht, verhindert aber, dass Überlast zum Kollaps wird.",
     open: [
       "Texte in Kevins Worten nachschärfen",
     ],
