@@ -611,7 +611,7 @@ if (LITE) {
 }
 else {
   initCarousel(projectsSection);
-  initBigCards(projectsSection);
+  initBigCards(projectsSection, projectCards);
 }
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);

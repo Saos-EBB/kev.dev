@@ -1,40 +1,22 @@
 // The three big projects' desktop cards. Instead of the shared chrome
 // (visual + Why?/Learned!/Code teaser boxes), each gets a structure of its
-// own built from the same card data — YourBrand reads as its data model.
+// own built from the same card data — YourBrand reads as its database
+// diagram (yourbrand-schema.ts).
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
-import { cardBodies, esc, TENANT_MODULES, type Detail, type MailFolder, type ProjectCard, type TenantModule } from "./project-cards";
-import { blueprint, editor, orders, ramp, terminal, viewport } from "./project-visuals";
+import { cardBodies, esc, type MailFolder, type ProjectCard } from "./project-cards";
+import { editor, orders, ramp, terminal, viewport } from "./project-visuals";
+import { initSchema, schemaCard } from "./yourbrand-schema";
 import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
 
-// Crow's-foot ends for the relation lines between entities.
-const ONE = (x: number) => `<line x1="${x}" y1="13" x2="${x}" y2="27" /><line x1="${x + 5}" y1="13" x2="${x + 5}" y2="27" />`;
-const MANY_RIGHT = `<line x1="38" y1="12" x2="38" y2="28" /><line x1="42" y1="20" x2="52" y2="10" /><line x1="42" y1="20" x2="52" y2="30" />`;
-const MANY_LEFT = `<line x1="14" y1="12" x2="14" y2="28" /><line x1="10" y1="20" x2="0" y2="10" /><line x1="10" y1="20" x2="0" y2="30" />`;
-
-function relation(ends: string, label: string): string {
-  return `
-    <div class="er-rel" aria-hidden="true">
-      <svg viewBox="0 0 52 40"><line x1="0" y1="20" x2="52" y2="20" />${ends}</svg>
-      <span>${label}</span>
-    </div>`;
-}
-
-// One attribute row. Its text isn't in the table: picking the row shows it
-// in the detail box under the diagram, so the tables stay as tall as their
-// rows and the text gets the card's full width.
-// `viz`: the chart beside the text, largest first — the first that fits
-// the free space is shown (initBigCards), smaller ones are the fallbacks.
-type ErRow = { key?: string; swatch?: string; attr: string; type?: string; body: string; hot?: boolean; viz?: string[] };
-
-// The charts beside a row's text, shown only where the text leaves room
-// (initBigCards). One hue throughout: the row's own part in --pc, the
-// context dimmed — never a color per series.
+// Small charts for YourBrand's inspector (yourbrand-schema.ts). One hue
+// throughout: the row's own part in --pc, the context dimmed — never a
+// color per series.
 
 // The layer stack with one layer lit (none: -1, all at full strength).
-function vizStack(active: number, caption = true): string {
+export function vizStack(active: number, caption = true): string {
   const layers = UI.vizLayers;
   return `
     ${caption ? `<p class="viz-caption">${UI.vizFig1}</p>` : ""}
@@ -45,33 +27,9 @@ function vizStack(active: number, caption = true): string {
     </ol>`;
 }
 
-// Tenants × modules with one tenant's row or one module's column lit.
-function vizMatrix(card: ProjectCard, hl: { tenant?: number; module?: TenantModule }): string {
-  const tenants = card.tenants ?? [];
-  const lit = (i: number, m: TenantModule) => hl.tenant === i || hl.module === m;
-  return `
-    <p class="viz-caption">${UI.vizFig2}</p>
-    <table class="viz-tenants er-matrix ${hl.module ? "er-matrix--col" : hl.tenant !== undefined ? "er-matrix--row" : ""}">
-      <thead><tr><th></th>${TENANT_MODULES.map(
-        (m) => `<th class="${m === "shop" ? "wip" : ""}${hl.module === m ? " hl" : ""}"><span>${esc(UI.vizModules[m])}</span></th>`,
-      ).join("")}</tr></thead>
-      <tbody>
-        ${tenants
-          .map(
-            (t, i) =>
-              `<tr class="${hl.tenant === i ? "hl" : ""}"><th>${esc(t.name)}</th>${TENANT_MODULES.map(
-                (m) =>
-                  `<td class="${t.modules.includes(m) ? "on" : m === "shop" ? "wip" : ""}${lit(i, m) ? " hl" : ""}" title="${esc(t.name)} · ${esc(UI.vizModules[m])}"></td>`,
-              ).join("")}</tr>`,
-          )
-          .join("")}
-      </tbody>
-    </table>`;
-}
-
 // The compact form of one matrix row or column: a square per item, filled
 // where it's booked.
-function vizList(items: { label: string; on: boolean }[]): string {
+export function vizList(items: { label: string; on: boolean }[]): string {
   return `
     <ul class="er-list${items.length > 5 ? " er-list--2" : ""}">
       ${items.map((it) => `<li class="${it.on ? "on" : ""}">${esc(it.label)}</li>`).join("")}
@@ -80,7 +38,7 @@ function vizList(items: { label: string; on: boolean }[]): string {
 
 // Hours as bars on one scale: the solid part is the low estimate, the
 // lighter part the rest of the range. Every bar carries its value.
-function vizHours(rows: [string, number, number][]): string {
+export function vizHours(rows: [string, number, number][]): string {
   const max = Math.ceil(Math.max(...rows.map(([, , hi]) => hi)) / 100) * 100;
   const pct = (v: number) => `${(v / max) * 100}%`;
   const value = (lo: number, hi: number) => (lo === hi ? `~${lo} h` : `${lo}–${hi} h`);
@@ -99,7 +57,7 @@ function vizHours(rows: [string, number, number][]): string {
 }
 
 // The timeline as phases over months (April 2026 on), the current one lit.
-function vizTimeline(rows: [string, number, number][]): string {
+export function vizTimeline(rows: [string, number, number][]): string {
   const months = Math.max(...rows.map(([, , to]) => to)) + 1;
   const name = new Intl.DateTimeFormat(LANG, { month: "short" });
   return `
@@ -115,116 +73,9 @@ function vizTimeline(rows: [string, number, number][]): string {
     </div>`;
 }
 
-function entity(name: string, count: string, rows: ErRow[], selected: string, lead = false): string {
-  return `
-    <section class="er-entity${rows.length > 6 ? " er-entity--wide" : ""}">
-      <h4 class="er-name${lead ? " er-name--lead" : ""}"><span>${name}</span><span>${esc(count)}</span></h4>
-      <div class="er-rows">${rows
-        .map(
-          (r, i) => `
-      <button type="button" class="er-row${r.hot ? " er-row--hot" : ""}" data-er="${name}-${i}" aria-pressed="${`${name}-${i}` === selected}">
-        ${r.swatch ? `<span class="er-swatch" style="background: ${esc(r.swatch)}"></span>` : `<span class="er-key">${r.key ?? ""}</span>`}
-        <span class="er-attr">${esc(r.attr)}</span>
-        ${r.type ? `<span class="er-type">${esc(r.type)}</span>` : ""}
-      </button>`,
-        )
-        .join("")}</div>
-    </section>`;
-}
-
-// YourBrand: project —1:1— core —1:n— tenant —n:m— module, left to right,
-// and under them the picked row's text.
-function erCard(card: ProjectCard, head: string): string {
-  const tenants = card.tenants ?? [];
-  const p = (s?: string) => (s ? `<p>${esc(s)}</p>` : "");
-  const detail = (d?: Detail) => (d ? p(d.about) + `<ul>${d.points.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
-  const links = (card.links ?? [])
-    .map((l) => (l.href ? `<a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>` : esc(l.label)))
-    .join(" · ");
-
-  const overview = [blueprint(card), vizMatrix(card, {}), vizStack(-1, false)];
-  const project: ErRow[] = [
-    { key: "PK", attr: "why", type: "text", body: p(card.learnGoal) + p(card.what), viz: overview },
-    // The challenge: a clean base, the business logic on top experimental.
-    { attr: "learned", type: "text", body: p(card.challenge), viz: [vizStack(0), vizStack(0, false)] },
-    { attr: "architecture", type: "text[]", body: `<ul>${(card.decisions ?? []).map((d) => `<li>${esc(d)}</li>`).join("")}</ul>`, viz: overview },
-    { attr: "hours", type: "text", body: p(card.meta), viz: card.hoursChart && [vizHours(card.hoursChart)] },
-    { attr: "timeline", type: "text", body: p(card.origin), viz: card.timelineChart && [vizTimeline(card.timelineChart)] },
-    { attr: "repo", type: "url", body: `<p>${links}</p><ul class="er-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`, viz: overview },
-  ];
-
-  const layers = UI.vizLayers;
-  const core: ErRow[] = layers.map(([name, sub], i) => ({
-    key: `L${layers.length - i}`,
-    attr: name,
-    body: `<p><b>${esc(sub)}</b></p>${detail(card.layers?.[i])}`,
-    viz: [vizStack(i), vizStack(i, false)],
-  }));
-
-  const tenant: ErRow[] = tenants.map((t, i) => ({
-    swatch: t.color,
-    attr: t.name,
-    type: t.tier,
-    body: `<p><b>${esc(t.kind)}</b></p>${p(t.about)}<p class="er-mods">${t.modules.map((m) => esc(UI.vizModules[m])).join(" · ")}</p>`,
-    viz: [vizMatrix(card, { tenant: i }), vizList(TENANT_MODULES.map((m) => ({ label: UI.vizModules[m], on: t.modules.includes(m) })))],
-  }));
-
-  const module: ErRow[] = TENANT_MODULES.map((m) => {
-    const users = tenants.filter((t) => t.modules.includes(m));
-    const wip = m === "shop";
-    return {
-      attr: UI.vizModules[m],
-      type: wip ? UI.vizWip : `${users.length} / ${tenants.length}`,
-      hot: wip,
-      body: detail(card.moduleInfo?.[m]) + `<p class="er-mods">${esc(users.length ? users.map((t) => t.name).join(" · ") : UI.vizWip)}</p>`,
-      viz: [vizMatrix(card, { module: m }), vizList(tenants.map((t) => ({ label: t.name, on: t.modules.includes(m) })))],
-    };
-  });
-
-  const all: [string, ErRow[]][] = [["project", project], ["core", core], ["tenant", tenant], ["module", module]];
-  const selected = "project-0";
-  const panes = all
-    .flatMap(([name, rows]) =>
-      rows.map(
-        (r, i) => `
-      <div class="er-pane" data-er-pane="${name}-${i}"${`${name}-${i}` === selected ? "" : " hidden"}>
-        <p class="er-path"><span>${name}</span> › ${esc(r.attr)}${r.type ? ` <i>${esc(r.type)}</i>` : ""}</p>
-        <div class="er-main">
-          <div class="er-body">${r.body}</div>
-          ${r.viz ? `<figure class="er-viz" hidden>${r.viz.map((v) => `<div class="er-viz-v" hidden>${v}</div>`).join("")}</figure>` : ""}
-        </div>
-      </div>`,
-      ),
-    )
-    .join("");
-
-  return `
-    <article class="pcard pcard--big pcard--er" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
-      ${head}
-      <div class="er">
-        ${entity("project", "1", project, selected, true)}
-        ${relation(ONE(7) + ONE(40), "1 : 1")}
-        ${entity("core", "1", core, selected)}
-        ${relation(ONE(7) + MANY_RIGHT, "1 : n")}
-        ${entity("tenant", String(tenants.length), tenant, selected)}
-        ${relation(MANY_LEFT + MANY_RIGHT, "n : m")}
-        ${entity("module", String(TENANT_MODULES.length), module, selected)}
-      </div>
-      <section class="er-detail">
-        ${panes}
-        <p class="er-pager" hidden>
-          <button type="button" data-er-page="-1" aria-label="${esc(UI.erPrev)}">‹</button>
-          <span dir="ltr"></span>
-          <button type="button" data-er-page="1" aria-label="${esc(UI.erNext)}">›</button>
-        </p>
-      </section>
-    </article>
-  `;
-}
-
 // A decision reads "Head: the rest" or "Head — the rest"; the head becomes
 // the list row's title, like a mail subject.
-function splitDecision(d: string): [string, string] {
+export function splitDecision(d: string): [string, string] {
   const m = d.match(/^(.{4,60}?)(?::| —) (.+)$/);
   return m ? [m[1], m[2]] : [d, ""];
 }
@@ -454,10 +305,10 @@ function partsCard(card: ProjectCard, head: string): string {
 // --fit factor (big-cards.css). A ResizeObserver refits on resize
 // and when a hidden tab panel shows (its size goes from 0); content that
 // changes in place (TschoBBo's letters) calls fitText itself.
-const FIT_BOXES = ".big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code";
+const FIT_BOXES = ".big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code, .sch-insp";
 const MIN_FIT = 0.65;
 
-function fitText(el: HTMLElement) {
+export function fitText(el: HTMLElement) {
   if (el.hidden || !el.clientHeight) return;
   let fit = 1;
   el.style.setProperty("--fit", "1");
@@ -471,7 +322,8 @@ function fitText(el: HTMLElement) {
 // A folder shows its mails and opens the first (the architecture folder
 // opens on its code instead); a mail shows its letter. One listener per
 // big card; the cards are rendered once, so nothing to tear down.
-export function initBigCards(root: HTMLElement) {
+export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
+  initSchema(root, cards);
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
   boxes.forEach((box) => sizes.observe(box));
@@ -514,93 +366,6 @@ export function initBigCards(root: HTMLElement) {
       const mail = target.closest<HTMLElement>("[data-mail]");
       if (mail) show(mail.dataset.mail!);
     });
-  });
-  // YourBrand: a row shows its text in the detail box. Text that doesn't
-  // fit runs on into more columns to the side; the pager slides them in a
-  // box-width at a time — pages instead of a scrollbar.
-  root.querySelectorAll<HTMLElement>(".pcard--er").forEach((card) => {
-    const pager = card.querySelector<HTMLElement>(".er-pager");
-    let page = 0;
-    const paginate = () => {
-      const pane = card.querySelector<HTMLElement>(".er-pane:not([hidden])");
-      const body = pane?.querySelector<HTMLElement>(".er-body");
-      const viz = pane?.querySelector<HTMLElement>(".er-viz");
-      if (!body || !pager) return;
-      body.style.transform = "";
-      body.style.flex = "";
-      body.style.columnCount = "";
-      if (viz) viz.hidden = true;
-      const css = getComputedStyle(body);
-      const gap = parseFloat(css.columnGap) || 0;
-      const step = body.clientWidth + gap;
-      // How far the columns reach past the box's start edge.
-      const reach = () => {
-        const box = body.getBoundingClientRect();
-        let r = 0;
-        for (const el of Array.from(body.children)) {
-          for (const rect of Array.from(el.getClientRects())) r = Math.max(r, rect.right - box.left);
-        }
-        return r;
-      };
-      const used = reach();
-      const pages = step > 0 ? Math.max(1, Math.ceil((used - 1) / step)) : 1;
-      // Text that leaves whole columns empty gives them to the chart: the
-      // text keeps exactly the columns it fills, same width as before.
-      if (viz && pages === 1) {
-        const count = Math.min(4, Math.max(1, Math.floor((body.clientWidth + gap) / ((parseFloat(css.columnWidth) || 240) + gap))));
-        const col = (body.clientWidth - (count - 1) * gap) / count;
-        const cols = Math.max(1, Math.ceil((used + gap - 1) / (col + gap)));
-        const free = body.clientWidth - cols * (col + gap);
-        if (cols < count && free >= 16 * parseFloat(getComputedStyle(document.documentElement).fontSize)) {
-          body.style.flex = `0 0 ${cols * col + (cols - 1) * gap}px`;
-          body.style.columnCount = String(cols);
-          viz.hidden = false;
-          // The largest chart that fits; one that doesn't fit at all stays
-          // out rather than being cut off.
-          const fits = (v: HTMLElement) => v.offsetHeight <= viz.clientHeight + 1 && v.scrollWidth <= viz.clientWidth + 1;
-          const variants = Array.from(viz.querySelectorAll<HTMLElement>(".er-viz-v"));
-          let shown = false;
-          for (const v of variants) {
-            variants.forEach((o) => (o.hidden = o !== v));
-            if (fits(v)) {
-              shown = true;
-              break;
-            }
-          }
-          if (!shown) {
-            viz.hidden = true;
-            body.style.flex = "";
-            body.style.columnCount = "";
-          }
-        }
-      }
-      page = Math.min(page, pages - 1);
-      body.style.transform = page ? `translateX(${-page * step}px)` : "";
-      pager.hidden = pages < 2;
-      pager.querySelector("span")!.textContent = `${page + 1} / ${pages}`;
-      pager.querySelectorAll<HTMLButtonElement>("[data-er-page]").forEach((b) => {
-        b.disabled = b.dataset.erPage === "-1" ? page === 0 : page === pages - 1;
-      });
-    };
-    card.addEventListener("click", (e) => {
-      const target = e.target as Element;
-      const turn = target.closest<HTMLElement>("[data-er-page]");
-      if (turn) {
-        page += Number(turn.dataset.erPage);
-        paginate();
-        return;
-      }
-      const pick = target.closest<HTMLElement>("[data-er]");
-      if (!pick) return;
-      card.querySelectorAll<HTMLElement>("[data-er]").forEach((row) => row.setAttribute("aria-pressed", String(row === pick)));
-      card.querySelectorAll<HTMLElement>("[data-er-pane]").forEach((pane) => {
-        pane.hidden = pane.dataset.erPane !== pick.dataset.er;
-      });
-      page = 0;
-      paginate();
-    });
-    const detail = card.querySelector(".er-detail");
-    if (detail) new ResizeObserver(paginate).observe(detail);
   });
   // Every tab box (textTabs and the like): a tab shows its panel within
   // its own [data-tabs] box.
@@ -838,7 +603,7 @@ export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 export function renderBigCard(card: ProjectCard, head: string): string {
   switch (card.layout) {
     case "blueprint":
-      return erCard(card, head);
+      return schemaCard(card, head);
     case "inbox":
       return mailCard(card, head);
     case "storyboard":
