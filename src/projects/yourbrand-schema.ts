@@ -5,8 +5,8 @@
 // through the diagram step by step. The rows and their texts come from
 // the card's own data (already in the visitor's language); only the
 // lines, the flows and the chrome are new here, all four languages inline.
-// The lines are an SVG over the measured rows, like the highlight graphs
-// (src/graph/main.ts), redrawn whenever the card's layout moves.
+// The lines are an SVG over the measured rows, redrawn whenever the card's
+// layout moves.
 
 import { esc, TENANT_MODULES, type Detail, type ProjectCard } from "./project-cards";
 import { LANG, type Lang } from "../i18n";

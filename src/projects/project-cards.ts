@@ -133,8 +133,8 @@ export interface ProjectCard {
   steps?: string[];
   sources?: [string, string][];
   modes?: [string, string][];
-  // The big three's highlight graph (graph/<id>.html): a link tile beside
-  // the facet buttons.
+  // The big three's engineering flows (#eng/<id>, src/engineering/): a
+  // link tile beside the facet buttons.
   graph?: string;
   // Loadtest's visual: the latest ramp as [req/s, p95 ms, within budget].
   ramp?: [number, number, boolean][];

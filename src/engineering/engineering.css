@@ -641,7 +641,9 @@
 .eng-report .eng-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "brand close" "projects mode";
+  /* Three projects don't fit beside the mode switch on a phone: they get
+     their own row, the switch sits under them. */
+  grid-template-areas: "brand close" "projects projects" "mode mode";
   gap: 10px;
 }
 .eng-report .eng-brand {
@@ -656,6 +658,7 @@
 }
 .eng-report .eng-mode {
   grid-area: mode;
+  justify-self: start;
 }
 .eng-scroll {
   overflow-y: auto;

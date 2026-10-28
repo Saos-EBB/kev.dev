@@ -12,10 +12,11 @@ import { LANG, pick } from "../i18n";
 import { LITE } from "../viewport";
 import type { EngRoute } from "./index";
 import type { EngFlow, EngNode, EngProject, EngStep, Text } from "./types";
+import { kevdev } from "./data/kevdev";
 import { tschobbo } from "./data/tschobbo";
 import { yourbrand } from "./data/yourbrand";
 
-const PROJECTS: EngProject[] = [yourbrand, tschobbo];
+const PROJECTS: EngProject[] = [yourbrand, tschobbo, kevdev];
 
 const UI = pick({
   de: {
@@ -138,7 +139,7 @@ function store(key: string, value: string) {
   }
 }
 
-// Shared with the graph pages (src/graph/main.ts), so the choice carries over.
+// Stored, so the choice carries over to the next visit.
 const MODE_KEY = "graph-mode";
 type Mode = "plain" | "dev";
 
@@ -555,7 +556,7 @@ function renderAll() {
     wirePan(q("[data-canvas]")!);
     renderSide();
     drawGraph();
-    focusFlow();
+    fit();
   }
   setHash();
 }
@@ -581,24 +582,12 @@ function usable(): DOMRect {
   return new DOMRect(0, 0, r.width, Math.max(120, bar.top - r.top - 8));
 }
 
+// The whole graph, always: every layer a flow passes through stays in view.
+// Zooming in is the visitor's choice (wheel, +, minimap).
 function fit() {
   const area = usable();
   const k = Math.min(1.1, (area.width - 32) / layout.width, (area.height - 16) / layout.height);
   view = { k, x: (area.width - layout.width * k) / 2, y: Math.max(8, (area.height - layout.height * k) / 2) };
-  applyView();
-}
-
-// Zoom to the open flow's nodes, never smaller than the whole graph.
-function focusFlow() {
-  const area = usable();
-  const pts = flow.steps.map((s) => layout.placed.get(s.node)!);
-  const x0 = Math.min(...pts.map((p) => p.x)) - 40;
-  const y0 = Math.min(...pts.map((p) => p.y)) - 40;
-  const x1 = Math.max(...pts.map((p) => p.x)) + NODE_W + 90;
-  const y1 = Math.max(...pts.map((p) => p.y)) + NODE_H + 40;
-  const all = Math.min((area.width - 32) / layout.width, (area.height - 16) / layout.height);
-  const k = Math.max(all, Math.min(1.15, area.width / (x1 - x0), area.height / (y1 - y0)));
-  view = { k, x: area.width / 2 - ((x0 + x1) / 2) * k, y: area.height / 2 - ((y0 + y1) / 2) * k };
   applyView();
 }
 
@@ -635,7 +624,7 @@ function goFlow(id: string, i = 0) {
   step = Math.max(0, i);
   renderSide();
   renderStep();
-  focusFlow();
+  fit();
 }
 
 function onClick(e: MouseEvent) {
@@ -754,7 +743,7 @@ function wire() {
   });
   document.addEventListener("keydown", onKey);
   window.addEventListener("resize", () => {
-    if (root && !root.hidden && !LITE) focusFlow();
+    if (root && !root.hidden && !LITE) fit();
   });
 }
 

@@ -8,8 +8,8 @@
 
 import type Lenis from "lenis";
 
-// Projects that have flows. The others keep their old graph page for now.
-const PROJECTS = ["yourbrand", "tschobbo"];
+// Projects that have flows.
+const PROJECTS = ["yourbrand", "tschobbo", "kevdev"];
 
 export function hasEngineering(project: string): boolean {
   return PROJECTS.includes(project);

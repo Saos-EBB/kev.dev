@@ -537,8 +537,3 @@
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1.25rem 1rem;
 }
-
-/* Dev-only tile to the old graph page, see SHOW_OLD_GRAPH. */
-.facet-tile--dev {
-  border-style: dashed;
-}
