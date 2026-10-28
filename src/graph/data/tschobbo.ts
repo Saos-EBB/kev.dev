@@ -1,6 +1,5 @@
-// TschoBBo's highlights, checked against the local working repo
-// (instantJobbot, private); file links point at the public JoBBoT repo,
-// files that only exist in the private one are listed without a link.
+// TschoBBo's highlights, checked against the public JoBBoT repo (main).
+// Only what is visible there goes in: nothing from the private working repo.
 
 import type { GraphProject } from "../types";
 
@@ -120,10 +119,10 @@ export const tschobbo: GraphProject = {
       layer: "pipeline",
       title: { de: "KI-Filter (JEV)", en: "AI filter (JEV)", ru: "ИИ-фильтр (JEV)", ja: "AIフィルター（JEV）" },
       plain: {
-        de: "Ein kleines Sprachmodell liest die Anzeige und beantwortet einfache Fragen: Ist das ein Job, den ich will? Wie viel Erfahrung wird verlangt? IT oder Büro?",
-        en: "A small language model reads the listing and answers simple questions: is this a job I want? How much experience do they ask for? IT or office?",
-        ru: "Небольшая языковая модель читает объявление и отвечает на простые вопросы: это работа, которую я хочу? Сколько нужно опыта? IT или офис?",
-        ja: "小さな言語モデルが求人を読み、簡単な質問に答えます。私が望む仕事か？ 求められる経験は？ ITか事務か？",
+        de: "Ein kleines Sprachmodell liest die Anzeige und beantwortet einfache Fragen: Ist das ein Job, den ich will? Wie viel Erfahrung wird verlangt? Support, Wunschjob oder keins?",
+        en: "A small language model reads the listing and answers simple questions: is this a job I want? How much experience do they ask for? Support, a job I want, or neither?",
+        ru: "Небольшая языковая модель читает объявление и отвечает на простые вопросы: это работа, которую я хочу? Сколько нужно опыта? Поддержка, желанная работа или ни то ни другое?",
+        ja: "小さな言語モデルが求人を読み、簡単な質問に答えます。私が望む仕事か？ 求められる経験は？ サポートか、希望の職か、どちらでもないか？",
       },
       dev: {
         de: "Bespoke Nimble 9B als Klassifizierer, kein Chat-Modell: pro Aufruf genau ein Feld, Antwort ein Buchstabe. Jedes Feld bekommt nur den Textausschnitt, den es braucht, weil auf CPU/iGPU die Prompt-Verarbeitung die ganze Zeit kostet.",
@@ -132,44 +131,24 @@ export const tschobbo: GraphProject = {
         ja: "チャットモデルではなく分類器としてのBespoke Nimble 9B。1回の呼び出しで1項目だけ、答えは1文字。CPU/iGPUではプロンプト処理に時間がかかるため、各項目には必要な部分の文章だけを渡します。",
       },
       files: ["lib/filter-nimble.ts"],
-      privateFiles: ["lib/bereich-jev.ts"],
     },
     {
       id: "anschreiben",
       layer: "pipeline",
       title: { de: "Anschreiben", en: "Cover letter", ru: "Сопроводительное письмо", ja: "応募文" },
       plain: {
-        de: "Für jede passende Stelle schreibt der Bot ein eigenes Anschreiben aus meinem Profil, ehrlich auch bei Lücken. Für Büro- und Lehrstellen gibt es eigene Vorlagen.",
-        en: "For every matching job the bot writes its own cover letter from my profile, honest about gaps too. Office jobs and apprenticeships get their own templates.",
-        ru: "Для каждой подходящей вакансии бот пишет своё письмо по моему профилю, честно и о пробелах. Для офисных вакансий и мест обучения есть свои шаблоны.",
-        ja: "合う求人ごとに、私のプロフィールから専用の応募文を書きます。足りない点も正直に。事務職や職業訓練には専用のテンプレートがあります。",
+        de: "Für jede passende Stelle schreibt der Bot ein eigenes Anschreiben aus meinem Profil, ehrlich auch bei Lücken.",
+        en: "For every matching job the bot writes its own cover letter from my profile, honest about gaps too.",
+        ru: "Для каждой подходящей вакансии бот пишет своё письмо по моему профилю, честно и о пробелах.",
+        ja: "合う求人ごとに、私のプロフィールから専用の応募文を書きます。足りない点も正直に。",
       },
       dev: {
-        de: "Gemma 4 26B (MoE, Q4_0) auf der CPU, nach einem Benchmark gegen Mistral Small und mehrere Qwen-Modelle. ~45–80 s mit kaltem Modell, ~20–30 s warm. Eigene System-Prompts für IT, Büro (SYSTEM_BUERO) und Lehre (SYSTEM_LEHRE).",
-        en: "Gemma 4 26B (MoE, Q4_0) on the CPU, picked after a benchmark against Mistral Small and several Qwen models. ~45–80 s with a cold model, ~20–30 s warm. Separate system prompts for IT, office (SYSTEM_BUERO) and apprenticeships (SYSTEM_LEHRE).",
-        ru: "Gemma 4 26B (MoE, Q4_0) на CPU, выбрана после бенчмарка против Mistral Small и нескольких моделей Qwen. ~45–80 с с холодной моделью, ~20–30 с с прогретой. Отдельные системные промпты для IT, офиса (SYSTEM_BUERO) и обучения (SYSTEM_LEHRE).",
-        ja: "CPU上のGemma 4 26B（MoE、Q4_0）。Mistral Smallや複数のQwenモデルとのベンチマークで選びました。コールド時約45〜80秒、ウォーム時約20〜30秒。IT、事務（SYSTEM_BUERO）、職業訓練（SYSTEM_LEHRE）で別々のシステムプロンプト。",
+        de: "Gemma 4 26B (MoE, Q4_0) auf der CPU, nach einem Benchmark gegen Mistral Small und mehrere Qwen-Modelle. ~45–80 s mit kaltem Modell, ~20–30 s warm.",
+        en: "Gemma 4 26B (MoE, Q4_0) on the CPU, picked after a benchmark against Mistral Small and several Qwen models. ~45–80 s with a cold model, ~20–30 s warm.",
+        ru: "Gemma 4 26B (MoE, Q4_0) на CPU, выбрана после бенчмарка против Mistral Small и нескольких моделей Qwen. ~45–80 с с холодной моделью, ~20–30 с с прогретой.",
+        ja: "CPU上のGemma 4 26B（MoE、Q4_0）。Mistral Smallや複数のQwenモデルとのベンチマークで選びました。コールド時約45〜80秒、ウォーム時約20〜30秒。",
       },
       files: ["lib/anschreiben.ts"],
-    },
-    {
-      id: "auto",
-      layer: "pipeline",
-      title: { de: "Auto-Entwurf", en: "Auto draft", ru: "Автоматический черновик", ja: "自動下書き" },
-      plain: {
-        de: "Ein Knopf, und die ganze Kette läuft von der Suche bis zum fertigen Entwurf. Gesendet wird trotzdem nichts, das mache ich selbst.",
-        en: "One button and the whole chain runs from search to finished draft. Nothing is sent, though; I do that myself.",
-        ru: "Одна кнопка — и вся цепочка проходит от поиска до готового черновика. Но ничего не отправляется — это я делаю сам.",
-        ja: "ボタン1つで、検索から下書き完成までの全工程が動きます。それでも送信はしません。それは自分でやります。",
-      },
-      dev: {
-        de: "Vier Knöpfe (fullPipeLineX, mailPipeLineX, bueroPipeLineX, bueroMailX): scrapen nur, wenn es Neues gibt, dann filtern, die neuesten X passenden Jobs mit Mailadresse, Anschreiben, Gmail-Entwurf. Jobs landen im Postausgang, nie direkt im Versand.",
-        en: "Four buttons (fullPipeLineX, mailPipeLineX, bueroPipeLineX, bueroMailX): scrape only if there's something new, then filter, the newest X matching jobs with an e-mail address, cover letter, Gmail draft. Jobs land in the outbox, never straight in sending.",
-        ru: "Четыре кнопки (fullPipeLineX, mailPipeLineX, bueroPipeLineX, bueroMailX): скрапинг только если есть новое, затем фильтр, X самых новых подходящих вакансий с адресом почты, письмо, черновик Gmail. Вакансии попадают в исходящие, а не сразу в отправку.",
-        ja: "4つのボタン（fullPipeLineX、mailPipeLineX、bueroPipeLineX、bueroMailX）。新着があるときだけスクレイプし、絞り込み、メールアドレス付きの最新X件、応募文、Gmail下書き。求人は送信トレイに入り、直接送信はされません。",
-      },
-      files: [],
-      privateFiles: ["lib/auto-entwurf.ts"],
     },
     {
       id: "llm",
@@ -188,25 +167,6 @@ export const tschobbo: GraphProject = {
         ja: "中立的なインターフェース1つ（chat、ensureReady）の裏に、プリセット付きのルーターモードのllama-server。以前はOllamaでしたが、切り替えてもlib/llm/の外は何も変わりませんでした。",
       },
       files: ["lib/llm/types.ts", "lib/llm/llamacpp.ts"],
-    },
-    {
-      id: "exklusiv",
-      layer: "ai",
-      title: { de: "Nur ein Modell im RAM", en: "One model in RAM", ru: "Одна модель в RAM", ja: "RAMにはモデル1つだけ" },
-      plain: {
-        de: "Zwei große Modelle gleichzeitig bringen meinen Laptop zum Absturz. Darum wartet das zweite, bis das erste fertig ist, und fragt vorher nach.",
-        en: "Two large models at once crash my laptop. So the second one waits until the first is done, and asks first.",
-        ru: "Две большие модели одновременно роняют мой ноутбук. Поэтому вторая ждёт, пока закончит первая, и сначала спрашивает.",
-        ja: "大きなモデルを2つ同時に動かすとノートPCが落ちます。だから2つ目は1つ目が終わるまで待ち、事前に確認します。",
-      },
-      dev: {
-        de: "Harter Schalter: höchstens inference.maxModelle (Standard 1) sind geladen. Ein anderes Modell wartet, entlädt das aktuelle und beendet den Prozess hart, falls das Entladen hängt; sonst bricht die Anfrage ab. Die UI zeigt vorher RAM-Bedarf und freien RAM.",
-        en: "A hard switch: at most inference.maxModelle (default 1) are loaded. Another model waits, unloads the current one and kills the process if unloading hangs; otherwise the request is aborted. The UI shows the RAM needed and free beforehand.",
-        ru: "Жёсткий переключатель: загружено не больше inference.maxModelle (по умолчанию 1). Другая модель ждёт, выгружает текущую и жёстко завершает процесс, если выгрузка зависла; иначе запрос прерывается. UI заранее показывает нужную и свободную RAM.",
-        ja: "ハードスイッチ。読み込めるのは最大inference.maxModelle（既定1）。別のモデルは待機し、現在のモデルをアンロードし、止まれば強制終了。できなければリクエストを中止します。UIは事前に必要なRAMと空きRAMを表示。",
-      },
-      files: [],
-      privateFiles: ["lib/llm/exklusiv.ts"],
     },
     {
       id: "storage",
@@ -301,7 +261,7 @@ export const tschobbo: GraphProject = {
     {
       id: "tests",
       layer: "ui",
-      title: { de: "681 Tests, offline", en: "681 tests, offline", ru: "681 тест, офлайн", ja: "681件のテスト（オフライン）" },
+      title: { de: "590 Tests, offline", en: "590 tests, offline", ru: "590 тестов, офлайн", ja: "590件のテスト（オフライン）" },
       plain: {
         de: "Hunderte automatische Prüfungen laufen bei jeder Änderung, ohne Internet und ohne KI-Modell.",
         en: "Hundreds of automatic checks run on every change, without internet and without an AI model.",
@@ -309,10 +269,10 @@ export const tschobbo: GraphProject = {
         ja: "変更のたびに数百の自動チェックが、インターネットもAIモデルもなしで動きます。",
       },
       dev: {
-        de: "681 Tests in 81 Dateien mit node:test über tsx, ohne Test-Framework. Scraper laufen gegen gespeicherte Seiten, statt eines echten Modells antwortet ein lokaler Mock-Server, alles in Temp-Verzeichnissen.",
-        en: "681 tests in 81 files with node:test via tsx, no test framework. Scrapers run against saved pages, a local mock server answers instead of a real model, everything in temp directories.",
-        ru: "681 тест в 81 файле на node:test через tsx, без тестового фреймворка. Скраперы работают против сохранённых страниц, вместо настоящей модели отвечает локальный mock-сервер, всё во временных каталогах.",
-        ja: "81ファイル681件のテストをtsx経由のnode:testで、テストフレームワークなし。スクレイパーは保存済みページに対して動き、本物のモデルの代わりにローカルのモックサーバーが応答します。すべて一時ディレクトリで実行。",
+        de: "590 Tests in 63 Dateien mit node:test über tsx, ohne Test-Framework. Scraper laufen gegen gespeicherte Seiten, statt eines echten Modells antwortet ein lokaler Mock-Server, alles in Temp-Verzeichnissen.",
+        en: "590 tests in 63 files with node:test via tsx, no test framework. Scrapers run against saved pages, a local mock server answers instead of a real model, everything in temp directories.",
+        ru: "590 тестов в 63 файлах на node:test через tsx, без тестового фреймворка. Скраперы работают против сохранённых страниц, вместо настоящей модели отвечает локальный mock-сервер, всё во временных каталогах.",
+        ja: "63ファイル590件のテストをtsx経由のnode:testで、テストフレームワークなし。スクレイパーは保存済みページに対して動き、本物のモデルの代わりにローカルのモックサーバーが応答します。すべて一時ディレクトリで実行。",
       },
       files: ["test/", "test/fixtures/"],
     },
@@ -328,10 +288,6 @@ export const tschobbo: GraphProject = {
     { from: "anschreiben", to: "llm", label: { de: "Gemma 4 26B", en: "Gemma 4 26B", ru: "Gemma 4 26B", ja: "Gemma 4 26B" } },
     { from: "anschreiben", to: "status", label: { de: "'generated'", en: "'generated'", ru: "'generated'", ja: "'generated'" } },
     { from: "anschreiben", to: "id8", label: { de: "findAnschreiben()", en: "findAnschreiben()", ru: "findAnschreiben()", ja: "findAnschreiben()" } },
-    { from: "auto", to: "regex", label: { de: "filtert alles Neue", en: "filters everything new", ru: "фильтрует всё новое", ja: "新着をすべて絞り込み" } },
-    { from: "auto", to: "anschreiben", label: { de: "neueste X mit Mailadresse", en: "newest X with an address", ru: "X самых новых с адресом", ja: "アドレス付きの最新X件" } },
-    { from: "auto", to: "gmail", label: { de: "nur Entwurf, nie Versand", en: "draft only, never send", ru: "только черновик, не отправка", ja: "下書きのみ、送信しない" } },
-    { from: "llm", to: "exklusiv", label: { de: "höchstens ein Modell", en: "at most one model", ru: "не больше одной модели", ja: "モデルは最大1つ" } },
     { from: "status", to: "storage", label: { de: "updateStatus()", en: "updateStatus()", ru: "updateStatus()", ja: "updateStatus()" } },
     { from: "gmail", to: "status", label: { de: "'postausgang' → 'gesendet'", en: "'postausgang' → 'gesendet'", ru: "'postausgang' → 'gesendet'", ja: "'postausgang' → 'gesendet'" } },
     { from: "sync", to: "gmail", label: { de: "liest nur (readOnly)", en: "reads only (readOnly)", ru: "только чтение (readOnly)", ja: "読み取りのみ（readOnly）" } },
@@ -359,7 +315,7 @@ export const tschobbo: GraphProject = {
         ru: "Как ИИ работает полностью локально и не роняет компьютер.",
         ja: "PCを落とさずに、AIを完全にローカルで動かす方法。",
       },
-      steps: ["jev", "anschreiben", "llm", "exklusiv"],
+      steps: ["jev", "anschreiben", "llm"],
     },
   ],
 };

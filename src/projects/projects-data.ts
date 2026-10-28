@@ -318,11 +318,11 @@ const cards: ProjectCard[] = [
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
     points: ["Scrapt österreichische Jobbörsen, filtert per Regex oder JEV, einem kleinen lokalen Modell", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
-    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; per Knopf läuft die ganze Kette bis zum Entwurf automatisch, abgeschickt wird immer von mir. Ein Gmail-Sync erkennt Abgeschicktes von selbst, JEV liest die Antworten und erkennt Absage, Zusage oder „bitte übers Portal bewerben“, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
+    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; abgeschickt wird immer von mir. Ein Gmail-Sync erkennt Abgeschicktes von selbst, JEV liest die Antworten und erkennt Absage, Zusage oder „bitte übers Portal bewerben“, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
     tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
     links: [
-      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/jobsuche-apply-bot" },
+      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/JoBBoT" },
       { label: "läuft lokal — Screenshots in den Details" },
     ],
     decisions: [
@@ -334,7 +334,7 @@ const cards: ProjectCard[] = [
       "Fünf Portale hinter einem Scraper-Interface: karriere.at, devjobs.at, LinkedIn, AMS, jobs.at — Playwright nur dort, wo eine Seite ohne Browser nichts hergibt (AMS, devjobs.at)",
       "Eigene JSON-Ablage statt Datenbank: ein Job = eine Datei, das Anschreiben als .md daneben, geschrieben über Temp-Datei + rename — nie halb geschriebene Daten",
       "Das Modell hinter einer Schnittstelle (LlmProvider): heute nur llama.cpp im Router-Modus, Modelle als Presets — ein neues Backend ist eine Datei plus ein Eintrag",
-      "681 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
+      "590 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
     ],
     // The architecture as code on the desktop card: the pipeline (stage,
     // file, the job status it leaves behind) and an excerpt of the real
@@ -367,7 +367,7 @@ const cards: ProjectCard[] = [
         "  ensureReady(host?: string): Promise<void>;",
         "}",
         "",
-        "// test/ — 681 tests, node:test, offline",
+        "// test/ — 590 tests, node:test, offline",
       ].join("\n"),
     },
     // Desktop card: the mails behind each folder, from the JoBBoT README.
