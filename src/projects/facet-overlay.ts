@@ -56,14 +56,23 @@ const LABELS: Record<FacetKind, string> = {
 // flows, otherwise to its old graph page.
 const GRAPH_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5" /><circle cx="18" cy="8" r="2.5" /><circle cx="9" cy="18" r="2.5" /><path d="M8.3 7.1l7.4 0.6M7 8.3l1.4 7.3M16.6 10l-6 6.3" /></svg>`;
 
+// Only to compare the two graphs side by side: on the dev server, or with
+// ?dev in the URL, a project with flows also gets a tile to its old graph page.
+const SHOW_OLD_GRAPH = import.meta.env.DEV || new URLSearchParams(location.search).has("dev");
+
 export function renderFacetTiles(card: ProjectCard): string {
   if (!card.facets?.length && !card.graph) return "";
   const graph = card.graph
     ? `<a class="facet-tile" href="${esc(hasEngineering(card.graph) ? engHref(card.graph) : `/graph/${card.graph}.html`)}">${GRAPH_ICON}<span>${esc(UI.facetGraph)}</span></a>`
     : "";
+  const oldGraph =
+    card.graph && SHOW_OLD_GRAPH && hasEngineering(card.graph)
+      ? `<a class="facet-tile facet-tile--dev" href="/graph/${esc(card.graph)}.html">${GRAPH_ICON}<span>${esc(UI.facetGraph)} alt</span></a>`
+      : "";
   return `
     <div class="facet-tiles" role="group" aria-label="${esc(UI.moreAbout(card.title))}">
         ${graph}
+        ${oldGraph}
         ${(card.facets ?? [])
           .map(
             (kind) => `

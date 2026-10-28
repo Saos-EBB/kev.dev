@@ -12,9 +12,10 @@ import { LANG, pick } from "../i18n";
 import { LITE } from "../viewport";
 import type { EngRoute } from "./index";
 import type { EngFlow, EngNode, EngProject, EngStep, Text } from "./types";
+import { tschobbo } from "./data/tschobbo";
 import { yourbrand } from "./data/yourbrand";
 
-const PROJECTS: EngProject[] = [yourbrand];
+const PROJECTS: EngProject[] = [yourbrand, tschobbo];
 
 const UI = pick({
   de: {
