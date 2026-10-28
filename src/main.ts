@@ -17,6 +17,7 @@ import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
+import { initCatalog, renderCatalog } from "./projects/catalog";
 import { hasBigCard, initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
@@ -183,7 +184,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   </section>
 
   <div class="projects-headline" aria-hidden="true">${titleFx(UI.projects)}</div>
-  ${LITE ? "" : `<div class="projects-groups projects-groups--spots" aria-hidden="true">${groupTagsHtml()}</div>`}
+  ${LITE ? "" : `<div class="projects-groups projects-groups--spots" aria-hidden="true">${groupTagsHtml(["big"])}</div>`}
 
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
@@ -194,21 +195,29 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     ${
       LITE
         ? `<div class="project-list">
-            ${projectCards.map((card, i) => renderProjectTeaser(card, i, projectCards.length)).join("")}
+            ${projectCards
+              .map(
+                (card, i) =>
+                  // the small ones get their own heading, like the desktop catalog
+                  (card.group !== "big" && projectCards[i - 1]?.group === "big"
+                    ? `<h3 class="catalog-sub"><span class="catalog-tag">${UI.catalogTag}</span></h3>`
+                    : "") + renderProjectTeaser(card, i, projectCards.length),
+              )
+              .join("")}
           </div>`
         : `<div class="carousel-stage">
             ${projectCards
-              .map(
-                (card, i) => `
+              .map((card, i) => (card.group !== "big" ? "" : `
               <div class="carousel-project" data-project="${i}" data-group="${card.group}" data-count="1"${hasBigCard(card) ? " data-big" : ""}>
                 ${renderProjectCard(card, i, projectCards.length)}
               </div>
-            `,
-              )
+            `))
               .join("")}
           </div>`
     }
   </section>
+
+  ${LITE ? "" : `<section class="catalog" id="catalog">${renderCatalog(projectCards, titleFx)}</section>`}
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
@@ -617,6 +626,11 @@ if (LITE) {
 else {
   initCarousel(projectsSection);
   initBigCards(projectsSection, projectCards);
+  const catalogSection = document.querySelector<HTMLElement>("#catalog")!;
+  initCatalog(catalogSection, lenis);
+  initBigCards(catalogSection, projectCards);
+  initFacetOverlay(catalogSection, projectCards, lenis);
+  mountFaceVisuals(catalogSection);
 }
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);

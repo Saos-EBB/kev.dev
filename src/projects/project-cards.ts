@@ -76,8 +76,8 @@ export const GROUP_LABELS: Record<ProjectGroup, string> = {
 
 // The group words, one span each; CSS places them (fixed spots around the
 // desktop headline, all on one spot in the phone title).
-export const groupTagsHtml = () =>
-  (Object.keys(GROUP_LABELS) as ProjectGroup[])
+export const groupTagsHtml = (groups: ProjectGroup[] = Object.keys(GROUP_LABELS) as ProjectGroup[]) =>
+  groups
     .map((g) => `<span class="projects-group" data-group="${g}">${GROUP_LABELS[g]}</span>`)
     .join("");
 
@@ -239,7 +239,7 @@ export function cardBodies(card: ProjectCard) {
   return boxes.map((kind) => ({ kind, heading: headings[kind], body: { why, learned, code }[kind] }));
 }
 
-const indexLine = (card: ProjectCard, index: number, total: number) =>
+export const indexLine = (card: ProjectCard, index: number, total: number) =>
   `<span>${pad(index + 1)}</span> / ${pad(total)} · ${esc(card.kind)}`;
 
 const visualHidden = (card: ProjectCard) =>
