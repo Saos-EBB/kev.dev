@@ -1,5 +1,6 @@
-// "Grundlagen" widget: a workspace for the nine Bootcamp programs. Along
-// the top they sit as sticky notes (plus prev/next); the picked one fills
+// "Grundlagen" widget: the arcade (arcade.ts) — the three Bootcamp games
+// that are fun to play: Pokémon, Mastermind, Minesweeper. Along the top
+// they sit as game buttons (plus prev/next); the picked one fills
 // the rest — its Why?, concepts and what it does as cards on the left, the
 // shared terminal running the original Java program in the middle (see
 // java-runner.ts), its code excerpt on the right. All of it takes the
@@ -14,14 +15,8 @@ import { UI } from "../../i18n/ui";
 import { grantConsent, hasConsent } from "../../consent";
 import { localizeNote } from "./grundlagen-i18n";
 
-import gameOfLifeSrc from "../../../java/GameOfLife.java?raw";
 import masterMindSrc from "../../../java/MasterMind.java?raw";
-import bibliothekSrc from "../../../java/Bibliothek.java?raw";
 import minesweeperSrc from "../../../java/MinesweaperV2.java?raw";
-import zahlenratenSrc from "../../../java/ZahlenRatenV2.java?raw";
-import chiffreSrc from "../../../java/ChiffrePOLY.java?raw";
-import pmSrc from "../../../java/PersonenVerwaltung/PM.java?raw";
-import myStackSrc from "../../../java/MyStack.java?raw";
 import dmgCalcSrc from "../../../java/src/Logik/DmgCalc.java?raw";
 import pokemonRaw from "../../../java/src/Persistierung/PokemonRawData?raw";
 import attackRaw from "../../../java/src/Persistierung/AttackRawData?raw";
@@ -44,22 +39,9 @@ interface Note {
   concepts?: string[]; // what the project exercises, shown as small tags
 }
 
-// Hues stay within green → violet so the nine read as one family with the
+// Hues stay within green → violet so the games read as one family with the
 // page's green accent (hue 140), not as a rainbow.
 const NOTES: Note[] = [
-  {
-    id: "gameoflife",
-    intro: "Conways Spiel des Lebens als Konsolenprogramm: Zellen leben, sterben oder entstehen je nach Nachbarn. Ich wollte verstehen, wie man ein Gitter modelliert und aus einfachen Regeln ein Verhalten entstehen lässt.",
-    concepts: ["2D-Arrays", "Nachbar-Zählung", "Zykluserkennung"],
-    label: "Game of Life",
-    color: "var(--note-1)",
-    bullets: [
-      "Gitter- und Nachbar-Zähllogik von Grund auf gebaut",
-      "Schritt-für-Schritt-Simulation mit Zykluserkennung — stoppt von selbst, wenn sich ein Muster wiederholt",
-    ],
-    code: { file: "GameOfLife.java", text: excerpt(gameOfLifeSrc, 85, 116) },
-    run: "gameoflife",
-  },
   {
     id: "pokemon",
     intro: "Ein kleines Kampfsystem im Stil von Pokémon. Die Daten zu Pokémon, Attacken und Typ-Stärken werden aus Dateien eingelesen und der Schaden wird daraus berechnet. Hier habe ich Klassenhierarchien geübt.",
@@ -89,45 +71,6 @@ const NOTES: Note[] = [
     run: "mastermind",
   },
   {
-    id: "rpn",
-    intro: "Ein Rechner für die umgekehrte polnische Notation (Operanden zuerst, dann der Operator). Die Datenstruktur dahinter, Liste und Stack, habe ich selbst gebaut statt eine fertige zu nutzen.",
-    concepts: ["Verkettete Liste", "Stack", "Ausdrücke auswerten"],
-    label: "RPN-Rechner",
-    color: "var(--note-4)",
-    bullets: [
-      "Selbst implementierte einfach verkettete Liste",
-      "Stack darauf aufgebaut, zum Auswerten der Ausdrücke genutzt",
-    ],
-    code: { file: "MyStack.java", text: excerpt(myStackSrc, 1, 32) },
-    run: "rpn",
-  },
-  {
-    id: "personal",
-    intro: "Eine kleine Verwaltung für Standorte und die Personen darin. Der Fokus lag auf sauberem Klassendesign, Enums und dem Abfangen falscher Eingaben. Es hat kein main, deshalb gibt es kein Terminal.",
-    concepts: ["Enum", "Überladene Methoden", "Fehlerbehandlung"],
-    label: "Personalverwaltung",
-    color: "var(--note-5)",
-    bullets: [
-      "Verwaltungen (Standorte) anlegen und Personen mit Adresse, Geschlecht (Enum) und Geburtsdatum darin ablegen",
-      "Überladene create-Methoden je nach Datenumfang; ein falsches Datumsformat wird abgefangen",
-    ],
-    code: { file: "PersonenVerwaltung/PM.java", text: excerpt(pmSrc, 5, 27) },
-    run: "personal",
-  },
-  {
-    id: "bibliothek",
-    intro: "Eine Mini-Bibliothek in der Konsole: Autoren, ihre Bücher und Zitate, durchsuchbar über ein Menü. Hier ging es um die Wahl passender Collections.",
-    concepts: ["HashMap", "HashSet", "Konsolen-Menü"],
-    label: "Bibliothek",
-    color: "var(--note-6)",
-    bullets: [
-      "Autoren und ihre Bücher in einer HashMap mit HashSets, dazu Zitate pro Titel",
-      "Menü: Autoren auflisten, Bibliografie ansehen, Zitat zu einem Titel, Autor zu einem Titel finden, eigene Autoren ergänzen",
-    ],
-    code: { file: "Bibliothek.java", text: excerpt(bibliothekSrc, 10, 29) },
-    run: "bibliothek",
-  },
-  {
     id: "minesweeper",
     intro: "Minesweeper mit Twist: Du rätst, wo keine Mine liegt, und je nach Feldwert wird ein größerer Bereich aufgedeckt.",
     concepts: ["2D-Arrays", "Koordinaten-Eingabe", "Felder aufdecken"],
@@ -139,32 +82,6 @@ const NOTES: Note[] = [
     ],
     code: { file: "MinesweaperV2.java", text: excerpt(minesweeperSrc, 49, 80) },
     run: "minesweeper",
-  },
-  {
-    id: "zahlenraten",
-    intro: "Ein Zahlenraten-Duell zwischen Roboter und Mensch. Der Roboter rät nicht zufällig, sondern grenzt den Bereich mit jedem Hinweis systematisch ein.",
-    concepts: ["Bereichs-Suche", "Intervalle eingrenzen"],
-    label: "Zahlenraten",
-    color: "var(--note-8)",
-    bullets: [
-      "Roboter gegen Mensch: abwechselnd eine Zahl von 0 bis 100 raten",
-      "Der Roboter nimmt jeweils die Mitte der noch möglichen Zahlen und streicht anhand der Hinweise („Fast da“, „Relativ nah“ …) ganze Bereiche",
-    ],
-    code: { file: "ZahlenRatenV2.java", text: excerpt(zahlenratenSrc, 30, 54) },
-    run: "zahlenraten",
-  },
-  {
-    id: "chiffre",
-    intro: "Eine Vigenère-artige Verschlüsselung in Java: Text wird mit einem Passwort verschoben und danach zur Kontrolle direkt wieder entschlüsselt.",
-    concepts: ["Strings", "Modulo-Verschiebung", "Ver-/Entschlüsselung"],
-    label: "Chiffre",
-    color: "var(--note-9)",
-    bullets: [
-      "Polyalphabetische Verschlüsselung: jeder Buchstabe wird um den passenden Buchstaben des Passworts verschoben, das Passwort wiederholt sich",
-      "Eingabe wird bereinigt (Umlaute → AE/OE/UE, ß → SS, nur A–Z); das Ergebnis wird direkt wieder entschlüsselt",
-    ],
-    code: { file: "ChiffrePOLY.java", text: excerpt(chiffreSrc, 62, 80) },
-    run: "chiffre",
   },
 ].map(localizeNote); // texts in the visitor's language (grundlagen-i18n.ts)
 

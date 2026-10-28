@@ -18,6 +18,7 @@ import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
 import { initCarousel } from "./projects/carousel";
 import { initCatalog, renderCatalog } from "./projects/catalog";
+import { initArcade, renderArcade } from "./projects/arcade";
 import { hasBigCard, initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
@@ -201,7 +202,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
                   // the small ones get their own heading, like the desktop catalog
                   (card.group !== "big" && projectCards[i - 1]?.group === "big"
                     ? `<h3 class="catalog-sub"><span class="catalog-tag">${UI.catalogTag}</span></h3>`
-                    : "") + renderProjectTeaser(card, i, projectCards.length),
+                    : "") + (card.id === "grundlagen" ? renderArcade : renderProjectTeaser)(card, i, projectCards.length),
               )
               .join("")}
           </div>`
@@ -622,12 +623,14 @@ mountFaceVisuals(projectsSection);
 if (LITE) {
   initProjectSheet(projectsSection, projectCards, lenis);
   initProjectWheel(projectsSection);
+  initArcade(projectsSection);
 }
 else {
   initCarousel(projectsSection);
   initBigCards(projectsSection, projectCards);
   const catalogSection = document.querySelector<HTMLElement>("#catalog")!;
   initCatalog(catalogSection, lenis);
+  initArcade(catalogSection);
   initBigCards(catalogSection, projectCards);
   initFacetOverlay(catalogSection, projectCards, lenis);
   mountFaceVisuals(catalogSection);

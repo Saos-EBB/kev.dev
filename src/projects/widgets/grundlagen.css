@@ -472,3 +472,27 @@
     font-size: 1rem;
   }
 }
+
+/* Arcade look (arcade.ts opens this widget): square game buttons instead of
+   tilted sticky notes, a green phosphor terminal. */
+.gwidget-tab {
+  transform: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
+}
+
+.gwidget-tab[aria-selected="true"] {
+  transform: none;
+  box-shadow: none;
+}
+
+.gwidget-out {
+  background: #040805;
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 3px);
+  color: #a8ff57;
+  text-shadow: 0 0 0.4em rgba(168, 255, 87, 0.45);
+}
