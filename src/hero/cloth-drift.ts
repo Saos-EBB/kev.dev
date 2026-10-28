@@ -56,3 +56,39 @@ export function driftOffset(
     out.y += Math.sin(arg + w.phaseY) * AMPLITUDE;
   }
 }
+
+// The same field for a regular grid (rest x per column, rest y per row),
+// without per-node trig: sin(a + b) = sin a·cos b + cos a·sin b, with the
+// x part fixed per column and the y + time part computed once per row and
+// frame. driftOffset does 6 sines per node and frame; this does them per
+// row, which on the desktop mesh is about 100× fewer.
+export function makeGridDrift(xs: number[], ys: number[]) {
+  const W = waves.length, C = xs.length, R = ys.length;
+  const colSin = new Float32Array(W * C), colCos = new Float32Array(W * C);
+  waves.forEach((w, i) => xs.forEach((x, c) => {
+    colSin[i * C + c] = Math.sin(w.kx * x);
+    colCos[i * C + c] = Math.cos(w.kx * x);
+  }));
+  const rSX = new Float32Array(W * R), rCX = new Float32Array(W * R);
+  const rSY = new Float32Array(W * R), rCY = new Float32Array(W * R);
+  return {
+    // once per frame
+    update(seconds: number) {
+      waves.forEach((w, i) => ys.forEach((y, r) => {
+        const b = w.ky * y + w.speed * seconds, k = i * R + r;
+        rSX[k] = Math.sin(b + w.phaseX); rCX[k] = Math.cos(b + w.phaseX);
+        rSY[k] = Math.sin(b + w.phaseY); rCY[k] = Math.cos(b + w.phaseY);
+      }));
+    },
+    // offset of the node in column c, row r, written into out
+    at(c: number, r: number, out: { x: number; y: number }) {
+      out.x = 0;
+      out.y = 0;
+      for (let i = 0; i < W; i++) {
+        const s = colSin[i * C + c], co = colCos[i * C + c], k = i * R + r;
+        out.x += (s * rCX[k] + co * rSX[k]) * AMPLITUDE;
+        out.y += (s * rCY[k] + co * rSY[k]) * AMPLITUDE;
+      }
+    },
+  };
+}
