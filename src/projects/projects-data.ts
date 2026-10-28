@@ -53,7 +53,7 @@ const cards: ProjectCard[] = [
       "Moderation, die trägt: Melde-System, Sofort-Sperren/Entsperren, alles mit Notizen",
       "DSGVO-konform durchgezogen (Kopfweh ohne Ende)",
       "Bewusst nicht alles gebaut, was ginge: manche Mechaniken aus ethischen Gründen zurückgehalten",
-      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 500 req/s in allen Budgets, grob 2.500–3.300 gleichzeitige Nutzer. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Offen: eine Uhren-Race im Chat, die ab ~800 req/s den Zusammenbruch auslöst",
+      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 600 req/s in allen Budgets, grob 3.000–4.000 gleichzeitige Nutzer. Gemessen auf einem Laptop (8 Kerne, 32 GB), auf einem Server dürfte mehr gehen. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Die Uhren-Race im Chat ist behoben: Auch bei 800 req/s bricht nichts mehr zusammen. Nächstes Ziel: 1000 req/s",
       "Architektur, Datenmodell und Businesslogik von mir. Die APIs habe ich selbst gebaut, weil sie mich interessiert haben — den Rest der Umsetzung mit CC als Implementierungs-Agent.",
     ],
     // Desktop ER card: the core's layers (UI.vizLayers order, top to

@@ -26,24 +26,27 @@ export interface AboutContent {
 
 const de: AboutContent = {
   role: "Junior Software Developer",
-  facts: ["Raum Linz · remote im DACH-Raum", "sofort verfügbar", "TypeScript-Fullstack · Autodidakt"],
+  facts: ["Raum Linz · remote im DACH-Raum", "sofort verfügbar", "TypeScript-Fullstack · Bootcamp + viel Eigenregie"],
   story: [
-    `${hl("„Geht nicht“ akzeptiere ich nicht.")} Das zieht sich durch alles, was ich anfange. Wenn ich ein neues Spiel starte, nehme ich es zuerst auseinander: In WoW habe ich mich durch Addons gekämpft, die teils ziemlich komplex waren, WeakAuras zum Beispiel. In League of Legends habe ich Mechaniken, Rollen und Champions studiert und Jungle-Pfade, Builds und Tempo durchprobiert, bevor ich überhaupt „richtig“ gespielt habe.`,
-    `Genau so fühlt sich Programmieren für mich an: ${hl("wie ein neues Spiel, das ich die nächsten Jahre komplett erkunden will.")} Ich will vor keiner Sprache Respekt haben müssen, sondern die Logik und das große Ganze verstehen, und dann einfache, effiziente Lösungen finden oder neue Ansätze ausprobieren. Deshalb arbeite ich mich gerade mit einem Skript der Uni Graz in C++ ein. Das Ziel ist klar: Programmierer werden.`,
-    `Der Weg zu meinem größten Projekt führte über einen Passwort-Cracker, eine Tamagotchi-App und ein Unity-Spiel, das ich nach zwei Wochen verworfen habe. Dann kam ${hl("YourBrand")}. Am Anfang stand ein „Das schaffst du nicht“ — und ich hatte den Mund ziemlich voll genommen. Also wollte ich zeigen, dass ich das auch einlösen kann. Nach langer Arbeit steht jetzt ein voll funktionsfähiger Prototyp.`,
-    `Alles andere unter ${projectsLink("Projekte")} entsteht aus einem von zwei Gründen. Entweder brauche ich es selbst: TschoBBo, mein Bewerbungs-Bot, der Release Watcher, Userscripts. Oder ich will etwas lernen: der 3D-Renderer, diese Seite, die Java-Grundlagen. Überwiegend schreibe ich ${hl("TypeScript")}, weil ich damit den ganzen Stack in einer Sprache abdecke; die Grundlagen kommen aus Java.`,
+    `Bevor ich Software gebaut habe, habe ich mit den Händen gebaut: fast sieben Jahre als Bodenleger und Sonnenschutztechniker, danach zwei Jahre Sanierung unseres Wohnhauses. Da lernt man schnell: ${hl("Ein Boden ist nur so gut wie sein Untergrund.")} Wer dort schlampt, sieht es später an jeder Fuge. Beim Programmieren ist es genauso, nur geht hier der Werkstoff nie aus.`,
+    `Neue Dinge nehme ich zuerst auseinander. Bevor ich ein Spiel richtig spiele, kenne ich seine Mechaniken, egal ob WeakAuras in WoW oder Jungle-Routen in League of Legends. Mit Code mache ich dasselbe: Ich will keine Sprache als Blackbox benutzen, ich will sie verstehen.`,
+    `Mein größtes Projekt ist YourBrand. Davor kamen ein Passwort-Cracker, eine Tamagotchi-App und ein Unity-Spiel, das ich nach zwei Wochen verworfen habe. Am Anfang stand ein „Das schaffst du nicht“ — und ich hatte den Mund ziemlich voll genommen. Zwei Monate später habe ich im Bootcamp den ersten Prototyp vorgestellt, ehrlich gesagt mit zu viel Umfang für die Zeit. Seitdem baue ich weiter: Inzwischen stecken rund 700 bis 800 Stunden drin, die APIs habe ich mit Postman gebaut und getestet, und im Lasttest hält das Backend ${hl("stabil 600 Requests pro Sekunde")}. Und das auf meinem Laptop, einem Ryzen 7 mit 8 Kernen und 32 GB, auf dem Lastgenerator, Datenbank und alle Instanzen gleichzeitig laufen. Auf einem echten Server dürfte deutlich mehr drin sein; gemessen habe ich das noch nicht. Das Ziel sind 1000.`,
+    `Alles andere unter ${projectsLink("Projekte")} entsteht aus einem von zwei Gründen: Entweder brauche ich es selbst, oder ich will dabei etwas lernen. Überwiegend schreibe ich TypeScript, weil ich damit den ganzen Stack in einer Sprache abdecke.`,
   ],
   principles: [
     "„Geht nicht“ heißt meistens: noch nicht verstanden.",
     "Ist das Konzept durchdacht, ist die Implementierung der einfachere Teil.",
-    "Einfache Lösungen sind robuster und für andere leichter nachvollziehbar.",
+    "Wer nach mir kommt, soll meinen Code ohne mich verstehen.",
   ],
   work: [
-    `${hl("Ich denke mich gern in Abläufe hinein.")} Bei YourBrand hieß das: Was will ein User, was ein Admin, was ein Owner? Wie soll es sich anfühlen, wie wird es intuitiv, welche Layouts braucht es auf welchem Gerät? Wer bekommt welche Rechte, wie gehe ich mit Sichtbarkeit und Nutzerschutz um, wie sieht ein Ticket-System für Admins aus? Und darüber: Wie bringt man Spaß hinein, wie gewinnt und hält man Nutzer, wie verdient man Geld?`,
-    `Über tausend solcher Fragen musste ich mir stellen und beantworten, bevor das Produkt Form hatte. ${hl("Genau dieser Teil reizt mich am meisten.")}`,
-    `Ich plane, bevor ich baue, setze Ideen dann früh um und teste sie. Hakt es, war der Plan nicht genau genug — dann strukturiere ich neu und setze wieder an, ${hl("bis es funktioniert")}. Die Umsetzung läuft heute oft über ${hl("Claude Code")} als Implementierungs-Agent: Konzept und Architektur kommen von mir, CC schreibt den Code. Selbst zu coden lasse ich mir trotzdem nicht nehmen, das mache ich zu gern. Mit C++ lerne ich gerade, was mir Java und JS/TS bisher abgenommen haben: ${hl("Speicher selbst zu verwalten")}.`,
+    `Ich denke mich gern in Abläufe hinein. Bei YourBrand hieß das: Was will ein User, was ein Admin, was ein Owner? Wer bekommt welche Rechte, und wie schützt man Nutzer? Wie wird es auf jedem Gerät intuitiv? Und wie gewinnt und hält man Nutzer, wie verdient man Geld? Über tausend solcher Fragen standen am Anfang, bevor das Produkt Form hatte. ${hl("Genau dieser Teil reizt mich am meisten.")}`,
+    `Nicht jede Frage macht Spaß. Allein für die DSGVO habe ich drei Tage lang Videos geschaut, bis ich einen Plan hatte, und danach einen eigenen Agent darauf abgerichtet, das Thema im Auge zu behalten. Irgendwann hat er mich massiv genervt. Genau dafür war er da.`,
+    `Ich plane, bevor ich baue, setze Ideen dann früh um und teste sie. Hakt es, war der Plan nicht genau genug. Dann strukturiere ich neu und setze wieder an.`,
+    `Die Umsetzung läuft heute oft über Claude Code. Konzept, Architektur und Specs schreibe ich so, dass ein Agent sie umsetzen kann, ich prüfe, was zurückkommt, und weiß, wann ich selbst an die Tastatur muss. Selbst coden mache ich trotzdem gern und oft.`,
+    `Im Team bin ich anfangs eher zurückhaltend. Ich brauche etwas Zeit zum Auftauen und gehe selten als Erster auf Leute zu, bin aber komplett offen. Woher jemand kommt oder wie er aussieht, spielt für mich keine Rolle, zumindest versuche ich das. Ich hatte schon sehr unterschiedliche Chefs und bin mit allen klargekommen.`,
+    `Als Administrator bei der BBU habe ich dafür gesorgt, dass alles geplant und geregelt war, und war viel unterwegs: In einem Jahr war ich 88-mal am Flughafen Wien-Schwechat, um Klienten an internationale Organisationen zu übergeben. Und wenn der Zug eine Tür verliert, wir zwei Stunden zu spät kommen und deshalb jemand meinen Klienten anfährt, stelle ich mich vor ihn. Ich bin ein Arbeitstier; remote, im Büro oder auf Reisen zu Meetings, das kenne ich alles schon.`,
     `Kreativität gehört für mich dazu. Früher wollte ich Modedesigner werden und habe Graffiti gemalt; heute steckt das in UI und Interaktion. Die Graffiti-Überschriften auf dieser Seite und die vielen Elemente, die man anfassen kann, kommen nicht von ungefähr.`,
-    `Mein Arbeitsalltag ist ${hl("strukturiertes Chaos")}. Oft arbeite ich an einem Projekt und habe dabei eine Idee für ein anderes — dann wechsle ich dorthin. An Bugfix- und Clean-up-Tagen lasse ich mehrere Agents parallel an verschiedenen Projekten arbeiten; die Tasks sind meist klein, und beim Erledigen der ersten fallen immer noch ein paar neue an. An anderen Tagen sitze ich vor einer einzigen Datei und gehe Codeblöcke und Variablennamen durch, bis alles Sinn ergibt.`,
+    `Ich habe zwei Arten von Arbeitstagen. An Bugfix- und Clean-up-Tagen arbeite ich in die Breite: Mehrere Agents laufen parallel an verschiedenen Projekten, die Tasks sind klein, und beim Erledigen der ersten fallen immer ein paar neue an. An anderen Tagen arbeite ich in die Tiefe: Ich sitze vor einer einzigen Datei und gehe Codeblöcke und Variablennamen durch, ${hl("bis alles Sinn ergibt")}.`,
   ],
   end: `Ausgleich zum Coden und Lernen finde ich in der Natur und bei meiner Familie, allen voran bei ${hl("meinem Sohn")}.`,
   cv: [
@@ -74,33 +77,36 @@ const de: AboutContent = {
     },
     {
       heading: "Sprachen",
-      items: [`${hl("Deutsch")} — Muttersprache`, `${hl("Englisch")} — siehe Lebenslauf`],
+      items: [`${hl("Deutsch")} — Muttersprache`, `${hl("Englisch")} — C1`],
     },
   ],
 };
 
 const en: AboutContent = {
   role: "Junior Software Developer",
-  facts: ["Linz area · remote across DACH", "available now", "TypeScript full stack · self-taught"],
+  facts: ["Linz area · remote across DACH", "available now", "TypeScript full stack · bootcamp + lots of self-study"],
   story: [
-    `${hl("I don't accept \"can't be done\".")} That runs through everything I start. When I pick up a new game, I take it apart first: in WoW I fought my way through add-ons, some of them fairly complex, WeakAuras for example. In League of Legends I studied mechanics, roles and champions and tried out jungle paths, builds and tempo before I even played "for real".`,
-    `That's exactly how programming feels to me: ${hl("like a new game I want to explore fully over the next few years.")} I don't want to be intimidated by any language; I want to understand the logic and the bigger picture, then find simple, efficient solutions or try new approaches. That's why I'm currently working my way into C++ with a course script from the University of Graz. The goal is clear: to become a programmer.`,
-    `The road to my biggest project led through a password cracker, a Tamagotchi app and a Unity game I scrapped after two weeks. Then came ${hl("YourBrand")}. It started with a "you won't pull that off" — and I had talked pretty big. So I wanted to show I could back it up. After a long stretch of work, there's now a fully functional prototype.`,
-    `Everything else under ${projectsLink("Projects")} comes from one of two reasons. Either I need it myself: TschoBBo, my job-application bot, the Release Watcher, userscripts. Or I want to learn something: the 3D renderer, this site, the Java fundamentals. I mostly write ${hl("TypeScript")}, because it covers the whole stack in one language; the fundamentals come from Java.`,
+    `Before I built software, I built with my hands: almost seven years as a floor layer and sun-protection technician, then two years renovating our family house. You learn fast there: ${hl("a floor is only as good as what's underneath it.")} Cut corners and it shows in every joint later. Programming works the same way, except the material never runs out.`,
+    `I take new things apart first. Before I really play a game, I know its mechanics, whether that's WeakAuras in WoW or jungle routes in League of Legends. I do the same with code: I don't want to use any language as a black box, I want to understand it.`,
+    `My biggest project is YourBrand. Before it came a password cracker, a Tamagotchi app and a Unity game I scrapped after two weeks. It started with a "you won't pull that off" — and I had talked pretty big. Two months later I presented the first prototype at the bootcamp, honestly with too much scope for the time. I've kept building since: about 700 to 800 hours have gone into it, I built and tested the APIs with Postman, and under load testing the backend ${hl("holds a stable 600 requests per second")}. That's on my laptop, a Ryzen 7 with 8 cores and 32 GB, running the load generator, the database and every instance at once. A real server should manage considerably more; I haven't measured that yet. The goal is 1,000.`,
+    `Everything else under ${projectsLink("Projects")} comes from one of two reasons: either I need it myself, or I want to learn something from it. I mostly write TypeScript, because it covers the whole stack in one language.`,
   ],
   principles: [
     "\"Can't be done\" usually means: not understood yet.",
     "Once the concept is thought through, implementation is the easier part.",
-    "Simple solutions are more robust and easier for others to follow.",
+    "Whoever comes after me should understand my code without me.",
   ],
   work: [
-    `${hl("I like thinking my way into processes.")} With YourBrand that meant: what does a user want, what does an admin want, what does an owner want? How should it feel, how does it become intuitive, which layouts are needed on which device? Who gets which rights, how do I handle visibility and user protection, what does a ticket system for admins look like? And on top: how do you make it fun, how do you win and keep users, how do you make money?`,
-    `I had to ask and answer well over a thousand questions like these before the product took shape. ${hl("That's the part that appeals to me most.")}`,
-    `I plan before I build, then put ideas into practice early and test them. If something snags, the plan wasn't precise enough — so I restructure and go again, ${hl("until it works")}. These days the implementation often runs through ${hl("Claude Code")} as an implementation agent: concept and architecture come from me, CC writes the code. I'm not giving up coding myself, though — I enjoy it too much. With C++ I'm currently learning what Java and JS/TS have taken off my hands so far: ${hl("managing memory myself")}.`,
+    `I like thinking my way into processes. With YourBrand that meant: what does a user want, an admin, an owner? Who gets which rights, and how do you protect users? How does it become intuitive on every device? And how do you win and keep users, and make money? Well over a thousand questions like these came first, before the product took shape. ${hl("That's the part that appeals to me most.")}`,
+    `Not every question is fun. GDPR alone took me three days of videos before I had a plan, and afterwards I trained my own agent to keep an eye on it. At some point it got massively on my nerves. That was its job.`,
+    `I plan before I build, then put ideas into practice early and test them. If something snags, the plan wasn't precise enough, so I restructure and go again.`,
+    `These days implementation often runs through Claude Code. I write the concept, the architecture and the specs so an agent can carry them out, I check what comes back, and I know when to take the keyboard myself. I still enjoy writing code myself, and I do it often.`,
+    `In a team I'm fairly reserved at first. I need a little time to warm up and rarely go up to people first, but I'm completely open. Where someone comes from or what they look like doesn't matter to me, or at least I try not to let it. I've had very different bosses and got along with all of them.`,
+    `As an administrator at BBU I made sure everything was planned and organised, and I was on the road a lot: in one year I was at Vienna Airport 88 times to hand clients over to international organisations. And when the train loses a door, we arrive two hours late and someone snaps at my client because of it, I stand up for him. I'm a workhorse; remote, in the office or travelling to meetings, I've done it all.`,
     `Creativity is part of it for me. I used to want to be a fashion designer and painted graffiti; today that goes into UI and interaction. The graffiti headlines on this page and the many elements you can touch are no coincidence.`,
-    `My working days are ${hl("structured chaos")}. I'm often working on one project and get an idea for another — so I switch over to it. On bug-fix and clean-up days I have several agents working on different projects in parallel; the tasks are usually small, and finishing the first ones always turns up a few more. On other days I sit in front of a single file and go through code blocks and variable names until everything makes sense.`,
+    `I have two kinds of working days. On bug-fix and clean-up days I work wide: several agents run in parallel on different projects, the tasks are small, and finishing the first ones always turns up a few more. On other days I work deep: I sit in front of a single file and go through code blocks and variable names ${hl("until everything makes sense")}.`,
   ],
-  end: `My balance to coding and learning is nature and my family, above all ${hl("my son")}.`,
+  end: `Away from the keyboard, my balance is nature and my family, above all ${hl("my son")}.`,
   cv: [
     {
       heading: "Experience",
@@ -129,31 +135,34 @@ const en: AboutContent = {
     },
     {
       heading: "Languages",
-      items: [`${hl("German")} — native`, `${hl("English")} — see CV`],
+      items: [`${hl("German")} — native`, `${hl("English")} — C1`],
     },
   ],
 };
 
 const ru: AboutContent = {
   role: "Junior-разработчик ПО",
-  facts: ["Линц и окрестности · удалённо по DACH", "готов приступить сразу", "TypeScript full stack · самоучка"],
+  facts: ["Линц и окрестности · удалённо по DACH", "готов приступить сразу", "TypeScript full stack · буткемп + много самостоятельной работы"],
   story: [
-    `${hl("«Невозможно» я не принимаю.")} Это проходит через всё, за что я берусь. Начиная новую игру, я сначала разбираю её на части: в WoW я пробивался через аддоны, порой довольно сложные, например WeakAuras. В League of Legends я изучал механики, роли и чемпионов, перепробовал маршруты в лесу, сборки и темп, прежде чем вообще начал играть «по-настоящему».`,
-    `Именно так ощущается для меня программирование: ${hl("как новая игра, которую я хочу исследовать до конца в ближайшие годы.")} Я не хочу бояться ни одного языка — я хочу понимать логику и общую картину, а затем находить простые, эффективные решения или пробовать новые подходы. Поэтому сейчас я осваиваю C++ по учебному скрипту Грацского университета. Цель ясна: стать программистом.`,
-    `Путь к моему крупнейшему проекту лежал через взломщик паролей, приложение-тамагочи и игру на Unity, которую я забросил через две недели. Потом появился ${hl("YourBrand")}. Всё началось с «у тебя не получится» — а я наобещал немало. Хотелось доказать, что слова подкреплены делом. После долгой работы теперь есть полностью рабочий прототип.`,
-    `Всё остальное в разделе ${projectsLink("Проекты")} возникает по одной из двух причин. Либо это нужно мне самому: TschoBBo, мой бот для откликов, Release Watcher, юзерскрипты. Либо я хочу чему-то научиться: 3D-рендерер, этот сайт, основы Java. В основном я пишу на ${hl("TypeScript")}, потому что он покрывает весь стек одним языком; основы — из Java.`,
+    `Прежде чем строить софт, я строил руками: почти семь лет укладчиком полов и техником по солнцезащите, потом два года ремонта нашего семейного дома. Там быстро понимаешь: ${hl("пол хорош ровно настолько, насколько хорошо основание.")} Схалтуришь — потом это видно в каждом шве. В программировании так же, только материал здесь никогда не заканчивается.`,
+    `Новое я сначала разбираю на части. Прежде чем по-настоящему играть в игру, я знаю её механики, будь то WeakAuras в WoW или маршруты в лесу в League of Legends. С кодом то же самое: я не хочу пользоваться языком как чёрным ящиком, я хочу его понимать.`,
+    `Мой крупнейший проект — YourBrand. До него были взломщик паролей, приложение-тамагочи и игра на Unity, которую я забросил через две недели. Всё началось с «у тебя не получится» — а я наобещал немало. Через два месяца я представил первый прототип на буткемпе, честно говоря, со слишком большим объёмом для такого срока. С тех пор я продолжаю строить: сейчас в проекте около 700–800 часов, API я строил и тестировал в Postman, а под нагрузочным тестом бэкенд ${hl("стабильно держит 600 запросов в секунду")}. И это на моём ноутбуке — Ryzen 7 с 8 ядрами и 32 ГБ, — где одновременно работают генератор нагрузки, база данных и все инстансы. На настоящем сервере должно быть заметно больше; это я ещё не измерял. Цель — 1000.`,
+    `Всё остальное в разделе ${projectsLink("Проекты")} возникает по одной из двух причин: либо это нужно мне самому, либо я хочу на этом чему-то научиться. В основном я пишу на TypeScript, потому что он покрывает весь стек одним языком.`,
   ],
   principles: [
     "«Невозможно» чаще всего значит: ещё не понято.",
     "Если концепция продумана, реализация — более простая часть.",
-    "Простые решения надёжнее, и другим в них легче разобраться.",
+    "Тот, кто придёт после меня, должен понять мой код без меня.",
   ],
   work: [
-    `${hl("Мне нравится вникать в процессы.")} В YourBrand это значило: чего хочет пользователь, чего администратор, чего владелец? Каким это должно ощущаться, как сделать интуитивно, какие макеты нужны на каком устройстве? Кто получает какие права, как обращаться с видимостью и защитой пользователей, как выглядит тикет-система для администраторов? А поверх этого: как добавить веселья, как привлечь и удержать пользователей, как зарабатывать?`,
-    `Больше тысячи таких вопросов мне пришлось задать себе и ответить на них, прежде чем продукт обрёл форму. ${hl("Именно эта часть привлекает меня больше всего.")}`,
-    `Я планирую, прежде чем строить, затем рано воплощаю идеи и тестирую их. Если что-то не идёт, значит план был недостаточно точным — тогда я перестраиваю его и пробую снова, ${hl("пока не заработает")}. Реализация сегодня часто идёт через ${hl("Claude Code")} как агента: концепция и архитектура — мои, CC пишет код. Но от собственного кода я не отказываюсь — слишком уж люблю это дело. С C++ я сейчас учусь тому, что Java и JS/TS до сих пор делали за меня: ${hl("самому управлять памятью")}.`,
+    `Мне нравится вникать в процессы. В YourBrand это значило: чего хочет пользователь, администратор, владелец? Кто получает какие права и как защитить пользователей? Как сделать всё интуитивным на любом устройстве? И как привлечь и удержать пользователей, как зарабатывать? Больше тысячи таких вопросов стояли в начале, прежде чем продукт обрёл форму. ${hl("Именно эта часть привлекает меня больше всего.")}`,
+    `Не каждый вопрос в радость. Только на GDPR у меня ушло три дня видео, прежде чем появился план, а потом я натаскал собственного агента следить за этой темой. В какой-то момент он начал меня жутко раздражать. Для этого он и был нужен.`,
+    `Я планирую, прежде чем строить, затем рано воплощаю идеи и тестирую их. Если что-то не идёт, значит, план был недостаточно точным, — тогда я перестраиваю его и пробую снова.`,
+    `Реализация сегодня часто идёт через Claude Code. Концепцию, архитектуру и спецификации я пишу так, чтобы агент мог их выполнить, проверяю то, что возвращается, и знаю, когда пора сесть за клавиатуру самому. Писать код сам я всё равно люблю и делаю это часто.`,
+    `В команде я поначалу скорее сдержан. Мне нужно время, чтобы оттаять, и я редко первым подхожу к людям, но я полностью открыт. Откуда человек и как он выглядит, для меня не важно, по крайней мере я стараюсь, чтобы было так. У меня были самые разные начальники, и я ладил со всеми.`,
+    `Администратором в BBU я следил за тем, чтобы всё было спланировано и организовано, и много ездил: за один год я 88 раз был в венском аэропорту, чтобы передать клиентов международным организациям. А когда у поезда отваливается дверь, мы опаздываем на два часа и кто-то из-за этого срывается на моего клиента, я за него заступаюсь. Я трудоголик: удалённо, в офисе или в поездках на встречи — всё это мне знакомо.`,
     `Креативность для меня — часть работы. Раньше я хотел стать модельером и рисовал граффити; сегодня это уходит в UI и взаимодействие. Граффити-заголовки на этой странице и множество элементов, которые можно потрогать, — не случайность.`,
-    `Мои рабочие дни — это ${hl("структурированный хаос")}. Часто я работаю над одним проектом и у меня появляется идея для другого — тогда я переключаюсь на него. В дни багфиксов и уборки кода у меня параллельно работают несколько агентов над разными проектами; задачи обычно небольшие, и пока закрываешь первые, всегда появляется ещё несколько. В другие дни я сижу над одним файлом и перебираю блоки кода и имена переменных, пока всё не обретёт смысл.`,
+    `У меня два вида рабочих дней. В дни багфиксов и уборки кода я работаю вширь: несколько агентов параллельно работают над разными проектами, задачи небольшие, и пока закрываешь первые, всегда появляется ещё несколько. В другие дни я работаю вглубь: сижу над одним файлом и перебираю блоки кода и имена переменных, ${hl("пока всё не обретёт смысл")}.`,
   ],
   end: `Отдых от кода и учёбы для меня — природа и семья, и прежде всего ${hl("сын")}.`,
   cv: [
@@ -184,31 +193,34 @@ const ru: AboutContent = {
     },
     {
       heading: "Языки",
-      items: [`${hl("Немецкий")} — родной`, `${hl("Английский")} — см. резюме`],
+      items: [`${hl("Немецкий")} — родной`, `${hl("Английский")} — C1`],
     },
   ],
 };
 
 const ja: AboutContent = {
   role: "ジュニア・ソフトウェア開発者",
-  facts: ["リンツ周辺 · DACH圏でリモート可", "すぐに勤務可能", "TypeScriptフルスタック · 独学"],
+  facts: ["リンツ周辺 · DACH圏でリモート可", "すぐに勤務可能", "TypeScriptフルスタック · ブートキャンプ＋独学"],
   story: [
-    `${hl("「できない」は受け入れません。")}これは私が始めることすべてに通じています。新しいゲームを始めるときは、まず分解します。WoWでは、WeakAurasのようなかなり複雑なアドオンと格闘しました。League of Legendsでは、メカニクス、ロール、チャンピオンを研究し、ジャングルのルート、ビルド、テンポを試してから、ようやく「本気で」プレイし始めました。`,
-    `私にとってプログラミングはまさにそれです。${hl("これから何年もかけて隅々まで探索したい新しいゲームのようなもの。")}どの言語にも怖気づきたくありません。ロジックと全体像を理解し、シンプルで効率的な解決策や新しいアプローチを見つけたいのです。そのため今、グラーツ大学の講義資料でC++を学んでいます。目標ははっきりしています。プログラマーになることです。`,
-    `最大のプロジェクトにたどり着くまでに、パスワードクラッカー、たまごっち風アプリ、そして2週間で断念したUnityゲームを作りました。そして生まれたのが${hl("YourBrand")}です。始まりは「お前には無理だ」という一言。私はかなり大きなことを言っていたので、それを実現できると示したかったのです。長い作業の末、今は完全に動作するプロトタイプがあります。`,
-    `${projectsLink("プロジェクト")}にあるほかのものは、2つの理由のどちらかから生まれています。自分で必要だったもの：応募ボットのTschoBBo、Release Watcher、ユーザースクリプト。あるいは学びたかったもの：3Dレンダラー、このサイト、Javaの基礎。主に${hl("TypeScript")}を書いています。1つの言語でスタック全体をカバーできるからです。基礎はJavaから来ています。`,
+    `ソフトウェアを作る前は、手でものを作っていました。床職人と日よけ設備の技術者としてほぼ7年、その後2年間は家族の家の改修です。そこではすぐに学びます。${hl("床の良し悪しは下地で決まる。")}手を抜けば、あとで継ぎ目のすべてに現れます。プログラミングも同じです。ただ、こちらは材料が尽きることがありません。`,
+    `新しいものは、まず分解します。ゲームを本気でプレイする前に、そのメカニクスを把握します。WoWのWeakAurasでも、League of Legendsのジャングルルートでも。コードでも同じです。どの言語もブラックボックスとして使いたくはなく、理解したいのです。`,
+    `最大のプロジェクトはYourBrandです。その前に、パスワードクラッカー、たまごっち風アプリ、そして2週間で断念したUnityゲームがありました。始まりは「お前には無理だ」という一言。私はかなり大きなことを言っていました。2か月後、ブートキャンプで最初のプロトタイプを発表しました。正直、その期間にしては範囲を広げすぎていました。それ以来ずっと作り続けていて、今では約700〜800時間を費やしています。APIはPostmanで構築・テストし、負荷テストではバックエンドが${hl("毎秒600リクエストを安定して処理")}しています。しかもそれは、8コア・32 GBのRyzen 7搭載ノートPC上で、負荷ジェネレーター、データベース、全インスタンスを同時に動かした結果です。本物のサーバーならかなり多く処理できるはずですが、まだ測定はしていません。目標は1000です。`,
+    `${projectsLink("プロジェクト")}にあるほかのものは、2つの理由のどちらかから生まれています。自分で必要だったか、それを通して何かを学びたかったか。主にTypeScriptを書いています。1つの言語でスタック全体をカバーできるからです。`,
   ],
   principles: [
     "「できない」はたいてい、まだ理解していないという意味だ。",
     "コンセプトが練られていれば、実装は簡単な部分になる。",
-    "シンプルな解決策は壊れにくく、他の人にも理解しやすい。",
+    "私の後に来る人が、私なしでコードを理解できること。",
   ],
   work: [
-    `${hl("処理の流れを深く考えるのが好きです。")}YourBrandでは、ユーザーは何を求め、管理者は何を、オーナーは何を求めるのか。どう感じられるべきか、どうすれば直感的になるか、どのデバイスにどのレイアウトが必要か。誰にどの権限を与え、可視性とユーザー保護をどう扱うか、管理者向けのチケットシステムはどうあるべきか。さらにその上で、どう楽しさを加え、ユーザーを集めて定着させ、どう収益を上げるか。`,
-    `製品が形になるまでに、こうした問いを千以上も自分に投げかけ、答えを出す必要がありました。${hl("まさにこの部分に一番惹かれます。")}`,
-    `作る前に計画し、アイデアは早めに形にしてテストします。行き詰まったら計画の精度が足りなかったということなので、構成を見直してもう一度取り組みます。${hl("動くまで")}。現在、実装には${hl("Claude Code")}を実装エージェントとしてよく使います。コンセプトとアーキテクチャは私が考え、CCがコードを書きます。それでも自分でコードを書くことはやめません。好きすぎるからです。今C++で、これまでJavaやJS/TSが肩代わりしてくれていたこと、つまり${hl("メモリを自分で管理すること")}を学んでいます。`,
+    `処理の流れを深く考えるのが好きです。YourBrandでは、ユーザー、管理者、オーナーはそれぞれ何を求めるのか。誰にどの権限を与え、ユーザーをどう守るのか。どのデバイスでも直感的にするにはどうするか。そして、どうユーザーを集めて定着させ、どう収益を上げるか。製品が形になる前に、こうした問いが千以上ありました。${hl("まさにこの部分に一番惹かれます。")}`,
+    `すべての問いが楽しいわけではありません。GDPRだけでも、計画が立つまでに3日間動画を見続け、その後はこのテーマを見張る専用のエージェントを仕込みました。そのうち、そいつにはかなりうんざりさせられました。それがまさに役目でした。`,
+    `作る前に計画し、アイデアは早めに形にしてテストします。行き詰まったら計画の精度が足りなかったということなので、構成を見直してもう一度取り組みます。`,
+    `現在、実装にはClaude Codeをよく使います。コンセプト、アーキテクチャ、仕様はエージェントが実行できる形で私が書き、返ってきたものを確認し、自分でキーボードに向かうべきときを見極めます。それでも自分でコードを書くのは好きで、よく書いています。`,
+    `チームでは、最初はどちらかというと控えめです。打ち解けるまで少し時間がかかり、自分から人に話しかけることはあまりありませんが、心はまったく開いています。出身や見た目は私には関係ありません。少なくとも、そうあろうと努めています。これまでさまざまな上司のもとで働いてきましたが、誰ともうまくやってきました。`,
+    `BBUで管理担当をしていたときは、すべてがきちんと計画・調整されているよう気を配り、外に出ることも多くありました。1年間でウィーン空港に88回通い、クライアントを国際機関に引き渡しました。列車のドアが外れて2時間遅れ、そのせいで誰かが私のクライアントに怒鳴ったときは、私が彼の前に立ちます。私は働き者です。リモートでも、オフィスでも、会議のための出張でも、すべて経験済みです。`,
     `創造性も私にとって欠かせません。以前はファッションデザイナーを目指し、グラフィティを描いていました。今はそれがUIとインタラクションに生きています。このページの見出しがグラフィティ文字で、触れられる要素が多いのは偶然ではありません。`,
-    `私の仕事ぶりは${hl("構造化されたカオス")}です。あるプロジェクトに取り組んでいると別のプロジェクトのアイデアが浮かび、そちらに移ることがよくあります。バグ修正やクリーンアップの日には、複数のエージェントに並行して別々のプロジェクトを進めてもらいます。タスクはたいてい小さく、最初のいくつかを片づけるうちに必ず新しいものが出てきます。別の日には1つのファイルに向き合い、すべてが筋の通ったものになるまでコードブロックや変数名を見直します。`,
+    `私の仕事の日は2種類あります。バグ修正やクリーンアップの日は広く進めます。複数のエージェントが並行して別々のプロジェクトを進め、タスクは小さく、最初のいくつかを片づけるうちに必ず新しいものが出てきます。別の日は深く進めます。1つのファイルに向き合い、コードブロックや変数名を見直します。${hl("すべてが筋の通ったものになるまで")}。`,
   ],
   end: `コードと学習の合間の息抜きは、自然と家族、何より${hl("息子")}です。`,
   cv: [
@@ -217,7 +229,7 @@ const ja: AboutContent = {
       items: [
         `${hl("ジュニア開発者")} — フルスタック・ブートキャンプ · Talent Hub – IT Ibis Acam、リンツ · 2025年10月 – 2026年6月`,
         `${hl("住宅の改修")}（家族のプロジェクト） · リンツ＝エーベルスベルク · 2023年6月 – 2025年10月`,
-        `${hl("システム管理者")} · BBU GmbH、リンツ · 2022年1月 – 2023年6月`,
+        `${hl("管理担当")} · BBU GmbH、リンツ · 2022年1月 – 2023年6月`,
         `${hl("社会奉仕（兵役代替）")} · BBU GmbH、リンツ · 2021年3月 – 2021年12月`,
         `${hl("海外滞在")} · 主にヨーロッパ · 2019年9月 – 2021年2月`,
         `${hl("日よけ設備の技術者")} · SUNSTAR、レオンディング · 2017年7月 – 2019年4月`,
@@ -239,7 +251,7 @@ const ja: AboutContent = {
     },
     {
       heading: "言語",
-      items: [`${hl("ドイツ語")} — 母語`, `${hl("英語")} — 履歴書を参照`],
+      items: [`${hl("ドイツ語")} — 母語`, `${hl("英語")} — C1`],
     },
   ],
 };
