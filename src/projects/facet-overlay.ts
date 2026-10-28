@@ -23,6 +23,7 @@
 
 import { UI } from "../i18n/ui";
 import "./facet-overlay.css";
+import { engHref, hasEngineering } from "../engineering";
 import type Lenis from "lenis";
 import { displayText, type ProjectCard, type ProjectWidget, type FacetKind } from "./project-cards";
 
@@ -50,14 +51,15 @@ const LABELS: Record<FacetKind, string> = {
   self: UI.facetSelf,
 };
 
-// The highlight graph is its own page, so its tile is a plain link — no
-// data-facet, the overlay never sees it.
+// The graph tile is a plain link, no data-facet, so the facet overlay
+// never sees it: to the engineering overlay (#eng/…) where a project has
+// flows, otherwise to its old graph page.
 const GRAPH_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2.5" /><circle cx="18" cy="8" r="2.5" /><circle cx="9" cy="18" r="2.5" /><path d="M8.3 7.1l7.4 0.6M7 8.3l1.4 7.3M16.6 10l-6 6.3" /></svg>`;
 
 export function renderFacetTiles(card: ProjectCard): string {
   if (!card.facets?.length && !card.graph) return "";
   const graph = card.graph
-    ? `<a class="facet-tile" href="/graph/${esc(card.graph)}.html">${GRAPH_ICON}<span>${esc(UI.facetGraph)}</span></a>`
+    ? `<a class="facet-tile" href="${esc(hasEngineering(card.graph) ? engHref(card.graph) : `/graph/${card.graph}.html`)}">${GRAPH_ICON}<span>${esc(UI.facetGraph)}</span></a>`
     : "";
   return `
     <div class="facet-tiles" role="group" aria-label="${esc(UI.moreAbout(card.title))}">

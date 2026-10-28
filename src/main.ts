@@ -16,6 +16,7 @@ import { renderAboutBlocks, renderAboutFooter, initCvLinks } from "./about/about
 import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
+import { initEngineering } from "./engineering";
 import { initCarousel } from "./projects/carousel";
 import { initCatalog, renderCatalog } from "./projects/catalog";
 import { initArcade, renderArcade } from "./projects/arcade";
@@ -673,6 +674,7 @@ initThemeToggle();
 initLangSwitch();
 initCvLinks();
 initLegalOverlay(lenis);
+initEngineering(lenis);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Start gate: lenis.start() runs exactly once, only after BOTH:
