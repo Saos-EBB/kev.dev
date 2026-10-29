@@ -697,6 +697,70 @@ function maybeStart() {
   // Give ScrollTrigger one frame to complete layout measurements before
   // Lenis starts processing scroll events (prevents stutter from stale pins).
   requestAnimationFrame(() => lenis.start());
+  startThrowLayer();
+}
+
+// Thrown objects (src/lab/throws.ts, from the Motion Lab): a fixed layer
+// over the whole viewport, so a throw is always in view wherever the page
+// is scrolled. Above the header (150), below sheets/overlays (180+).
+// Loaded only once the page is running. Sound unlocks on the visitor's
+// first click/tap/key — browsers allow audio only after a gesture — and
+// the fixed mute button (bottom right, always reachable, unlike the header
+// which hides mid-page) turns it off; the choice is remembered.
+const THROWS_MUTED_KEY = "saos-throws-muted";
+
+function startThrowLayer() {
+  let muted = false;
+  try {
+    muted = localStorage.getItem(THROWS_MUTED_KEY) === "1";
+  } catch {
+    // storage blocked: just start unmuted
+  }
+  const sound = import("./lab/sound");
+  import("./lab/throws").then(({ startThrows }) => {
+    const layer = document.createElement("div");
+    layer.className = "ml-scene";
+    layer.setAttribute("aria-hidden", "true");
+    layer.style.setProperty("--throws-z", "160");
+    document.body.appendChild(layer);
+    // The button's styles come with this chunk (throws.css).
+    document.body.appendChild(btn);
+    startThrows(layer, 3);
+  });
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "throws-mute";
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M11 5 6 9H2v6h4l5 4V5z" />
+      <path class="throws-mute-on" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+      <path class="throws-mute-off" d="m23 9-6 6M17 9l6 6" />
+    </svg>`;
+  const render = () => {
+    btn.setAttribute("aria-pressed", String(muted));
+    btn.setAttribute("aria-label", muted ? UI.throwsUnmute : UI.throwsMute);
+    btn.title = btn.getAttribute("aria-label")!;
+    sound.then((s) => s.setMuted(muted));
+  };
+  btn.addEventListener("click", () => {
+    muted = !muted;
+    try {
+      localStorage.setItem(THROWS_MUTED_KEY, muted ? "1" : "0");
+    } catch {
+      // not remembered, still applied for this visit
+    }
+    render();
+  });
+  render();
+
+  const unlock = () => {
+    sound.then((s) => s.unlock().then(render));
+    window.removeEventListener("pointerdown", unlock);
+    window.removeEventListener("keydown", unlock);
+  };
+  window.addEventListener("pointerdown", unlock);
+  window.addEventListener("keydown", unlock);
 }
 
 // Gate A — window.load
