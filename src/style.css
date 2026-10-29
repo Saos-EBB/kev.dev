@@ -1193,8 +1193,7 @@ button:focus-visible {
   }
 }
 
-/* Visible only while the skull scene isn't there (still loading, or no
-   WebGL) — then it's the plain fallback: heading + a row of links. */
+/* Screen-reader heading — hidden visually by the rule further down. */
 .contact-headline {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 8vw, 5rem);
@@ -1236,15 +1235,16 @@ button:focus-visible {
   height: 24px;
 }
 
-/* Scene is up: the links become shards — skull-scene.ts sets each one's
-   left/top/transform and shows it once its saw blade has hit. The
-   heading stays for screen readers only. */
-.contact.has-skull .contact-inner {
+/* The links are shards of the skull — skull-scene.ts sets each one's
+   left/top/transform and shows it once its saw blade has hit. Until the
+   scene is up they're hidden; only if it fails (.no-skull, no WebGL) do
+   they show as a plain row. The heading is for screen readers only. */
+.contact:not(.no-skull) .contact-inner {
   position: absolute;
   inset: 0;
 }
 
-.contact.has-skull .contact-headline {
+.contact .contact-headline {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1253,7 +1253,7 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.contact.has-skull .contact-icons a {
+.contact:not(.no-skull) .contact-icons a {
   position: absolute;
   left: 50%;
   top: 50%;

@@ -7,10 +7,11 @@
 // (skull-scene.ts). The first hit stops the thrown objects (throws.ts);
 // scrolling back out resets it all and lets them fly again.
 //
-// The 3D scene (three.js + the 1.4 MB skull model) loads only when the
-// section gets close. Until then — or if WebGL fails — the links sit in a
-// plain row (style.css), and under reduced motion there's no pin: the
-// scene just shows its end state.
+// The 3D scene (three.js + the 1.4 MB skull model) loads once the section
+// is within three screens. No "Let's talk" text any more: the heading is
+// screen-reader-only and the links only show as shards (or, if WebGL
+// fails, as a plain row). Under reduced motion there's no pin: the scene
+// just shows its end state.
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -69,14 +70,13 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
       )
       .then((s) => {
         scene = s;
-        section.classList.add("has-skull"); // links leave the row, scene places them
-        if (reducedMotion) s.finish();
+                if (reducedMotion) s.finish();
         else s.setRise(rise.value);
       })
       .catch(() => {
-        // no WebGL / load failed: the plain row of links stays
+        section.classList.add("no-skull"); // no WebGL / load failed: plain row of links
       });
-  }, { rootMargin: "150% 0px" });
+  }, { rootMargin: "300% 0px" });
   io.observe(section);
 
   if (reducedMotion) return;
