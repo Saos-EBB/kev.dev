@@ -147,15 +147,46 @@ export function crack() {
   noiseHit(out, { t: 0.05, f: 300, vol: 0.4, len: 0.2 });
 }
 
-// a door slams somewhere far behind you
-export function slam(at: Vec3) {
-  const p = new PannerNode(ctx, { panningModel: "HRTF", distanceModel: "inverse", refDistance: 2, rolloffFactor: 0.6 });
+// a short-lived panner at a fixed spot, for one sound
+function oneShot(at: Vec3, refDistance = 1, rolloffFactor = 1, ms = 1500) {
+  const p = new PannerNode(ctx, { panningModel: "HRTF", distanceModel: "inverse", refDistance, rolloffFactor });
   setPos(p, at);
   p.connect(out);
+  setTimeout(() => p.disconnect(), ms);
+  return p;
+}
+
+// a door slams somewhere far behind you
+export function slam(at: Vec3) {
+  const p = oneShot(at, 2, 0.6);
   tone(p, { f: 90, f2: 35, vol: 0.9, len: 0.6 });
   noiseHit(p, { f: 500, vol: 0.9, len: 0.5, att: 0.002 });
   noiseHit(p, { t: 0.08, f: 3000, type: "bandpass", q: 4, vol: 0.15, len: 0.35 });
-  setTimeout(() => p.disconnect(), 1500);
+}
+
+// a water drop hits a puddle
+export function drip(at: Vec3) {
+  const p = oneShot(at, 0.8, 1.3);
+  tone(p, { f: 1500 + Math.random() * 300, f2: 520, vol: 0.22, len: 0.11, att: 0.002 });
+  noiseHit(p, { f: 3200, type: "bandpass", q: 6, vol: 0.06, len: 0.07 });
+}
+
+// tiny claws on concrete, and one squeak
+export function scurry(at: Vec3) {
+  const p = oneShot(at, 1, 1.2, 2000);
+  for (let k = 0; k < 10; k++) noiseHit(p, { t: k * 0.045, f: 2500 + Math.random() * 1500, type: "bandpass", q: 3, vol: 0.14, len: 0.04, att: 0.002 });
+  tone(p, { t: 0.15, f: 3400, f2: 2700, type: "triangle", vol: 0.03, len: 0.14 });
+}
+
+// the quiet scare: a low swell with a thin high tone over it, no hit
+export function lowSting() {
+  tone(out, { f: 55, f2: 47, vol: 0.35, len: 2.4, att: 0.5 });
+  for (const f of [1975, 2093]) tone(out, { f, vol: 0.022, len: 2, att: 0.4 });
+}
+
+// the turn: air rushing past your ears
+export function whoosh() {
+  noiseHit(out, { f: 900, type: "bandpass", q: 0.7, vol: 0.5, len: 0.3, att: 0.12 });
 }
 
 export function door() {

@@ -13,11 +13,12 @@ import "@fontsource/caveat-brush/400.css";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as sfx from "./horror-audio";
+import { createLife } from "./horror-life";
 
 
 const MARKUP = `
   <canvas id="gl"></canvas>
-  <p class="hud" id="count">Erinnerungen <b id="got">0</b> / <b id="tot">6</b></p>
+  <div class="hud" id="count"><p>Erinnerungen <b id="got">0</b> / <b id="tot">6</b></p><p id="goal">Folge den Kreidepfeilen am Boden</p></div>
   <p class="hud" id="fps" hidden></p>
   <div class="hud" id="dot"></div>
   <div class="hud" id="card"><small id="card-tag"></small><span id="card-text"></span></div>
@@ -272,26 +273,71 @@ function mount() {
   const writeGeo = new THREE.PlaneGeometry(2.2, 1.1);
   type Writing = { mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshStandardMaterial>; lines: string; color: string };
   const writings: Writing[] = [];
-  function writeOn(cx: number, cz: number, [wx, wz]: Cell, lines: string, color: string, y = 1.6) {
+  // glow: the chalk faintly lights itself, so notes read in the dark and through the fog
+  function writeOn(cx: number, cz: number, [wx, wz]: Cell, lines: string, color: string, y = 1.6, glow = 0.35) {
     usedWalls.add(`${cx},${cz},${wx},${wz}`);
-    const mesh = new THREE.Mesh(writeGeo, new THREE.MeshStandardMaterial({ map: chalk(lines, color), alphaTest: 0.3, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 }));
+    const map = chalk(lines, color);
+    const mesh = new THREE.Mesh(writeGeo, new THREE.MeshStandardMaterial({
+      map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: glow, alphaTest: 0.3, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2,
+    }));
     mesh.position.set(cx * C + wx * (C / 2 - 0.01), y, cz * C + wz * (C / 2 - 0.01));
     mesh.rotation.y = Math.atan2(-wx, -wz);
     mesh.receiveShadow = true;
     mesh.matrixAutoUpdate = false; mesh.updateMatrix();
     scene.add(mesh);
-    writings.push({ mesh, lines, color });
+    const wr = { mesh, lines, color };
+    writings.push(wr);
+    return wr;
   }
   const notes = noteCells.map(([x, z], i) => {
     const [ox, oz] = openDirs(x, z)[0]; // write on the wall facing the way in
-    writeOn(x, z, [-ox, -oz], NOTES[i].wall, "#efe6d6");
-    return { x, z, i, got: false };
+    const wr = writeOn(x, z, [-ox, -oz], NOTES[i].wall, "#efe6d6");
+    return { x, z, i, got: false, mat: wr.mesh.material };
   });
-  writeOn(exitCell[0], exitCell[1], [1, 0], FINAL.wall, "#e8473c"); // behind the steel door
+  writeOn(exitCell[0], exitCell[1], [1, 0], FINAL.wall, "#e8473c", 1.6, 0.6); // behind the steel door
   $("tot").textContent = String(notes.length);
+
+  /* ---------- chalk arrows on the floor: at every junction, the way to the nearest note left (then to the exit) ---------- */
+  const junctions = reachable.filter(([x, z]) => openDirs(x, z).length >= 3);
+  const arrowCv = document.createElement("canvas");
+  arrowCv.width = arrowCv.height = 256;
+  {
+    const g = arrowCv.getContext("2d")!;
+    g.strokeStyle = g.fillStyle = "#f2e9d8"; g.lineWidth = 22; g.lineCap = "round";
+    g.beginPath(); g.moveTo(128, 220); g.lineTo(128, 70); g.stroke();
+    g.beginPath(); g.moveTo(128, 28); g.lineTo(196, 110); g.lineTo(60, 110); g.closePath(); g.fill();
+    g.globalCompositeOperation = "destination-out";
+    for (let i = 0; i < 1800; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.8})`; g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 1 + Math.random() * 2); }
+  }
+  const arrowTex = new THREE.CanvasTexture(arrowCv);
+  arrowTex.colorSpace = THREE.SRGBColorSpace;
+  const arrowMat = new THREE.MeshStandardMaterial({ map: arrowTex, emissiveMap: arrowTex, emissive: 0xffffff, emissiveIntensity: 0.3, alphaTest: 0.3, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 });
+  const arrows = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.9, 0.9), arrowMat, junctions.length);
+  arrows.receiveShadow = true;
+  scene.add(arrows);
+  const arrowRot = new THREE.Euler(0, 0, 0, "YXZ"), arrowQ = new THREE.Quaternion(), arrowP = new THREE.Vector3(), ONE = new THREE.Vector3(1, 1, 1), ZERO = new THREE.Vector3();
+  function updateArrows() {
+    // distance field from every target cell, then each junction points downhill
+    const targets: Cell[] = notes.some((n) => !n.got) ? notes.filter((n) => !n.got).map((n) => [n.x, n.z]) : [exitCell];
+    const d = new Map<string, number>(targets.map((c) => [key(c), 0]));
+    const q = [...targets];
+    for (let i = 0; i < q.length; i++) {
+      const [x, z] = q[i];
+      for (const [dx, dz] of DIRS) { const n: Cell = [x + dx, z + dz]; if (cell(...n) !== "#" && !d.has(key(n))) { d.set(key(n), d.get(key([x, z]))! + 1); q.push(n); } }
+    }
+    junctions.forEach(([x, z], i) => {
+      const best = openDirs(x, z).reduce((a, b) => (d.get(key([x + b[0], z + b[1]]))! < d.get(key([x + a[0], z + a[1]]))! ? b : a));
+      arrowRot.set(-Math.PI / 2, Math.atan2(-best[0], -best[1]), 0);
+      arrowQ.setFromEuler(arrowRot);
+      arrowP.set(x * C + best[0] * 0.3, 0.01, z * C + best[1] * 0.3);
+      arrows.setMatrixAt(i, m4.compose(arrowP, arrowQ, d.get(key([x, z])) === 0 ? ZERO : ONE));
+    });
+    arrows.instanceMatrix.needsUpdate = true;
+  }
+  updateArrows();
   // the chalk font arrives async: redraw everything once it's there
   document.fonts.load('80px "Caveat Brush"').then(() => {
-    for (const w of writings) { w.mesh.material.map?.dispose(); w.mesh.material.map = chalk(w.lines, w.color); w.mesh.material.needsUpdate = true; }
+    for (const w of writings) { const m = w.mesh.material; m.map?.dispose(); m.map = m.emissiveMap = chalk(w.lines, w.color); m.needsUpdate = true; }
   }).catch(() => {});
 
   /* ============================ MODELS ============================ */
@@ -332,11 +378,12 @@ function mount() {
   // heads pushing out of corridor walls; they turn to follow you
   type WallHead = { obj: THREE.Object3D; base: THREE.Vector3; out: THREE.Vector3; gone: number; q: THREE.Quaternion };
   const wallHeads: WallHead[] = [];
+  // straight corridor cells away from the start: wall heads, bulbs and drips go here
+  const straight = reachable.filter(([x, z]) => {
+    const o = openDirs(x, z);
+    return o.length === 2 && o[0][0] === -o[1][0] && o[0][1] === -o[1][1] && dist.get(key([x, z]))! > 4 && MAP[z][x] === ".";
+  });
   function placeWallHeads(proto: THREE.Object3D) {
-    const straight = reachable.filter(([x, z]) => {
-      const o = openDirs(x, z);
-      return o.length === 2 && o[0][0] === -o[1][0] && o[0][1] === -o[1][1] && dist.get(key([x, z]))! > 4 && MAP[z][x] === ".";
-    });
     [0.2, 0.45, 0.7, 0.92].forEach((f, i) => {
       const [x, z] = straight[Math.floor(f * (straight.length - 1))];
       const [ox, oz] = openDirs(x, z)[0];
@@ -392,7 +439,7 @@ function mount() {
   const vig = $("vig"), fpsEl = $("fps");
   fpsEl.hidden = !SHOW_FPS;
   let cardTimer = 0;
-  function card(tag: string, text: string, ms = 7000) {
+  function card(tag: string, text: string, ms = 10000) {
     $("card-tag").textContent = tag; $("card-text").textContent = text; $("card").classList.add("on");
     clearTimeout(cardTimer);
     cardTimer = window.setTimeout(() => $("card").classList.remove("on"), ms);
@@ -414,6 +461,30 @@ function mount() {
     morph("mouthStretch_L", 0.8); morph("mouthStretch_R", 0.8); morph("noseSneer_L", 0.6); morph("noseSneer_R", 0.6);
   }
 
+  // caught: you get spun around and it is right in your face
+  const G = { t: -1, from: 0, hit: false };
+  function grab() {
+    if (G.t >= 0) return;
+    G.t = 0; G.from = yaw; G.hit = false;
+    AP.t = -1; S.reveal = 0; it.visible = false;
+    dread = 20; S.lookCD = now + 3; // the forced turn must not count as "you looked back"
+    sfx.whoosh();
+  }
+
+  // the quiet scare: it just stands there, far ahead, until you look straight at it
+  const AP = { t: -1, seen: 0, p: new THREE.Vector3() };
+  function apparition() {
+    // ahead if there's room, else to the side, else behind you (you'll find it when you turn)
+    for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
+      const fx = -Math.sin(yaw + turn), fz = -Math.cos(yaw + turn);
+      for (let d = 7; d >= 3.5; d -= 0.5) {
+        AP.p.set(pos.x + fx * d, 0, pos.z + fz * d);
+        const room = [[0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45], [0, 0]].every(([ox, oz]) => !solidAt(AP.p.x + ox, AP.p.z + oz));
+        if (room && clearLine(pos, AP.p)) { AP.t = 0; AP.seen = 0; sfx.lowSting(); return; }
+      }
+    }
+  }
+
   // the maze changes where you've already been: red writing on a wall ~10-15 m back along your path
   function writeBehind() {
     for (let back = 35; back < 60 && back < crumbs.length; back += 3) {
@@ -429,12 +500,15 @@ function mount() {
   // the story: each note found moves it one step further
   function collect(n: (typeof notes)[number]) {
     n.got = true; got++;
+    n.mat.emissiveIntensity = 0.08; // found: the chalk stops glowing
     $("got").textContent = String(got);
+    updateArrows();
+    if (got === notes.length) $("goal").textContent = "Zum Ausgang – den Pfeilen nach";
     card(NOTES[n.i].tag, NOTES[n.i].text);
     if (got >= 2) setTimeout(writeBehind, 4000);
     if (got === 1) setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 3500);
     if (got === 2) { S.active = true; setTimeout(() => sfx.whisper(sfx.ear, 2.4), 1500); }
-    if (got === 3) { blackout(1.8, jumpscare); setTimeout(sfx.breath, 300); }
+    if (got === 3) { blackout(1.4, apparition); setTimeout(sfx.breath, 300); }
     if (got === 4) { setTimeout(() => { whisperText("Es ist direkt hinter dir."); sfx.whisper(sfx.ear, 1.6); }, 2500); S.back = -2; }
     if (got === 5) { blackout(0.9); setTimeout(() => sfx.step(sfx.ear, 0.5), 200); setTimeout(() => sfx.step(sfx.ear, 0.5), 650); }
     if (got === notes.length) {
@@ -450,8 +524,8 @@ function mount() {
   function finish() {
     ended = true;
     card(FINAL.tag, FINAL.text, 9000);
-    jumpscare();
-    setTimeout(() => blackout(99), 900);
+    grab();
+    setTimeout(() => blackout(99), 1250);
     setTimeout(() => {
       running = false;
       document.exitPointerLock?.();
@@ -459,7 +533,7 @@ function mount() {
       list.replaceChildren(...[...NOTES, FINAL].map((n) => Object.assign(document.createElement("li"), { textContent: n.text })));
       $("end").hidden = false;
       $("again").focus();
-    }, 1400);
+    }, 1700);
   }
 
   /* ============================ INPUT ============================ */
@@ -526,6 +600,11 @@ function mount() {
     if (ok(pos.x, pos.z + dz)) pos.z += dz;
   }
 
+  const updateLife = createLife({
+    scene, camera, C, WH, corridors: straight, openDirs, solidAt, clearLine,
+    pixelRatio: () => renderer.getPixelRatio(),
+  });
+
   // step resolution down fast when frames drop, up slowly; stop adjusting after a few flip-flops
   function adapt(raw: number) {
     Q.acc += raw; Q.n++;
@@ -547,8 +626,42 @@ function mount() {
     now += dt;
     const sprint = !!(keys.ShiftLeft || keys.ShiftRight);
 
-    // --- move
-    const mx = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx, mz = (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
+    // --- grabbed: 0.28 s spin to face it, then it's in your face until the lights go
+    if (G.t >= 0) {
+      G.t += dt;
+      const k = Math.min(1, G.t / 0.28), e = 1 - (1 - k) ** 3;
+      yaw = G.from + Math.PI * e;
+      pitch *= 0.8;
+      if (k >= 1 && !G.hit) {
+        G.hit = true;
+        const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+        it.position.set(pos.x + fx * 0.55, 0, pos.z + fz * 0.55);
+        it.lookAt(tmp.set(pos.x, 0, pos.z));
+        it.visible = true;
+        itHead.visible = false; // the screaming face below *is* its head
+        jumpscare();
+      }
+      if (G.t > 1.2) { G.t = -1; it.visible = false; itHead.visible = true; S.hidden = true; S.back = 4; }
+    }
+
+    // --- apparition: gone once you've looked right at it for a moment, or after a few seconds
+    if (AP.t >= 0) {
+      AP.t += dt;
+      it.position.copy(AP.p);
+      it.lookAt(tmp.set(pos.x, 0, pos.z));
+      itHead.rotation.z = 0.35; // head tilted, the only thing that's off
+      it.visible = flick > 0.3;
+      tmp.set(AP.p.x - pos.x, 0, AP.p.z - pos.z).normalize();
+      if (-Math.sin(yaw) * tmp.x - Math.cos(yaw) * tmp.z > 0.97) AP.seen += dt; // looking straight at it
+      if (AP.seen > 0.4 || AP.t > 4) { AP.t = -1; it.visible = false; itHead.rotation.z = 0; S.flickUntil = now + 0.3; nextFlick = now + 3; }
+    }
+
+    // --- notes you haven't found yet breathe a little
+    for (const n of notes) if (!n.got) n.mat.emissiveIntensity = 0.3 + 0.12 * Math.sin(now * 2.2 + n.i);
+
+    // --- move (not while it has you)
+    const mx = G.t >= 0 ? 0 : (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx;
+    const mz = G.t >= 0 ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
     const len = Math.hypot(mx, mz), moving = len > 0.1;
     if (moving) {
       const sp = ((sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
@@ -579,7 +692,7 @@ function mount() {
     if (S.active) dread += dt * (2.6 + (moving ? 1.4 : 0) + (moving && sprint ? 2.5 : 0)) * (emergency ? 1.6 : 1);
     vig.style.opacity = S.active ? Math.min(1, dread / 110).toFixed(2) : "0";
     S.back = Math.max(0, S.back - dt * 0.4);
-    if (dread >= 100 && scareT < 0) { dread = 20; S.back = 4; jumpscare(); }
+    if (dread >= 100 && G.t < 0 && scareT < 0) grab(); // it caught you
     if (S.active && dread > 55 && now > S.nextHeart) { S.nextHeart = now + 1.15 - dread * 0.006; sfx.heart(dread / 100); }
     if (S.active && dread > 70 && now > S.nextBreath && !S.hidden) { S.nextBreath = now + 3.5; sfx.breath(); }
     if (S.active && dread > 82 && now > S.nextWhisper) { S.nextWhisper = now + 6; whisperText("Dreh dich um."); sfx.whisper(sfx.ear, 1.4); }
@@ -657,7 +770,8 @@ function mount() {
     camera.updateMatrixWorld();
     lamp.intensity = 22 * flick * (scareT >= 0 ? 1.6 : 1);
     hemi.intensity = (emergency ? 0.7 : 0.6) * (0.25 + 0.75 * flick);
-    if (S.active && running && !paused) updateStalker(dt);
+    if (S.active && running && !paused && G.t < 0 && AP.t < 0) updateStalker(dt);
+    updateLife(dt, flick, dread, running && !paused);
     if (sfx.ready()) {
       camera.getWorldDirection(fwd);
       sfx.setListener(camera.position, fwd);
