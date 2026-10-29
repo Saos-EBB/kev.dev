@@ -1,6 +1,8 @@
 // First: sets <html lang/dir> from the stored language before anything renders.
 import { LANG_AI } from "./i18n";
 import { UI } from "./i18n/ui";
+import { startThrows } from "./lab/throws";
+import { setMuted, unlock } from "./lab/sound";
 import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
 import "@fontsource-variable/jetbrains-mono";
@@ -703,10 +705,13 @@ function maybeStart() {
 // Thrown objects (src/lab/throws.ts, from the Motion Lab): a fixed layer
 // over the whole viewport, so a throw is always in view wherever the page
 // is scrolled. Above the header (150), below sheets/overlays (180+).
-// Loaded only once the page is running. Sound unlocks on the visitor's
-// first click/tap/key — browsers allow audio only after a gesture — and
-// the fixed mute button (bottom right, always reachable, unlike the header
-// which hides mid-page) turns it off; the choice is remembered.
+// Imported statically on purpose: loading it with import() made the
+// bundler pull a namespace helper out of the yourbrand entry chunk, which
+// booted that React app on this page (React error #299) and the import
+// failed. Sound unlocks on the visitor's first click/tap/key — browsers
+// allow audio only after a gesture — and the fixed mute button (bottom
+// right, always reachable, unlike the header which hides mid-page) turns
+// it off; the choice is remembered.
 const THROWS_MUTED_KEY = "saos-throws-muted";
 
 function startThrowLayer() {
@@ -716,17 +721,6 @@ function startThrowLayer() {
   } catch {
     // storage blocked: just start unmuted
   }
-  const sound = import("./lab/sound");
-  import("./lab/throws").then(({ startThrows }) => {
-    const layer = document.createElement("div");
-    layer.className = "ml-scene";
-    layer.setAttribute("aria-hidden", "true");
-    layer.style.setProperty("--throws-z", "160");
-    document.body.appendChild(layer);
-    // The button's styles come with this chunk (throws.css).
-    document.body.appendChild(btn);
-    startThrows(layer, 3);
-  });
 
   const btn = document.createElement("button");
   btn.type = "button";
@@ -741,7 +735,7 @@ function startThrowLayer() {
     btn.setAttribute("aria-pressed", String(muted));
     btn.setAttribute("aria-label", muted ? UI.throwsUnmute : UI.throwsMute);
     btn.title = btn.getAttribute("aria-label")!;
-    sound.then((s) => s.setMuted(muted));
+    setMuted(muted);
   };
   btn.addEventListener("click", () => {
     muted = !muted;
@@ -754,13 +748,20 @@ function startThrowLayer() {
   });
   render();
 
-  const unlock = () => {
-    sound.then((s) => s.unlock().then(render));
-    window.removeEventListener("pointerdown", unlock);
-    window.removeEventListener("keydown", unlock);
+  const layer = document.createElement("div");
+  layer.className = "ml-scene";
+  layer.setAttribute("aria-hidden", "true");
+  layer.style.setProperty("--throws-z", "160");
+  document.body.append(layer, btn);
+  startThrows(layer, 3);
+
+  const onFirstGesture = () => {
+    unlock().then(render);
+    window.removeEventListener("pointerdown", onFirstGesture);
+    window.removeEventListener("keydown", onFirstGesture);
   };
-  window.addEventListener("pointerdown", unlock);
-  window.addEventListener("keydown", unlock);
+  window.addEventListener("pointerdown", onFirstGesture);
+  window.addEventListener("keydown", onFirstGesture);
 }
 
 // Gate A — window.load
