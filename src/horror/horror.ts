@@ -55,6 +55,11 @@ const MARKUP = `
       </div>
       <p class="warn">Kopfhörer empfohlen · Jumpscares · flackerndes Licht</p>
       <button class="btn" id="go" type="button" disabled>lädt …</button>
+      <p class="muted dev">Dev, Startpunkt:
+        <label><input type="radio" name="from" value="start" checked> Anfang</label>
+        <label><input type="radio" name="from" value="stairs"> Treppe</label>
+        <label><input type="radio" name="from" value="boss"> Endkampf</label>
+      </p>
       <p class="muted">Am Handy: rechts wischen zum Umsehen, Kreis links unten zum Gehen.</p>
     </div>
   </div>
@@ -649,7 +654,7 @@ function mount() {
     W.killed = 0;
     if (next === "normals") { W.total = 10; W.spawned = 0; spawnIn(halls.h, "normal", 4); $("goal").textContent = "Zehn. Kopf ist einfacher."; }
     if (next === "bigs") { W.total = 4; W.spawned = 0; spawnIn(halls.H, "big", 2); $("goal").textContent = "Die sind größer."; }
-    if (next === "boss") { W.total = 1; W.spawned = 0; spawnIn(halls.B, "boss", 1); $("goal").textContent = ""; $("bossbar").hidden = false; }
+    if (next === "boss") { W.total = 1; W.spawned = 0; spawnIn(halls.B, "boss", 1); $("count").hidden = true; $("bossbar").hidden = false; }
   }
   // keep a few on the floor at a time until the wave is through
   function feedWave() {
@@ -771,8 +776,34 @@ function mount() {
     sfx.init();
     $("start").hidden = true; running = true;
     if (isTouch) pad.classList.add("on"); else lock();
-    setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
+    const from = (document.querySelector<HTMLInputElement>('input[name="from"]:checked')?.value ?? "start");
+    if (from === "start") setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
+    else jumpTo(from as "stairs" | "boss");
   });
+
+  // dev shortcut: skip ahead. Doors you'd have opened stand open, items you'd have found are found.
+  function jumpTo(where: "stairs" | "boss") {
+    const openNow = (id: string) => { open.add(id); const s = slab(id); s.mesh.visible = false; s.t = 1; };
+    for (const it of items) if (!it.got) { it.got = true; got++; scene.remove(it.obj); }
+    $("got").textContent = String(got);
+    openNow("D");
+    S.active = false; dread = 0;
+    if (where === "stairs") {
+      phase = "stairs";
+      pos.set(stairs[0][0] * C - C, 0, stairs[0][1] * C); // just above the top step
+      $("goal").textContent = "Runter.";
+    } else {
+      openNow("1"); openNow("2");
+      phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
+      combat.grant("shotgun"); combat.grant("bat");
+      onPickup("shotgun");
+      const [gx, gz] = cellsOf("G")[2];
+      pos.set((gx - 1) * C, 0, gz * C);
+      $("goal").textContent = "Der Große wartet.";
+    }
+    yaw = -Math.PI / 2; pitch = 0; // facing east, down the level
+    crumbs.length = 0; crumbs.push(pos.clone());
+  }
   $("resume").addEventListener("click", () => { paused = false; $("pause").hidden = true; lock(); });
   $("again").addEventListener("click", () => location.reload());
 
@@ -787,8 +818,9 @@ function mount() {
   }
   function tryMove(dx: number, dz: number) {
     const ok = (x: number, z: number) => !solidAt(x - PR, z - PR) && !solidAt(x + PR, z - PR) && !solidAt(x - PR, z + PR) && !solidAt(x + PR, z + PR);
-    if (ok(pos.x + dx, pos.z)) pos.x += dx;
-    if (ok(pos.x, pos.z + dz)) pos.z += dz;
+    const free = !ok(pos.x, pos.z); // already overlapping something (a slab came down on you): let you walk out
+    if (free || ok(pos.x + dx, pos.z)) pos.x += dx;
+    if (free || ok(pos.x, pos.z + dz)) pos.z += dz;
   }
 
   // figures that only move while you don't look (from the 2nd note on)
@@ -935,9 +967,12 @@ function mount() {
       S.active = false; it.visible = false; dread = 0; // the horror part is over; now they come at you
       crumbs.length = 0; crumbs.push(pos.clone());
     }
-    if (phase === "stairs" && here === "h" && combat.weapon) enterHall("normals", findCell("G"));
-    if (phase === "normals" && here === "H") enterHall("bigs", cellsOf("G")[1]);
-    if (phase === "bigs" && here === "B") enterHall("boss", cellsOf("G")[2]);
+    // a gate only drops once you're two cells past it (dropping it while you still
+    // stand half in its cell would trap you inside the wall)
+    const gates = cellsOf("G"), past = (g: Cell) => (dist.get(key([Math.round(pos.x / C), Math.round(pos.z / C)])) ?? 0) >= dist.get(key(g))! + 2;
+    if (phase === "stairs" && here === "h" && combat.weapon && past(gates[0])) enterHall("normals", gates[0]);
+    if (phase === "normals" && here === "H" && past(gates[1])) enterHall("bigs", gates[1]);
+    if (phase === "bigs" && here === "B" && past(gates[2])) enterHall("boss", gates[2]);
     if ((phase === "normals" || phase === "bigs") && W.total) {
       feedWave();
       if (W.killed >= W.total) { waveDone(); W.total = 0; }

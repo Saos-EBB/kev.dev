@@ -112,3 +112,8 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 #bossbar small { font: 400 22px/1 var(--display); color: var(--blood); letter-spacing: .04em; text-shadow: 0 2px 10px #000; }
 #bossbar i { display: block; height: 10px; background: #00000099; border: 1px solid var(--blood); }
 #bossbar b { display: block; height: 100%; width: 100%; background: var(--blood); transition: width .15s; }
+
+/* dev: start point picker on the start screen */
+.dev { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.dev label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; color: var(--bone); }
+.dev input { accent-color: var(--sodium); }
