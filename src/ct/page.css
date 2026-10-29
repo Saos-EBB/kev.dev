@@ -1,0 +1,850 @@
+/* CT-Schädel page (page.ts), after the CT-Desktop / CT-Mobile mockup. */
+
+@font-face {
+  font-family: "Urban Sign";
+  src: url("/fonts/urban-sign.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --bg: #05060a;
+  --text: #e9edf2;
+  --muted: #7d8794;
+  --hot: #ffe08a;
+  --red: #e0202e;
+  --violet: #b48cff;
+  --blue: #5fa8ff;
+  --rule: #ffffff1f;
+  --color-text: var(--text); /* the contact scene's cracks */
+  --color-bg: var(--bg); /* thrown objects' fill */
+  --color-line: var(--violet); /* the mute button */
+  --color-throw: #89ff57; /* thrown objects' outline */
+  --transition-hover: 0.2s ease;
+  --font-display: "Urban Sign", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  --pad: 48px;
+  --col: min(700px, 52vw);
+  color-scheme: dark;
+}
+
+html {
+  background: var(--bg);
+}
+
+.ct-body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 700px at 78% 6%, #1a1440 0%, transparent 70%) no-repeat,
+    var(--bg);
+  color: var(--text);
+  font: 16px/1.5 var(--font-mono);
+  overflow-x: hidden;
+}
+
+.ct-body a {
+  color: inherit;
+}
+
+.ct-body :focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 3px;
+}
+
+.ct-skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 10;
+  padding: 10px 14px;
+  background: var(--hot);
+  color: var(--bg) !important;
+}
+
+.ct-skip:focus {
+  top: 12px;
+}
+
+/* ── fixed layers ─────────────────────────────────────────────────── */
+
+/* The skull sits behind the text (dots under letters read fine), the
+   pointers above it. Neither takes clicks. */
+.ct-skull {
+  position: fixed;
+  z-index: 0;
+  top: 40px;
+  right: max(30px, calc((100vw - 1440px) / 2 + 30px));
+  width: min(46vw, 680px);
+  aspect-ratio: 1.3;
+  pointer-events: none;
+  transform-origin: 100% 0;
+  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+.ct-skull:not(.is-ready) {
+  visibility: hidden;
+}
+
+.ct-skull canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Atlas: the skull comes forward a little (mockup: 760 px wide there). */
+.ct-skull.is-atlas {
+  transform: translateY(80px) scale(1.12);
+}
+
+.ct-pointers {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.ct-progress {
+  position: fixed;
+  z-index: 2;
+  right: 22px;
+  top: 25vh;
+  width: 2px;
+  height: 50vh;
+  background: #ffffff14;
+}
+
+.ct-progress > div {
+  height: 100%;
+  background: linear-gradient(var(--violet), var(--blue));
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+main,
+.ct-header,
+.ct-footer {
+  position: relative;
+  z-index: 1;
+  max-width: 1440px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ── header ───────────────────────────────────────────────────────── */
+
+.ct-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 72px;
+  padding: 0 var(--pad);
+  z-index: 3;
+}
+
+.ct-brand {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ct-brand span {
+  color: var(--violet);
+}
+
+.ct-nav {
+  display: flex;
+  gap: 30px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.ct-nav a {
+  text-decoration: none;
+  padding: 10px 0;
+}
+
+.ct-nav a:hover {
+  color: var(--violet);
+}
+
+.ct-nav .is-hot {
+  color: var(--hot);
+}
+
+.ct-menu {
+  display: none;
+}
+
+/* ── type ─────────────────────────────────────────────────────────── */
+
+.ct-display {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 0.85;
+  background: linear-gradient(100deg, var(--violet), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 20px #8a7dff55);
+}
+
+.ct-h1 {
+  font-size: clamp(84px, 10.4vw, 150px);
+  line-height: 0.84;
+}
+
+.ct-h2 {
+  font-size: clamp(72px, 7.6vw, 110px);
+}
+
+.ct-title {
+  margin-top: 18px;
+  font-size: clamp(76px, 9vw, 130px);
+}
+
+.ct-eyebrow {
+  margin: 0;
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--violet);
+}
+
+.ct-eyebrow--hot {
+  color: var(--hot);
+}
+
+.ct-sub {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ct-muted {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.ct-lead {
+  margin: 18px 0 0;
+  max-width: 40ch;
+  font-size: 19px;
+  line-height: 1.6;
+}
+
+/* ── buttons ──────────────────────────────────────────────────────── */
+
+.ct-button {
+  display: inline-block;
+  padding: 16px 24px;
+  font-weight: 800;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background var(--transition-hover), color var(--transition-hover);
+}
+
+.ct-button--red {
+  background: var(--red);
+  color: #fff !important;
+}
+
+.ct-button--red:hover {
+  background: #ff3a44;
+}
+
+.ct-button--ghost {
+  border: 1px solid var(--violet);
+  color: var(--violet) !important;
+}
+
+.ct-button--ghost:hover {
+  background: var(--violet);
+  color: var(--bg) !important;
+}
+
+.ct-button--hot {
+  margin-top: 22px;
+  padding: 14px 22px;
+  font-size: 15px;
+  border: 1px solid var(--hot);
+  color: var(--hot) !important;
+}
+
+.ct-button--hot:hover {
+  background: var(--hot);
+  color: var(--bg) !important;
+}
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+
+.ct-hero {
+  min-height: 608px;
+  padding: 150px var(--pad) 60px;
+  box-sizing: border-box;
+  width: calc(640px + var(--pad));
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ct-hero-lead {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.ct-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ct-note {
+  margin: 0;
+  max-width: 60ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ── findings ─────────────────────────────────────────────────────── */
+
+.ct-intro {
+  padding: 120px var(--pad) 20px;
+}
+
+.ct-finding {
+  position: relative;
+  min-height: 647px;
+  padding: 0 var(--pad) 110px;
+}
+
+.ct-finding article {
+  width: var(--col);
+  padding-top: 70px;
+}
+
+/* "Hinter dir": a dark red glow behind the skull. */
+.ct-finding--horror::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  top: -100px;
+  width: 900px;
+  height: 900px;
+  max-width: 100vw;
+  background: radial-gradient(closest-side, #2a0a12, transparent);
+  pointer-events: none;
+}
+
+.ct-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 28px 0 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ct-stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 18px 0;
+}
+
+.ct-stats dd {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ct-stats dd.is-red {
+  color: var(--red);
+}
+
+.ct-stats dt {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ct-points {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 16px;
+}
+
+.ct-points li {
+  padding: 10px 0;
+  border-bottom: 1px solid #ffffff12;
+}
+
+.ct-points li::before {
+  content: "→ ";
+  color: var(--blue);
+}
+
+/* ── atlas ────────────────────────────────────────────────────────── */
+
+.ct-atlas {
+  min-height: 828px;
+  margin-top: 40px;
+  padding: 0 var(--pad);
+}
+
+.ct-atlas-list {
+  width: 424px;
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-atlas-list li {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid #ffffff14;
+  cursor: default;
+  outline-offset: 2px;
+}
+
+.ct-atlas-list li:hover .ct-atlas-name,
+.ct-atlas-list li:focus-visible .ct-atlas-name {
+  color: var(--c);
+}
+
+.ct-atlas-no {
+  display: none;
+}
+
+.ct-atlas-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--c);
+}
+
+.ct-atlas-name {
+  font-weight: 800;
+  font-size: 24px;
+  transition: color var(--transition-hover);
+}
+
+.ct-atlas-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── anamnesis ────────────────────────────────────────────────────── */
+
+.ct-anamnesis {
+  display: grid;
+  grid-template-columns: minmax(240px, 420px) 1fr;
+  gap: 48px;
+  margin-top: 140px;
+  padding: 0 var(--pad);
+}
+
+.ct-history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-history li {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 24px;
+  padding: 22px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.ct-history li > span:first-child {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: var(--blue);
+}
+
+.ct-history b {
+  display: block;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.ct-history b + span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.ct-quote {
+  margin: 28px 0 0;
+  padding: 18px 22px;
+  border-left: 3px solid var(--red);
+  font-size: 20px;
+  line-height: 1.5;
+}
+
+/* ── contact ──────────────────────────────────────────────────────── */
+
+.ct-contact {
+  position: relative;
+  margin-top: 140px;
+  min-height: 752px;
+  padding: 0 var(--pad) 80px;
+}
+
+.ct-contact-text {
+  position: relative;
+  width: min(620px, 50vw);
+  padding-top: 120px;
+}
+
+.ct-contact .ct-eyebrow {
+  font-size: 12px;
+  display: block;
+  line-height: 1.6;
+}
+
+.ct-mail {
+  display: inline-block;
+  margin-top: 28px;
+  font-size: 28px;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.ct-mail:hover {
+  color: var(--hot);
+}
+
+.ct-stage {
+  position: absolute;
+  right: var(--pad);
+  top: 0;
+  width: min(640px, 46vw);
+  aspect-ratio: 1;
+}
+
+.ct-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The links are shards: saw-scene.ts places each one and shows it once
+   its blade has hit. Without the scene (no WebGL): a plain row. */
+.ct-stage a {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  visibility: hidden;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid #ff2a3d;
+  box-shadow: 0 0 26px #ff2a3d88;
+  color: #ff2a3d !important;
+  will-change: transform;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.ct-stage a:hover,
+.ct-stage a:focus-visible {
+  color: var(--hot) !important;
+  border-color: var(--hot);
+}
+
+.ct-stage.no-skull {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.ct-stage.no-skull a {
+  position: static;
+  visibility: visible;
+}
+
+/* ── footer ───────────────────────────────────────────────────────── */
+
+.ct-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px var(--pad) 28px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.ct-footer span:last-child {
+  display: flex;
+  gap: 24px;
+}
+
+/* ── phones ───────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  :root {
+    --pad: 16px;
+    --col: 100%;
+  }
+
+  .ct-progress {
+    display: none;
+  }
+
+  /* Starts big over the hero, shrinks into the corner (page.ts). */
+  .ct-skull {
+    top: 58px;
+    right: 4px;
+    width: 46vw;
+    transition: none;
+    transform-origin: 50% 0;
+  }
+
+  .ct-header {
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(6px);
+  }
+
+  .ct-menu {
+    display: block;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--violet);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+  }
+
+  .ct-nav {
+    display: none;
+    position: absolute;
+    top: 56px;
+    right: 16px;
+    flex-direction: column;
+    gap: 0;
+    padding: 8px 18px;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+  }
+
+  .is-menu .ct-nav {
+    display: flex;
+  }
+
+  .ct-hero {
+    width: auto;
+    min-height: 0;
+    padding-top: calc(66vw + 24px);
+    gap: 16px;
+  }
+
+  .ct-h1 {
+    font-size: 64px;
+  }
+
+  .ct-h2 {
+    font-size: 54px;
+  }
+
+  .ct-title {
+    font-size: 50px;
+  }
+
+  .ct-hero-lead,
+  .ct-lead {
+    font-size: 15px;
+  }
+
+  .ct-button--red {
+    display: block;
+    text-align: center;
+  }
+
+  .ct-actions .ct-button--ghost {
+    display: none;
+  }
+
+  .ct-note {
+    font-size: 11px;
+  }
+
+  .ct-intro {
+    padding-top: 48px;
+  }
+
+  .ct-finding {
+    min-height: 0;
+    padding-bottom: 56px;
+  }
+
+  /* Room for the skull in the corner next to the section head. */
+  .ct-finding article {
+    padding-top: 40px;
+  }
+
+  .ct-finding .ct-eyebrow,
+  .ct-finding .ct-sub {
+    max-width: 50%;
+    font-size: 11px;
+  }
+
+  .ct-finding .ct-title {
+    margin-top: 72px;
+  }
+
+  .ct-stats dd {
+    font-size: 26px;
+  }
+
+  .ct-stats dt {
+    font-size: 9px;
+  }
+
+  .ct-points {
+    font-size: 13px;
+  }
+
+  .ct-atlas {
+    min-height: 0;
+    margin-top: 0;
+  }
+
+  .ct-atlas .ct-h2 {
+    margin-bottom: calc(46vw);
+  }
+
+  .ct-atlas-list {
+    width: auto;
+  }
+
+  .ct-atlas-list li {
+    grid-template-columns: 30px 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .ct-atlas-no {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--c);
+    color: var(--c);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .ct-atlas-label {
+    display: none;
+  }
+
+  .ct-atlas-name {
+    font-size: 17px;
+  }
+
+  .ct-atlas-sub {
+    font-size: 11px;
+  }
+
+  .ct-anamnesis {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 72px;
+  }
+
+  .ct-history li {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .ct-history b {
+    font-size: 22px;
+  }
+
+  .ct-quote {
+    font-size: 16px;
+  }
+
+  /* Heading, then the skull with its shards, then the address. */
+  .ct-contact {
+    margin-top: 72px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ct-contact-text {
+    display: contents;
+  }
+
+  .ct-contact .ct-title {
+    order: 1;
+  }
+
+  .ct-contact .ct-stage {
+    order: 2;
+  }
+
+  .ct-contact .ct-mail {
+    order: 3;
+  }
+
+  .ct-stage {
+    position: relative;
+    right: auto;
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .ct-stage a {
+    width: 64px;
+    height: 64px;
+  }
+
+  .ct-mail {
+    font-size: 16px;
+  }
+
+  .ct-footer {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-skull {
+    transition: none;
+  }
+}
+
+/* Thrown objects (src/lab/throws.ts): green outlines, as before. */
+.ct-body .ml-slice {
+  stroke: var(--color-throw);
+}

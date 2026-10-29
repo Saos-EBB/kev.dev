@@ -5,7 +5,7 @@
 // ("#skull infos /ct-skull-prototype.html").
 import * as THREE from "three";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
-import { loadSkullGeometry } from "../skull-site/parts";
+import { loadSkullGeometry } from "./parts";
 import { createBrain, type Part } from "./brain";
 import { dotMaterial, skullDots } from "./dots";
 
@@ -29,7 +29,8 @@ export interface CtScene {
   requestRender(): void;
 }
 
-export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: boolean } = {}): Promise<CtScene> {
+// distance: camera distance (6.2 as in the mockup renders; closer = bigger).
+export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: boolean; distance?: number } = {}): Promise<CtScene> {
   const phone = !!opts.phone;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setClearColor(0, 0);
@@ -47,7 +48,7 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: b
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
-  camera.position.set(0, 0.1, 6.2);
+  camera.position.set(0, 0.1, opts.distance ?? 6.2);
   camera.lookAt(0, 0, 0);
 
   const plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0.95);

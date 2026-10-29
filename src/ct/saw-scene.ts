@@ -1,15 +1,15 @@
-// Skull variant's contact 3D scene (loaded lazily by contact-skull.ts): the craniumCut01
-// skull rises from the bottom as you scroll in (setRise), and once it's up,
+// The CT page's contact finale (loaded lazily by page.ts): the craniumCut01
+// skull rises from the bottom (setRise), and once it's up,
 // three saw blades hit it one after another. Each hit throws bone shards
 // that slow down and hang in the air — and one shard of each hit is a real
-// link (GitHub, mail, phone: the section's .contact-icons <a>s, positioned
-// here over the 3D scene every frame).
+// link (GitHub, mail, phone: the <a>s handed in, positioned here over the
+// 3D scene every frame, relative to `box`).
 //
 // Everything after the rise is a closed-form function of the time since the
 // sequence started (no stepping), so reduced motion just jumps to the end.
 import * as THREE from "three";
 import { BLADE_R, bladeGeometry, loadSkullGeometry } from "./parts";
-import { dotMaterial, skullDots, surfaceDots } from "../ct/dots";
+import { dotMaterial, skullDots, surfaceDots } from "./dots";
 
 const BLADE_FLIGHT = 0.45; // s from off-screen to stuck
 const HIT_AT = [0.5, 1.9, 3.3]; // s after the skull is up
@@ -37,7 +37,7 @@ const css = (name: string) => getComputedStyle(document.documentElement).getProp
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
 const settle = (u: number) => (u <= 0 ? 0 : (1 - Math.exp(-FREEZE * u)) / FREEZE); // distance factor, freezes at 1/FREEZE
 
-export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], hooks: Hooks): Promise<SkullScene> {
+export async function createSkullScene(box: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], hooks: Hooks): Promise<SkullScene> {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
@@ -49,7 +49,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const textColor = new THREE.Color();
   const readColors = () => textColor.set(css("--color-text") || "#f5f5f6");
   readColors();
-  const small = section.clientWidth < 900;
+  const small = matchMedia("(max-width: 900px)").matches;
 
   // ── skull ──
   const geo = await loadSkullGeometry();
@@ -146,7 +146,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   // ── layout ──
   let w = 1, h = 1;
   const resize = () => {
-    w = section.clientWidth; h = section.clientHeight;
+    w = box.clientWidth; h = box.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // narrow screens: step back so skull + blades fit the width
@@ -156,7 +156,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     camera.updateProjectionMatrix();
     dirty = true;
   };
-  new ResizeObserver(resize).observe(section);
+  new ResizeObserver(resize).observe(box);
 
   // ── state ──
   let rise = 0;
@@ -244,12 +244,12 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     }
   }
 
-  // Render only while the section is on screen.
+  // Render only while the box is on screen.
   let visible = false;
   new IntersectionObserver(([e]) => {
     visible = e.isIntersecting;
     if (visible) { last = performance.now(); requestAnimationFrame(frame); }
-  }).observe(section);
+  }).observe(box);
 
   const END = HIT_AT[HIT_AT.length - 1] + 4;
   function frame(now: number) {

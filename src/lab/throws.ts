@@ -15,8 +15,8 @@ import { gsap } from "gsap";
 import { THROWABLES, renderThrowable } from "./throwables";
 import { pass, whoosh } from "./sound";
 
-// The contact section (src/skull-site/contact-skull.ts) stops the throws while its saw blades fly: no new launches, and
-// whatever is in the air fades out.
+// The CT page's contact (src/ct/page.ts) stops the throws while its saw
+// blades fly: no new launches, and whatever is in the air fades out.
 let paused = false;
 let clearFlying: () => void = () => {};
 export function pauseThrows(p: boolean) {

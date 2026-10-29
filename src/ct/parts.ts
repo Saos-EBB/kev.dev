@@ -1,4 +1,4 @@
-// 3D parts for the skull variant (skull-scene.ts, src/ct/): the
+// 3D parts for the CT skull (ct-scene.ts, saw-scene.ts): the
 // craniumCut01 skull from the 2D renderer's models, turned to face the
 // camera, and an extruded saw blade.
 import * as THREE from "three";
