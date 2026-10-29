@@ -16,6 +16,32 @@ html.skull-site .ml-slice {
   stroke: var(--color-throw);
 }
 
+/* contact-skull.ts: the section becomes a scroll track (.contact--track,
+   only with motion) 120vh taller than the screen-high sticky stage that
+   holds the grid, the canvas and the links — sticky instead of a
+   ScrollTrigger pin, which lagged behind touch scrolling on phones. vh, not
+   svh, so the track doesn't change length as a phone's address bar hides. */
+html.skull-site .contact {
+  display: block;
+  min-height: 0;
+  padding: 0;
+}
+
+html.skull-site .contact--track {
+  height: 220vh;
+}
+
+html.skull-site .contact-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem var(--hero-pad-inline);
+}
+
 /* skull-scene.ts draws the skull + saw blades here (transparent, so
    --contact-bg shows through and the theme toggle just works). */
 html.skull-site .contact-skull {

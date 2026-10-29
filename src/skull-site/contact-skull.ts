@@ -1,8 +1,12 @@
 // Contact section of the skull variant (/saos#dev#skull, see
 // src/saos-entry.ts) — replaces src/contact/contact.ts there: the page's
 // closing beat. The projects grid carries
-// straight across the seam and dissolves once the section is pinned; then
-// scrolling on lifts the craniumCut01 skull up from the bottom (scrubbed).
+// straight across the seam and dissolves once the section fills the screen;
+// then scrolling on lifts the craniumCut01 skull up from the bottom
+// (scrubbed). The section is a tall scroll track with a sticky, screen-high
+// stage inside (not a ScrollTrigger pin): on phones touch scrolling runs on
+// its own thread and a pin, swapped in on the main thread, lags behind it —
+// it jumped and stuttered there. Sticky moves with the scroll itself.
 // From 70 % of the way up, the page scrolls the rest by itself at the speed
 // you were scrolling. Once the skull is up, three saw blades hit it and the
 // shards that hang in the air are the GitHub / mail / phone links
@@ -12,8 +16,8 @@
 // The 3D scene (three.js + the 1.4 MB skull model) loads once the section
 // is within three screens. No "Let's talk" text any more: the heading is
 // screen-reader-only and the links only show as shards (or, if WebGL
-// fails, as a plain row). Under reduced motion there's no pin: the scene
-// just shows its end state.
+// fails, as a plain row). Under reduced motion there's no scroll track:
+// the scene just shows its end state.
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -31,7 +35,8 @@ gsap.registerPlugin(ScrollTrigger);
 // rather than in src/timings.ts so the main page's TIMINGS.contact stays
 // untouched.
 const TIMING = {
-  pinScroll: "+=120%", // scroll distance the dissolve + rise play over
+  // Scroll distance the dissolve + rise play over: the section is this
+  // much taller than its sticky stage (skull-site.css, .contact--track).
   scrub: 0.85, // lag (seconds) between scroll position and timeline position — reads as eased catching-up; this page's scroll is already Lenis-smoothed
 
   grid: {
@@ -52,13 +57,13 @@ const TIMING = {
   },
 };
 
-// The pinned ScrollTrigger, once created — main.ts reads its start/end
+// The scrubbed ScrollTrigger, once created — main.ts reads its start/end
 // through getSkullContactRevealScrollY() so a nav click can jump straight to
 // the skull already up instead of to the top of the pin.
 let pinTrigger: ScrollTrigger | null = null;
 
-// 0.97, not 1 — the very end of the pin's scroll range is also where it
-// releases, so landing a hair before it keeps the section pinned.
+// 0.97, not 1 — at the very end of the track the sticky stage starts to
+// scroll away, so landing a hair before it keeps the skull filling the screen.
 const LANDED_PROGRESS = 0.97;
 
 export function getSkullContactRevealScrollY(): number | null {
@@ -72,6 +77,12 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
   const canvas = section.querySelector<HTMLCanvasElement>(".contact-skull");
   const links = Array.from(section.querySelectorAll<HTMLElement>(".contact-icons a"));
   if (!canvas || links.length < 3) return;
+
+  // The screen-high sticky stage everything is drawn in (see the header).
+  const stage = document.createElement("div");
+  stage.className = "contact-stage";
+  stage.append(...Array.from(section.childNodes));
+  section.append(stage);
 
   const forceMotion = document.documentElement.classList.contains("force-motion");
   const reducedMotion = !forceMotion && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -87,7 +98,7 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
     io.disconnect();
     import("./skull-scene")
       .then(({ createSkullScene }) =>
-        createSkullScene(section, canvas, links, {
+        createSkullScene(stage, canvas, links, {
           onFirstHit: () => pauseThrows(true),
           onReset: () => pauseThrows(false),
         }),
@@ -104,12 +115,13 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
   io.observe(section);
 
   if (reducedMotion) return;
+  section.classList.add("contact--track");
 
   // Grid lines, built up front so `tl` below can dissolve them — kept
   // fully intact (no fade, no crop) for the entire entry scroll, so
   // nothing here is ever mid-dissolve before the user can actually see
-  // it. Only once the section is pinned (fully on screen) does the
-  // dissolve play, as the very first thing `tl` does.
+  // it. Only once the stage fills the screen does the dissolve play, as
+  // the very first thing `tl` does.
   const bgGrid = section.querySelector<HTMLElement>(".contact-bg-grid");
   const hLines: HTMLElement[] = [];
   const vLines: HTMLElement[] = [];
@@ -126,8 +138,8 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
     // line, instead of starting their own at the section's edge (which
     // read as the grid jumping at the seam):
     //  - lite page: the grid painted on the page itself (style.css), so
-    //    rows are phased by the section's document offset — the pinned
-    //    spacer's start, which settles only after fonts/layout;
+    //    rows are phased by the section's document offset — the
+    //    trigger's start, which settles only after fonts/layout;
     //  - desktop: .projects-bg-grid, whose rows start at #projects' top —
     //    one section height above this one once its pin has run out — and
     //    whose columns run through the centre from the bento breakpoint
@@ -220,7 +232,7 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
     onUpdate: () => scene?.setRise(rise.value),
   });
   // A little slack after the rise, so it's fully up (rise = 1, which
-  // starts the saw blades) before LANDED_PROGRESS — the pin's very end.
+  // starts the saw blades) before LANDED_PROGRESS — the track's very end.
   tl.to({}, { duration: 0.15 });
 
   // Scroll progress at which the skull is autoScrollAt of the way up.
@@ -232,8 +244,7 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
   pinTrigger = ScrollTrigger.create({
     trigger: section,
     start: "top top",
-    end: TIMING.pinScroll,
-    pin: true,
+    end: "bottom bottom",
     scrub: TIMING.scrub,
     animation: tl,
     onUpdate(self) {

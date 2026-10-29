@@ -8,6 +8,7 @@
 // Everything after the rise is a closed-form function of the time since the
 // sequence started (no stepping), so reduced motion just jumps to the end.
 import * as THREE from "three";
+import { LITE } from "../viewport";
 import { BLADE_R, bladeGeometry, loadSkullGeometry, wireMesh } from "./parts";
 
 const BLADE_FLIGHT = 0.45; // s from off-screen to stuck
@@ -36,9 +37,13 @@ const css = (name: string) => getComputedStyle(document.documentElement).getProp
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
 const settle = (u: number) => (u <= 0 ? 0 : (1 - Math.exp(-FREEZE * u)) / FREEZE); // distance factor, freezes at 1/FREEZE
 
+// `section` is the screen-high sticky stage (contact-skull.ts), not the tall
+// scroll track around it: sizes and visibility are taken from it.
 export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], hooks: Hooks): Promise<SkullScene> {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // Phones (LITE): no MSAA and at most 1.5x pixels — at 2-3x with
+  // antialiasing the dense wire skull lagged there.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.5 : 2));
   renderer.setClearColor(0x000000, 0);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
