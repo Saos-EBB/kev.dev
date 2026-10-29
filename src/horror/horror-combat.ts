@@ -38,7 +38,15 @@ const PELLETS = 8, SPREAD = 0.12, RANGE = 30; // the shotgun scatters: up close 
 const DMG = { shotgun: { head: 100, body: 50 }, bat: { head: 500, body: 150 }, sword: { head: 500, body: 200 }, rail: { head: 600, body: 300 } };
 // ice launcher: lobbed like a grenade, bursts on impact, little damage, slows everyone around
 const ICE = { speed: 13, every: 0.9, radius: 3.5, dmg: 60, slow: 0.45, slowFor: 4 };
-const RAIL_EVERY = 1.2; // the beam goes through everything in a line
+const RAIL_EVERY = 0.5; // the beam goes through everything in a line
+// magazines: empty one and you reload (R, or by itself). Shells come from what you find; rail and ice reload forever
+const MAG = { shotgun: 7, rail: 21, ice: 7 }, RELOAD = { shotgun: 1.6, rail: 1.8, ice: 1.5 }; // seconds
+type Gun = keyof typeof MAG;
+const isGun = (x: Weapon | null): x is Gun => !!x && x in MAG;
+// abilities: chain lightning (E, held) costs energy; frost nova (Q) has a cooldown
+const CHAIN = { range: 14, aim: 0.9, tick: 0.1, dmg: 30, drain: 30, regen: 8, headBonus: 5 }; // drain/regen/bonus in % (per second / per headshot)
+const NOVA = { radius: 6, dmg: 80, slowFor: 5, every: 10 };
+const PINK = 0xff4fd8;
 // elements your skulls carry (random per throw)
 type Element = "fire" | "poison" | "ice" | "shock";
 const ELEMENTS: Element[] = ["fire", "poison", "ice", "shock"];
@@ -122,6 +130,10 @@ export function createCombat(w: CombatWorld) {
   let weapon: Weapon | null = null;
   let ammo = 0, cooldown = 0, recoil = 0, flashT = 0, bobPhase = 0, swingT = -1, swung = false;
   let skullsUnlocked = false, skullCD = 0, clock = 0;
+  const mag: Record<Gun, number> = { shotgun: 0, rail: MAG.rail, ice: MAG.ice };
+  let reloadT = 0; // counts down while the gun in hand reloads
+  let chainUnlocked = false, chainWant = false, chainTick = 0, energy = 100;
+  let novaUnlocked = false, novaCD = 0;
 
   type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3; amount: number };
   const pickups: Pickup[] = [];
@@ -139,8 +151,8 @@ export function createCombat(w: CombatWorld) {
       ...files.map((f) => loader.loadAsync(`/horror/${f}.glb`)),
     ]);
     props.shotgun = gun.scene; props.bat = bat.scene;
-    // the railgun: the kit's rifle with a glowing cyan coil; the ice launcher: its SMG, frosted
-    rifle.scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.material = (o.material as THREE.MeshStandardMaterial).clone(); (o.material as THREE.MeshStandardMaterial).emissive.set(0x0a5a70); } });
+    // the railgun: the kit's rifle, pink and glowing; the ice launcher: its SMG, frosted
+    rifle.scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.material = (o.material as THREE.MeshStandardMaterial).clone(); const m = o.material as THREE.MeshStandardMaterial; m.color.lerp(new THREE.Color(PINK), 0.55); m.emissive.set(0x5a0a48); } });
     smg.scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.material = (o.material as THREE.MeshStandardMaterial).clone(); const m = o.material as THREE.MeshStandardMaterial; m.color.lerp(new THREE.Color(0x9fd8ff), 0.6); m.emissive.set(0x123a55); } });
     props.rail = rifle.scene; props.ice = smg.scene;
     const box = (o: THREE.Object3D) => new THREE.Box3().setFromObject(o, true);
@@ -181,7 +193,7 @@ export function createCombat(w: CombatWorld) {
   const gun = new THREE.Group(), batView = new THREE.Group(), swordView = new THREE.Group(), railView = new THREE.Group(), iceView = new THREE.Group(); // guns point to -z
   const flash = makeFlash(), railFlash = makeFlash();
   gun.add(flash); railView.add(railFlash);
-  railFlash.material = railFlash.material.clone(); railFlash.material.color.set(0x66eeff);
+  railFlash.material = railFlash.material.clone(); railFlash.material.color.set(PINK);
   viewRoot.add(gun, batView, swordView, railView, iceView);
   function buildViewModels() {
     const rm = props.rail!.clone();
@@ -437,6 +449,7 @@ export function createCombat(w: CombatWorld) {
 
   function damage(z: Zombie, head: boolean, amount: number, quiet = false) {
     z.hp -= amount; z.hits++;
+    if (head) energy = Math.min(100, energy + CHAIN.headBonus); // headshots feed the lightning
     flat.subVectors(z.root.position, origin).setY(0).normalize();
     if (z.kind !== "boss" && !quiet) tryMove(z, flat.x * 0.3, flat.z * 0.3); // knockback
     if (z.hp <= 0) {
@@ -461,10 +474,12 @@ export function createCombat(w: CombatWorld) {
   function fire() {
     if (!weapon || cooldown > 0) return;
     if (MELEE(weapon)) { cooldown = weapon === "sword" ? 0.7 : 0.6; swingT = 0; swung = false; setTimeout(sfx.swing, 90); return; }
+    if (!isGun(weapon) || reloadT > 0) return;
+    if (mag[weapon] <= 0) { if (!reload()) { sfx.click(); cooldown = 0.3; } return; }
+    mag[weapon]--;
     if (weapon === "rail") return fireRail();
     if (weapon === "ice") return fireIce();
-    if (ammo <= 0) { sfx.click(); cooldown = 0.3; return; }
-    ammo--; cooldown = 0.85; recoil = 1; flashT = 0.06;
+    cooldown = 0.85; recoil = 1; flashT = 0.06;
     sfx.shotgun(); setTimeout(sfx.pump, 280);
     w.onShot();
     aim();
@@ -497,10 +512,10 @@ export function createCombat(w: CombatWorld) {
   }
 
   /* ---------- railgun: one beam, through everything in line ---------- */
-  const beamMat = new THREE.MeshBasicMaterial({ color: 0x7ff6ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-  type Fx = { obj: THREE.Object3D; life: number; max: number; mat: THREE.Material & { opacity: number } };
+  const beamMat = new THREE.MeshBasicMaterial({ color: PINK, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  type Fx = { obj: THREE.Object3D; life: number; max: number; mat: THREE.Material & { opacity: number }; grow?: [number, number] };
   const fxs: Fx[] = []; // short-lived visuals: beams, lightning, frost rings
-  function addFx(obj: THREE.Object3D, mat: THREE.Material & { opacity: number }, life: number) { scene.add(obj); fxs.push({ obj, life, max: life, mat }); }
+  function addFx(obj: THREE.Object3D, mat: THREE.Material & { opacity: number }, life: number, grow?: [number, number]) { scene.add(obj); fxs.push({ obj, life, max: life, mat, grow }); }
   function fireRail() {
     cooldown = RAIL_EVERY; recoil = 1.2; flashT = 0.08;
     sfx.rail();
@@ -579,7 +594,7 @@ export function createCombat(w: CombatWorld) {
     const mat = new THREE.LineBasicMaterial({ color: 0xe0d8ff, transparent: true, blending: THREE.AdditiveBlending });
     addFx(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat), mat, 0.18);
   }
-  function chainShock(first: Zombie) {
+  function chainShock(first: Zombie, dmg = SHOCK_CHAIN.dmg * 0.7, quiet = false) {
     const done = new Set([first]);
     let cur = first;
     for (let j = 0; j < SHOCK_CHAIN.jumps; j++) {
@@ -593,7 +608,7 @@ export function createCombat(w: CombatWorld) {
       const a = cur.root.position.clone().setY(cur.root.position.y + cur.height * 0.6), b = next.root.position.clone().setY(next.root.position.y + next.height * 0.6);
       bolt(a, b);
       origin.copy(a);
-      damage(next, false, SHOCK_CHAIN.dmg * 0.7);
+      damage(next, false, dmg, quiet);
       done.add(next); cur = next;
     }
   }
@@ -682,12 +697,75 @@ export function createCombat(w: CombatWorld) {
 
   // dev shortcut: hand over a weapon without the pickup
   function grant(kind: Weapon) {
+    if (kind === "shotgun" && !have.shotgun) giveShotgun();
     have[kind] = true;
-    if (kind === "shotgun") ammo = Math.max(ammo, 30);
     weapon = kind;
   }
 
-  function select(next: Weapon) { if (have[next] && weapon !== next) { weapon = next; cooldown = 0.25; swingT = -1; } }
+  function select(next: Weapon) { if (have[next] && weapon !== next) { weapon = next; cooldown = 0.25; swingT = -1; reloadT = 0; } }
+
+  // reload the gun in hand; false if there's nothing to load
+  function reload() {
+    if (!isGun(weapon) || reloadT > 0 || mag[weapon] >= MAG[weapon]) return false;
+    if (weapon === "shotgun" && ammo <= 0) return false;
+    reloadT = RELOAD[weapon];
+    sfx.click();
+    return true;
+  }
+  function reloadDone() {
+    if (!isGun(weapon)) return;
+    if (weapon === "shotgun") { const take = Math.min(MAG.shotgun - mag.shotgun, ammo); mag.shotgun += take; ammo -= take; sfx.pump(); }
+    else { mag[weapon] = MAG[weapon]; sfx.pump(); }
+  }
+  // shotgun shells: new ones go into the reserve, the magazine is filled on reload
+  function giveShotgun() {
+    if (!have.shotgun) { have.shotgun = true; mag.shotgun = MAG.shotgun; ammo += 30 - MAG.shotgun; }
+    else ammo += 30;
+  }
+
+  /* ---------- chain lightning (E, held): zaps what you aim at and jumps on ---------- */
+  function zap() {
+    aim();
+    const hand = tmp.copy(origin).addScaledVector(fwd, 0.45).addScaledVector(right, 0.12).addScaledVector(up, -0.12).clone();
+    let best: Zombie | null = null, bestDot = CHAIN.aim;
+    for (const z of zombies) {
+      if (z.dying >= 0) continue;
+      const c = center.set(z.root.position.x, z.root.position.y + z.height * 0.6, z.root.position.z);
+      const d = c.distanceTo(origin);
+      if (d > CHAIN.range) continue;
+      const dot = ray.subVectors(c, origin).normalize().dot(fwd);
+      if (dot > bestDot && w.clearLine(origin, c)) { best = z; bestDot = dot; }
+    }
+    if (!best) { bolt(hand, origin.clone().addScaledVector(fwd, 3)); return; } // nothing in reach: it crackles into the air
+    const at = best.root.position.clone().setY(best.root.position.y + best.height * 0.6);
+    bolt(hand, at); bolt(hand, at);
+    burst(at, 4, 0.85, 0.8, 1, 2);
+    origin.copy(hand);
+    damage(best, false, CHAIN.dmg, true);
+    chainShock(best, CHAIN.dmg * 0.7, true);
+    sfx.zap();
+  }
+
+  /* ---------- frost nova (Q): everything around you freezes up ---------- */
+  function nova(at: THREE.Vector3) {
+    if (!novaUnlocked || novaCD > 0) return;
+    novaCD = NOVA.every;
+    sfx.shatter(at);
+    let any = false;
+    for (const z of zombies) {
+      if (z.dying >= 0 || Math.hypot(z.root.position.x - at.x, z.root.position.z - at.z) > NOVA.radius) continue;
+      z.slowUntil = clock + NOVA.slowFor;
+      origin.copy(at);
+      damage(z, false, NOVA.dmg);
+      any = true;
+    }
+    if (any) w.onHitmarker(false);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 48).rotateX(-Math.PI / 2), mat);
+    ring.position.set(at.x, w.floorAt(at.x, at.z) + 0.05, at.z);
+    addFx(ring, mat, 0.6, [0.5, NOVA.radius]);
+    for (let k = 0; k < 24; k++) { const a = (k / 24) * Math.PI * 2; burst(tmp.set(at.x + Math.cos(a) * 1.5, w.floorAt(at.x, at.z) + 0.6, at.z + Math.sin(a) * 1.5), 2, 0.6, 0.85, 1, 5); }
+  }
 
   /* ---------- the bat swing: three poses, eased between ---------- */
   // [x, y, z, rotX, rotY, rotZ] of the bat in front of the camera
@@ -764,6 +842,18 @@ export function createCombat(w: CombatWorld) {
   /* ---------- per frame ---------- */
   function update(dt: number, player: THREE.Vector3, eyeY: number, moving: boolean, onPickup: (kind: PickupKind) => void) {
     cooldown = Math.max(0, cooldown - dt);
+    novaCD = Math.max(0, novaCD - dt);
+    if (reloadT > 0) { reloadT -= dt; if (reloadT <= 0) { reloadT = 0; reloadDone(); } }
+    else if (isGun(weapon) && mag[weapon] === 0 && cooldown <= 0) reload(); // empty: reloads by itself
+    // the lightning: drains while held, refills by itself when you let go
+    if (chainUnlocked && chainWant && energy > 0) {
+      energy = Math.max(0, energy - CHAIN.drain * dt);
+      chainTick -= dt;
+      if (chainTick <= 0) { chainTick = CHAIN.tick; zap(); }
+    } else {
+      chainTick = 0;
+      energy = Math.min(100, energy + CHAIN.regen * dt);
+    }
 
     // weapons in hand: Doom-style figure-eight bob, recoil, pump dip, bat swing
     clock += dt;
@@ -777,6 +867,9 @@ export function createCombat(w: CombatWorld) {
       const bx = Math.sin(bobPhase * 0.5) * 0.018, by = -Math.abs(Math.cos(bobPhase * 0.5)) * 0.014;
       recoil = Math.max(0, recoil - dt * 5);
       const pump = cooldown > 0.15 && cooldown < 0.55 ? Math.sin(((0.55 - cooldown) / 0.4) * Math.PI) : 0;
+      // reloading: the gun dips down and tilts, then comes back up
+      const dip = reloadT > 0 && isGun(weapon) ? Math.sin((1 - reloadT / RELOAD[weapon]) * Math.PI) : 0;
+      viewRoot.translateY(-dip * 0.12); viewRoot.rotateX(-dip * 0.5); viewRoot.rotateZ(dip * 0.3);
       gun.position.set(0.14 + bx, -0.16 + by + recoil * 0.02 - pump * 0.03, -0.3 + recoil * 0.09);
       gun.rotation.set(recoil * 0.25 - pump * 0.12, 0, pump * 0.2);
       railView.position.set(0.14 + bx, -0.15 + by + recoil * 0.02, -0.3 + recoil * 0.1);
@@ -804,7 +897,7 @@ export function createCombat(w: CombatWorld) {
       p.obj.rotation.y += dt * 1.6;
       p.obj.position.y = p.at.y + Math.sin(performance.now() / 300 + i) * 0.04;
       if (Math.hypot(player.x - p.at.x, player.z - p.at.z) < 0.9) {
-        if (p.kind === "shotgun") { have.shotgun = true; ammo += 30; weapon = "shotgun"; }
+        if (p.kind === "shotgun") { giveShotgun(); weapon = "shotgun"; }
         if (p.kind === "bat" || p.kind === "sword" || p.kind === "rail" || p.kind === "ice") { have[p.kind] = true; weapon = p.kind; }
         if (p.kind === "shells") ammo += p.amount;
         scene.remove(p.obj); pickups.splice(i, 1);
@@ -913,6 +1006,7 @@ export function createCombat(w: CombatWorld) {
       const f = fxs[i];
       f.life -= dt;
       f.mat.opacity = Math.max(0, f.life / f.max);
+      if (f.grow) f.obj.scale.setScalar(f.grow[0] + (f.grow[1] - f.grow[0]) * (1 - f.life / f.max));
       if (f.life <= 0) { scene.remove(f.obj); fxs.splice(i, 1); }
     }
 
@@ -972,7 +1066,17 @@ export function createCombat(w: CombatWorld) {
     get skulls() { return skullsUnlocked; },
     get weapon() { return weapon; },
     get has() { return have; },
-    get ammo() { return ammo; },
+    get ammo() { return ammo + mag.shotgun; }, // all shells, in the gun and in your pockets
+    // for the HUD: what's in the gun in hand, and what's left to load ("∞" for rail and ice)
+    get mag() { return isGun(weapon) ? mag[weapon] : -1; },
+    get reserve() { return weapon === "shotgun" ? String(ammo) : "∞"; },
+    get reloading() { return reloadT > 0; },
+    reload,
+    nova,
+    chain: (on: boolean) => { chainWant = on; },
+    unlockChain: () => { chainUnlocked = true; },
+    unlockNova: () => { novaUnlocked = true; },
+    get abilities() { return { chain: chainUnlocked, nova: novaUnlocked, energy, novaCD }; },
     alive: (kind?: ZombieKind) => zombies.filter((z) => z.dying < 0 && (!kind || z.kind === kind)).length,
     bossHealth: () => { const b = boss(); return b && b.dying < 0 ? Math.max(0, b.hp / b.spec.hp) : -1; },
   };

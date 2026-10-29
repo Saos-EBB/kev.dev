@@ -41,6 +41,7 @@ const MARKUP = `
   <canvas class="hud" id="splat" hidden></canvas>
   <div class="hud" id="cut" hidden></div>
   <div id="touch" aria-hidden="true"></div>
+  <div class="hud" id="energy" hidden><i><b id="energy-b"></b></i><small id="energy-t">E Kettenblitz</small></div>
   <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p><span id="wname">Schrot</span> <b id="ammo">0</b></p></div>
   <button id="fire" type="button" hidden>Feuer</button>
   <p id="err"></p>
@@ -56,7 +57,8 @@ const MARKUP = `
         <b>Shift</b><span>rennen (laut, es hört dich)</span>
         <b>Klick</b><span>schießen / zuschlagen</span>
         <b>1 – 5</b><span>Waffe wechseln (Mausrad geht auch)</span>
-        <b>F</b><span>Schädel werfen, wenn du es dir verdient hast</span>
+        <b>R</b><span>nachladen</span>
+        <b>E · Q · F</b><span>Kettenblitz · Frostnova · Schädel, wenn du sie dir verdient hast</span>
         <b>Esc</b><span>Pause</span>
       </div>
       <p class="warn">Kopfhörer empfohlen · Jumpscares · flackerndes Licht</p>
@@ -67,6 +69,7 @@ const MARKUP = `
         <label><input type="radio" name="from" value="hall1"> Welle 1</label>
         <label><input type="radio" name="from" value="hall2"> Welle 3</label>
         <label><input type="radio" name="from" value="boss"> Endkampf</label>
+        <label><input type="radio" name="from" value="arena"> Arena (endlos)</label>
       </p>
       <p class="muted">Am Handy: rechts wischen zum Umsehen, Kreis links unten zum Gehen.</p>
     </div>
@@ -121,6 +124,22 @@ const MAP = carveUpper([
   "######################hh##hhhhh##hh###HHH##HHH##HHH###BBB##BBBBB##BBB###########",
   "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
   "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
+  "################################################################################",
+  // dev arena (not connected, and east of x 14, which the maze generator overwrites): one big bright room, one pillar, endless zombies
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAA##AAAAAAAAA######################################",
+  "######################AAAAAAAAA##AAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  "######################AAAAAAAAAAAAAAAAAAAA######################################",
   "################################################################################",
 ]);
 const UPPER = new Set([".", "S", "a", "b", "c", "D"]);
@@ -206,7 +225,7 @@ function mount() {
       if (!["#", "W", "m"].includes(cell(...n)) && !dist.has(key(n))) { dist.set(key(n), dist.get(key([x, z]))! + 1); reachable.push(n); }
     }
   }
-  const halls = { h: cellsOf("h"), H: cellsOf("H"), B: cellsOf("B") };
+  const halls = { h: cellsOf("h"), H: cellsOf("H"), B: cellsOf("B"), A: cellsOf("A") };
   // the walkable cell closest to the middle of a hall
   const hallCenter = (cells: Cell[]) => {
     const x = cells.reduce((a, c) => a + c[0], 0) / cells.length, z = cells.reduce((a, c) => a + c[1], 0) / cells.length;
@@ -301,7 +320,7 @@ function mount() {
   wallMesh.castShadow = wallMesh.receiveShadow = true;
   scene.add(wallMesh);
   // floor tiles at their height (one draw call), steps on the stairs, one ceiling for everything
-  const tiles = reachable.concat(cellsOf("m")).filter(([x, z]) => !["v", "W"].includes(MAP[z][x]));
+  const tiles = reachable.concat(cellsOf("m"), cellsOf("A")).filter(([x, z]) => !["v", "W"].includes(MAP[z][x]));
   const floorMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(C, C).rotateX(-Math.PI / 2), floorMat, tiles.length);
   tiles.forEach(([x, z], i) => floorMesh.setMatrixAt(i, m4.makeTranslation(x * C, floorAt(x * C, z * C), z * C)));
   floorMesh.receiveShadow = true;
@@ -575,6 +594,8 @@ function mount() {
   const keys: Record<string, boolean> = {};
   const crumbs = [pos.clone()]; // your path, every 30 cm; the thing walks it behind you
   const S = { active: false, hidden: false, outSince: 0, reveal: 0, revealCD: 0, back: 0, lookCD: 0, nextBreath: 0, nextHeart: 0, nextWhisper: 0, flickUntil: 0 };
+  const vel = new THREE.Vector3();
+  let bobAmt = 0;
   let shake = 0, fallen = 0, fovKick = 0, kick = 0; // kick: the view jumping up after a shot // fallen: how far the camera has sunk in the ending
   let flick = 1, nextFlick = 4, blackUntil = 0, scareT = -1, stepPhase = 0, lastStep = 0, now = 0, nextSlam = 30, behindIdx = 0;
   const yawHist: [number, number][] = [];
@@ -658,7 +679,7 @@ function mount() {
   }
 
   /* ---------- part 2: the halls ---------- */
-  type Phase = "puzzle" | "stairs" | "normals" | "bigs" | "boss" | "mirror" | "end";
+  type Phase = "puzzle" | "stairs" | "normals" | "bigs" | "boss" | "mirror" | "end" | "arena";
   let phase: Phase = "puzzle";
   // five waves, each 50 bigger than the last (50 … 250). Waves 1–2 in hall 1, 3–5 in hall 2;
   // from wave 3 on, one in five is a big one. A short breather between waves.
@@ -718,7 +739,8 @@ function mount() {
 
   // headshot kills unlock things: 10 the saw, 50 a katana that hits everyone in front, 100 a railgun
   // that goes through a whole line, 200 faster legs and an ice launcher (lobbed, slows everything
-  // around the burst), 250 throwing skulls that burn, poison, freeze or shock at random.
+  // around the burst), 250 chain lightning (E), 300 frost nova (Q), 350 throwing skulls that burn,
+  // poison, freeze or shock at random.
   // The count survives a death (sessionStorage): what you earned is handed over again next run.
   const ahead = () => tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone();
   const REWARDS: [number, (now: boolean) => void][] = [
@@ -726,7 +748,9 @@ function mount() {
     [50, (now) => { if (now) return combat.grant("sword"); combat.addPickup("sword", ahead()); card("50 Kopfschüsse", "Katana. Trifft alles vor dir. Taste 3.", 6000); }],
     [100, (now) => { if (now) return combat.grant("rail"); combat.addPickup("rail", ahead()); card("100 Kopfschüsse", "Railgun. Geht durch alles in einer Linie. Stell sie dir in eine Reihe. Taste 4.", 7000); }],
     [200, (now) => { fast = 1.25; if (now) return combat.grant("ice"); combat.addPickup("ice", ahead()); card("200 Kopfschüsse", "Du bist schneller. Und: Eiswerfer. Wenig Schaden, aber alles um den Einschlag wird langsam. Taste 5.", 7000); }],
-    [250, (now) => { combat.unlockSkulls(); if (!now) card("250 Kopfschüsse", "F oder Rechtsklick wirft Schädel. Jeder brennt, vergiftet, friert oder blitzt, zufällig.", 7000); }],
+    [250, (now) => { combat.unlockChain(); if (!now) card("250 Kopfschüsse", "E halten: Kettenblitz. Frisst Energie, lädt sich wieder auf. Jeder Kopfschuss gibt 5 % zurück.", 7000); }],
+    [300, (now) => { combat.unlockNova(); if (!now) card("300 Kopfschüsse", "Q: Frostnova. Alles um dich wird langsam. Alle 10 Sekunden.", 6000); }],
+    [350, (now) => { combat.unlockSkulls(); if (!now) card("350 Kopfschüsse", "F oder Rechtsklick wirft Schädel. Jeder brennt, vergiftet, friert oder blitzt, zufällig.", 7000); }],
   ];
   function savedHeads() { try { return Number(sessionStorage.getItem("hinter-dir-heads")) || 0; } catch { return 0; } }
   function saveHeads() { try { sessionStorage.setItem("hinter-dir-heads", String(W.heads)); } catch { /* private mode: just this run */ } }
@@ -744,7 +768,7 @@ function mount() {
   // medkits are rare (2.5 %)
   function onKill(k: { kind: string; hits: number; head: boolean; at: THREE.Vector3 }) {
     W.killed++;
-    if (k.head && k.kind !== "boss") {
+    if (k.head && k.kind !== "boss" && phase !== "arena") {
       W.heads++; saveHeads();
       for (const [at, give] of REWARDS) if (W.heads === at) give(false);
     }
@@ -753,6 +777,21 @@ function mount() {
     if (k.kind !== "boss" && Math.random() < 0.025) combat.addPickup("health", k.at.clone().add(new THREE.Vector3(0.5, 0, 0.3)));
     if (phase === "normals" || phase === "bigs") waveHud();
     hud();
+  }
+  // dev arena: endless, and it keeps getting faster. Every 30 s the spawn gap shrinks by about a third.
+  let arenaT = 0, arenaInfo = 0;
+  function updateArena(dt: number) {
+    arenaT += dt;
+    const every = Math.max(0.12, 1.2 * Math.pow(0.987, arenaT)), cap = Math.min(60, 10 + Math.floor(arenaT / 3));
+    if (now >= W.nextSpawn && W.spawned - W.killed < cap) {
+      W.nextSpawn = now + every;
+      spawnIn(halls.A, Math.random() < 0.2 ? "big" : "normal", 1);
+    }
+    arenaInfo -= dt;
+    if (arenaInfo <= 0) {
+      arenaInfo = 0.25;
+      $("goal").textContent = `Arena · ${W.killed} tot · ${W.spawned - W.killed} da · alle ${every.toFixed(2)} s · unverwundbar`;
+    }
   }
   function waveDone() {
     if (phase === "normals" || phase === "bigs") {
@@ -863,6 +902,8 @@ function mount() {
     const slots = { Digit1: "shotgun", Digit2: "bat", Digit3: "sword", Digit4: "rail", Digit5: "ice" } as const;
     if (e.code in slots) combat.select(slots[e.code as keyof typeof slots]);
     if (e.code === "KeyF" && running && !paused) combat.throwOwnSkull();
+    if (e.code === "KeyR" && running && !paused) combat.reload();
+    if (e.code === "KeyQ" && running && !paused) combat.nova(pos);
   });
   // mouse wheel: next weapon you have
   window.addEventListener("wheel", (e) => {
@@ -931,11 +972,15 @@ function mount() {
     if (isTouch) pad.classList.add("on"); else lock();
     const from = (document.querySelector<HTMLInputElement>('input[name="from"]:checked')?.value ?? "start");
     if (from === "start") setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
-    else jumpTo(from as "stairs" | "hall1" | "hall2" | "boss");
+    else jumpTo(from as "stairs" | "hall1" | "hall2" | "boss" | "arena");
   });
 
   // dev shortcut: skip ahead. Doors you'd have opened stand open, items you'd have found are found.
-  function jumpTo(where: "stairs" | "hall1" | "hall2" | "boss") {
+  function grantAll() {
+    combat.grant("ice"); combat.grant("rail"); combat.grant("sword"); combat.grant("bat"); combat.grant("shotgun");
+    combat.unlockSkulls(); combat.unlockChain(); combat.unlockNova(); fast = 1.25;
+  }
+  function jumpTo(where: "stairs" | "hall1" | "hall2" | "boss" | "arena") {
     const openNow = (id: string) => { open.add(id); const s = slab(id); s.mesh.visible = false; s.t = 1; };
     for (const it of items) if (!it.got) { it.got = true; got++; scene.remove(it.obj); }
     $("got").textContent = String(got);
@@ -952,11 +997,17 @@ function mount() {
       if (where === "hall2") { openNow("1"); combat.grant("bat"); combat.grant("shotgun"); }
       pos.set((g[0] + 2) * C, 0, g[1] * C); // two cells into the hall: the gate drops behind you
       enterHall(where === "hall1" ? "normals" : "bigs", g);
+    } else if (where === "arena") {
+      phase = "arena";
+      grantAll(); onPickup("shotgun");
+      pos.set(26 * C, 0, 20 * C);
+      ($("got").parentElement as HTMLElement).hidden = true;
+      W.nextSpawn = now + 1;
     } else {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
       // the end fight as if you'd earned everything on the way
-      combat.grant("ice"); combat.grant("rail"); combat.grant("sword"); combat.grant("bat"); combat.grant("shotgun"); combat.unlockSkulls(); fast = 1.25;
+      grantAll();
       onPickup("shotgun");
       const [gx, gz] = cellsOf("G")[2];
       pos.set((gx - 1) * C, 0, gz * C);
@@ -1044,6 +1095,7 @@ function mount() {
     },
     onHurt: (d) => {
       if (ended) return;
+      if (phase === "arena") { redFlash(150); return; } // dev arena: you can't die, it's for testing
       health = Math.max(0, health - d);
       redFlash(400); shake = 0.1;
       if (health <= 0) die();
@@ -1059,18 +1111,28 @@ function mount() {
   combat.addPickup("health", spot(halls.H, 0.5));
   combat.addPickup("health", spot(halls.B, 0.2));
   combat.addPickup("health", spot(halls.B, 0.8));
+  // the HUD runs every frame, so only touch the DOM when a value actually changed
+  const shown: Record<string, string> = {};
+  const put = (id: string, v: string) => { if (shown[id] !== v) { shown[id] = v; $(id).textContent = v; } };
   const hud = () => {
-    $("hp").textContent = String(health);
+    put("hp", String(health));
     const names = { shotgun: "Schrot", bat: "Säge", sword: "Katana", rail: "Railgun", ice: "Eiswerfer" };
-    $("wname").textContent = combat.weapon ? names[combat.weapon] : "";
-    $("ammo").textContent = combat.weapon === "shotgun" ? String(combat.ammo) : "∞";
+    put("wname", combat.weapon ? names[combat.weapon] : "");
+    put("ammo", combat.mag < 0 ? "∞" : combat.reloading ? "…" : `${combat.mag}/${combat.reserve}`);
+    const ab = combat.abilities;
+    if (ab.chain || ab.nova) {
+      if (shown.energyOn !== "1") { shown.energyOn = "1"; $("energy").hidden = false; }
+      const width = `${Math.round(ab.energy)}%`;
+      if (shown.energyW !== width) { shown.energyW = width; $("energy-b").style.width = width; }
+      put("energy-t", [ab.chain ? "E Blitz" : "", ab.nova ? (ab.novaCD > 0 ? `Q ${Math.ceil(ab.novaCD)} s` : "Q bereit") : ""].filter(Boolean).join(" · "));
+    }
   };
   function onPickup(kind: string) {
     if (kind === "health") health = Math.min(100, health + 25);
     if (kind === "shotgun") {
       $("status").hidden = false; $("dot").classList.add("cross");
       if (isTouch) $("fire").hidden = false;
-      card("Schrotflinte", "30 Schuss. Kopf: ein Treffer. Körper: zwei. Mehr gibt es nicht.", 7000);
+      card("Schrotflinte", "30 Schuss, 7 passen rein. R lädt nach. Kopf: ein Treffer. Körper: zwei.", 7000);
       $("goal").textContent = "Runter.";
     }
 
@@ -1145,11 +1207,18 @@ function mount() {
     const mx = still ? 0 : (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx;
     const mz = still ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
     const len = Math.hypot(mx, mz), moving = len > 0.1;
+    // speed eases in and out (about a tenth of a second) instead of jumping: smoother to strafe and kite
+    const armed = combat.weapon !== null;
+    const sp = moving ? (armed ? (sprint ? 4.8 : 3.2) * fast : sprint ? 3.4 : 2.0) / Math.max(1, len) : 0;
+    const s = Math.sin(yaw), c = Math.cos(yaw);
+    const ease = 1 - Math.exp(-dt * (moving ? 14 : 18));
+    vel.x += ((mx * c + mz * s) * sp - vel.x) * ease;
+    vel.z += ((-mx * s + mz * c) * sp - vel.z) * ease;
+    const before = tmp.copy(pos);
+    tryMove(vel.x * dt, vel.z * dt);
+    if (dt > 0) { vel.x = (pos.x - before.x) / dt; vel.z = (pos.z - before.z) / dt; } // walls stop you, so they stop the speed too
+    bobAmt += ((moving ? 1 : 0) - bobAmt) * (1 - Math.exp(-dt * 8)); // the head bob fades in and out
     if (moving) {
-      const armed = combat.weapon !== null;
-      const sp = ((armed ? (sprint ? 4.8 : 3.2) * fast : sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
-      const s = Math.sin(yaw), c = Math.cos(yaw);
-      tryMove((mx * c + mz * s) * sp, (-mx * s + mz * c) * sp);
       stepPhase += dt * (sprint ? 11 : 8);
       if (stepPhase - lastStep > Math.PI) {
         lastStep = stepPhase;
@@ -1169,7 +1238,7 @@ function mount() {
 
     // --- the story, by where you are
     moveSlabs(dt);
-    shake *= 0.88;
+    shake *= Math.exp(-dt * 7.7);
     for (const it of items) if (!it.got && Math.hypot(pos.x - it.obj.position.x, pos.z - it.obj.position.z) < 1.1) takeItem(it);
     const here = charAt(pos.x, pos.z);
     if (phase === "puzzle" && here === "v") {
@@ -1188,6 +1257,8 @@ function mount() {
       if (W.killed >= W.total) { waveDone(); W.total = 0; }
     }
     if (W.pending && now >= W.nextWave) startWave(W.pending);
+    if (phase === "arena") updateArena(dt);
+    combat.chain(!!keys.KeyE && !still);
     if (phase === "boss" && W.total) {
       const hp = combat.bossHealth();
       $("bosshp").style.width = `${Math.max(0, hp) * 100}%`;
@@ -1285,12 +1356,15 @@ function mount() {
     if (sfx.ready()) sfx.setPos(sfx.it, sph.center);
   }
 
+  let eyeY = 0;
   function render(dt: number) {
-    camera.position.set(pos.x + (Math.random() - 0.5) * shake, floorAt(pos.x, pos.z) + EYE - fallen + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
-    kick *= 0.86;
-    camera.rotation.set(pitch + kick, yaw, Math.sin(stepPhase * 0.5) * 0.006 + combat.swingLean() * 0.05, "YXZ"); // lean into the swing
+    // decays per second, not per frame: the same feel at 30 and at 144 fps
+    eyeY += (floorAt(pos.x, pos.z) - eyeY) * (1 - Math.exp(-dt * 20)); // stairs: no snapping
+    camera.position.set(pos.x + (Math.random() - 0.5) * shake, eyeY + EYE - fallen + Math.sin(stepPhase) * 0.035 * bobAmt + (Math.random() - 0.5) * shake, pos.z);
+    kick *= Math.exp(-dt * 9);
+    camera.rotation.set(pitch + kick, yaw, Math.sin(stepPhase * 0.5) * 0.006 * bobAmt + combat.swingLean() * 0.05, "YXZ"); // lean into the swing
     // FOV punch on a hit, settles back fast
-    fovKick *= 0.82;
+    fovKick *= Math.exp(-dt * 12);
     const fov = 72 - fovKick;
     if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
     camera.updateMatrixWorld();
@@ -1300,6 +1374,7 @@ function mount() {
     // down in the halls it's brighter and redder: you need to see what's coming
     const below = phase !== "puzzle";
     hemi.intensity = (below ? 3.2 : 0.6) * (0.25 + 0.75 * flick);
+    if (phase === "arena") { hemi.intensity = 7; fog.density = 0.02; hemi.color.set(0xd8c8b8); hemi.groundColor.set(0x4a3a30); } // dev: see everything
     if (below && fog.density > 0.065) { fog.density = 0.065; hemi.color.set(0xa0503a); hemi.groundColor.set(0x2a140c); }
     if (S.active && running && !paused && G.t < 0 && AP.t < 0) updateStalker(dt);
     updateLife(dt, flick, dread, running && !paused);

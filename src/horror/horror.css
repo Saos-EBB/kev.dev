@@ -134,3 +134,9 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 #waves p { margin: 0; }
 #waves b { color: var(--sodium); font-variant-numeric: tabular-nums; }
 #fps { top: calc(64px + env(safe-area-inset-top, 0px)); }
+
+/* energy for chain lightning (drains while you hold E) + frost nova cooldown */
+#energy { left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; width: min(260px, calc(100% - 200px)); display: grid; gap: 4px; text-align: center; }
+#energy i { display: block; height: 8px; background: #00000099; border: 1px solid #b9a8ff; }
+#energy b { display: block; height: 100%; width: 100%; background: #b9a8ff; }
+#energy small { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--bone); text-shadow: 0 1px 6px #000; }
