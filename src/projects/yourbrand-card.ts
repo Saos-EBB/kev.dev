@@ -1,16 +1,17 @@
 // YourBrand's desktop card: its module graph from the engineering overlay
-// on the left, a phone with the app in the middle, the texts as tabs on the
-// right — first among them the step the ride is on. Scrolling over graph or
-// phone rides four flows through the graph (new tenant → login → swipe →
-// chat), the phone shows the app at that step; a node picks its step. The
-// graph's data (nodes, flows, texts) is the overlay's own and loads with it
-// once the card comes near the screen. The phone: scroll-phone.ts.
+// on the left, the shared phone with the app in the middle (scroll-phone.ts),
+// the texts as tabs on the right — first among them the step the ride is
+// on. While the card holds in the carousel, scrolling the page rides four
+// flows through the graph (new tenant → login → swipe → chat) and the phone
+// shows the app at that step; a node or a flow scrolls the page to its step.
+// The graph's data (nodes, flows, texts) is the overlay's own chunk.
 
 import type { EngFlow, EngProject } from "../engineering/types";
 import { esc, TENANT_MODULES, type ProjectCard } from "./project-cards";
 import { fitText } from "./big-cards";
 import { LANG, pick, type Lang } from "../i18n";
-import { paintStates, phoneStage, reduced, runPhone, wheelSteps } from "./scroll-phone";
+import { paintStates, phoneApp, reduced, type Phone } from "./scroll-phone";
+import { rideTo } from "./carousel";
 import "./yourbrand-card.css";
 
 const S: Record<string, Record<Lang, string>> = {
@@ -91,18 +92,21 @@ const screens = () => `
 
 type Panel = { kind: string; heading: string; body: string };
 
+// Scroll the ride takes, in carousel timeline units (~140 px per step).
+const RIDE_UNITS = 6.5;
+
 // The card; `tabs` renders the text tabs (big-cards.ts) with the flow first.
 export function ybCard(card: ProjectCard, head: string, tabs: (first: Panel) => string): string {
   const brand = rideTenant(card)?.color ?? card.accent;
   return `
-    <article class="pcard pcard--big pcard--yb pcard--phone" data-card="${esc(card.id)}" style="--pc: ${card.accent}; --brand: ${brand}">
+    <article class="pcard pcard--big pcard--yb pcard--phone" data-card="${esc(card.id)}" data-ride="${RIDE_UNITS}" style="--pc: ${card.accent}; --brand: ${brand}">
       ${head}
       <div class="yb">
         <section class="sp-box yb-graphbox">
           <p class="yb-head"><span>${esc(tx("graph"))}</span><span class="yb-flowname"></span></p>
           <div class="yb-graph"></div>
         </section>
-        ${phoneStage(`<div class="yb-app">${screens()}</div>`, "▮▮▮")}
+        <div class="sp-slot"></div>
         ${tabs({ kind: "flow", heading: tx("flow"), body: `<div class="yb-segs"></div><div class="yb-step" aria-live="polite"></div>` })}
       </div>
     </article>`;
@@ -112,20 +116,18 @@ export function ybCard(card: ProjectCard, head: string, tabs: (first: Panel) => 
 const rideTenant = (card: ProjectCard) =>
   card.tenants?.find((t) => t.modules.includes("matching") && t.modules.includes("chat") && t.name !== "YourBrand") ?? card.tenants?.[0];
 
-export function initYourBrand(root: HTMLElement, cards: ProjectCard[]) {
-  root.querySelectorAll<HTMLElement>(".pcard--yb").forEach((el) => {
-    const card = cards.find((c) => c.id === el.dataset.card);
-    if (!card) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        io.disconnect();
-        import("../engineering/data/yourbrand").then((m) => ride(el, card, m.yourbrand));
-      },
-      { rootMargin: "50%" },
-    );
-    io.observe(el);
+// The app on the shared phone.
+export const ybApp = (card: ProjectCard) =>
+  phoneApp(card.id, `<div class="yb-app" style="--brand: ${rideTenant(card)?.color ?? card.accent}">${screens()}</div>`);
+
+export function initYourBrand(el: HTMLElement, card: ProjectCard, phone: Phone) {
+  let at = 0;
+  let onRide = (_p: number) => {};
+  el.addEventListener("ride", (e) => {
+    at = (e as CustomEvent<number>).detail;
+    onRide(at);
   });
+  import("../engineering/data/yourbrand").then((m) => (onRide = ride(el, card, m.yourbrand, phone, at)));
 }
 
 interface Step {
@@ -136,17 +138,16 @@ interface Step {
 }
 
 const NS = "http://www.w3.org/2000/svg";
-const IDLE_MS = 4000; // untouched this long, the ride goes on by itself
-const AUTO_MS = 2600; // one step per this while it does
 const TENANT_MS = 1400; // the home screen's tenants, one per this
 
-function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
+// Sets the ride up; returns what to do with the carousel's ride position.
+function ride(el: HTMLElement, card: ProjectCard, P: EngProject, phone: Phone, at: number): (p: number) => void {
   const flows = RIDE.map((id) => P.flows.find((f) => f.id === id)!).filter(Boolean);
   const steps: Step[] = flows.flatMap((flow) =>
     flow.steps.map((s, k) => ({ flow, k, node: s.node, page: flow.id === "tenant" && k === flow.steps.length - 1 ? "home" : flow.id })),
   );
-  const stage = el.querySelector<HTMLElement>(".sp-stage")!;
-  const pages = [...stage.querySelectorAll<HTMLElement>(".sp-page")];
+  const app = document.querySelector<HTMLElement>(`.sp-app[data-app="${card.id}"]`)!;
+  const pages = [...app.querySelectorAll<HTMLElement>(".sp-page")];
   const host = el.querySelector<HTMLElement>(".yb-graph")!;
   const panel = el.querySelector<HTMLElement>(".big-panel[data-panel='flow']")!;
   const segs = el.querySelector<HTMLElement>(".yb-segs")!;
@@ -155,7 +156,13 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
   const tenants = card.tenants ?? [];
   const home = rideTenant(card);
   const brand = home?.color ?? card.accent;
-  el.querySelector(".yb-slug")!.textContent = home?.name.toLowerCase().replace(/\s+/g, "-") ?? "";
+  app.querySelector(".yb-slug")!.textContent = home?.name.toLowerCase().replace(/\s+/g, "-") ?? "";
+  const step = (p: number) => Math.round(p * (steps.length - 1));
+  // Jumps go through the page's scroll, so the ride and the page agree;
+  // without the carousel (reduced motion) they just go.
+  const jump = (i: number) => {
+    if (!rideTo(el, i / (steps.length - 1))) go(i);
+  };
 
   const layer = new Map(P.layers.map((l) => [l.id, l]));
   const nodes = new Map(P.nodes.map((n) => [n.id, n]));
@@ -269,7 +276,7 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
     .join("");
   segs.addEventListener("click", (e) => {
     const b = (e.target as Element).closest<HTMLElement>("[data-flow]");
-    if (b) go(steps.findIndex((s) => s.flow.id === b.dataset.flow));
+    if (b) jump(steps.findIndex((s) => s.flow.id === b.dataset.flow));
   });
   const showStep = () => {
     const s = steps[cur], st = s.flow.steps[s.k];
@@ -303,22 +310,22 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
   const wearTenant = (i: number) => {
     const t = tenants[i];
     if (!t) return;
-    el.style.setProperty("--brand", t.color);
-    el.querySelector(".yb-tname")!.textContent = t.name;
-    el.querySelector(".yb-tkind")!.textContent = t.kind;
-    el.querySelectorAll<HTMLElement>(".yb-mod").forEach((m) => m.classList.toggle("is-lit", t.modules.includes(m.dataset.m as never)));
+    wear(t.color);
+    app.querySelector(".yb-tname")!.textContent = t.name;
+    app.querySelector(".yb-tkind")!.textContent = t.kind;
+    app.querySelectorAll<HTMLElement>(".yb-mod").forEach((m) => m.classList.toggle("is-lit", t.modules.includes(m.dataset.m as never)));
   };
 
-  let lastPoke = -1e9, stepAt = 0;
-  const poke = () => (lastPoke = performance.now());
-  const ph = runPhone(stage, {
+  // The brand the app wears, on the card (graph, step) and on the phone.
+  const wear = (c: string) => [el, app].forEach((x) => x.style.setProperty("--brand", c));
+
+  phone.add(card.id, {
     palette: [brand, ...tenants.map((t) => t.color)],
+    bar: "▮▮▮",
     shift: () => cur * 0.07,
-    shown: poke,
+    shown: () => phone.rail(cur / (steps.length - 1), steps.length),
     frame: (now) => {
-      const still = reduced();
-      if (!still && now - lastPoke > IDLE_MS && now - stepAt > AUTO_MS) go(cur >= steps.length - 1 ? 0 : cur + 1, false);
-      if (steps[cur].page === "home" && !still && now - tenantAt > TENANT_MS) {
+      if (steps[cur].page === "home" && !reduced() && now - tenantAt > TENANT_MS) {
         tenantAt = now;
         tenantIdx = (tenantIdx + 1) % tenants.length;
         wearTenant(tenantIdx);
@@ -334,12 +341,10 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
     },
   });
 
-  function go(i: number, poked = true) {
+  function go(i: number) {
     i = Math.max(0, Math.min(steps.length - 1, i));
-    if (poked) poke();
-    ph.kick(i >= cur ? 8 : -8);
+    phone.kick(i >= cur ? 8 : -8);
     cur = i;
-    stepAt = performance.now();
     const s = steps[i];
     pages.forEach((p) => {
       p.classList.toggle("is-show", p.dataset.page === s.page);
@@ -349,15 +354,17 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
       tenantIdx = Math.max(0, tenants.indexOf(home!));
       tenantAt = performance.now();
       wearTenant(tenantIdx);
-    } else el.style.setProperty("--brand", brand);
-    el.querySelector(".yb-deck")!.classList.toggle("is-load", s.flow.id === "swipe" && s.k === 0);
-    el.querySelector(".yb-deck")!.classList.toggle("is-flash", s.flow.id === "swipe" && s.k === 1);
-    el.querySelector(".yb-count")!.textContent = `${s.flow.id === "swipe" && s.k >= 4 ? 19 : 20} / 20`;
-    el.querySelector(".yb-chead")!.classList.toggle("is-live", s.flow.id === "chat");
-    el.querySelectorAll(".yb-tabbar i").forEach((t, j) => t.classList.toggle("is-on", j === TABS[s.flow.id]));
+    } else wear(brand);
+    app.querySelector(".yb-deck")!.classList.toggle("is-load", s.flow.id === "swipe" && s.k === 0);
+    app.querySelector(".yb-deck")!.classList.toggle("is-flash", s.flow.id === "swipe" && s.k === 1);
+    app.querySelector(".yb-count")!.textContent = `${s.flow.id === "swipe" && s.k >= 4 ? 19 : 20} / 20`;
+    app.querySelector(".yb-chead")!.classList.toggle("is-live", s.flow.id === "chat");
+    app.querySelectorAll(".yb-tabbar i").forEach((t, j) => t.classList.toggle("is-on", j === TABS[s.flow.id]));
     el.querySelector(".yb-flowname")!.textContent = pick(s.flow.title);
-    ph.ripple();
-    ph.rail(i / (steps.length - 1), steps.length);
+    if (phone.current() === card.id) {
+      phone.ripple();
+      phone.rail(i / (steps.length - 1), steps.length);
+    }
     picked = null;
     paintGraph();
     showStep();
@@ -366,18 +373,19 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject) {
   // A node: its step in the running flow, else its first on the ride; one
   // off the ride says which flows it is in.
   const pick_ = (id: string) => {
-    poke();
     const s = steps[cur];
     const inFlow = steps.findIndex((x) => x.flow === s.flow && x.node === id);
     const j = inFlow >= 0 ? inFlow : steps.findIndex((x) => x.node === id);
     if (flowTab.getAttribute("aria-selected") !== "true") flowTab.click();
-    if (j >= 0) return go(j);
+    if (j >= 0) return jump(j);
     picked = id;
     paintGraph();
     showNode(id);
   };
 
-  wheelSteps([el.querySelector(".yb-graphbox")!, stage], () => [cur, steps.length], (dir) => go(cur + dir));
   new ResizeObserver(draw).observe(host);
-  go(0, false);
+  go(step(at));
+  return (p) => {
+    if (step(p) !== cur) go(step(p));
+  };
 }

@@ -20,7 +20,7 @@ import { initEngineering } from "./engineering";
 import { initCarousel } from "./projects/carousel";
 import { initCatalog, renderCatalog } from "./projects/catalog";
 import { initArcade, renderArcade } from "./projects/arcade";
-import { hasBigCard, initBigCards } from "./projects/big-cards";
+import { bigPhone, hasBigCard, initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
@@ -215,6 +215,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               </div>
             `))
               .join("")}
+            ${bigPhone(projectCards.filter((c) => c.group === "big"))}
           </div>`
     }
   </section>
@@ -627,7 +628,7 @@ if (LITE) {
   initArcade(projectsSection);
 }
 else {
-  initCarousel(projectsSection);
+  initCarousel(projectsSection, lenis);
   initBigCards(projectsSection, projectCards);
   const catalogSection = document.querySelector<HTMLElement>("#catalog")!;
   initCatalog(catalogSection, lenis);

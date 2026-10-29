@@ -5,7 +5,7 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 0.8fr) minmax(13rem, 0.5fr) minmax(0, 1fr);
+  grid-template-columns: var(--sp-cols);
   gap: 1.5rem;
 }
 

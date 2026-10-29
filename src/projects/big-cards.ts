@@ -6,9 +6,10 @@
 
 import { cardBodies, esc, type ProjectCard } from "./project-cards";
 import { editor, orders, ramp, terminal, viewport } from "./project-visuals";
-import { initYourBrand, ybCard } from "./yourbrand-card";
-import { initTschobbo, tbCard } from "./tschobbo-card";
-import { initPhones, phone } from "./kevdev-phone";
+import { initYourBrand, ybApp, ybCard } from "./yourbrand-card";
+import { initTschobbo, tbApp, tbCard } from "./tschobbo-card";
+import { initKevApp, kevApp } from "./kevdev-phone";
+import { phoneStage, runPhone } from "./scroll-phone";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
 
@@ -48,12 +49,18 @@ function textTabs(card: ProjectCard, extra: Panel[] = [], edit = (p: Panel) => p
 // page's own sections as tabs over one table — what each does, the files
 // behind it, what of it is reusable and, where there are some, pros and
 // cons. Scrolling the phone picks the tab, a tab scrolls the phone.
-function partsCard(card: ProjectCard, head: string): string {
+// The card's parts, named after the page's sections where they have no
+// name of their own.
+function cardParts(card: ProjectCard) {
   const story = UI.vizStory;
-  const parts = Array.from({ length: Math.max(story.length, card.parts?.length ?? 0) }, (_, i) => {
+  return Array.from({ length: Math.max(story.length, card.parts?.length ?? 0) }, (_, i) => {
     const part = card.parts?.[i] ?? { does: "", files: [], reuse: "" };
     return { ...part, name: part.name ?? story[i]?.[0] ?? "", line: part.line ?? story[i]?.[1] ?? "" };
   });
+}
+
+function partsCard(card: ProjectCard, head: string): string {
+  const parts = cardParts(card);
   const pid = (i: number) => `parts-${esc(card.id)}-${i}`;
   const list = (items?: string[]) => (items?.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
   return `
@@ -61,7 +68,7 @@ function partsCard(card: ProjectCard, head: string): string {
       ${head.replace("</header>", `<span class="parts-here" aria-hidden="true">${esc(UI.touchHere)}</span></header>`)}
       <div class="parts">
         ${textTabs(card)}
-        ${phone(parts.map((p) => p.name))}
+        <div class="sp-slot"></div>
         <div class="parts-side">
           <p class="parts-head">${esc(UI.partsHead)}</p>
           <section class="parts-box" data-tabs>
@@ -69,7 +76,7 @@ function partsCard(card: ProjectCard, head: string): string {
               ${parts
                 .map(
                   (p, i) =>
-                    `<button type="button" role="tab" id="${pid(i)}-tab" aria-controls="${pid(i)}" aria-selected="${i === 0}" data-tab="p${i}"><i>${String(i + 1).padStart(2, "0")}</i> ${esc(p.name)}</button>`,
+                    `<button type="button" role="tab" id="${pid(i)}-tab" aria-controls="${pid(i)}" aria-selected="${i === 0}" data-tab="p${i}" title="${esc(p.name)}"><i>${String(i + 1).padStart(2, "0")}</i> <span>${esc(p.name)}</span></button>`,
                 )
                 .join("")}
             </div>
@@ -124,12 +131,24 @@ export function fitText(el: HTMLElement) {
   }
 }
 
-// The phones, the text fitting and the tab boxes. The cards are rendered
-// once, so nothing to tear down.
+// The phone the big cards share (scroll-phone.ts), with an app for each
+// card that has one; it goes into the carousel next to them (main.ts).
+const APPS: Partial<Record<ProjectCard["layout"], (card: ProjectCard) => string>> = {
+  blueprint: ybApp,
+  inbox: tbApp,
+  storyboard: (card) => kevApp(card.id, cardParts(card).map((p) => p.name)),
+};
+
+export function bigPhone(cards: ProjectCard[]): string {
+  const apps = cards.map((c) => APPS[c.layout]?.(c) ?? "").join("");
+  return apps ? phoneStage(apps) : "";
+}
+
+// The shared phone, the text fitting and the tab boxes. The cards are
+// rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
-  initYourBrand(root, cards);
-  initTschobbo(root);
-  initPhones(root);
+  const stage = root.querySelector<HTMLElement>(".carousel-stage > .sp-stage");
+  if (stage) initSharedPhone(root, stage, cards);
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
   boxes.forEach((box) => sizes.observe(box));
@@ -147,6 +166,44 @@ export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
       panel.hidden = panel.dataset.panel !== tab.dataset.tab;
     });
   });
+}
+
+// The phone sits in the current card's slot: measured with the card and its
+// group at rest (their transforms off for the moment of reading — nothing
+// paints in between), so it stands still while the cards slide.
+function initSharedPhone(root: HTMLElement, stage: HTMLElement, cards: ProjectCard[]) {
+  const phone = runPhone(stage);
+  root.querySelectorAll<HTMLElement>(".pcard--big").forEach((el) => {
+    const card = cards.find((c) => c.id === el.dataset.card);
+    if (!card || !el.querySelector(".sp-slot")) return;
+    if (card.layout === "blueprint") initYourBrand(el, card, phone);
+    else if (card.layout === "inbox") initTschobbo(el, phone);
+    else if (card.layout === "storyboard") initKevApp(el, phone);
+  });
+
+  let current: HTMLElement | null = null;
+  const place = () => {
+    if (!current) return;
+    const group = current.closest<HTMLElement>(".carousel-project");
+    const slot = current.querySelector<HTMLElement>(".sp-slot")!;
+    const held = [group?.style.transform ?? "", current.style.transform];
+    if (group) group.style.transform = "translate(-50%, -50%)";
+    current.style.transform = "translate(-50%, -50%)";
+    const r = slot.getBoundingClientRect();
+    const p = stage.parentElement!.getBoundingClientRect();
+    if (group) group.style.transform = held[0];
+    current.style.transform = held[1];
+    stage.style.setProperty("--sp-x", `${r.left - p.left + r.width / 2}px`);
+    stage.style.setProperty("--sp-y", `${r.top - p.top + r.height / 2}px`);
+    stage.style.setProperty("--sp-w", `${r.width}px`);
+    stage.style.setProperty("--sp-h", `${r.height}px`);
+  };
+  root.addEventListener("bigcard", (e) => {
+    current = (e as CustomEvent<HTMLElement>).detail;
+    phone.use(current.dataset.card!);
+    place();
+  });
+  window.addEventListener("resize", place);
 }
 
 // AniScript: a player with its six features pinned where they act, and

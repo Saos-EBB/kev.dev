@@ -1,17 +1,18 @@
-// TschoBBo's desktop card: the pipeline as a track on the left, a phone
-// with an app for the bot in the middle — an illustration, the bot itself
-// runs in a terminal and says so under the phone — and the texts as tabs on
-// the right, first among them the station the ride is on. Scrolling over
-// track or phone rides the five stations once (each plays its steps by
-// itself), then the local AI step by step. Stations and steps are the
-// engineering overlay's flows, loaded with it once the card comes near the
-// screen. The phone: scroll-phone.ts.
+// TschoBBo's desktop card: the pipeline as a track on the left, the shared
+// phone (scroll-phone.ts) with an app for the bot in the middle — an
+// illustration, the bot itself runs in a terminal and says so under the
+// phone — and the texts as tabs on the right, first among them the station
+// the ride is on. While the card holds in the carousel, scrolling the page
+// rides the five stations once (each plays its steps by itself), then the
+// local AI step by step. Stations and steps are the engineering overlay's
+// flows, from its own chunk.
 
 import type { EngFlow, EngProject, EngStep } from "../engineering/types";
 import { esc, type ProjectCard } from "./project-cards";
 import { fitText } from "./big-cards";
 import { LANG, pick, type Lang } from "../i18n";
-import { paintStates, phoneStage, reduced, runPhone, wheelSteps } from "./scroll-phone";
+import { paintStates, phoneApp, reduced, type Phone } from "./scroll-phone";
+import { rideTo } from "./carousel";
 import "./tschobbo-card.css";
 
 const S = {
@@ -135,55 +136,58 @@ const screens = (mascot: string) => {
 
 type Panel = { kind: string; heading: string; body: string };
 
+// Scroll the ride takes, in carousel timeline units (~250 px per step).
+const RIDE_UNITS = 4.5;
+
 // The card; `tabs` renders the text tabs (big-cards.ts) with the station first.
 export function tbCard(card: ProjectCard, head: string, tabs: (first: Panel) => string): string {
   return `
-    <article class="pcard pcard--big pcard--tb pcard--phone" data-card="${esc(card.id)}" style="--pc: ${card.accent}; --brand: ${card.accent}">
+    <article class="pcard pcard--big pcard--tb pcard--phone" data-card="${esc(card.id)}" data-ride="${RIDE_UNITS}" style="--pc: ${card.accent}; --brand: ${card.accent}">
       ${head}
       <div class="tb">
         <section class="sp-box tb-trackbox">
           <p class="tb-boxhead"><span>${esc(tx("pipeline"))}</span><span class="tb-count"></span></p>
           <ol class="tb-track"></ol>
         </section>
-        ${phoneStage(`<div class="tb-app">${screens(card.mascot?.src ?? "")}</div>`, "▮▮▮", esc(tx("note")))}
+        <div class="sp-slot"></div>
         ${tabs({ kind: "station", heading: tx("pipeline"), body: `<div class="tb-info" aria-live="polite"></div>` })}
       </div>
     </article>`;
 }
 
-export function initTschobbo(root: HTMLElement) {
-  root.querySelectorAll<HTMLElement>(".pcard--tb").forEach((el) => {
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        io.disconnect();
-        import("../engineering/data/tschobbo").then((m) => ride(el, m.tschobbo));
-      },
-      { rootMargin: "50%" },
-    );
-    io.observe(el);
+// The app on the shared phone.
+export const tbApp = (card: ProjectCard) =>
+  phoneApp(card.id, `<div class="tb-app" style="--brand: ${card.accent}">${screens(card.mascot?.src ?? "")}</div>`);
+
+export function initTschobbo(el: HTMLElement, phone: Phone) {
+  let at = 0;
+  let onRide = (_p: number) => {};
+  el.addEventListener("ride", (e) => {
+    at = (e as CustomEvent<number>).detail;
+    onRide(at);
   });
+  import("../engineering/data/tschobbo").then((m) => (onRide = ride(el, m.tschobbo, phone, at)));
 }
 
 type Step = { flow: EngFlow; page: string; k: number; ai?: EngStep };
 
-const IDLE_MS = 4000; // untouched this long, the ride goes on by itself
 const AUTO_MS = 1250; // a station's own steps, one per this
-const AI_AUTO_MS = 2600; // the local AI's steps when the ride goes by itself
 
-function ride(el: HTMLElement, P: EngProject) {
+// Sets the ride up; returns what to do with the carousel's ride position.
+function ride(el: HTMLElement, P: EngProject, phone: Phone, at: number): (p: number) => void {
   const flow = (id: string) => P.flows.find((f) => f.id === id)!;
   const steps: Step[] = [
     ...STATIONS.map((id) => ({ flow: flow(id), page: id, k: 0 })),
     ...AI_STEPS.map(([id, i], k) => ({ flow: flow(id), page: "ai", k, ai: flow(id).steps[i] })),
   ];
   const aiNodes = new Set(P.nodes.filter((n) => n.layer === "ai").map((n) => n.id));
-  const stage = el.querySelector<HTMLElement>(".sp-stage")!;
-  const pages = [...stage.querySelectorAll<HTMLElement>(".sp-page")];
+  const id = el.dataset.card!;
+  const app = document.querySelector<HTMLElement>(`.sp-app[data-app="${id}"]`)!;
+  const pages = [...app.querySelectorAll<HTMLElement>(".sp-page")];
   const track = el.querySelector<HTMLElement>(".tb-track")!;
   const info = el.querySelector<HTMLElement>(".tb-info")!;
   const panel = el.querySelector<HTMLElement>(".big-panel[data-panel='station']")!;
-  const toast = el.querySelector<HTMLElement>(".tb-toast")!;
+  const toast = app.querySelector<HTMLElement>(".tb-toast")!;
   const count = el.querySelector<HTMLElement>(".tb-count")!;
   const href = (f: EngFlow) => `#eng/tschobbo/${f.id}`;
 
@@ -196,11 +200,10 @@ function ride(el: HTMLElement, P: EngProject) {
     .join("");
   track.addEventListener("click", (e) => {
     const b = (e.target as Element).closest<HTMLElement>("[data-i]");
-    if (b) go(Number(b.dataset.i));
+    if (b && !rideTo(el, Number(b.dataset.i) / (steps.length - 1))) go(Number(b.dataset.i));
   });
 
-  let cur = 0, sub = 0, subAt = 0, lastPoke = -1e9, stepAt = 0;
-  const poke = () => (lastPoke = performance.now());
+  let cur = 0, sub = 0, subAt = 0;
 
   // A station plays its own steps; the toast names the one it's on.
   const paintSub = () => {
@@ -215,29 +218,26 @@ function ride(el: HTMLElement, P: EngProject) {
     count.textContent = `${tx(s.page as (typeof STATIONS)[number])} · ${sub + 1} / ${s.flow.steps.length}`;
   };
 
-  const ph = runPhone(stage, {
+  phone.add(id, {
     palette: ["#9d57ff", ...FIT, "#cd57ff"],
+    bar: "▮▮▮",
+    note: tx("note"),
     shift: () => cur * 0.07,
-    shown: poke,
+    shown: () => phone.rail(cur / (steps.length - 1), steps.length),
     frame: (now) => {
-      if (reduced()) return;
       const s = steps[cur];
-      if (now - lastPoke > IDLE_MS && now - stepAt > (s.ai ? AI_AUTO_MS : AUTO_MS * s.flow.steps.length))
-        go(cur >= steps.length - 1 ? 0 : cur + 1, false);
-      else if (!s.ai && now - subAt > AUTO_MS) {
-        subAt = now;
-        sub = (sub + 1) % s.flow.steps.length;
-        paintSub();
-      }
+      if (reduced() || s.ai || now - subAt < AUTO_MS) return;
+      subAt = now;
+      sub = (sub + 1) % s.flow.steps.length;
+      paintSub();
     },
   });
 
-  function go(i: number, poked = true) {
+  function go(i: number) {
     i = Math.max(0, Math.min(steps.length - 1, i));
-    if (poked) poke();
-    ph.kick(i >= cur ? 8 : -8);
+    phone.kick(i >= cur ? 8 : -8);
     cur = i;
-    stepAt = subAt = performance.now();
+    subAt = performance.now();
     const s = steps[i];
     pages.forEach((p) => p.classList.toggle("is-show", p.dataset.page === s.page));
     track.querySelectorAll<HTMLElement>("[data-i]").forEach((b) => {
@@ -245,12 +245,12 @@ function ride(el: HTMLElement, P: EngProject) {
       b.parentElement!.classList.toggle("is-on", j === i);
       b.parentElement!.classList.toggle("is-done", j < i);
     });
-    el.querySelectorAll(".tb-tabbar i").forEach((t, j) => t.classList.toggle("is-on", !s.ai && j === i));
+    app.querySelectorAll(".tb-tabbar i").forEach((t, j) => t.classList.toggle("is-on", !s.ai && j === i));
     if (s.ai) {
       paintStates(pages.find((p) => p.dataset.page === "ai")!, s.k);
-      el.querySelector(".tb-kpower")!.classList.toggle("is-on", s.k >= 1);
-      el.querySelector(".tb-kram")!.classList.toggle("is-swap", s.k >= 3);
-      el.querySelectorAll(".tb-kkinds span").forEach((x, j) => x.classList.toggle("is-a", s.k === 5 && j === 0));
+      app.querySelector(".tb-kpower")!.classList.toggle("is-on", s.k >= 1);
+      app.querySelector(".tb-kram")!.classList.toggle("is-swap", s.k >= 3);
+      app.querySelectorAll(".tb-kkinds span").forEach((x, j) => x.classList.toggle("is-a", s.k === 5 && j === 0));
       toast.textContent = pick(s.ai.title);
       count.textContent = `${tx("ai")} · ${s.k + 1} / ${AI_STEPS.length}`;
       info.innerHTML = `
@@ -268,11 +268,16 @@ function ride(el: HTMLElement, P: EngProject) {
       sub = reduced() ? s.flow.steps.length - 1 : 0;
       paintSub();
     }
-    ph.ripple();
-    ph.rail(i / (steps.length - 1), steps.length);
+    if (phone.current() === id) {
+      phone.ripple();
+      phone.rail(i / (steps.length - 1), steps.length);
+    }
     fitText(panel);
   }
 
-  wheelSteps([el.querySelector(".tb-trackbox")!, stage], () => [cur, steps.length], (dir) => go(cur + dir));
-  go(0, false);
+  const step = (p: number) => Math.round(p * (steps.length - 1));
+  go(step(at));
+  return (p) => {
+    if (step(p) !== cur) go(step(p));
+  };
 }

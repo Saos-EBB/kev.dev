@@ -29,6 +29,7 @@
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import type Lenis from "lenis";
 import { TIMINGS } from "../timings";
 import { viewportHeight } from "../viewport";
 
@@ -169,7 +170,20 @@ const MOBILE_TILT_SCALE = 0.6;
 // already arrived, this just sells "landing" one at a time.
 const CARD_ENTRY_VW = 6;
 
-export function initCarousel(section: HTMLElement) {
+// The big cards with a ride (data-ride, in timeline units): while one
+// holds still, scrolling runs its ride from 0 to 1 — the card hears it as
+// a "ride" event (detail: 0…1). rideTo scrolls the page to a point of it.
+const rides = new Map<HTMLElement, { start: number; dur: number }>();
+let scrollToTime: ((time: number) => void) | null = null;
+
+export function rideTo(card: HTMLElement, p: number): boolean {
+  const ride = rides.get(card);
+  if (!ride || !scrollToTime) return false;
+  scrollToTime(ride.start + p * ride.dur);
+  return true;
+}
+
+export function initCarousel(section: HTMLElement, lenis: Lenis) {
   const projectGroups = Array.from(
     section.querySelectorAll<HTMLElement>(".carousel-project"),
   );
@@ -228,6 +242,8 @@ export function initCarousel(section: HTMLElement) {
   // Timeline span of each project category ("big", "tools", "along"):
   // from its first project's slide-in to its last one's slide-out.
   const spans = new Map<string, { start: number; end: number }>();
+  // The cards that hold the shared phone (scroll-phone.ts), with their span.
+  const phoned: { card: HTMLElement; start: number; end: number }[] = [];
 
   projectGroups.forEach((group, i) => {
     const cards = Array.from(
@@ -266,21 +282,31 @@ export function initCarousel(section: HTMLElement) {
       duration: reveal.duration,
       ease: reveal.ease,
       onUpdate: onSlide,
-    })
-      .to(cards, {
-        x: "0vw",
-        opacity: 1,
-        duration: cardReveal.duration,
-        ease: cardReveal.ease,
-        stagger: cardReveal.staggerEach,
-      })
-      .to({}, { duration: holdUnits })
-      .to(group, {
-        x: `${-SLIDE_VW}vw`,
-        duration: clear.duration,
-        ease: clear.ease,
-        onUpdate: onSlide,
+    }).to(cards, {
+      x: "0vw",
+      opacity: 1,
+      duration: cardReveal.duration,
+      ease: cardReveal.ease,
+      stagger: cardReveal.staggerEach,
+    });
+    const rideUnits = Number(cards[0].dataset.ride ?? 0);
+    if (rideUnits) {
+      const ride = { p: 0 };
+      rides.set(cards[0], { start: tl.duration(), dur: rideUnits });
+      tl.to(ride, {
+        p: 1,
+        duration: rideUnits,
+        ease: "none",
+        onUpdate: () => cards[0].dispatchEvent(new CustomEvent("ride", { detail: ride.p })),
       });
+    }
+    tl.to({}, { duration: holdUnits }).to(group, {
+      x: `${-SLIDE_VW}vw`,
+      duration: clear.duration,
+      ease: clear.ease,
+      onUpdate: onSlide,
+    });
+    if (cards[0].querySelector(".sp-slot")) phoned.push({ card: cards[0], start, end: tl.duration() });
     const key = group.dataset.group ?? "";
     spans.set(key, { start: spans.get(key)?.start ?? start, end: tl.duration() });
   });
@@ -318,7 +344,26 @@ export function initCarousel(section: HTMLElement) {
     );
   }
 
-  ScrollTrigger.create({
+  // The shared phone flies in with the first of its cards and out with the
+  // last; in between the current card is the one whose span the timeline is
+  // in, announced to the section as "bigcard" (detail: the card).
+  const phone = section.querySelector<HTMLElement>(".carousel-stage > .sp-stage");
+  if (phone && phoned.length) {
+    const first = phoned[0], last = phoned[phoned.length - 1];
+    gsap.set(phone, { autoAlpha: 0, y: "35vh", rotation: -16, scale: 0.6 });
+    tl.to(phone, { autoAlpha: 1, y: 0, rotation: 0, scale: 1, duration: reveal.duration, ease: "back.out(1.4)" }, first.start);
+    tl.to(phone, { autoAlpha: 0, y: "-35vh", rotation: 16, scale: 0.6, duration: clear.duration, ease: "power2.in" }, last.end - clear.duration);
+    let current: HTMLElement | null = null;
+    tl.eventCallback("onUpdate", () => {
+      const t = tl.time();
+      const at = phoned.find((x) => t < x.end) ?? last;
+      if (at.card === current) return;
+      current = at.card;
+      section.dispatchEvent(new CustomEvent("bigcard", { detail: current }));
+    });
+  }
+
+  const st = ScrollTrigger.create({
     trigger: section,
     start: "top top",
     end: `+=${tl.duration() * scrollPerCard + viewportHeight()}`,
@@ -326,4 +371,5 @@ export function initCarousel(section: HTMLElement) {
     scrub,
     animation: tl,
   });
+  scrollToTime = (time) => lenis.scrollTo(st.start + (time / tl.duration()) * (st.end - st.start), { duration: 1.2 });
 }

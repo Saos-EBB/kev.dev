@@ -25,9 +25,15 @@
   font-size: var(--fs-tiny);
 }
 
-/* Seven tabs: each as wide as its name, the rest of the row shared. */
+/* Each tab as wide as what it shows, the rest of the row shared. */
 .pcard--parts .parts-tabbar {
   display: flex;
+}
+
+/* Seven tabs beside the phone: the number for each, the name for the one
+   that's open. */
+.pcard--parts .parts-tabbar button:not([aria-selected="true"]) span {
+  display: none;
 }
 
 .pcard--parts .parts-tabbar button {
@@ -236,6 +242,44 @@
 }
 
 .sp-page.is-show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Every phone card: its two sides around the slot the phone stands in, the
+   slot in the middle so it's in the same place on all of them. */
+.pcard--phone {
+  --sp-cols: minmax(0, 1fr) clamp(13rem, 17vw, 16rem) minmax(0, 1fr);
+}
+
+.parts:has(.sp-slot) {
+  grid-template-columns: var(--sp-cols);
+}
+
+/* The phone in the carousel, over the current card's slot (big-cards.ts
+   measures it); the carousel brings it in and out. */
+.carousel-stage > .sp-stage {
+  --pc: var(--note-9);
+  position: absolute;
+  z-index: 50;
+  left: var(--sp-x, 50%);
+  top: var(--sp-y, 50%);
+  width: var(--sp-w, 15rem);
+  height: var(--sp-h, 60vh);
+  translate: -50% -50%;
+  transition: left 0.6s, top 0.6s, width 0.6s, height 0.6s;
+}
+
+/* One app on the phone at a time. */
+.sp-app {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s, visibility 0.4s;
+}
+
+.sp-app.is-show {
   opacity: 1;
   visibility: visible;
 }

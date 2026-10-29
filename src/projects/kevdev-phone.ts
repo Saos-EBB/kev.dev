@@ -1,12 +1,11 @@
-// kev.dev's card: a phone in the middle with this page in skeletons, one
-// screen per section (hero cloth, elevator, the bench, falling letters,
+// kev.dev's app on the shared phone (scroll-phone.ts): this page in
+// skeletons, one screen per section (hero cloth, elevator, the bench, falling letters,
 // the legal overlay, the languages, the phone version). Scrolling it picks the matching tab of
 // the parts table beside it, a tab scrolls it there; left alone it scrolls
 // itself. The skeletons take the project note colors in a wave that moves
-// with time and scroll, a ring of light runs down at each section change
-// (the phone itself: scroll-phone.ts).
+// with time and scroll, a ring of light runs down at each section change.
 
-import { phoneStage, reduced, runPhone } from "./scroll-phone";
+import { phoneApp, reduced, type Phone } from "./scroll-phone";
 import "./kevdev-phone.css";
 
 const sk = (cls = "", style = "") => `<i class="sp-sk${cls ? ` ${cls}` : ""}" data-w${style ? ` style="${style}"` : ""}></i>`;
@@ -41,9 +40,10 @@ const SCREENS = [
    <span class="kp-frames">${rep(18, () => sk())}</span>`,
 ];
 
-// The phone's markup, one screen per section name (the parts' names).
-export function phone(names: string[]): string {
-  return phoneStage(
+// The app, one screen per section name (the parts' names).
+export function kevApp(id: string, names: string[]): string {
+  return phoneApp(
+    id,
     `<div class="kp-scroll">
       ${names
         .map(
@@ -55,37 +55,22 @@ export function phone(names: string[]): string {
         )
         .join("")}
     </div>`,
-    "kev.dev",
   );
 }
 
 const IDLE_MS = 3500; // untouched this long, the phone scrolls itself
 
-export function initPhones(root: HTMLElement) {
-  root.querySelectorAll<HTMLElement>(".pcard--parts .sp-stage").forEach(initPhone);
-}
-
-function initPhone(stage: HTMLElement) {
-  const card = stage.closest<HTMLElement>(".pcard")!;
-  const scroller = stage.querySelector<HTMLElement>(".kp-scroll")!;
-  const secs = [...scroller.querySelectorAll<HTMLElement>(".kp-sec")];
-  const tabs = [...card.querySelectorAll<HTMLElement>(".parts-tabbar [data-tab]")];
-  const threads = [...stage.querySelectorAll<SVGPathElement>(".kp-cloth path")];
-  const floors = [...stage.querySelectorAll<HTMLElement>(".kp-floors .sp-sk")];
-  const lines = [...stage.querySelectorAll<HTMLElement>(".kp-lines .sp-sk")];
-  const langs = [...stage.querySelectorAll<HTMLElement>(".kp-langs b")];
-  const bars = [...stage.querySelectorAll<HTMLElement>(".kp-frames .sp-sk")];
-
-  let active = -1;
-  let jumping = -1; // a tab's scroll on its way: don't pick tabs on the way past
-  let lastPoke = -1e9;
+export function initKevApp(card: HTMLElement, phone: Phone) {
+  const id = card.dataset.card!;
   let lastTop = 0;
+  let lastPoke = -1e9;
   const poke = () => (lastPoke = performance.now());
 
   // The note colors, the same loop as the project notes.
   const css = getComputedStyle(document.documentElement);
-  const ph = runPhone(stage, {
+  const app = phone.add(id, {
     palette: [1, 2, 3, 4, 5, 9, 6].map((n) => css.getPropertyValue(`--note-${n}`).trim()),
+    bar: "kev.dev",
     shift: () => scroller.scrollTop * 0.00045,
     shown: poke,
     frame: (now, t) => {
@@ -100,9 +85,9 @@ function initPhone(stage: HTMLElement) {
       }
 
       const top = scroller.scrollTop;
-      ph.kick(Math.max(-12, Math.min(12, top - lastTop)));
+      phone.kick(Math.max(-12, Math.min(12, top - lastTop)));
       lastTop = top;
-      ph.rail(top / max, secs.length);
+      phone.rail(top / max, secs.length);
       const at = Math.min(secs.length - 1, Math.round(top / h));
       if (jumping < 0 || at === jumping) {
         jumping = -1;
@@ -132,11 +117,22 @@ function initPhone(stage: HTMLElement) {
     },
   });
 
+  const scroller = app.querySelector<HTMLElement>(".kp-scroll")!;
+  const secs = [...scroller.querySelectorAll<HTMLElement>(".kp-sec")];
+  const tabs = [...card.querySelectorAll<HTMLElement>(".parts-tabbar [data-tab]")];
+  const threads = [...app.querySelectorAll<SVGPathElement>(".kp-cloth path")];
+  const floors = [...app.querySelectorAll<HTMLElement>(".kp-floors .sp-sk")];
+  const lines = [...app.querySelectorAll<HTMLElement>(".kp-lines .sp-sk")];
+  const langs = [...app.querySelectorAll<HTMLElement>(".kp-langs b")];
+  const bars = [...app.querySelectorAll<HTMLElement>(".kp-frames .sp-sk")];
+  let active = -1;
+  let jumping = -1; // a tab's scroll on its way: don't pick tabs on the way past
+
   const show = (i: number) => {
     if (i === active) return;
     active = i;
     secs.forEach((s, k) => s.classList.toggle("is-in", k === i));
-    ph.ripple();
+    phone.ripple();
     // The tab box's own click handler (initBigCards) switches the panel.
     if (tabs[i]?.getAttribute("aria-selected") !== "true") tabs[i]?.click();
   };

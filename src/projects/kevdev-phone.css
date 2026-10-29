@@ -1,10 +1,6 @@
 /* kev.dev's phone (kevdev-phone.ts): this page in skeletons on the shared
    phone (scroll-phone.css), one screen per section. */
 
-.parts:has(.sp-stage) {
-  grid-template-columns: minmax(0, 0.7fr) minmax(13rem, 0.5fr) minmax(0, 1.3fr);
-}
-
 
 .kp-scroll {
   position: absolute;
