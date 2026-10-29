@@ -20,7 +20,6 @@ export function phoneStage(apps: string): string {
   return `
     <div class="sp-stage">
       <span class="sp-sun" aria-hidden="true"></span>
-      <span class="sp-floor" aria-hidden="true"></span>
       <div class="sp-rig" aria-hidden="true">
         ${[16, 12, 8, 4].map((z) => `<span class="sp-slab" style="transform: translateZ(-${z}px)"></span>`).join("")}
         <span class="sp-btn" style="top: 22%; height: 8%"></span>

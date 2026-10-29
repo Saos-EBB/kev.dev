@@ -1,5 +1,5 @@
 /* The phone the three big cards share (scroll-phone.ts): a phone in 3D
-   over a moving floor grid. --c / --a on every [data-w] come from the
+   with a glow behind it. --c / --a on every [data-w] come from the
    wave in the script; --wave is the color at the middle of the screen, for
    the glow around it. The boxes beside it take the phone's shape. */
 
@@ -77,27 +77,6 @@
   translate: -50% -50%;
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--wave) 30%, transparent), transparent 62%);
-}
-
-/* The floor: the page's grid, laid down and running toward you. */
-.sp-floor {
-  position: absolute;
-  left: -60%;
-  right: -60%;
-  bottom: -3rem;
-  height: 18rem;
-  transform: rotateX(78deg);
-  transform-origin: 50% 100%;
-  background:
-    linear-gradient(color-mix(in srgb, var(--wave) 45%, transparent) 1px, transparent 1px) 0 0 / 40px 40px,
-    linear-gradient(90deg, color-mix(in srgb, var(--wave) 45%, transparent) 1px, transparent 1px) 0 0 / 40px 40px;
-  mask: radial-gradient(ellipse 50% 70% at 50% 60%, #000 10%, transparent 70%);
-  opacity: 0.6;
-  animation: sp-floor 4s linear infinite;
-}
-
-@keyframes sp-floor {
-  to { background-position: 0 40px, 0 40px; }
 }
 
 /* The phone: a slab stacked a few times for its depth, the face on top. */
@@ -256,19 +235,19 @@
   grid-template-columns: var(--sp-cols);
 }
 
-/* The phone in the pinned projects section, in the middle of the screen
-   (the section is pinned at its top, so 50vh is the screen's middle) and
-   over everything else there, the fixed headline (z-index 50) too; the
-   carousel brings it in and out. The cards leave their middle column free
-   for it. */
+/* The phone in the pinned projects section, over the cards' bodies: the
+   cards are centered below the fixed headline (style.css, the same
+   --projects-title-h), their bodies a head's height lower. Above everything
+   else there, the headline (z-index 50) too; the carousel brings it in and
+   out. The cards leave their middle column free for it. */
 .projects > .sp-stage {
   --pc: var(--note-9);
   position: absolute;
   z-index: 60;
   left: 50%;
-  top: 50vh;
+  top: calc(50vh + var(--projects-title-h, 0px) / 2 + 4.75rem);
   width: clamp(13rem, 17vw, 16rem);
-  height: min(64vh, 36rem);
+  height: min(36rem, calc(100vh - var(--projects-title-h, 12rem) - 13.5rem));
   translate: -50% -50%;
   overflow: visible;
 }
@@ -334,7 +313,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root:not(.force-motion) .sp-floor,
   :root:not(.force-motion) .sp-hl::after {
     animation: none;
   }
