@@ -104,9 +104,7 @@ export function pass(name: string, pan: number) {
       noiseBurst(c, v, t, 0.08, 3000, 2, 0.4);
       partial(c, v, 610, t + 0.12, 0.25, 0.12);
       break;
-    case "ball":
-    case "poop": // skull variant (src/skull-site/throwables-skull.ts)
-      // two bounces: a sine thump dropping in pitch
+    case "poop": // two wet thumps: a sine dropping in pitch
       [0, 0.28].forEach((d, i) => {
         const o = c.ac.createOscillator();
         const g = c.ac.createGain();
@@ -144,12 +142,7 @@ export function pass(name: string, pan: number) {
       lfo.stop(t + 1.05);
       break;
     }
-    case "skull": // hollow bony chatter: quick clicks
-      for (let i = 0; i < 6; i++) noiseBurst(c, v, t + i * 0.055, 0.04, 900 + Math.random() * 500, 6, 0.6);
-      partial(c, v, 180, t, 0.3, 0.25, "triangle");
-      break;
-    case "knife":
-    case "axe": { // axe: skull variant; swish + blade ring ("schwing")
+    case "axe": { // swish + blade ring ("schwing")
       const s = noiseSrc(c);
       const f = c.ac.createBiquadFilter();
       const g = c.ac.createGain();
@@ -166,9 +159,5 @@ export function pass(name: string, pan: number) {
       [3150, 4720].forEach((fr, i) => partial(c, v, fr, t + 0.08, 0.9, 0.08 / (i + 1)));
       break;
     }
-    case "teapot": // porcelain clink, lid rattling once
-      [1760, 2640, 4100].forEach((f, i) => partial(c, v, f, t, 0.5 - i * 0.12, 0.18 / (i + 1)));
-      [1980, 2970].forEach((f, i) => partial(c, v, f, t + 0.14, 0.3, 0.1 / (i + 1)));
-      break;
   }
 }
