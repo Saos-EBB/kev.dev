@@ -77,9 +77,11 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
   const data = await loadData(opts.pointsScale ?? 1);
   const group = new THREE.Group();
   // Fitted into craniumCut01's vault (side view against the skull dots):
-  // back to the occiput, a little taller, frontal lobe behind the forehead.
+  // back to the occiput, a little taller, frontal lobe behind the forehead,
+  // tilted front-up a little so it follows the skull's sloping base.
   group.scale.set(0.92, 1.012, 0.92);
   group.position.set(0, -0.02, -0.2);
+  group.rotation.x = -0.1;
 
   // Current and target colours per part, linear RGB + alpha (alpha 0 = hidden).
   const cur = PARTS.map((p, i) => {

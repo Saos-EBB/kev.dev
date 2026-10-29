@@ -54,9 +54,10 @@ createCtScene(canvas, { phone: matchMedia("(max-width: 900px)").matches }).then(
     ct.setPose(pose);
     ct.setHighlight(state.parts, state.colors);
   };
-  // Brain fit for tuning: #bs=0.9#by=-0.05#bz=-0.2
+  // Brain fit for tuning: #bs=0.9#bsy=1.1#by=-0.05#bz=-0.2#brx=0.1
   const brainGroup = ct.rig.children[1];
   if (flags.has("bs")) brainGroup.scale.set(Number(flags.get("bs")), Number(flags.get("bs")) * Number(flags.get("bsy") ?? 1), Number(flags.get("bs")));
+  if (flags.has("brx")) brainGroup.rotation.x = Number(flags.get("brx"));
   if (flags.has("by") || flags.has("bz")) brainGroup.position.set(0, Number(flags.get("by") ?? -0.02), Number(flags.get("bz") ?? 0));
   slider.addEventListener("input", apply);
   document.querySelectorAll<HTMLButtonElement>("[data-k]").forEach((b) =>
