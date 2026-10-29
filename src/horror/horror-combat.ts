@@ -1,5 +1,6 @@
-// Hinter dir — the Doom part: shotgun, saw bat, pistol, sword and your own
-// skulls; three kinds of zombie (normal, big, the boss), pickups, blood.
+// Hinter dir — the Doom part: shotgun, saw bat, katana, railgun, ice launcher
+// and your own elemental skulls; three kinds of zombie (normal, big, the boss),
+// burning / poisoned / frozen / shocked zombies, pickups, blood.
 // Models: Quaternius "Zombie Apocalypse Kit" (CC0), see NOTICE.md.
 // Skull projectiles: the craniumCut01 skull from the site's renderer models.
 //
@@ -12,9 +13,9 @@ import * as sfx from "./horror-audio";
 import { loadSkullGeometry } from "../skull-site/parts";
 
 export type ZombieKind = "normal" | "big" | "boss";
-export type Weapon = "shotgun" | "bat" | "pistol" | "sword";
+export type Weapon = "shotgun" | "bat" | "sword" | "rail" | "ice";
 export type PickupKind = Weapon | "shells" | "health";
-const WEAPONS: Weapon[] = ["shotgun", "bat", "pistol", "sword"];
+const WEAPONS: Weapon[] = ["shotgun", "bat", "sword", "rail", "ice"];
 const MELEE = (w: Weapon | null) => w === "bat" || w === "sword";
 export type Kill = { kind: ZombieKind; hits: number; head: boolean; at: THREE.Vector3 };
 
@@ -34,7 +35,15 @@ export type CombatWorld = {
 };
 
 const PELLETS = 8, SPREAD = 0.12, RANGE = 30; // the shotgun scatters: up close it's sure, further out it's luck
-const DMG = { shotgun: { head: 100, body: 50 }, pistol: { head: 100, body: 50 }, bat: { head: 500, body: 150 }, sword: { head: 500, body: 200 } };
+const DMG = { shotgun: { head: 100, body: 50 }, bat: { head: 500, body: 150 }, sword: { head: 500, body: 200 }, rail: { head: 600, body: 300 } };
+// ice launcher: lobbed like a grenade, bursts on impact, little damage, slows everyone around
+const ICE = { speed: 13, every: 0.9, radius: 3.5, dmg: 60, slow: 0.45, slowFor: 4 };
+const RAIL_EVERY = 1.2; // the beam goes through everything in a line
+// elements your skulls carry (random per throw)
+type Element = "fire" | "poison" | "ice" | "shock";
+const ELEMENTS: Element[] = ["fire", "poison", "ice", "shock"];
+const ELEMENT_COLOR: Record<Element, [number, number, number]> = { fire: [1, 0.45, 0.08], poison: [0.35, 0.9, 0.2], ice: [0.55, 0.85, 1], shock: [0.85, 0.8, 1] };
+const BURN_DPS = 35, POISON_DPS = 22, DOT_FOR = 4, SHOCK_CHAIN = { dmg: 120, reach: 4.5, jumps: 3 };
 const BAT_RANGE = 2.1, SWORD_RANGE = 2.7; // the sword hits everything in front of you, not just the closest
 const OWN_SKULL = { speed: 16, every: 0.5, dmg: 150, head: 300 }; // yours: twice a second
 const SHELLS_PER_BOX = 5;
@@ -48,7 +57,7 @@ type KindSpec = { file: string; scale: number; hp: number; speed: [number, numbe
 const KINDS: Record<ZombieKind, KindSpec> = {
   normal: { file: "zombie_basic", scale: 1, hp: 100, speed: [1.3, 2.3], attack: "Punch", dmg: 12 },
   big: { file: "zombie_chubby", scale: 1.3, hp: 200, speed: [1.0, 1.3], attack: "Punch", dmg: 18 },
-  boss: { file: "zombie_chubby", scale: 2.1, hp: 4000, speed: [0.6, 0.6], attack: "Punch", dmg: 25 },
+  boss: { file: "zombie_basic", scale: 2.2, hp: 4000, speed: [0.6, 0.6], attack: "Punch", dmg: 25 }, // the yellow one, big
 };
 
 /* ---------- small helpers ---------- */
@@ -74,27 +83,45 @@ function makeBox(kind: "shells" | "health") {
   return g;
 }
 
-// there's no sword in the kit: blade, guard, grip, pommel
+// there's no sword in the kit: a katana from simple parts — a slim, slightly curved
+// single-edged blade, a round tsuba, a long wrapped grip
 function makeSword() {
-  const steel = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, metalness: 0.9, roughness: 0.25 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x2a1a12, roughness: 0.8 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0xc9ced6, metalness: 0.95, roughness: 0.18 });
+  const edge = new THREE.MeshStandardMaterial({ color: 0xf2f4f8, metalness: 1, roughness: 0.08 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x15110f, roughness: 0.9 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0x8a6a2a, metalness: 0.8, roughness: 0.4 });
   const g = new THREE.Group(); // grip at the origin, blade up +y
-  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.95, 0.012), steel); blade.position.y = 0.62;
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.12, 4), steel); tip.position.y = 1.15; tip.rotation.y = Math.PI / 4; tip.scale.z = 0.3;
-  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.035, 0.05), dark); guard.position.y = 0.13;
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.2, 8), dark);
-  const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), steel); pommel.position.y = -0.11;
-  g.add(blade, tip, guard, grip, pommel);
+  // blade: a 2D profile (back straight-ish, edge curving to the point), extruded thin
+  const L = 1.05, Wb = 0.034, sori = 0.045;
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 0);
+  shape.quadraticCurveTo(sori * 0.6, L * 0.5, sori, L * 0.92); // back of the blade, bowed
+  shape.lineTo(sori - 0.004, L); // kissaki
+  shape.quadraticCurveTo(sori - Wb * 0.9, L * 0.9, sori - Wb, L * 0.8); // tip curve into the edge
+  shape.quadraticCurveTo(-Wb + sori * 0.4, L * 0.45, -Wb, 0); // cutting edge
+  shape.lineTo(0, 0);
+  const blade = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.006, bevelEnabled: true, bevelThickness: 0.002, bevelSize: 0.002, bevelSegments: 1, curveSegments: 14 }), steel);
+  blade.position.set(Wb / 2, 0.16, -0.003);
+  const hamon = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.0075, bevelEnabled: false, curveSegments: 14 }), edge); // the bright edge line
+  hamon.scale.set(0.35, 1, 1); hamon.position.set(-Wb * 0.55, 0.16, -0.0035);
+  const habaki = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.035, 0.016), gold); habaki.position.y = 0.15;
+  const tsuba = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.012, 16), black); tsuba.position.y = 0.13; tsuba.scale.z = 0.8;
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.27, 8), black); grip.position.y = -0.01;
+  g.add(blade, hamon, habaki, tsuba, grip);
+  // the diamond wrap on the grip: small gold rhombi
+  for (let i = 0; i < 6; i++) { const d = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.012, 0.044), gold); d.position.y = -0.12 + i * 0.045; d.rotation.y = Math.PI / 4; g.add(d); }
+  const kashira = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.019, 0.02, 8), gold); kashira.position.y = -0.155;
+  g.add(kashira);
   g.traverse((o) => { o.castShadow = true; });
   return g;
 }
 
 export function createCombat(w: CombatWorld) {
   const { scene, camera } = w;
-  const have: Record<Weapon, boolean> = { shotgun: false, bat: false, pistol: false, sword: false };
+  const have: Record<Weapon, boolean> = { shotgun: false, bat: false, sword: false, rail: false, ice: false };
   let weapon: Weapon | null = null;
   let ammo = 0, cooldown = 0, recoil = 0, flashT = 0, bobPhase = 0, swingT = -1, swung = false;
-  let skullsUnlocked = false, skullCD = 0;
+  let skullsUnlocked = false, skullCD = 0, clock = 0;
 
   type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3; amount: number };
   const pickups: Pickup[] = [];
@@ -102,15 +129,20 @@ export function createCombat(w: CombatWorld) {
   /* ---------- assets: load once, in the background ---------- */
   const loader = new GLTFLoader();
   const protos = new Map<string, { scene: THREE.Object3D; clips: THREE.AnimationClip[]; height: number }>();
-  const props: Record<Weapon, THREE.Object3D | null> = { shotgun: null, bat: null, pistol: null, sword: makeSword() };
+  const props: Record<Weapon, THREE.Object3D | null> = { shotgun: null, bat: null, sword: makeSword(), rail: null, ice: null };
   let skullGeo: THREE.BufferGeometry | null = null;
   const ready = (async () => {
     const files = ["zombie_basic", "zombie_chubby"];
-    const [gun, bat, pistol, ...zs] = await Promise.all([
-      loader.loadAsync("/horror/shotgun.glb"), loader.loadAsync("/horror/bat_saw.glb"), loader.loadAsync("/horror/pistol.glb"),
+    const [gun, bat, rifle, smg, ...zs] = await Promise.all([
+      loader.loadAsync("/horror/shotgun.glb"), loader.loadAsync("/horror/bat_saw.glb"),
+      loader.loadAsync("/horror/rifle.glb"), loader.loadAsync("/horror/smg.glb"),
       ...files.map((f) => loader.loadAsync(`/horror/${f}.glb`)),
     ]);
-    props.shotgun = gun.scene; props.bat = bat.scene; props.pistol = pistol.scene;
+    props.shotgun = gun.scene; props.bat = bat.scene;
+    // the railgun: the kit's rifle with a glowing cyan coil; the ice launcher: its SMG, frosted
+    rifle.scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.material = (o.material as THREE.MeshStandardMaterial).clone(); (o.material as THREE.MeshStandardMaterial).emissive.set(0x0a5a70); } });
+    smg.scene.traverse((o) => { if (o instanceof THREE.Mesh) { o.material = (o.material as THREE.MeshStandardMaterial).clone(); const m = o.material as THREE.MeshStandardMaterial; m.color.lerp(new THREE.Color(0x9fd8ff), 0.6); m.emissive.set(0x123a55); } });
+    props.rail = rifle.scene; props.ice = smg.scene;
     const box = (o: THREE.Object3D) => new THREE.Box3().setFromObject(o, true);
     const k = ZOMBIE_HEIGHT / (box(zs[0].scene).max.y - box(zs[0].scene).min.y); // one scale for the pack
     zs.forEach((g, n) => {
@@ -146,15 +178,21 @@ export function createCombat(w: CombatWorld) {
   const viewLight = new THREE.DirectionalLight(0xffd0a0, 2.5);
   viewLight.position.set(0.3, 1, 0.5);
   viewRoot.add(viewLight, viewLight.target);
-  const gun = new THREE.Group(), batView = new THREE.Group(), pistolView = new THREE.Group(), swordView = new THREE.Group(); // guns point to -z
-  const flash = makeFlash(), pistolFlash = makeFlash();
-  gun.add(flash); pistolView.add(pistolFlash);
-  viewRoot.add(gun, batView, pistolView, swordView);
+  const gun = new THREE.Group(), batView = new THREE.Group(), swordView = new THREE.Group(), railView = new THREE.Group(), iceView = new THREE.Group(); // guns point to -z
+  const flash = makeFlash(), railFlash = makeFlash();
+  gun.add(flash); railView.add(railFlash);
+  railFlash.material = railFlash.material.clone(); railFlash.material.color.set(0x66eeff);
+  viewRoot.add(gun, batView, swordView, railView, iceView);
   function buildViewModels() {
-    const pm = props.pistol!.clone();
-    pm.rotation.y = Math.PI; pm.scale.setScalar(0.42);
-    pistolView.add(pm);
-    pistolFlash.position.set(0, 0.03, -0.88 * 0.42 - 0.04); pistolFlash.scale.setScalar(0.22);
+    const rm = props.rail!.clone();
+    rm.rotation.y = Math.PI; rm.scale.setScalar(0.4);
+    rm.position.z = -0.2; // its stock is long: push it forward so it doesn't fill the screen
+    railView.add(rm);
+    railFlash.position.set(0, 0.03, -1.02 * 0.4 - 0.25);
+    const im = props.ice!.clone();
+    im.rotation.y = Math.PI; im.scale.setScalar(0.4);
+    im.position.z = -0.12;
+    iceView.add(im);
     const sw = props.sword!.clone();
     sw.rotation.set(-0.5, 0, -0.35);
     swordView.add(sw);
@@ -207,6 +245,7 @@ export function createCombat(w: CombatWorld) {
     hp: number; hits: number; speed: number; move: string;
     attackCD: number; struck: boolean; dying: number; growlCD: number; throwCD: number;
     charge: "none" | "windup" | "dash"; chargeT: number; chargeCD: number; chargeTo: THREE.Vector3; chargeHit: boolean;
+    slowUntil: number; burnUntil: number; poisonUntil: number; fxT: number; // status effects (combat clock)
   };
   const zombies: Zombie[] = [];
 
@@ -235,7 +274,10 @@ export function createCombat(w: CombatWorld) {
         kind, spec, root, height: proto.height * spec.scale, mixer, actions, current: "", busy: 0,
         hp: spec.hp, hits: 0, speed, move, attackCD: 0, struck: false, dying: -1, growlCD: 1 + Math.random() * 3, throwCD: 3,
         charge: "none", chargeT: 0, chargeCD: 0, chargeTo: new THREE.Vector3(), chargeHit: false,
+        slowUntil: 0, burnUntil: 0, poisonUntil: 0, fxT: 0,
       };
+      // the boss is the yellow one, and it stays bright yellow (the others are dimmed for the dark)
+      if (kind === "boss") root.traverse((o) => { if (o instanceof THREE.SkinnedMesh) { const m = (o.material as THREE.MeshStandardMaterial).clone(); m.color.multiplyScalar(1 / 0.55); m.emissive.set(0x2a2000); o.material = m; } });
       // feet roughly match the ground
       actions[move].timeScale = (move === "Walk" ? speed / 1.3 : speed / 2.6) / spec.scale;
       play(z, move);
@@ -254,7 +296,7 @@ export function createCombat(w: CombatWorld) {
     const root = SkeletonUtils.clone(proto.scene);
     // the weapon mesh node itself (not its scene wrapper), placed with the grip the pack
     // uses for its armed characters (Characters_*_SingleWeapon: child of Middle1.L)
-    const node = { shotgun: "Shotgun", bat: "WoodenBat_Saw", pistol: "Pistol", sword: "" };
+    const node = { shotgun: "Shotgun", bat: "WoodenBat_Saw", sword: "", rail: "Rifle", ice: "SMG" };
     const held = weapon && (weapon === "sword" ? props.sword!.clone() : props[weapon]?.getObjectByName(node[weapon])?.clone());
     const hand = root.getObjectByName("Middle1L"); // GLTFLoader drops the dot from "Middle1.L"
     if (held && hand) {
@@ -309,7 +351,7 @@ export function createCombat(w: CombatWorld) {
   }
   function dressPickup(p: Pickup) {
     const m = props[p.kind as Weapon]!.clone();
-    if (p.kind === "shotgun" || p.kind === "pistol") { m.scale.setScalar(p.kind === "pistol" ? 0.6 : 0.9); m.rotation.set(0, 0, Math.PI / 2); m.position.z = -0.4; }
+    if (p.kind === "shotgun" || p.kind === "rail" || p.kind === "ice") { m.scale.setScalar(0.9); m.rotation.set(0, 0, Math.PI / 2); m.position.z = -0.4; }
     else { m.scale.setScalar(0.8); m.rotation.set(0, 0, Math.PI / 2); m.position.x = 0.35; }
     p.obj.add(m);
   }
@@ -393,17 +435,17 @@ export function createCombat(w: CombatWorld) {
   const bodyHit = (z: Zombie, o: THREE.Vector3, d: THREE.Vector3) => { const p = z.root.position, s = z.height / ZOMBIE_HEIGHT; return raySphere(o, d, center.set(p.x, p.y + z.height * 0.55, p.z), 0.32 * s); };
   const headHit = (z: Zombie, o: THREE.Vector3, d: THREE.Vector3, grow = 1) => { const p = z.root.position, s = z.height / ZOMBIE_HEIGHT; return raySphere(o, d, center.set(p.x, p.y + z.height * 0.88, p.z), 0.17 * s * grow); };
 
-  function damage(z: Zombie, head: boolean, amount: number) {
+  function damage(z: Zombie, head: boolean, amount: number, quiet = false) {
     z.hp -= amount; z.hits++;
     flat.subVectors(z.root.position, origin).setY(0).normalize();
-    if (z.kind !== "boss") tryMove(z, flat.x * 0.3, flat.z * 0.3); // knockback
+    if (z.kind !== "boss" && !quiet) tryMove(z, flat.x * 0.3, flat.z * 0.3); // knockback
     if (z.hp <= 0) {
       z.dying = 0; play(z, "Death", true);
       sfx.die(z.root.position);
       burst(hitAt.copy(z.root.position).setY(z.root.position.y + z.height * 0.6), z.kind === "boss" ? 60 : 20, 0.4, 0.02, 0.02, 3);
       bloodPool(z.root.position, z.kind === "boss" ? 2.4 : 1 + Math.random() * 0.5);
       w.onKill({ kind: z.kind, hits: z.hits, head, at: z.root.position.clone() });
-    } else {
+    } else if (!quiet) {
       if (z.kind !== "boss" || Math.random() < 0.25) play(z, "HitReact", true);
       sfx.pain(z.root.position);
     }
@@ -419,7 +461,8 @@ export function createCombat(w: CombatWorld) {
   function fire() {
     if (!weapon || cooldown > 0) return;
     if (MELEE(weapon)) { cooldown = weapon === "sword" ? 0.7 : 0.6; swingT = 0; swung = false; setTimeout(sfx.swing, 90); return; }
-    if (weapon === "pistol") return firePistol();
+    if (weapon === "rail") return fireRail();
+    if (weapon === "ice") return fireIce();
     if (ammo <= 0) { sfx.click(); cooldown = 0.3; return; }
     ammo--; cooldown = 0.85; recoil = 1; flashT = 0.06;
     sfx.shotgun(); setTimeout(sfx.pump, 280);
@@ -453,28 +496,106 @@ export function createCombat(w: CombatWorld) {
     if (hits.size) w.onHitmarker([...hits.values()].some((h) => h));
   }
 
-  // pistol: endless, quick, nearly exact
-  function firePistol() {
-    cooldown = 0.22; recoil = 0.6; flashT = 0.05;
-    sfx.pistol();
+  /* ---------- railgun: one beam, through everything in line ---------- */
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0x7ff6ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  type Fx = { obj: THREE.Object3D; life: number; max: number; mat: THREE.Material & { opacity: number } };
+  const fxs: Fx[] = []; // short-lived visuals: beams, lightning, frost rings
+  function addFx(obj: THREE.Object3D, mat: THREE.Material & { opacity: number }, life: number) { scene.add(obj); fxs.push({ obj, life, max: life, mat }); }
+  function fireRail() {
+    cooldown = RAIL_EVERY; recoil = 1.2; flashT = 0.08;
+    sfx.rail();
     w.onShot();
     aim();
-    ray.copy(fwd).addScaledVector(right, (Math.random() - 0.5) * 0.016).addScaledVector(up, (Math.random() - 0.5) * 0.016).normalize();
-    const wall = wallDistance(origin, ray);
-    let best: Zombie | null = null, bestT = wall, head = false;
+    const wall = wallDistance(origin, fwd);
+    const end = Math.min(wall, RANGE);
+    // every zombie the line passes through, nearest first
+    const hit: [Zombie, boolean][] = [];
     for (const z of zombies) {
       if (z.dying >= 0) continue;
-      const tb = bodyHit(z, origin, ray), th = headHit(z, origin, ray);
-      if (tb < bestT) { best = z; bestT = tb; head = false; }
-      if (th < bestT) { best = z; bestT = th; head = true; }
+      const th = headHit(z, origin, fwd, 1.2), tb = bodyHit(z, origin, fwd);
+      if (Math.min(th, tb) < end) hit.push([z, th <= tb]);
     }
-    hitAt.copy(origin).addScaledVector(ray, bestT);
-    if (best) {
-      burst(hitAt, 6, 0.45, 0.02, 0.02, 2.5);
-      bloodBehind(hitAt, ray, 2.6, 0.35);
-      damage(best, head, head ? DMG.pistol.head : DMG.pistol.body);
-      w.onHitmarker(head);
-    } else if (wall < RANGE) { burst(hitAt, 3, 0.5, 0.48, 0.44, 1.4); hole(hitAt, normal, 0.05); }
+    for (const [z, head] of hit) {
+      hitAt.copy(z.root.position).setY(z.root.position.y + z.height * (head ? 0.88 : 0.55));
+      spray(hitAt, fwd.x, fwd.z, 26);
+      damage(z, head, head ? DMG.rail.head : DMG.rail.body);
+    }
+    if (hit.length) w.onHitmarker(hit.some(([, h]) => h));
+    // the beam: a thin glowing cylinder from the muzzle to wherever it stopped
+    const from = tmp.copy(origin).addScaledVector(right, 0.12).addScaledVector(up, -0.1);
+    const to = origin.clone().addScaledVector(fwd, end);
+    const len = from.distanceTo(to);
+    const mat = beamMat.clone();
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, len, 6, 1, true), mat);
+    beam.position.copy(from).add(to).multiplyScalar(0.5);
+    beam.quaternion.setFromUnitVectors(up1, tmp.subVectors(to, from).normalize());
+    addFx(beam, mat, 0.3);
+    if (wall < RANGE) { hole(to, normal, 0.18); burst(to, 14, 0.5, 0.95, 1, 3); }
+  }
+
+  /* ---------- ice launcher: a lobbed shard ball that bursts and slows ---------- */
+  type IceBall = { mesh: THREE.Mesh; vel: THREE.Vector3; life: number };
+  const iceBalls: IceBall[] = [];
+  const iceMat = new THREE.MeshStandardMaterial({ color: 0xbfe9ff, emissive: 0x3aa0ff, emissiveIntensity: 0.8, roughness: 0.2 });
+  const iceGeo = new THREE.IcosahedronGeometry(0.11, 0);
+  function fireIce() {
+    cooldown = ICE.every; recoil = 0.8;
+    sfx.thunk();
+    aim();
+    const mesh = new THREE.Mesh(iceGeo, iceMat);
+    mesh.position.copy(origin).addScaledVector(fwd, 0.6).addScaledVector(right, 0.12).addScaledVector(up, -0.08);
+    scene.add(mesh);
+    iceBalls.push({ mesh, vel: fwd.clone().multiplyScalar(ICE.speed).addScaledVector(up1, 2.5), life: 4 });
+  }
+  function iceBurst(at: THREE.Vector3) {
+    sfx.shatter(at);
+    burst(at, 40, 0.6, 0.85, 1, 5);
+    let any = false;
+    for (const z of zombies) {
+      if (z.dying >= 0) continue;
+      const d = Math.hypot(z.root.position.x - at.x, z.root.position.z - at.z);
+      if (d > ICE.radius) continue;
+      z.slowUntil = clock + ICE.slowFor;
+      origin.copy(at);
+      damage(z, false, ICE.dmg * (1 - (d / ICE.radius) * 0.5));
+      any = true;
+    }
+    if (any) w.onHitmarker(false);
+    // a frost ring on the floor, fading
+    const mat = new THREE.MeshBasicMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(ICE.radius * 0.85, ICE.radius, 32).rotateX(-Math.PI / 2), mat);
+    ring.position.set(at.x, w.floorAt(at.x, at.z) + 0.03, at.z);
+    addFx(ring, mat, 0.8);
+  }
+
+  /* ---------- lightning: jagged lines between zombies ---------- */
+  function bolt(a: THREE.Vector3, b: THREE.Vector3) {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i <= 8; i++) {
+      const p = a.clone().lerp(b, i / 8);
+      if (i && i < 8) p.add(new THREE.Vector3((Math.random() - 0.5) * 0.35, (Math.random() - 0.5) * 0.35, (Math.random() - 0.5) * 0.35));
+      pts.push(p);
+    }
+    const mat = new THREE.LineBasicMaterial({ color: 0xe0d8ff, transparent: true, blending: THREE.AdditiveBlending });
+    addFx(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat), mat, 0.18);
+  }
+  function chainShock(first: Zombie) {
+    const done = new Set([first]);
+    let cur = first;
+    for (let j = 0; j < SHOCK_CHAIN.jumps; j++) {
+      let next: Zombie | null = null, nd = SHOCK_CHAIN.reach;
+      for (const z of zombies) {
+        if (z.dying >= 0 || done.has(z)) continue;
+        const d = z.root.position.distanceTo(cur.root.position);
+        if (d < nd) { next = z; nd = d; }
+      }
+      if (!next) break;
+      const a = cur.root.position.clone().setY(cur.root.position.y + cur.height * 0.6), b = next.root.position.clone().setY(next.root.position.y + next.height * 0.6);
+      bolt(a, b);
+      origin.copy(a);
+      damage(next, false, SHOCK_CHAIN.dmg * 0.7);
+      done.add(next); cur = next;
+    }
   }
 
   // melee connects mid-swing. Bat: the closest zombie in front of you. Sword: every one in reach.
@@ -505,16 +626,21 @@ export function createCombat(w: CombatWorld) {
   }
 
   // your own skulls (unlocked late): straight out of your hands, twice a second
-  type OwnSkull = { mesh: THREE.Mesh; vel: THREE.Vector3; life: number };
+  type OwnSkull = { mesh: THREE.Mesh; vel: THREE.Vector3; life: number; el: Element };
+  const elementMats = Object.fromEntries(ELEMENTS.map((e) => {
+    const [r, g, b] = ELEMENT_COLOR[e];
+    return [e, new THREE.MeshStandardMaterial({ color: 0xe3dccb, emissive: new THREE.Color(r, g, b), emissiveIntensity: 1.4, roughness: 0.6 })];
+  })) as Record<Element, THREE.MeshStandardMaterial>;
   const ownSkulls: OwnSkull[] = [];
   function throwOwnSkull() {
     if (!skullsUnlocked || skullCD > 0 || !skullGeo) return;
     skullCD = OWN_SKULL.every;
     aim();
-    const mesh = new THREE.Mesh(skullGeo, boneMat);
+    const el = ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)]; // fire, poison, ice or lightning: luck
+    const mesh = new THREE.Mesh(skullGeo, elementMats[el]);
     mesh.position.copy(origin).addScaledVector(fwd, 0.5).addScaledVector(right, 0.15).addScaledVector(up, -0.1);
     scene.add(mesh);
-    ownSkulls.push({ mesh, vel: fwd.clone().multiplyScalar(OWN_SKULL.speed), life: 3 });
+    ownSkulls.push({ mesh, vel: fwd.clone().multiplyScalar(OWN_SKULL.speed), life: 3, el });
     sfx.skullThrow(mesh.position);
   }
 
@@ -640,7 +766,8 @@ export function createCombat(w: CombatWorld) {
     cooldown = Math.max(0, cooldown - dt);
 
     // weapons in hand: Doom-style figure-eight bob, recoil, pump dip, bat swing
-    gun.visible = weapon === "shotgun"; batView.visible = weapon === "bat"; pistolView.visible = weapon === "pistol"; swordView.visible = weapon === "sword";
+    clock += dt;
+    gun.visible = weapon === "shotgun"; batView.visible = weapon === "bat"; swordView.visible = weapon === "sword"; railView.visible = weapon === "rail"; iceView.visible = weapon === "ice";
     skullCD = Math.max(0, skullCD - dt);
     if (weapon) {
       camera.updateMatrixWorld();
@@ -652,11 +779,13 @@ export function createCombat(w: CombatWorld) {
       const pump = cooldown > 0.15 && cooldown < 0.55 ? Math.sin(((0.55 - cooldown) / 0.4) * Math.PI) : 0;
       gun.position.set(0.14 + bx, -0.16 + by + recoil * 0.02 - pump * 0.03, -0.3 + recoil * 0.09);
       gun.rotation.set(recoil * 0.25 - pump * 0.12, 0, pump * 0.2);
-      pistolView.position.set(0.13 + bx, -0.13 + by + recoil * 0.03, -0.28 + recoil * 0.06);
-      pistolView.rotation.set(recoil * 0.4, 0, 0);
+      railView.position.set(0.14 + bx, -0.15 + by + recoil * 0.02, -0.3 + recoil * 0.1);
+      railView.rotation.set(recoil * 0.2, 0, 0);
+      iceView.position.set(0.14 + bx, -0.15 + by + recoil * 0.03, -0.3 + recoil * 0.07);
+      iceView.rotation.set(recoil * 0.35, 0, 0);
       flashT -= dt;
-      flash.visible = weapon === "shotgun" && flashT > 0; pistolFlash.visible = weapon === "pistol" && flashT > 0;
-      flash.material.rotation = pistolFlash.material.rotation = Math.random() * 6;
+      flash.visible = weapon === "shotgun" && flashT > 0; railFlash.visible = weapon === "rail" && flashT > 0;
+      flash.material.rotation = railFlash.material.rotation = Math.random() * 6;
       // swing: wind up over the right shoulder, whip down-left across the view, come back slowly
       if (swingT >= 0) {
         swingT += dt;
@@ -676,7 +805,7 @@ export function createCombat(w: CombatWorld) {
       p.obj.position.y = p.at.y + Math.sin(performance.now() / 300 + i) * 0.04;
       if (Math.hypot(player.x - p.at.x, player.z - p.at.z) < 0.9) {
         if (p.kind === "shotgun") { have.shotgun = true; ammo += 30; weapon = "shotgun"; }
-        if (p.kind === "bat" || p.kind === "pistol" || p.kind === "sword") { have[p.kind] = true; weapon = p.kind; }
+        if (p.kind === "bat" || p.kind === "sword" || p.kind === "rail" || p.kind === "ice") { have[p.kind] = true; weapon = p.kind; }
         if (p.kind === "shells") ammo += p.amount;
         scene.remove(p.obj); pickups.splice(i, 1);
         sfx.pickup(); onPickup(p.kind);
@@ -696,6 +825,19 @@ export function createCombat(w: CombatWorld) {
         continue;
       }
       const dx = player.x - p.x, dz = player.z - p.z, d = Math.hypot(dx, dz);
+      // status effects: burning / poisoned hurt over time, slowed walks at half pace; each shows in its colour
+      const slow = clock < z.slowUntil ? ICE.slow : 1;
+      z.mixer.timeScale = slow;
+      const dot = (clock < z.burnUntil ? BURN_DPS : 0) + (clock < z.poisonUntil ? POISON_DPS : 0);
+      z.fxT -= dt;
+      if (z.fxT <= 0 && (dot || slow < 1)) {
+        z.fxT = 0.08;
+        tmp.set(p.x + (Math.random() - 0.5) * 0.5, p.y + z.height * (0.3 + Math.random() * 0.6), p.z + (Math.random() - 0.5) * 0.5);
+        if (clock < z.burnUntil) burst(tmp, 2, ...ELEMENT_COLOR.fire, 1.5);
+        if (clock < z.poisonUntil) burst(tmp, 2, ...ELEMENT_COLOR.poison, 0.8);
+        if (slow < 1) burst(tmp, 1, ...ELEMENT_COLOR.ice, 0.4);
+      }
+      if (dot) { origin.copy(p); damage(z, false, dot * dt, true); if (z.dying >= 0) continue; }
       z.growlCD -= dt;
       if (z.growlCD <= 0 && d < 14) { z.growlCD = 3 + Math.random() * 4; if (z.kind === "boss") sfx.roar(p); else sfx.growl(p); }
       if (z.kind === "boss" && bossBrain(z, dt, player, d)) continue; // charging: nothing else this frame
@@ -706,7 +848,7 @@ export function createCombat(w: CombatWorld) {
         z.root.lookAt(aimAt.x, p.y, aimAt.z);
         const sx = aimAt.x - p.x, sz = aimAt.z - p.z, sl = Math.hypot(sx, sz) || 1;
         if (z.busy <= 0) play(z, z.move);
-        if (z.current === z.move) tryMove(z, (sx / sl) * z.speed * dt, (sz / sl) * z.speed * dt);
+        if (z.current === z.move) tryMove(z, (sx / sl) * z.speed * slow * dt, (sz / sl) * z.speed * slow * dt);
       } else {
         z.root.lookAt(player.x, p.y, player.z);
         z.attackCD -= dt;
@@ -751,12 +893,37 @@ export function createCombat(w: CombatWorld) {
       }
     }
 
+    // ice balls: arc down, burst on whatever they touch
+    for (let i = iceBalls.length - 1; i >= 0; i--) {
+      const b = iceBalls[i], m = b.mesh;
+      b.vel.y -= 9.8 * dt;
+      m.position.addScaledVector(b.vel, dt);
+      m.rotation.x += dt * 6; m.rotation.z += dt * 4;
+      b.life -= dt;
+      burst(m.position, 1, ...ELEMENT_COLOR.ice, 0.3);
+      const touch = zombies.some((z) => z.dying < 0 && Math.hypot(z.root.position.x - m.position.x, z.root.position.z - m.position.z) < 0.45 * (z.height / ZOMBIE_HEIGHT) && m.position.y < z.root.position.y + z.height);
+      if (touch || w.solidAt(m.position.x, m.position.z) || m.position.y < w.floorAt(m.position.x, m.position.z) || m.position.y > 2.8 || b.life <= 0) {
+        iceBurst(m.position.clone());
+        scene.remove(m); iceBalls.splice(i, 1);
+      }
+    }
+
+    // short-lived visuals fade out
+    for (let i = fxs.length - 1; i >= 0; i--) {
+      const f = fxs[i];
+      f.life -= dt;
+      f.mat.opacity = Math.max(0, f.life / f.max);
+      if (f.life <= 0) { scene.remove(f.obj); fxs.splice(i, 1); }
+    }
+
     // your skulls: fly, hit the first zombie they touch, or break on a wall
     for (let i = ownSkulls.length - 1; i >= 0; i--) {
       const s = ownSkulls[i], m = s.mesh;
       m.position.addScaledVector(s.vel, dt);
       m.rotation.x += dt * 9; m.rotation.y += dt * 7;
       s.life -= dt;
+      const [er, eg, eb] = ELEMENT_COLOR[s.el];
+      burst(m.position, 1, er, eg, eb, 0.6); // a trail in its colour
       let hit: Zombie | null = null, head = false;
       for (const z of zombies) {
         if (z.dying >= 0) continue;
@@ -768,7 +935,18 @@ export function createCombat(w: CombatWorld) {
       if (hit || wall || s.life <= 0) {
         burst(m.position, 16, 0.85, 0.82, 0.74, 3.5);
         sfx.skullBreak(m.position);
-        if (hit) { origin.copy(camera.position); burst(m.position, 10, 0.45, 0.02, 0.02, 3); damage(hit, head, head ? OWN_SKULL.head : OWN_SKULL.dmg); w.onHitmarker(head); }
+        burst(m.position, 22, er, eg, eb, 4);
+        if (hit) {
+          origin.copy(camera.position);
+          burst(m.position, 10, 0.45, 0.02, 0.02, 3);
+          // the element sticks: fire and poison keep hurting, ice slows, lightning jumps on
+          if (s.el === "fire") hit.burnUntil = clock + DOT_FOR;
+          if (s.el === "poison") hit.poisonUntil = clock + DOT_FOR * 1.5;
+          if (s.el === "ice") hit.slowUntil = clock + ICE.slowFor;
+          damage(hit, head, head ? OWN_SKULL.head : OWN_SKULL.dmg);
+          if (s.el === "shock") chainShock(hit);
+          w.onHitmarker(head);
+        }
         scene.remove(m); ownSkulls.splice(i, 1);
       }
     }

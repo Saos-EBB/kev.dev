@@ -284,8 +284,21 @@ export function tick() {
   tone(out, { f: 2200, f2: 1700, type: "square", vol: 0.06, len: 0.05, att: 0.001 });
 }
 
-// pistol: short, sharp, less body than the shotgun
-export function pistol() {
-  noiseHit(out, { f: 3200, type: "lowpass", vol: 0.7, len: 0.18, att: 0.001 });
-  tone(out, { f: 160, f2: 60, vol: 0.5, len: 0.12, att: 0.001 });
+// railgun: a charged crack with a whine falling off
+export function rail() {
+  tone(out, { f: 2400, f2: 300, type: "sawtooth", vol: 0.25, len: 0.5, att: 0.001 });
+  noiseHit(out, { f: 5000, type: "highpass", vol: 0.6, len: 0.25, att: 0.001 });
+  tone(out, { f: 80, f2: 40, vol: 0.7, len: 0.3, att: 0.001 });
+}
+// grenade-style launch
+export function thunk() {
+  tone(out, { f: 140, f2: 70, vol: 0.6, len: 0.18, att: 0.001 });
+  noiseHit(out, { f: 600, vol: 0.4, len: 0.12, att: 0.001 });
+}
+// ice bursting
+export function shatter(at: Vec3) {
+  const p = oneShot(at, 2, 0.8, 2000);
+  noiseHit(p, { f: 4500, type: "highpass", vol: 0.6, len: 0.6, att: 0.001 });
+  for (let k = 0; k < 10; k++) tone(p, { t: Math.random() * 0.4, f: 3000 + Math.random() * 3000, vol: 0.04, len: 0.12, type: "sine" });
+  tone(p, { f: 90, f2: 45, vol: 0.5, len: 0.3 });
 }

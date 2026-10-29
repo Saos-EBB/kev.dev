@@ -55,7 +55,8 @@ const MARKUP = `
         <b>W A S D</b><span>gehen</span>
         <b>Shift</b><span>rennen (laut, es hört dich)</span>
         <b>Klick</b><span>schießen / zuschlagen</span>
-        <b>1 · 2</b><span>Waffe wechseln</span>
+        <b>1 – 5</b><span>Waffe wechseln (Mausrad geht auch)</span>
+        <b>F</b><span>Schädel werfen, wenn du es dir verdient hast</span>
         <b>Esc</b><span>Pause</span>
       </div>
       <p class="warn">Kopfhörer empfohlen · Jumpscares · flackerndes Licht</p>
@@ -108,19 +109,19 @@ const MARKUP = `
    r      mirror room · W the glass · m the room behind the glass (unreachable) */
 // the upper part (x 0..14) is replaced by a fresh random maze on every load, see horror-maze.ts
 const MAP = carveUpper([
-  "####################################################################",
-  "#..b#........c################################BBBBBBBBBBB###########",
-  "#.###.#####.##################################BB##BBBB##B###########",
-  "#...#.....#...########hhhh#hhhh###HHH#HHHHH###BB##BBBB##B###########",
-  "###.#####.###.########h##h#h##h###H#H#H##HH###BBBBB##BBBB###########",
-  "#S....#...#...########h#hhhhh#h###H#HHH#HH####BBBBB##BBBB##rrrWmmm##",
-  "#####.#.###.#..Dvvvv,Ghhh###hhh1,GHH##H#HHH2,GBBBBBBBBBBB3,rrrWmmmm#",
-  "#...#.#.#...#.########h#hhhhh#h###H#HHHHH#H###BBBBBBBBBBB##rrrWmmm##",
-  "#.#.#.#.#.###.########h##h#h##h###HHH#H##HH###BBBBB##BBBB###########",
-  "#.#.#...#.#a#.########hhhh#hhhh####HHHHH#HH###BB##B##B##B###########",
-  "#.#.#####.#.#.################################BB##BBBB##B###########",
-  "#.........#...################################BBBBBBBBBBB###########",
-  "####################################################################",
+  "################################################################################",
+  "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
+  "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
+  "######################hh##hhhhh##hh###HHH##HHH##HHH###BBB##BBBBB##BBB###########",
+  "######################hh##hhhhh##hh###HHH##HHH##HHH###BBB##BBBBB##BBB###########",
+  "######################hhhhh###hhhhh###HHH##HHH##HHH###BBBBBBBBBBBBBBB##rrrWmmm##",
+  "#S.............Dvvvv,Ghhhhh###hhhhh1,GHHHHHHHHHHHHH2,GBBBBBBBBBBBBBBB3,rrrWmmmm#",
+  "######################hhhhh###hhhhh###HHH##HHH##HHH###BBBBBBBBBBBBBBB##rrrWmmm##",
+  "######################hh##hhhhh##hh###HHH##HHH##HHH###BBB##BBBBB##BBB###########",
+  "######################hh##hhhhh##hh###HHH##HHH##HHH###BBB##BBBBB##BBB###########",
+  "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
+  "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
+  "################################################################################",
 ]);
 const UPPER = new Set([".", "S", "a", "b", "c", "D"]);
 const DEPTH = 2.8; // how far the stairs go down
@@ -665,7 +666,7 @@ function mount() {
   const LAST_IN_HALL1 = 2, BREATHER = 5; // seconds
   const maxAlive = (n: number) => 8 + 2 * n, spawnEvery = (n: number) => Math.max(0.5, 1.1 - 0.12 * n);
   // spawned counts the ones still loading too
-  const W = { n: 0, spawned: 0, killed: 0, total: 0, bigLeft: 0, nextSpawn: 0, nextWave: 0, pending: 0, drop: 0, heads: 0 };
+  const W = { n: 0, spawned: 0, killed: 0, total: 0, bigLeft: 0, nextSpawn: 0, nextWave: 0, pending: 0, drop: 0, heads: savedHeads() };
   // zombies come in from the far side of the hall, away from you
   function spawnIn(cells: Cell[], kind: "normal" | "big" | "boss", n: number) {
     const far = cells.filter(([x, z]) => Math.hypot(x * C - pos.x, z * C - pos.z) > 9);
@@ -695,6 +696,7 @@ function mount() {
   }
   function enterHall(next: Phase, gate: Cell) {
     phase = next;
+    giveCarried();
     dropGate(...gate);
     ($("got").parentElement as HTMLElement).hidden = true; // items are done; the wave counter is top right now
     if (next === "normals") startWave(1);
@@ -714,15 +716,28 @@ function mount() {
     $("heads").textContent = String(W.heads);
   };
 
-  // headshot kills unlock things: 10 the saw, 50 a pistol, 100 a sword that hits everyone in front,
-  // 200 faster legs, 250 the boss's own trick: throwing skulls, twice a second
-  const REWARDS: [number, () => void][] = [
-    [10, () => { if (!combat.has.bat) { combat.addPickup("bat", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone()); card("10 Kopfschüsse", "Säge-Schläger. Ein Schlag auf den Kopf reicht. Taste 2.", 6000); } }],
-    [50, () => { combat.addPickup("pistol", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone()); card("50 Kopfschüsse", "Pistole. Unendlich Munition, schnell, genau. Taste 3.", 6000); }],
-    [100, () => { combat.addPickup("sword", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone()); card("100 Kopfschüsse", "Schwert. Trifft alles vor dir. Taste 4.", 6000); }],
-    [200, () => { fast = 1.25; card("200 Kopfschüsse", "Du bist schneller.", 5000); }],
-    [250, () => { combat.unlockSkulls(); card("250 Kopfschüsse", "Du kannst jetzt, was er kann: F oder Rechtsklick wirft Schädel. Zweimal pro Sekunde.", 7000); }],
+  // headshot kills unlock things: 10 the saw, 50 a katana that hits everyone in front, 100 a railgun
+  // that goes through a whole line, 200 faster legs and an ice launcher (lobbed, slows everything
+  // around the burst), 250 throwing skulls that burn, poison, freeze or shock at random.
+  // The count survives a death (sessionStorage): what you earned is handed over again next run.
+  const ahead = () => tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone();
+  const REWARDS: [number, (now: boolean) => void][] = [
+    [10, (now) => { if (combat.has.bat) return; if (now) return combat.grant("bat"); combat.addPickup("bat", ahead()); card("10 Kopfschüsse", "Säge-Schläger. Ein Schlag auf den Kopf reicht. Taste 2.", 6000); }],
+    [50, (now) => { if (now) return combat.grant("sword"); combat.addPickup("sword", ahead()); card("50 Kopfschüsse", "Katana. Trifft alles vor dir. Taste 3.", 6000); }],
+    [100, (now) => { if (now) return combat.grant("rail"); combat.addPickup("rail", ahead()); card("100 Kopfschüsse", "Railgun. Geht durch alles in einer Linie. Stell sie dir in eine Reihe. Taste 4.", 7000); }],
+    [200, (now) => { fast = 1.25; if (now) return combat.grant("ice"); combat.addPickup("ice", ahead()); card("200 Kopfschüsse", "Du bist schneller. Und: Eiswerfer. Wenig Schaden, aber alles um den Einschlag wird langsam. Taste 5.", 7000); }],
+    [250, (now) => { combat.unlockSkulls(); if (!now) card("250 Kopfschüsse", "F oder Rechtsklick wirft Schädel. Jeder brennt, vergiftet, friert oder blitzt, zufällig.", 7000); }],
   ];
+  function savedHeads() { try { return Number(sessionStorage.getItem("hinter-dir-heads")) || 0; } catch { return 0; } }
+  function saveHeads() { try { sessionStorage.setItem("hinter-dir-heads", String(W.heads)); } catch { /* private mode: just this run */ } }
+  // carried over from an earlier run: hand it all over at once, quietly
+  let carried = false;
+  function giveCarried() {
+    if (carried) return; carried = true;
+    for (const [at, give] of REWARDS) if (W.heads >= at) give(true);
+    if (W.heads >= 10) card(`${W.heads} Kopfschüsse`, "Von vorhin mitgenommen. Was du dir verdient hast, hast du noch.", 5000);
+    combat.select("shotgun");
+  }
   let fast = 1; // movement multiplier (reward at 200)
 
   // ammo from the dead, sparingly: half the normal ones leave 3 shells, a big one 4 (60 %);
@@ -730,8 +745,8 @@ function mount() {
   function onKill(k: { kind: string; hits: number; head: boolean; at: THREE.Vector3 }) {
     W.killed++;
     if (k.head && k.kind !== "boss") {
-      W.heads++;
-      for (const [at, give] of REWARDS) if (W.heads === at) give();
+      W.heads++; saveHeads();
+      for (const [at, give] of REWARDS) if (W.heads === at) give(false);
     }
     if (k.kind === "normal" && Math.random() < 0.5) combat.addPickup("shells", k.at, 3);
     if (k.kind === "big" && Math.random() < 0.6) combat.addPickup("shells", k.at, 4);
@@ -845,13 +860,13 @@ function mount() {
   /* ============================ INPUT ============================ */
   window.addEventListener("keydown", (e) => {
     keys[e.code] = true;
-    const slots = { Digit1: "shotgun", Digit2: "bat", Digit3: "pistol", Digit4: "sword" } as const;
+    const slots = { Digit1: "shotgun", Digit2: "bat", Digit3: "sword", Digit4: "rail", Digit5: "ice" } as const;
     if (e.code in slots) combat.select(slots[e.code as keyof typeof slots]);
     if (e.code === "KeyF" && running && !paused) combat.throwOwnSkull();
   });
   // mouse wheel: next weapon you have
   window.addEventListener("wheel", (e) => {
-    const order = (["shotgun", "bat", "pistol", "sword"] as const).filter((w) => combat.has[w]);
+    const order = (["shotgun", "bat", "sword", "rail", "ice"] as const).filter((w) => combat.has[w]);
     if (order.length < 2 || !combat.weapon) return;
     const i = order.indexOf(combat.weapon);
     combat.select(order[(i + (e.deltaY > 0 ? 1 : order.length - 1)) % order.length]);
@@ -941,7 +956,7 @@ function mount() {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
       // the end fight as if you'd earned everything on the way
-      combat.grant("pistol"); combat.grant("sword"); combat.grant("bat"); combat.grant("shotgun"); combat.unlockSkulls(); fast = 1.25;
+      combat.grant("ice"); combat.grant("rail"); combat.grant("sword"); combat.grant("bat"); combat.grant("shotgun"); combat.unlockSkulls(); fast = 1.25;
       onPickup("shotgun");
       const [gx, gz] = cellsOf("G")[2];
       pos.set((gx - 1) * C, 0, gz * C);
@@ -1046,7 +1061,7 @@ function mount() {
   combat.addPickup("health", spot(halls.B, 0.8));
   const hud = () => {
     $("hp").textContent = String(health);
-    const names = { shotgun: "Schrot", bat: "Säge", pistol: "Pistole", sword: "Schwert" };
+    const names = { shotgun: "Schrot", bat: "Säge", sword: "Katana", rail: "Railgun", ice: "Eiswerfer" };
     $("wname").textContent = combat.weapon ? names[combat.weapon] : "";
     $("ammo").textContent = combat.weapon === "shotgun" ? String(combat.ammo) : "∞";
   };
