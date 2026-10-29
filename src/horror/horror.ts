@@ -23,6 +23,7 @@ import * as sfx from "./horror-audio";
 import { createLife } from "./horror-life";
 import { createFigures } from "./horror-figures";
 import { createCombat } from "./horror-combat";
+import { carveUpper } from "./horror-maze";
 
 
 const MARKUP = `
@@ -97,14 +98,15 @@ const MARKUP = `
 /* ============================ LEVEL ============================
    Upper level (floor 0 m) and lower level (floor -2.8 m, halls 5.6 m high).
    # wall · . corridor (upper) · S start, facing the wall
-   a b c  the three items, hidden in dead ends of the little maze up top
+   a b c  the three items, at corners of the maze up top (random each time)
    D      heavy door, opens once you have all three
    v      stairs down (east)
    , h H B  lower floor: corridor, hall 1, hall 2, boss hall (twisty, with pillars)
    G      gate: drops behind you once you're in the next hall
    1 2 3  exit doors of hall 1, 2 and the boss hall: open when it's cleared
    r      mirror room · W the glass · m the room behind the glass (unreachable) */
-const MAP = [
+// the upper part (x 0..14) is replaced by a fresh random maze on every load, see horror-maze.ts
+const MAP = carveUpper([
   "####################################################################",
   "#..b#........c################################BBBBBBBBBBB###########",
   "#.###.#####.##################################BB##BBBB##B###########",
@@ -118,7 +120,7 @@ const MAP = [
   "#.#.#####.#.#.################################BB##BBBB##B###########",
   "#.........#...################################BBBBBBBBBBB###########",
   "####################################################################",
-];
+]);
 const UPPER = new Set([".", "S", "a", "b", "c", "D"]);
 const DEPTH = 2.8; // how far the stairs go down
 
