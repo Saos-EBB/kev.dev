@@ -127,3 +127,10 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 #dot.hit, #dot.headhit { animation: hitmark .18s ease-out; }
 #dot.headhit { animation-duration: .3s; }
 @keyframes hitmark { from { filter: drop-shadow(0 0 4px #d8291f) brightness(3) sepia(1) hue-rotate(-40deg) saturate(8); transform: scale(1.6) rotate(45deg); } to { transform: none; } }
+
+/* top right: wave, kills in this wave, headshots */
+#waves { top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 4px; text-align: right;
+  font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--bone); text-shadow: 0 1px 8px #000; }
+#waves p { margin: 0; }
+#waves b { color: var(--sodium); font-variant-numeric: tabular-nums; }
+#fps { top: calc(64px + env(safe-area-inset-top, 0px)); }
