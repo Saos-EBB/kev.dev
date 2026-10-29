@@ -291,7 +291,9 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     let tRot: number, tCut: number, tOp: number;
     if (active === "intro") {
       const t = REDUCED ? 1 : introProgress();
-      tRot = ease((t - 0.12) / 0.48) * (Math.PI / 2);
+      // Turns from the first scrolled pixel (the prototype waited 12 % —
+      // with the text pinned that read as "nothing happens").
+      tRot = ease(t / 0.6) * (Math.PI / 2);
       tCut = -0.95 + ease((t - 0.45) / 0.4) * 0.97;
       tOp = ease((t - 0.46) / 0.22);
     } else if (st.front) { tRot = 0; tCut = -5; tOp = 0; }
