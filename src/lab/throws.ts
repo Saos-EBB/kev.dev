@@ -18,7 +18,11 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const FRAMES = 30;
   const VANISH_MS = 750;
   const START_Z = -1200;
-  const END_Z = 700; // just past the camera (perspective 1000px)
+  // The camera sits at z = 1000 (perspective 1000px): ending past it makes
+  // the thing fly right through the viewer — it fills the screen, crosses
+  // the camera (the browser stops drawing it behind the eye) — and only
+  // then is it removed.
+  const END_Z = 1300;
   const GAP_S: [number, number] = [5, 15]; // pause between throws
   const FLIGHT_S: [number, number] = [4.5, 7]; // one throw, start to end
 
@@ -195,7 +199,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
         o.y = worldX(sy, o.z);
         o.rx += o.vrx * dt;
         o.ry += o.vry * dt;
-        if (!o.passed && o.z > 0) {
+        if (!o.passed && o.z > 600) {
           o.passed = true;
           pass(o.name, panOf(screenX(o.x, o.z)));
         }

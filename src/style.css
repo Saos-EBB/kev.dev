@@ -1139,6 +1139,9 @@ button:focus-visible {
   position: absolute;
   inset: 0;
   z-index: 0;
+  /* contact.ts adds one spare line past the right edge (phase shifts);
+     without the clip it made the page a pixel wider than a phone. */
+  overflow: clip;
   pointer-events: none;
 }
 
@@ -1782,5 +1785,15 @@ button:focus-visible {
   }
   .lite .music-controls {
     gap: 0.35rem;
+  }
+}
+
+/* 320px phones (iPhone SE): the nav was still ~8px wider than the bar. */
+@media (max-width: 360px) {
+  .lite .site-header-links {
+    gap: 0.4rem;
+  }
+  .lite .site-header-links a {
+    letter-spacing: 0;
   }
 }

@@ -66,6 +66,11 @@
   fill: none;
 }
 
+/* Cavities (the skull's eye sockets and nose): darker holes. */
+.ml-slice .hole {
+  fill: color-mix(in srgb, var(--color-line) 35%, transparent);
+}
+
 /* A mask flattens 3D, so while vanishing the object drops to one flat
    box (its slices hide) that carries the stripe fill — the original
    hides its sides the same way. */
@@ -142,12 +147,8 @@
   display: inline;
 }
 
-/* LITE footer is a thin bar (padding 0.55rem). Bottom LEFT here: the
-   LITE page is currently ~20px wider than the phone screen (header,
-   blueprint card), which pushes right-anchored fixed elements partly
-   off-screen. */
+/* LITE footer is a thin bar (padding 0.55rem). */
 .lite .throws-mute {
-  right: auto;
-  left: 16px;
+  right: 16px;
   bottom: 3.5rem;
 }

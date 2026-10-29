@@ -5,6 +5,14 @@
 /* corner brackets in the project's accent, mono labels.             */
 /* ---------------------------------------------------------------- */
 
+/* The entries tilt in with a 3D transform; in perspective their edges
+   reach ~20px past both sides of a phone screen, which made the whole page
+   wider than the screen (and dragged the fixed header/footer along).
+   clip (not hidden) cuts that off without making a scroll container. */
+.lite .projects {
+  overflow-x: clip;
+}
+
 .project-list {
   display: flex;
   flex-direction: column;
