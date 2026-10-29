@@ -184,6 +184,47 @@ export function lowSting() {
   for (const f of [1975, 2093]) tone(out, { f, vol: 0.022, len: 2, att: 0.4 });
 }
 
+/* ---------- shotgun + zombies ---------- */
+export function shotgun() {
+  noiseHit(out, { f: 2400, type: "lowpass", vol: 1, len: 0.45, att: 0.001 });
+  noiseHit(out, { f: 140, vol: 1, len: 0.6, att: 0.001 });
+  tone(out, { f: 90, f2: 30, vol: 0.9, len: 0.35, att: 0.001 });
+}
+export function pump() {
+  noiseHit(out, { f: 1800, type: "bandpass", q: 3, vol: 0.35, len: 0.06, att: 0.001 });
+  noiseHit(out, { t: 0.16, f: 1400, type: "bandpass", q: 3, vol: 0.4, len: 0.07, att: 0.001 });
+}
+export function click() {
+  noiseHit(out, { f: 3000, type: "bandpass", q: 5, vol: 0.2, len: 0.03, att: 0.001 });
+}
+export function pickup() {
+  tone(out, { f: 660, vol: 0.18, len: 0.12, type: "square" });
+  tone(out, { t: 0.08, f: 990, vol: 0.18, len: 0.16, type: "square" });
+}
+export function hurt() {
+  tone(out, { f: 160, f2: 90, type: "sawtooth", vol: 0.35, len: 0.25 });
+  noiseHit(out, { f: 400, vol: 0.4, len: 0.2 });
+}
+// a low wet growl from where the zombie is
+export function growl(at: Vec3) {
+  const p = oneShot(at, 1.5, 1, 2000);
+  const f0 = 70 + Math.random() * 40;
+  tone(p, { f: f0, f2: f0 * 0.7, type: "sawtooth", vol: 0.35, len: 0.9, att: 0.1 });
+  noiseHit(p, { f: 350, type: "bandpass", q: 2, vol: 0.4, len: 0.8, att: 0.15 });
+}
+export function pain(at: Vec3) {
+  const p = oneShot(at, 1.5, 1);
+  tone(p, { f: 220, f2: 120, type: "sawtooth", vol: 0.3, len: 0.3 });
+}
+export function die(at: Vec3) {
+  const p = oneShot(at, 1.5, 1, 2000);
+  tone(p, { f: 140, f2: 45, type: "sawtooth", vol: 0.4, len: 0.9, att: 0.02 });
+  noiseHit(p, { t: 0.5, f: 200, vol: 0.5, len: 0.3 }); // body hits the floor
+}
+export function impact(at: Vec3) {
+  noiseHit(oneShot(at, 1, 1.4), { f: 2500, type: "highpass", vol: 0.12, len: 0.08 });
+}
+
 // the turn: air rushing past your ears
 export function whoosh() {
   noiseHit(out, { f: 900, type: "bandpass", q: 0.7, vol: 0.5, len: 0.3, att: 0.12 });
