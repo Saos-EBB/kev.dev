@@ -1,5 +1,6 @@
-// Thrown objects: every 5–15 s something (cans, balls, a saw blade, a
-// skull, a knife, a teapot — throwables.ts) flies at the viewer from a
+// Thrown objects (skull variant only, /saos#dev#skull): every 5–15 s
+// something (a can, a saw blade, a poop pile, an axe — throwables.ts)
+// flies at the viewer from a
 // random side, with its own synthesized sound (sound.ts), and always
 // leaves the same way: through the screen, past the viewer. Grab one and it
 // comes to the front and follows the pointer; let go and it is thrown on,
@@ -11,11 +12,10 @@
 // always in view, wherever the page is scrolled.
 import "./throws.css";
 import { gsap } from "gsap";
-import { THROWABLES, renderThrowable, type Throwable } from "./throwables";
+import { THROWABLES, renderThrowable } from "./throwables";
 import { pass, whoosh } from "./sound";
 
-// The skull variant's contact section (src/skull-site/contact-skull.ts)
-// stops the throws while its saw blades fly: no new launches, and
+// The contact section (src/skull-site/contact-skull.ts) stops the throws while its saw blades fly: no new launches, and
 // whatever is in the air fades out.
 let paused = false;
 let clearFlying: () => void = () => {};
@@ -24,7 +24,7 @@ export function pauseThrows(p: boolean) {
   if (p) clearFlying();
 }
 
-export function startThrows(scene: HTMLElement, firstDelay = 1, items: Throwable[] = THROWABLES) {
+export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const START_Z = -1200;
   // The camera sits at z = 1000 (perspective 1000px): ending past it makes
   // the thing fly right through the viewer — it fills the screen, crosses
@@ -76,7 +76,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1, items: Throwable
   const worldX = (sx: number, z: number) => (sx * (1000 - z)) / 1000;
 
   function launch() {
-    const t = items[Math.floor(Math.random() * items.length)];
+    const t = THROWABLES[Math.floor(Math.random() * THROWABLES.length)];
     const el = document.createElement("div");
     el.className = "ml-obj";
     el.style.setProperty("--w", `${t.w}px`);

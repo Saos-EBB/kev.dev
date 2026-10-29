@@ -1,5 +1,5 @@
 /* Thrown objects — a fixed full-viewport layer that things fly through
-   (src/lab/throws.ts), used on the main page. Studied from wodniack.dev:
+   (src/lab/throws.ts), skull variant only (/saos#dev#skull). Studied from wodniack.dev:
    CSS-3D objects posed only via custom properties. */
 
 /* ---- 1. 3D objects ------------------------------------------------ */
@@ -63,11 +63,6 @@
 
 .ml-slice.is-wire {
   fill: none;
-}
-
-/* Cavities (the skull's eye sockets and nose): darker holes. */
-.ml-slice .hole {
-  fill: color-mix(in srgb, var(--color-line) 35%, transparent);
 }
 
 /* Main page: the throw-sound mute button (main.ts), fixed bottom right

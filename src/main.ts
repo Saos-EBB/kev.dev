@@ -2,7 +2,6 @@
 import { LANG_AI } from "./i18n";
 import { UI } from "./i18n/ui";
 import { startThrows } from "./lab/throws";
-import { SKULL_THROWABLES } from "./skull-site/throwables-skull";
 import { setMuted, unlock } from "./lab/sound";
 import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
@@ -67,9 +66,9 @@ if (
 if (LITE) document.documentElement.classList.add("lite");
 
 // Skull variant of this page (/saos#dev#skull): src/saos-entry.ts sets
-// html.skull-site before importing this file. Only the contact section and
-// the thrown objects differ (src/skull-site/); everything else is this
-// page as is.
+// html.skull-site before importing this file. Its contact section is the
+// skull (src/skull-site/), and only it throws things (src/lab/throws.ts);
+// everything else is this page as is.
 const SKULL_SITE = document.documentElement.classList.contains("skull-site");
 
 // The scroll scenes are built for one mode at load (see LITE in
@@ -709,10 +708,10 @@ function maybeStart() {
   // Give ScrollTrigger one frame to complete layout measurements before
   // Lenis starts processing scroll events (prevents stutter from stale pins).
   requestAnimationFrame(() => lenis.start());
-  startThrowLayer();
+  if (SKULL_SITE) startThrowLayer();
 }
 
-// Thrown objects (src/lab/throws.ts): a fixed layer
+// Thrown objects (src/lab/throws.ts, skull variant only): a fixed layer
 // over the whole viewport, so a throw is always in view wherever the page
 // is scrolled. Above the header (150), below sheets/overlays (180+).
 // Imported statically on purpose: loading it with import() made the
@@ -763,7 +762,7 @@ function startThrowLayer() {
   layer.setAttribute("aria-hidden", "true");
   layer.style.setProperty("--throws-z", "160");
   document.body.append(layer, btn);
-  startThrows(layer, 3, SKULL_SITE ? SKULL_THROWABLES : undefined);
+  startThrows(layer, 3);
 
   const onFirstGesture = () => {
     unlock().then(render);
