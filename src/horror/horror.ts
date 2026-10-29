@@ -117,7 +117,7 @@ const WALL_TEXTS = [
   "Hi, ich bin Kev.",
   "Ich bau gern\nunterschiedlichen Stuff.",
   "Warum ein Spiel?\nIch zock gern.\nZombie-Modi vor allem.",
-  "Am meisten Spaß machen mir\n3D-Renderer und C++.",
+  "Aktuell tob ich mich\nmit Web-Projekten aus.",
   "„Geht nicht“ heißt meistens:\nnoch nicht verstanden.",
   "Wer nach mir kommt,\nsoll meinen Code\nohne mich verstehen.",
 ];
