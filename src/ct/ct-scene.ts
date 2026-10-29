@@ -4,14 +4,10 @@
 // something changed. Numbers from the prototype that made the mockup
 // ("#skull infos /ct-skull-prototype.html").
 import * as THREE from "three";
-import { MeshSurfaceSampler } from "three/addons/math/MeshSurfaceSampler.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { loadSkullGeometry } from "../skull-site/parts";
 import { createBrain, type Part } from "./brain";
-
-const LDIR = new THREE.Vector3(-0.5, 0.6, 0.6).normalize();
-const TOP = new THREE.Color("#b48cff");
-const BOTTOM = new THREE.Color("#5fa8ff");
+import { dotMaterial, skullDots } from "./dots";
 
 export type Pose = {
   rotY: number; // 0 = from the front, π/2 = side view (left hemisphere to the camera)
@@ -31,25 +27,6 @@ export interface CtScene {
   readonly rig: THREE.Group;
   readonly camera: THREE.PerspectiveCamera;
   requestRender(): void;
-}
-
-function skullDots(geo: THREE.BufferGeometry, n: number) {
-  const flat = geo.toNonIndexed();
-  flat.computeVertexNormals();
-  const sampler = new MeshSurfaceSampler(new THREE.Mesh(flat)).build();
-  const P = new Float32Array(n * 3), C = new Float32Array(n * 3);
-  const p = new THREE.Vector3(), nn = new THREE.Vector3(), c = new THREE.Color();
-  for (let i = 0; i < n; i++) {
-    sampler.sample(p, nn);
-    const shade = 0.3 + 0.7 * Math.pow(Math.max(0, nn.dot(LDIR)), 1.2);
-    c.copy(BOTTOM).lerp(TOP, Math.min(Math.max((p.y + 1.1) / 2, 0), 1)).multiplyScalar(shade);
-    P.set([p.x, p.y, p.z], i * 3);
-    C.set([c.r, c.g, c.b], i * 3);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(P, 3));
-  g.setAttribute("color", new THREE.BufferAttribute(C, 3));
-  return g;
 }
 
 export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: boolean } = {}): Promise<CtScene> {
@@ -74,9 +51,7 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: b
   camera.lookAt(0, 0, 0);
 
   const plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0.95);
-  const skullMat = new THREE.PointsMaterial({
-    size: 0.012, vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, clippingPlanes: [plane],
-  });
+  const skullMat = dotMaterial({ transparent: true, opacity: 0.9, depthWrite: false, clippingPlanes: [plane] });
   const skull = new THREE.Group();
   skull.add(new THREE.Points(skullDots(skullGeo, phone ? 25000 : 70000), skullMat));
 

@@ -10,11 +10,15 @@
   aspect-ratio: 1.15;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.6s ease;
 }
 
+/* Fades in once the scene is built; the scroll fade is set inline. */
 .ct-skull:not(.is-ready) {
   opacity: 0 !important;
+}
+
+.ct-skull.is-ready {
+  transition: opacity 0.6s ease;
 }
 
 .ct-skull::before {

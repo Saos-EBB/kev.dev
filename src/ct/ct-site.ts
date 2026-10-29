@@ -104,8 +104,10 @@ export function initCtSkull() {
       if (key !== poseKey) {
         poseKey = key;
         ct.setPose(pose);
-        wrap.style.opacity = String(1 - ease((y - kStart) / (vh * 0.3)));
       }
+      // Gone once the contact pin starts: its own scene takes over there.
+      const fade = (1 - ease((y - kStart) / (vh * 0.3))).toFixed(3);
+      if (fade !== wrap.style.opacity) wrap.style.opacity = fade;
 
       // Highlight: nothing before the projects, the atlas in the catalog,
       // else the card on screen (kept while the carousel is between two).

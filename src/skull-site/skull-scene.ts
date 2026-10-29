@@ -8,7 +8,8 @@
 // Everything after the rise is a closed-form function of the time since the
 // sequence started (no stepping), so reduced motion just jumps to the end.
 import * as THREE from "three";
-import { BLADE_R, bladeGeometry, loadSkullGeometry, wireMesh } from "./parts";
+import { BLADE_R, bladeGeometry, loadSkullGeometry } from "./parts";
+import { dotMaterial, skullDots, surfaceDots } from "../ct/dots";
 
 const BLADE_FLIGHT = 0.45; // s from off-screen to stuck
 const HIT_AT = [0.5, 1.9, 3.3]; // s after the skull is up
@@ -43,21 +44,17 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
 
-  const lineColor = new THREE.Color(), throwColor = new THREE.Color(), bgColor = new THREE.Color(), textColor = new THREE.Color();
-  const readColors = () => {
-    lineColor.set(css("--color-line") || "#cd57ff");
-    throwColor.set(css("--color-throw") || "#89ff57");
-    bgColor.set(css("--contact-bg") || "#08070a");
-    textColor.set(css("--color-text") || "#f5f5f6");
-  };
+  // Point look of the CT skull (src/ct/): skull purple→blue, blades and
+  // shards as pale dots; only the cracks follow the theme.
+  const textColor = new THREE.Color();
+  const readColors = () => textColor.set(css("--color-text") || "#f5f5f6");
   readColors();
+  const small = section.clientWidth < 900;
 
   // ── skull ──
   const geo = await loadSkullGeometry();
-  const skullParts = wireMesh(geo, lineColor, bgColor, 0.32);
   const skull = new THREE.Group();
-  const body = skullParts.group;
-  skull.add(body);
+  skull.add(new THREE.Points(skullDots(geo, small ? 25000 : 55000), dotMaterial({ transparent: true, opacity: 0.9, depthWrite: false })));
   scene.add(skull);
   const pos = geo.getAttribute("position") as THREE.BufferAttribute;
 
@@ -99,11 +96,12 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   };
 
   // ── per hit: blade, cracks, shards ──
-  const bladeGeo = bladeGeometry();
-  const shardGeos = [new THREE.TetrahedronGeometry(1), new THREE.OctahedronGeometry(1), new THREE.IcosahedronGeometry(1)].map((g) => new THREE.WireframeGeometry(g));
-  const throwMats: THREE.LineBasicMaterial[] = [];
+  const bladeCol = new THREE.Color("#fff1c9"), shardCol = new THREE.Color("#c9b8ff");
+  const bladeDots = surfaceDots(bladeGeometry(), 9000, (_, c) => { c.copy(bladeCol); });
+  const shardGeos = [new THREE.TetrahedronGeometry(1), new THREE.OctahedronGeometry(1), new THREE.IcosahedronGeometry(1)]
+    .map((g) => surfaceDots(g, 60, (_, c) => { c.copy(shardCol); }));
+  const dotMat = dotMaterial();
   const crackMats: THREE.LineBasicMaterial[] = [];
-  const bladeFills: THREE.MeshBasicMaterial[] = [];
 
   const hits = HITS.map((h, i) => {
     const hit = nearestTo(new THREE.Vector3(...h.want));
@@ -111,8 +109,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     const stuck = hit.clone().addScaledVector(inDir, BLADE_R * h.scale - h.depth);
     const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
 
-    const blade = wireMesh(bladeGeo, throwColor, bgColor, 0.95, true);
-    throwMats.push(blade.lineMat); bladeFills.push(blade.fillMat);
+    const blade = { group: new THREE.Group() };
+    blade.group.add(new THREE.Points(bladeDots, dotMat));
     blade.group.visible = false;
     blade.group.scale.setScalar(h.scale);
     blade.group.rotation.set(h.tilt[0], h.tilt[1], 0); // spin (rotation.z) stays around the blade's own axis
@@ -127,9 +125,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     skull.add(cracks);
 
     const shards = Array.from({ length: SHARDS_PER_HIT }, (_, k) => {
-      const mat = new THREE.LineBasicMaterial({ color: k % 3 ? lineColor : throwColor, transparent: true, opacity: 0.95 });
-      if (k % 3 === 0) throwMats.push(mat);
-      const m = new THREE.LineSegments(shardGeos[k % 3], mat);
+      const m = new THREE.Points(shardGeos[k % 3], dotMat);
       m.scale.setScalar(0.025 + Math.random() * 0.06);
       m.visible = false;
       scene.add(m);
@@ -143,12 +139,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   // Theme toggle (data-theme on <html>): recolor everything in place.
   new MutationObserver(() => {
     readColors();
-    skullParts.lineMat.color.copy(lineColor);
-    skullParts.fillMat.color.copy(bgColor);
-    bladeFills.forEach((m) => m.color.copy(bgColor));
-    throwMats.forEach((m) => m.color.copy(throwColor));
     crackMats.forEach((m) => m.color.copy(textColor));
-    for (const h of hits) for (const s of h.shards) if (!throwMats.includes(s.m.material as THREE.LineBasicMaterial)) (s.m.material as THREE.LineBasicMaterial).color.copy(lineColor);
     dirty = true;
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
