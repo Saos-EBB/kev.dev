@@ -3,6 +3,7 @@
 // The variant is decided once, on load:
 //   #dev#horror     the horror maze (src/horror/horror.ts)
 //   #dev#skull#saw  the standalone skull + saw blade scene (src/skull/skull-saw.ts)
+//   #dev#skull#ct   test bench for the CT skull (src/ct/ct-test.ts)
 //   #dev#skull      the whole main page with the skull contact + its throw
 //                   set (src/main.ts with html.skull-site, see src/skull-site/)
 // Imported dynamically so only the chosen variant's code and CSS load —
@@ -12,7 +13,9 @@
 // so the gate is checked again.
 const hash = location.hash;
 
-if (hash.startsWith("#dev#skull") && !hash.startsWith("#dev#skull#saw")) {
+const isSub = (sub: string) => hash.startsWith(`#dev#skull#${sub}`);
+
+if (hash.startsWith("#dev#skull") && !isSub("saw") && !isSub("ct")) {
   document.documentElement.classList.add("skull-site");
   document.title = "Kevin Schaberl";
   void import("./main");
@@ -20,4 +23,5 @@ if (hash.startsWith("#dev#skull") && !hash.startsWith("#dev#skull#saw")) {
   window.addEventListener("hashchange", () => location.reload());
   if (hash.startsWith("#dev#horror")) void import("./horror/horror");
   else if (hash.startsWith("#dev#skull#saw")) void import("./skull/skull-saw");
+  else if (isSub("ct")) void import("./ct/ct-test");
 }
