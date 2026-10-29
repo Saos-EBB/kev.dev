@@ -105,7 +105,7 @@ async function mount() {
   // ── blade ──
   const bGeo = bladeGeometry();
   const blade = new THREE.Group();
-  blade.add(new THREE.Mesh(bGeo, blackFill()), new THREE.LineSegments(new THREE.EdgesGeometry(bGeo, 30), new THREE.LineBasicMaterial({ color: SOFT, transparent: true, opacity: 0.95 })));
+  blade.add(new THREE.Mesh(bGeo, blackFill()), wire(bGeo, SOFT, 0.95));
   scene.add(blade);
 
   // ── shockwave ring ──
