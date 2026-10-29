@@ -1,22 +1,24 @@
 // Thrown objects: every 5–15 s something (cans, balls, a saw blade, a
 // skull, a knife, a teapot — throwables.ts) flies at the viewer from a
-// random side, with its own synthesized sound (sound.ts). Grab one and it
-// comes to the front and follows the pointer; let go and it dissolves.
+// random side, with its own synthesized sound (sound.ts), and always
+// leaves the same way: through the screen, past the viewer. Grab one and it
+// comes to the front and follows the pointer; let go and it is thrown on,
+// through you.
 // Studied from wodniack.dev, rebuilt with our own shapes and code:
 //  1. CSS-3D: JS only writes --x/--y/--z/--rx/--ry per frame, the
 //     transform lives in throws.css.
 //  2. Vanish: a 30-frame dissolve sprite (painted here on a canvas, not
-//     copied) used as a mask and stepped through with steps(29).
+//     copied) used as a mask and stepped through with steps(29) — used by
+//     the Motion Lab's cards (.is-vanishing in throws.css).
 // The layer is position: fixed over the viewport, so whatever is thrown is
 // always in view, wherever the page is scrolled.
 import "./throws.css";
 import { gsap } from "gsap";
 import { THROWABLES, renderThrowable } from "./throwables";
-import { dissolve, pass, whoosh } from "./sound";
+import { pass, whoosh } from "./sound";
 
 export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const FRAMES = 30;
-  const VANISH_MS = 750;
   const START_Z = -1200;
   // The camera sits at z = 1000 (perspective 1000px): ending past it makes
   // the thing fly right through the viewer — it fills the screen, crosses
@@ -25,6 +27,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const END_Z = 1300;
   const GAP_S: [number, number] = [5, 15]; // pause between throws
   const FLIGHT_S: [number, number] = [4.5, 7]; // one throw, start to end
+  const RETHROW_S: [number, number] = [1.1, 1.6]; // after a drag: on through you
 
   // ---- Vanish sprite --------------------------------------------------
   // Each frame is a 16x16 cell grid; every cell gets a random threshold
@@ -69,6 +72,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
     arc: number; // sideways bow at mid-flight, screen px
     t: number; // seconds into the flight
     dur: number;
+    z0: number; // where this flight starts in depth
     passed: boolean;
     x: number;
     y: number;
@@ -77,7 +81,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
     ry: number;
     vrx: number;
     vry: number;
-    state: "flying" | "dragging" | "vanishing";
+    state: "flying" | "dragging";
   };
 
   const pointer = { x: 0, y: 0 };
@@ -112,6 +116,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
       arc: (Math.random() - 0.5) * 0.6 * edge,
       t: 0,
       dur: rand(FLIGHT_S),
+      z0: START_Z,
       passed: false,
       x: 0,
       y: 0,
@@ -138,10 +143,21 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
     el.addEventListener("pointerup", () => {
       if (o.state !== "dragging") return;
       dragged = null;
-      o.state = "vanishing";
-      el.classList.add("is-vanishing");
-      dissolve(panOf(o.x));
-      gsap.delayedCall(VANISH_MS / 1000, () => remove(o));
+      // Let go: a short new flight from where it is now (z ≈ 0, so screen
+      // == world x/y) towards the middle and on through the camera — every
+      // throw leaves through the screen, past the viewer.
+      const miss = 40 + Math.random() * 80;
+      const d = Math.hypot(o.x, o.y) || 1;
+      o.from = [o.x, o.y];
+      o.to = [(-o.x / d) * miss, (-o.y / d) * miss];
+      o.arc = 0;
+      o.t = 0;
+      o.dur = rand(RETHROW_S);
+      o.z0 = o.z;
+      o.passed = false;
+      o.state = "flying";
+      el.classList.remove("is-dragging");
+      whoosh(o.dur, panOf(o.from[0]), panOf(o.to[0]));
     });
   }
 
@@ -194,7 +210,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
         const ny = (o.to[0] - o.from[0]) / len;
         const sx = o.from[0] + (o.to[0] - o.from[0]) * q + nx * bow;
         const sy = o.from[1] + (o.to[1] - o.from[1]) * q + ny * bow;
-        o.z = START_Z + (END_Z - START_Z) * easeZ(u);
+        o.z = o.z0 + (END_Z - o.z0) * easeZ(u);
         o.x = worldX(sx, o.z);
         o.y = worldX(sy, o.z);
         o.rx += o.vrx * dt;

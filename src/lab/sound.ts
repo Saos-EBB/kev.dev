@@ -169,12 +169,3 @@ export function pass(name: string, pan: number) {
       break;
   }
 }
-
-// Soft crackle while something dissolves.
-export function dissolve(pan: number) {
-  if (!ctx || ctx.ac.state !== "running") return;
-  const c = ctx;
-  const t = c.ac.currentTime;
-  const v = voice(c, pan);
-  for (let i = 0; i < 14; i++) noiseBurst(c, v, t + Math.random() * 0.7, 0.03, 2500 + Math.random() * 4000, 8, 0.25);
-}
