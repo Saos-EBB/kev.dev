@@ -1,143 +1,21 @@
 // The three big projects' desktop cards. Instead of the shared chrome
 // (visual + Why?/Learned!/Code teaser boxes), each gets a structure of its
 // own built from the same card data — YourBrand rides its module graph
-// with a phone (yourbrand-card.ts).
+// with a phone (yourbrand-card.ts), TschoBBo its pipeline (tschobbo-card.ts).
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
-import { cardBodies, esc, type MailFolder, type ProjectCard } from "./project-cards";
+import { cardBodies, esc, type ProjectCard } from "./project-cards";
 import { editor, orders, ramp, terminal, viewport } from "./project-visuals";
 import { initYourBrand, ybCard } from "./yourbrand-card";
+import { initTschobbo, tbCard } from "./tschobbo-card";
 import { initPhones, phone } from "./kevdev-phone";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
 
-// A decision reads "Head: the rest" or "Head — the rest"; the head becomes
-// the list row's title, like a mail subject.
-export function splitDecision(d: string): [string, string] {
+// A decision reads "Head: the rest" or "Head — the rest".
+function splitDecision(d: string): [string, string] {
   const m = d.match(/^(.{4,60}?)(?::| —) (.+)$/);
   return m ? [m[1], m[2]] : [d, ""];
-}
-
-// A tiny highlighter for the architecture excerpt: comments, strings and a
-// few keywords — enough to read as code, not a parser.
-function highlight(code: string): string {
-  return code
-    .split("\n")
-    .map((line) => {
-      const safe = esc(line);
-      if (safe.trimStart().startsWith("//")) return `<span class="c">${safe}</span>`;
-      return safe
-        .replace(/&#39;[^&]*&#39;|'[^']*'/g, (m) => `<span class="s">${m}</span>`)
-        .replace(/\b(type|interface|Promise)\b/g, (m) => `<span class="k">${m}</span>`);
-    })
-    .join("\n");
-}
-
-// The architecture pane: the pipeline as an aligned table, then the types.
-function archPane(card: ProjectCard): string {
-  if (!card.arch) return "";
-  const w = Math.max(...card.arch.steps.map(([name]) => name.length)) + 2;
-  const f = Math.max(...card.arch.steps.map(([, file]) => file.length)) + 2;
-  const steps = card.arch.steps
-    .map(
-      ([name, file, status], i) =>
-        `<span class="n">${String(i + 1).padStart(2, "0")}</span>  <span class="k">${esc(name.padEnd(w))}</span><span class="f">${esc(file.padEnd(f))}</span><span class="o">→</span> <span class="s">${esc(status)}</span>`,
-    )
-    .join("\n");
-  return `
-    <div class="mail-code" data-pane="arch" hidden>
-      <p class="mail-code-head"><span>pipeline</span><span>${esc(UI.boxCode)}</span></p>
-      <pre><code>${steps}</code></pre>
-      <div class="mail-code-blocks">${card.arch.code
-        .split("\n\n")
-        .map((block) => `<pre><code>${highlight(block)}</code></pre>`)
-        .join("")}</div>
-    </div>`;
-}
-
-// The fit colors the JobBot list uses (match / off-stack / brutal).
-const FIT = ["#5B8CFF", "#E8B04B", "#E8622A"];
-
-// TschoBBo: the card as the bot's own mail client — folders on the left,
-// the picked folder's mails in the middle, the picked mail as a letter on
-// paper. "Code + Architektur" lists the decisions and opens on the code.
-// Clicks are wired in initBigCards.
-function mailCard(card: ProjectCard, head: string): string {
-  const box = card.mailbox;
-  const mails = (folder: MailFolder, first: [string, string]) => [first, ...(box?.[folder] ?? [])];
-  const folders: { id: string; label: string; mails: [string, string][] }[] = [
-    { id: "what", label: UI.lblWhat, mails: mails("what", [card.title, card.what ?? ""]) },
-    { id: "why", label: UI.boxWhy, mails: mails("why", [card.learnGoal, ""]) },
-    { id: "learned", label: UI.boxLearned, mails: mails("learned", [UI.lblChallenge, card.challenge ?? ""]) },
-    { id: "arch", label: UI.boxCode, mails: (card.decisions ?? []).map((d) => splitDecision(d)) },
-    { id: "origin", label: UI.lblOrigin, mails: mails("origin", [UI.lblOrigin, card.origin ?? ""]) },
-  ];
-  const gh = card.links?.find((l) => l.href);
-  // The decisions' letters show the whole decision, not just its tail.
-  const body = (f: string, i: number, text: string) => (f === "arch" ? card.decisions![i] : text);
-
-  return `
-    <article class="pcard pcard--big pcard--mail" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
-      ${head}
-      <div class="mail">
-        <div class="mail-bar" aria-hidden="true"><i></i><i></i><i></i><span>jobbot :// ${esc(card.title)}</span></div>
-        <div class="mail-panes">
-          <nav class="mail-folders">
-            <p class="mail-logo" aria-hidden="true">jobbot <span>://</span></p>
-            ${folders
-              .map(
-                (f, i) =>
-                  `<button type="button" class="mail-folder" data-folder="${f.id}" aria-pressed="${i === 0}"><span>${esc(f.label)}</span><span class="mail-n">${f.mails.length}</span></button>`,
-              )
-              .join("")}
-            ${card.mascot ? `<img class="mail-mascot" src="${esc(card.mascot.src)}" alt="${esc(card.mascot.alt)}" loading="lazy" decoding="async" />` : ""}
-          </nav>
-          <div class="mail-list">
-            ${folders
-              .map(
-                (f, fi) => `
-              <div class="mail-group" data-list="${f.id}"${fi === 0 ? "" : " hidden"}>
-                <p class="mail-list-head">${esc(f.label)}</p>
-                ${f.mails
-                  .map(
-                    ([title, text], i) => `
-                <button type="button" class="mail-row" data-mail="${f.id}-${i}" aria-pressed="${fi === 0 && i === 0}">
-                  <i style="background: ${FIT[i % FIT.length]}"></i>
-                  <span><b>${esc(title)}</b><span>${esc(text)}</span></span>
-                </button>`,
-                  )
-                  .join("")}
-              </div>`,
-              )
-              .join("")}
-            <ul class="mail-tags">${(card.tags ?? []).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-          </div>
-          <div class="mail-read">
-            ${archPane(card)}
-            <article class="mail-paper">
-              <div class="mail-stamp" aria-hidden="true">
-                ${card.mascot ? `<img src="${esc(card.mascot.src)}" alt="" loading="lazy" decoding="async" />` : ""}
-                <span>${esc(UI.touchStamp)}</span>
-              </div>
-              ${folders
-                .flatMap((f, fi) =>
-                  f.mails.map(
-                    ([title, text], i) => `
-                <div class="mail-pane" data-pane="${f.id}-${i}"${fi === 0 && i === 0 ? "" : " hidden"}>
-                  <p class="mail-kicker">${esc(f.label)}</p>
-                  <h4>${esc(title)}</h4>
-                  ${body(f.id, i, text) ? `<p>${esc(body(f.id, i, text))}</p>` : ""}
-                </div>`,
-                  ),
-                )
-                .join("")}
-            </article>
-            ${gh ? `<a class="mail-send" href="${esc(gh.href!)}" target="_blank" rel="noopener noreferrer">${esc(gh.label)} ↗</a>` : ""}
-          </div>
-        </div>
-      </div>
-    </article>
-  `;
 }
 
 // The card's texts (Why? / Learned! / Code, cardBodies) as tabs, with any
@@ -232,7 +110,7 @@ function partsCard(card: ProjectCard, head: string): string {
 // --fit factor (big-cards.css). A ResizeObserver refits on resize
 // and when a hidden tab panel shows (its size goes from 0); content that
 // changes in place (TschoBBo's letters) calls fitText itself.
-const FIT_BOXES = ".big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code";
+const FIT_BOXES = ".big-panel, .parts-panel";
 const MIN_FIT = 0.65;
 
 export function fitText(el: HTMLElement) {
@@ -246,11 +124,11 @@ export function fitText(el: HTMLElement) {
   }
 }
 
-// A folder shows its mails and opens the first (the architecture folder
-// opens on its code instead); a mail shows its letter. One listener per
-// big card; the cards are rendered once, so nothing to tear down.
+// The phones, the text fitting and the tab boxes. The cards are rendered
+// once, so nothing to tear down.
 export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
   initYourBrand(root, cards);
+  initTschobbo(root);
   initPhones(root);
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
@@ -258,43 +136,6 @@ export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
   // The web fonts change every line's width once they're in.
   document.fonts?.ready.then(() => boxes.forEach(fitText));
 
-  root.querySelectorAll<HTMLElement>(".pcard--mail").forEach((card) => {
-    const paper = card.querySelector<HTMLElement>(".mail-paper");
-    const show = (pane: string) => {
-      card.querySelectorAll<HTMLElement>("[data-pane]").forEach((el) => {
-        el.hidden = el.dataset.pane !== pane;
-      });
-      // The architecture is code, not a letter: no paper behind it.
-      if (paper) {
-        paper.hidden = pane === "arch";
-        paper.scrollTo(0, 0);
-      }
-      card.querySelectorAll<HTMLElement>(".mail-row").forEach((row) => {
-        row.setAttribute("aria-pressed", String(row.dataset.mail === pane));
-      });
-      // The reading side first: its size settles the row the list sits in.
-      [".mail-code", ".mail-paper", ".mail-list"].forEach((sel) => {
-        const box = card.querySelector<HTMLElement>(sel);
-        if (box) fitText(box);
-      });
-    };
-    card.addEventListener("click", (e) => {
-      const target = e.target as Element;
-      const folder = target.closest<HTMLElement>("[data-folder]");
-      if (folder) {
-        const id = folder.dataset.folder!;
-        card.querySelectorAll<HTMLElement>("[data-folder]").forEach((btn) => btn.setAttribute("aria-pressed", String(btn === folder)));
-        card.querySelectorAll<HTMLElement>("[data-list]").forEach((list) => {
-          list.hidden = list.dataset.list !== id;
-        });
-        card.querySelector(".mail-list")?.scrollTo(0, 0);
-        show(id === "arch" && card.querySelector("[data-pane='arch']") ? "arch" : `${id}-0`);
-        return;
-      }
-      const mail = target.closest<HTMLElement>("[data-mail]");
-      if (mail) show(mail.dataset.mail!);
-    });
-  });
   // Every tab box (textTabs and the like): a tab shows its panel within
   // its own [data-tabs] box.
   root.addEventListener("click", (e) => {
@@ -533,7 +374,7 @@ export function renderBigCard(card: ProjectCard, head: string): string {
     case "blueprint":
       return ybCard(card, head, (first) => textTabs(card, [first]));
     case "inbox":
-      return mailCard(card, head);
+      return tbCard(card, head, (first) => textTabs(card, [first]));
     case "storyboard":
       return partsCard(card, head);
     case "editor":
