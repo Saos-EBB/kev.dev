@@ -80,11 +80,36 @@ function knife(): Throwable {
 }
 
 function skull(): Throwable {
-  const svg =
-    '<path d="M50 5 C20 5 8 28 10 52 C11 64 18 70 22 74 L24 88 L76 88 L78 74 C82 70 89 64 90 52 C92 28 80 5 50 5 Z"/>' +
-    '<circle cx="34" cy="52" r="10"/><circle cx="66" cy="52" r="10"/><path d="M50 62 L44 75 L56 75 Z"/>' +
-    '<path d="M30 88 V102 H70 V88 M40 88 V100 M50 88 V100 M60 88 V100"/>';
-  return { name: "skull", w: 110, h: 120, slices: extrude(110, 120, "0 0 100 110", svg, 40, 6, 0.35) };
+  // Cranium + cheekbones as a rounded stack (outer slices shrink like a
+  // head), the lower jaw as a shallower stack of its own, and the face
+  // (eye sockets, nose cavity, teeth, cheek lines) on one slice at the
+  // front, so it reads as a skull from the front and as a head from the
+  // side. Sockets and nose are filled darker holes (.hole).
+  const w = 110;
+  const h = 132;
+  const vb = "0 0 100 120";
+  const cranium =
+    '<path d="M50 4 C24 4 8 22 8 46 C8 58 12 66 16 72 C18 76 20 80 23 84 L31 87 L69 87 L77 84 C80 80 82 76 84 72 C88 66 92 58 92 46 C92 22 76 4 50 4 Z"/>';
+  const jaw = '<path d="M27 84 C27 97 35 108 50 110 C65 108 73 97 73 84 L66 90 H34 Z"/>';
+  const face =
+    '<path class="hole" d="M25 49 C25 40 33 35 41 39 C47 42 46 54 41 58 C35 62 25 58 25 49 Z"/>' +
+    '<path class="hole" d="M75 49 C75 40 67 35 59 39 C53 42 54 54 59 58 C65 62 75 58 75 49 Z"/>' +
+    '<path class="hole" d="M50 61 L44 73 C46 75 48 75 50 73 C52 75 54 75 56 73 Z"/>' +
+    '<path d="M17 69 C23 65 30 65 35 68 M83 69 C77 65 70 65 65 68"/>' +
+    '<path d="M33 86 H67 M38 82 V92 M44 82 V93 M50 82 V93 M56 82 V93 M62 82 V92 M36 94 C44 97 56 97 64 94"/>';
+  const head = extrude(w, h, vb, cranium, 70, 7, 0.4);
+  const mandible = extrude(w, h, vb, jaw, 44, 4, 0.3).map((sl) => ({ ...sl, t: `translateZ(10px) ${sl.t}` }));
+  const front = { w, h, viewBox: vb, svg: face, wire: true, t: "translateZ(36px) scale(0.92)" };
+  // Side profile through the middle (rotateY 90deg turns its left edge to
+  // the front), so the skull keeps its shape when seen side-on.
+  const profile = {
+    w, h, viewBox: vb, t: "rotateY(90deg) scale(0.8)",
+    svg:
+      '<path d="M60 4 C82 4 95 22 95 45 C95 62 88 72 80 79 L76 90 C72 99 64 103 57 104 L42 109 C35 110 30 106 30 99 L28 92 L20 88 C16 86 16 82 18 79 L13 71 C11 67 13 63 17 61 L15 48 C15 24 34 4 60 4 Z"/>' +
+      '<path class="hole" d="M18 44 C24 40 32 42 33 50 C34 57 26 60 19 57 Z"/><circle class="hole" cx="70" cy="62" r="4"/>' +
+      '<path d="M24 68 C36 66 48 66 60 68 M30 92 H52 M34 88 V96 M40 88 V97 M46 88 V97"/>',
+  };
+  return { name: "skull", w, h, slices: [...head, ...mandible, profile, front] };
 }
 
 function teapot(): Throwable {
