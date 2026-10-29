@@ -25,6 +25,7 @@ export type CombatWorld = {
   onHurt: (damage: number) => void; // the game shows it and handles death
   onShot: () => void; // muzzle flash: the game brightens the lamp for a moment
   onKill: (k: Kill) => void;
+  onImpact: (head: boolean, kill: boolean) => void; // bat connects: the game freezes a beat, shakes, splatters the lens
 };
 
 const PELLETS = 8, SPREAD = 0.07, RANGE = 30;
@@ -148,6 +149,16 @@ export function createCombat(w: CombatWorld) {
   particles.frustumCulled = false;
   scene.add(particles);
   let pNext = 0;
+  // a directed spray: most of it flies along (dx, dz), fast, in a flat fan
+  function spray(at: THREE.Vector3, dx: number, dz: number, n: number) {
+    for (let k = 0; k < n; k++) {
+      const i = pNext++ % P, sp = 2 + Math.random() * 5;
+      pPos.set([at.x, at.y, at.z], i * 3);
+      pCol.set([0.35 + Math.random() * 0.2, 0.01, 0.01], i * 3);
+      pVel.set([dx * sp + (Math.random() - 0.5) * 2, Math.random() * 2.5, dz * sp + (Math.random() - 0.5) * 2], i * 3);
+      pLife[i] = 0.8 + Math.random() * 0.6;
+    }
+  }
   function burst(at: THREE.Vector3, n: number, r: number, g: number, b: number, speed: number) {
     for (let k = 0; k < n; k++) {
       const i = pNext++ % P;
@@ -313,7 +324,7 @@ export function createCombat(w: CombatWorld) {
 
   function fire() {
     if (!weapon || cooldown > 0) return;
-    if (weapon === "bat") { cooldown = 0.55; swingT = 0; swung = false; sfx.swing(); return; }
+    if (weapon === "bat") { cooldown = 0.6; swingT = 0; swung = false; setTimeout(sfx.swing, 90); return; }
     if (ammo <= 0) { sfx.click(); cooldown = 0.3; return; }
     ammo--; cooldown = 0.85; recoil = 1; flashT = 0.06;
     sfx.shotgun(); setTimeout(sfx.pump, 280);
@@ -352,9 +363,15 @@ export function createCombat(w: CombatWorld) {
     if (!best) return;
     const head = headHit(best, origin, fwd, 1.5) < Infinity;
     hitAt.copy(best.root.position).setY(best.root.position.y + best.height * (head ? 0.88 : 0.55));
-    burst(hitAt, 12, 0.45, 0.02, 0.02, 3);
+    // blood flies the way the bat went (to your left), plus a cloud, plus a few dark chunks
+    spray(hitAt, -right.x, -right.z, head ? 46 : 30);
+    burst(hitAt, head ? 20 : 12, 0.5, 0.02, 0.02, 3.5);
+    burst(hitAt, 6, 0.18, 0.02, 0.02, 2);
     sfx.chop(hitAt);
+    const killed = best.hp - (head ? DMG.bat.head : DMG.bat.body) <= 0;
     damage(best, head, head ? DMG.bat.head : DMG.bat.body);
+    if (!killed && best.kind !== "boss") tryMove(best, -right.x * 0.4 + fwd.x * 0.3, -right.z * 0.4 + fwd.z * 0.3); // knocked sideways
+    w.onImpact(head, killed);
   }
 
   function tryMove(z: Zombie, dx: number, dz: number) {
@@ -373,6 +390,24 @@ export function createCombat(w: CombatWorld) {
   }
 
   function select(next: "shotgun" | "bat") { if (have[next] && weapon !== next) { weapon = next; cooldown = 0.25; swingT = -1; } }
+
+  /* ---------- the bat swing: three poses, eased between ---------- */
+  // [x, y, z, rotX, rotY, rotZ] of the bat in front of the camera
+  const REST = [0.22, -0.28, -0.35, 0, 0, 0];
+  const WINDUP = [0.36, -0.06, -0.28, 0.55, -0.35, -0.7]; // raised over the right shoulder
+  const STRIKE = [-0.2, -0.4, -0.48, -1.35, 0.55, 1.0]; // swept through, down and left
+  const SWING = { windup: 0.13, strike: 0.25, hit: 0.19, end: 0.58 }; // seconds
+  const pose = REST.slice();
+  const ease = { out: (t: number) => 1 - (1 - t) ** 3, in: (t: number) => t * t * t, inOut: (t: number) => t * t * (3 - 2 * t) };
+  const mix = (a: number[], b: number[], t: number) => { for (let i = 0; i < 6; i++) pose[i] = a[i] + (b[i] - a[i]) * t; };
+  function swingPose(t: number, _out: number[]) {
+    if (t < 0) return mix(REST, REST, 0);
+    if (t < SWING.windup) return mix(REST, WINDUP, ease.out(t / SWING.windup));
+    if (t < SWING.strike) return mix(WINDUP, STRIKE, ease.in((t - SWING.windup) / (SWING.strike - SWING.windup)));
+    return mix(STRIKE, REST, ease.inOut(Math.min(1, (t - SWING.strike) / (SWING.end - SWING.strike))));
+  }
+  // how far into the strike we are (0..1), for the camera to lean into it
+  const swingLean = () => (swingT > SWING.windup && swingT < SWING.end ? Math.sin(Math.min(1, (swingT - SWING.windup) / (SWING.end - SWING.windup)) * Math.PI) : 0);
 
   /* ---------- the boss: skulls, and below 40 % a charge ---------- */
   const aimAt = new THREE.Vector3(), bossEye = new THREE.Vector3();
@@ -440,17 +475,15 @@ export function createCombat(w: CombatWorld) {
       flashT -= dt;
       flash.visible = flashT > 0;
       flash.material.rotation = Math.random() * 6;
-      // swing: wind up right, sweep down-left across the view
-      let k = 0;
+      // swing: wind up over the right shoulder, whip down-left across the view, come back slowly
       if (swingT >= 0) {
         swingT += dt;
-        k = Math.min(1, swingT / 0.32);
-        if (!swung && k > 0.45) { swung = true; batHit(); }
-        if (swingT > 0.5) swingT = -1;
+        if (!swung && swingT > SWING.hit) { swung = true; batHit(); }
+        if (swingT > SWING.end) swingT = -1;
       }
-      const s = Math.sin(k * Math.PI);
-      batView.position.set(0.22 + bx - s * 0.3, -0.28 + by + s * 0.12, -0.35 - s * 0.1);
-      batView.rotation.set(-s * 1.1, s * 0.6, -s * 0.9);
+      swingPose(swingT, pose);
+      batView.position.set(pose[0] + bx, pose[1] + by, pose[2]);
+      batView.rotation.set(pose[3], pose[4], pose[5]);
     }
 
     // pickups spin, you take them by walking over them
@@ -533,7 +566,7 @@ export function createCombat(w: CombatWorld) {
 
   const boss = () => zombies.find((z) => z.kind === "boss");
   return {
-    fire, spawn, addPickup, update, select, grant, mirrorZombie, burst, viewScene, ready,
+    fire, spawn, addPickup, update, select, grant, mirrorZombie, burst, swingLean, viewScene, ready,
     get weapon() { return weapon; },
     get has() { return have; },
     get ammo() { return ammo; },

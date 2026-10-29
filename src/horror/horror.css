@@ -121,3 +121,4 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 /* the ending: blood on the lens, then a hard cut to black */
 #splat { inset: 0; width: 100%; height: 100%; }
 #cut { inset: 0; background: #000; z-index: 15; }
+#gore { inset: 0; width: 100%; height: 100%; opacity: 0; }
