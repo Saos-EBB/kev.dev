@@ -1,4 +1,5 @@
-// Skull + saw blade — hidden scene on saos.html, mounts only on #dev#skull.
+// Skull + saw blade — hidden scene on saos.html, mounts only on #dev#skull#saw
+// (src/saos-entry.ts; plain #dev#skull is the skull variant of the main page).
 // The cranium is craniumCut01 from the 2D renderer (renderer-models), turned
 // to face the camera. A saw blade flies in from the upper left, sticks in
 // the forehead, bone shards burst toward the viewer. Pink wireframe on black.
@@ -251,4 +252,4 @@ async function mount() {
   });
 }
 
-if (location.hash.startsWith("#dev#skull")) mount();
+if (location.hash.startsWith("#dev#skull#saw")) mount();

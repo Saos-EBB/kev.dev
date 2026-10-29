@@ -23,7 +23,7 @@ const range = (from: number, to: number, step: number) => {
 
 // Silhouette extruded along z; `round` shrinks the outer slices so the
 // stack reads as a rounded body instead of a slab.
-function extrude(w: number, h: number, viewBox: string, svg: string, depth: number, n: number, round = 0): Slice[] {
+export function extrude(w: number, h: number, viewBox: string, svg: string, depth: number, n: number, round = 0): Slice[] {
   return range(-depth / 2, depth / 2, depth / Math.max(n - 1, 1)).map((z) => {
     const k = depth ? (2 * z) / depth : 0;
     const s = 1 - round * k * k;
@@ -43,7 +43,7 @@ function ball(): Throwable {
   return { name: "ball", w: d, h: d, slices: [...meridians, ...latitudes] };
 }
 
-function can(): Throwable {
+export function can(): Throwable {
   const d = 80;
   const h = 140;
   const top = '<circle cx="50" cy="50" r="48"/><circle cx="50" cy="50" r="40"/><rect x="40" y="20" width="20" height="12" rx="6"/>';
@@ -59,7 +59,7 @@ function can(): Throwable {
   return { name: "can", w: d, h, slices: [...rings, ...sides] };
 }
 
-function saw(): Throwable {
+export function saw(): Throwable {
   const teeth = 18;
   const pts: string[] = [];
   for (let i = 0; i < teeth; i++) {

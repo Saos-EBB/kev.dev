@@ -2,6 +2,7 @@
 import { LANG_AI } from "./i18n";
 import { UI } from "./i18n/ui";
 import { startThrows } from "./lab/throws";
+import { SKULL_THROWABLES } from "./skull-site/throwables-skull";
 import { setMuted, unlock } from "./lab/sound";
 import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
@@ -27,6 +28,7 @@ import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
+import { initSkullContact, getSkullContactRevealScrollY } from "./skull-site/contact-skull";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
@@ -63,6 +65,13 @@ if (
 }
 
 if (LITE) document.documentElement.classList.add("lite");
+
+// Skull variant of this page (/saos#dev#skull): src/saos-entry.ts sets
+// html.skull-site before importing this file. Only the contact section and
+// the thrown objects differ (src/skull-site/); everything else is this
+// page as is.
+const SKULL_SITE = document.documentElement.classList.contains("skull-site");
+
 // The scroll scenes are built for one mode at load (see LITE in
 // viewport.ts) — crossing the breakpoint (rotating a tablet, dragging a
 // desktop window narrow) rebuilds the page in the other one.
@@ -226,10 +235,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
+    ${SKULL_SITE ? `<canvas class="contact-skull" aria-hidden="true"></canvas>` : ""}
     <div class="contact-inner">
       <h2 class="contact-headline">${UI.contactHeadline}</h2>
-      <div class="contact-raygun" hidden></div>
-      <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
+      ${SKULL_SITE ? "" : `<div class="contact-raygun" hidden></div>
+      <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>`}
       <ul class="contact-icons">
         <li>
           <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
@@ -640,7 +650,7 @@ else {
   mountFaceVisuals(catalogSection);
 }
 
-initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
+(SKULL_SITE ? initSkullContact : initContact)(document.querySelector<HTMLElement>("#contact")!, lenis);
 
 // A plain "#contact" anchor jump lands at the top of the pin, where the
 // grid has just started dissolving — not what "go to Contact" means.
@@ -651,7 +661,7 @@ initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 // feel just for this one link.
 document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link) => {
   link.addEventListener("click", (e) => {
-    const target = getContactRevealScrollY();
+    const target = SKULL_SITE ? getSkullContactRevealScrollY() : getContactRevealScrollY();
     if (target === null) return; // reduced motion — no pin, let the native jump happen
     e.preventDefault();
     lenis.scrollTo(target, { immediate: true });
@@ -753,7 +763,7 @@ function startThrowLayer() {
   layer.setAttribute("aria-hidden", "true");
   layer.style.setProperty("--throws-z", "160");
   document.body.append(layer, btn);
-  startThrows(layer, 3);
+  startThrows(layer, 3, SKULL_SITE ? SKULL_THROWABLES : undefined);
 
   const onFirstGesture = () => {
     unlock().then(render);

@@ -11,10 +11,20 @@
 // always in view, wherever the page is scrolled.
 import "./throws.css";
 import { gsap } from "gsap";
-import { THROWABLES, renderThrowable } from "./throwables";
+import { THROWABLES, renderThrowable, type Throwable } from "./throwables";
 import { pass, whoosh } from "./sound";
 
-export function startThrows(scene: HTMLElement, firstDelay = 1) {
+// The skull variant's contact section (src/skull-site/contact-skull.ts)
+// stops the throws while its saw blades fly: no new launches, and
+// whatever is in the air fades out.
+let paused = false;
+let clearFlying: () => void = () => {};
+export function pauseThrows(p: boolean) {
+  paused = p;
+  if (p) clearFlying();
+}
+
+export function startThrows(scene: HTMLElement, firstDelay = 1, items: Throwable[] = THROWABLES) {
   const START_Z = -1200;
   // The camera sits at z = 1000 (perspective 1000px): ending past it makes
   // the thing fly right through the viewer — it fills the screen, crosses
@@ -66,7 +76,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const worldX = (sx: number, z: number) => (sx * (1000 - z)) / 1000;
 
   function launch() {
-    const t = THROWABLES[Math.floor(Math.random() * THROWABLES.length)];
+    const t = items[Math.floor(Math.random() * items.length)];
     const el = document.createElement("div");
     el.className = "ml-obj";
     el.style.setProperty("--w", `${t.w}px`);
@@ -136,6 +146,13 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
     o.el.remove();
   }
 
+  clearFlying = () => {
+    for (const o of flying) {
+      flying.delete(o);
+      gsap.to(o.el, { opacity: 0, duration: 0.3, onComplete: () => o.el.remove() });
+    }
+  };
+
   // Nobody sees a throw in a background tab: wait until it is visible
   // again, then throw.
   function whenVisible(fn: () => void) {
@@ -150,7 +167,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   function scheduleNext() {
     gsap.delayedCall(rand(GAP_S), () =>
       whenVisible(() => {
-        launch();
+        if (!paused) launch();
         scheduleNext();
       }),
     );
@@ -158,7 +175,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
 
   // First throw right away, then the 5–15 s gaps count from each throw.
   gsap.delayedCall(firstDelay, () => {
-    launch();
+    if (!paused) launch();
     scheduleNext();
   });
 

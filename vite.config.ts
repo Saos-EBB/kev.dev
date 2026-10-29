@@ -31,8 +31,15 @@ export default defineConfig({
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
-        horror: root("saos.html"),
+        saos: root("saos.html"),
       },
+      // saos.html's skull variant imports src/main.ts too, so main's
+      // modules are shared between two entries. By default Rolldown then
+      // parks its runtime helpers in the yourbrand entry chunk and main
+      // imports them from there — which boots the YourBrand React app on
+      // the main page (React error #299). "strict" keeps entry chunks to
+      // their own exports, so shared helpers get a chunk of their own.
+      preserveEntrySignatures: "strict",
     },
   },
 });

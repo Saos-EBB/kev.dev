@@ -104,7 +104,9 @@ export function pass(name: string, pan: number) {
       noiseBurst(c, v, t, 0.08, 3000, 2, 0.4);
       partial(c, v, 610, t + 0.12, 0.25, 0.12);
       break;
-    case "ball": // two bounces: a sine thump dropping in pitch
+    case "ball":
+    case "poop": // skull variant (src/skull-site/throwables-skull.ts)
+      // two bounces: a sine thump dropping in pitch
       [0, 0.28].forEach((d, i) => {
         const o = c.ac.createOscillator();
         const g = c.ac.createGain();
@@ -146,7 +148,8 @@ export function pass(name: string, pan: number) {
       for (let i = 0; i < 6; i++) noiseBurst(c, v, t + i * 0.055, 0.04, 900 + Math.random() * 500, 6, 0.6);
       partial(c, v, 180, t, 0.3, 0.25, "triangle");
       break;
-    case "knife": { // swish + blade ring ("schwing")
+    case "knife":
+    case "axe": { // axe: skull variant; swish + blade ring ("schwing")
       const s = noiseSrc(c);
       const f = c.ac.createBiquadFilter();
       const g = c.ac.createGain();
