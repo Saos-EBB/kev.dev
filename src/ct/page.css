@@ -1,4 +1,5 @@
-/* CT-Schädel page (page.ts), after the CT-Desktop / CT-Mobile mockup. */
+/* CT-Schädel page (page.ts), after the live prototype (ct-live.zip) and
+   the CT-Desktop / CT-Mobile mockup. */
 
 @font-face {
   font-family: "Urban Sign";
@@ -15,15 +16,13 @@
   --violet: #b48cff;
   --blue: #5fa8ff;
   --rule: #ffffff1f;
-  --color-text: var(--text); /* the contact scene's cracks */
+  --color-text: var(--text);
   --color-bg: var(--bg); /* thrown objects' fill */
   --color-line: var(--violet); /* the mute button */
   --color-throw: #89ff57; /* thrown objects' outline */
   --transition-hover: 0.2s ease;
   --font-display: "Urban Sign", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
-  --pad: 48px;
-  --col: min(700px, 52vw);
   color-scheme: dark;
 }
 
@@ -33,13 +32,15 @@ html {
 
 .ct-body {
   margin: 0;
-  min-height: 100vh;
-  background:
-    radial-gradient(900px 700px at 78% 6%, #1a1440 0%, transparent 70%) no-repeat,
-    var(--bg);
+  background: var(--bg) radial-gradient(60vw 60vh at 80% 20%, #1a1440 0%, transparent 70%) fixed no-repeat;
   color: var(--text);
   font: 16px/1.5 var(--font-mono);
   overflow-x: hidden;
+}
+
+.ct-body *,
+.ct-body *::before {
+  box-sizing: border-box;
 }
 
 .ct-body a {
@@ -67,122 +68,101 @@ html {
 
 /* ── fixed layers ─────────────────────────────────────────────────── */
 
-/* The skull sits behind the text (dots under letters read fine), the
-   pointers above it. Neither takes clicks. */
+/* The skull: the right half, full height, behind the text column. */
 .ct-skull {
   position: fixed;
-  z-index: 0;
-  top: 40px;
-  right: max(30px, calc((100vw - 1440px) / 2 + 30px));
-  width: min(46vw, 680px);
-  aspect-ratio: 1.3;
-  pointer-events: none;
-  transform-origin: 50% 50%; /* page.ts glides it: translate + scale */
-}
-
-.ct-skull:not(.is-ready) {
-  visibility: hidden;
-}
-
-/* The canvas overhangs the box by 20 % each side, so the saw blades can
-   fly in from outside it (the camera steps back by as much). */
-.ct-skull canvas {
-  position: absolute;
-  inset: -20%;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  width: 52vw;
+  height: 100vh;
   display: block;
-  width: 140%;
-  height: 140%;
-}
-
-/* The finale's link shards: a layer page.ts keeps exactly over the
-   canvas; saw.ts places each link in % and shows it once its blade hit.
-   Above the text, so they can be clicked. */
-.ct-links {
-  position: fixed;
-  z-index: 3;
   pointer-events: none;
-}
-
-.ct-links a {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  visibility: hidden;
-  display: grid;
-  place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid #ff2a3d;
-  box-shadow: 0 0 26px #ff2a3d88;
-  color: #ff2a3d !important;
-  will-change: transform;
-  transition: color var(--transition-hover), border-color var(--transition-hover);
-}
-
-.ct-links a:hover,
-.ct-links a:focus-visible {
-  color: var(--hot) !important;
-  border-color: var(--hot);
-}
-
-.ct-links.no-skull {
-  display: none;
 }
 
 .ct-pointers {
   position: fixed;
   inset: 0;
   z-index: 2;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
-  font-family: var(--font-mono);
-  font-weight: 700;
 }
 
-.ct-progress {
+.ct-status {
   position: fixed;
-  z-index: 2;
-  right: 22px;
-  top: 25vh;
-  width: 2px;
-  height: 50vh;
-  background: #ffffff14;
+  right: 24vw;
+  top: 48vh;
+  z-index: 3;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
 }
 
-.ct-progress > div {
-  height: 100%;
-  background: linear-gradient(var(--violet), var(--blue));
-  transform-origin: top;
-  transform: scaleY(0);
+/* The contact links, riding on the shards (page.ts placeShards). */
+.ct-shard {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  border: 2px solid #ff2a3d;
+  box-shadow: 0 0 26px #ff2a3d88;
+  color: #ff2a3d !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s, color var(--transition-hover), border-color var(--transition-hover);
 }
 
-main,
-.ct-header,
-.ct-footer {
-  position: relative;
-  z-index: 1;
-  max-width: 1440px;
-  margin: 0 auto;
-  box-sizing: border-box;
+.ct-shard.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ct-shard:hover,
+.ct-shard:focus-visible {
+  color: var(--hot) !important;
+  border-color: var(--hot);
+}
+
+.ct-shard svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* No WebGL: the links as a plain row under the contact. */
+.no-skull .ct-shard {
+  position: static;
+  display: inline-grid;
+  margin: 0 0 40px 48px;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* ── header ───────────────────────────────────────────────────────── */
 
 .ct-header {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 4;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 72px;
-  padding: 0 var(--pad);
-  z-index: 3;
+  padding: 20px 48px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  background: linear-gradient(#07070c 60%, transparent);
 }
 
 .ct-brand {
-  font-size: 15px;
   color: var(--muted);
 }
 
@@ -192,15 +172,12 @@ main,
 
 .ct-nav {
   display: flex;
-  gap: 30px;
-  font-size: 14px;
-  letter-spacing: 2px;
+  gap: 28px;
   text-transform: uppercase;
 }
 
 .ct-nav a {
   text-decoration: none;
-  padding: 10px 0;
 }
 
 .ct-nav a:hover {
@@ -211,13 +188,16 @@ main,
   color: var(--hot);
 }
 
-.ct-menu {
-  display: none;
+/* ── column ───────────────────────────────────────────────────────── */
+
+main {
+  position: relative;
+  z-index: 3;
+  width: min(640px, 46vw);
+  margin-left: 48px;
 }
 
-/* ── type ─────────────────────────────────────────────────────────── */
-
-.ct-display {
+.ct-h {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
@@ -230,58 +210,68 @@ main,
 }
 
 .ct-h1 {
-  font-size: clamp(84px, 10.4vw, 150px);
+  font-size: clamp(64px, 9vw, 150px);
   line-height: 0.84;
 }
 
 .ct-h2 {
-  font-size: clamp(72px, 7.6vw, 110px);
+  font-size: clamp(60px, 7vw, 110px);
 }
 
-.ct-title {
-  margin-top: 18px;
-  font-size: clamp(76px, 9vw, 130px);
-}
-
-.ct-eyebrow {
+.ct-kick {
   margin: 0;
-  display: flex;
-  gap: 14px;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--violet);
-}
-
-.ct-eyebrow--hot {
   color: var(--hot);
 }
 
-.ct-sub {
+.ct-kick span {
+  margin-right: 10px;
+}
+
+.ct-func {
   margin: 6px 0 0;
   font-size: 15px;
   color: var(--muted);
 }
 
-.ct-muted {
-  margin: 10px 0 0;
-  color: var(--muted);
-}
-
-.ct-lead {
-  margin: 18px 0 0;
+.ct-lead,
+.ct-claim {
+  margin: 0;
   max-width: 40ch;
-  font-size: 19px;
+  font-size: 18px;
   line-height: 1.6;
 }
 
-/* ── buttons ──────────────────────────────────────────────────────── */
+.ct-lead {
+  max-width: 34ch;
+  font-size: 19px;
+}
+
+.ct-hint,
+.ct-note {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+.ct-hint {
+  text-transform: uppercase;
+}
+
+.ct-note {
+  max-width: 60ch;
+  letter-spacing: 0;
+  line-height: 1.6;
+}
 
 .ct-button {
   display: inline-block;
-  padding: 16px 24px;
+  padding: 15px 22px;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
   text-decoration: none;
   transition: background var(--transition-hover), color var(--transition-hover);
 }
@@ -295,26 +285,8 @@ main,
   background: #ff3a44;
 }
 
-.ct-button--ghost {
-  border: 1px solid var(--violet);
-  color: var(--violet) !important;
-}
-
-.ct-button--ghost:hover {
-  background: var(--violet);
-  color: var(--bg) !important;
-}
-
-.ct-links-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 22px 0 0;
-}
-
 .ct-button--hot {
-  padding: 14px 22px;
-  font-size: 15px;
+  padding: 12px 18px;
   border: 1px solid var(--hot);
   color: var(--hot) !important;
 }
@@ -324,75 +296,58 @@ main,
   color: var(--bg) !important;
 }
 
-/* ── hero ─────────────────────────────────────────────────────────── */
+.ct-button--ghost {
+  padding: 12px 18px;
+  border: 1px solid var(--violet);
+  color: var(--violet) !important;
+}
 
-.ct-hero {
-  min-height: 608px;
-  padding: 150px var(--pad) 60px;
-  box-sizing: border-box;
-  width: calc(640px + var(--pad));
-  max-width: 100%;
+.ct-button--ghost:hover {
+  background: var(--violet);
+  color: var(--bg) !important;
+}
+
+/* ── intro: pinned while the skull turns and opens ────────────────── */
+
+.ct-intro {
+  height: 260vh;
+}
+
+.ct-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  justify-content: center;
+  gap: 22px;
 }
 
-.ct-hero-lead {
+.ct-pin p {
   margin: 0;
-  max-width: 34ch;
-  font-size: 20px;
-  line-height: 1.6;
-}
-
-.ct-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.ct-note {
-  margin: 0;
-  max-width: 60ch;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
 }
 
 /* ── findings ─────────────────────────────────────────────────────── */
 
-.ct-intro {
-  padding: 120px var(--pad) 20px;
+.ct-sec {
+  min-height: 120vh;
+  padding-top: 30vh;
 }
 
-.ct-finding {
-  position: relative;
-  min-height: 647px;
-  padding: 0 var(--pad) 110px;
+.ct-sec .ct-h {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: clamp(60px, 7vw, 120px);
 }
 
-.ct-finding article {
-  width: var(--col);
-  padding-top: 70px;
-}
-
-/* "Hinter dir": a dark red glow behind the skull. */
-.ct-finding--horror::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  right: 0;
-  top: -100px;
-  width: 900px;
-  height: 900px;
-  max-width: 100vw;
-  background: radial-gradient(closest-side, #2a0a12, transparent);
-  pointer-events: none;
+.ct-sec .ct-claim {
+  margin-top: 16px;
 }
 
 .ct-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  margin: 28px 0 0;
+  margin: 24px 0 0;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
 }
@@ -400,17 +355,21 @@ main,
 .ct-stats > div {
   display: flex;
   flex-direction: column-reverse;
-  padding: 18px 0;
+  padding: 16px 0;
+}
+
+.ct-stats > div + div {
+  padding-left: 18px;
+  border-left: 1px solid var(--rule);
 }
 
 .ct-stats dd {
   margin: 0;
-  font-size: 44px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-size: 40px;
+  font-weight: 700;
 }
 
-.ct-stats dd.is-red {
+.ct-stats > div:first-child dd {
   color: var(--red);
 }
 
@@ -422,15 +381,15 @@ main,
 }
 
 .ct-points {
-  margin: 18px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 16px;
 }
 
 .ct-points li {
   padding: 10px 0;
   border-bottom: 1px solid #ffffff12;
+  font-size: 15px;
 }
 
 .ct-points li::before {
@@ -440,7 +399,7 @@ main,
 
 /* The project's own text from the main page. */
 .ct-report {
-  margin-top: 28px;
+  margin-top: 26px;
 }
 
 .ct-report-h {
@@ -454,8 +413,7 @@ main,
 
 .ct-report p {
   margin: 0;
-  max-width: 62ch;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.7;
   color: #c9d0d8;
 }
@@ -464,7 +422,7 @@ main,
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 .ct-tags span {
@@ -481,17 +439,22 @@ main,
   color: var(--muted);
 }
 
+.ct-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0 0;
+}
+
 /* ── atlas ────────────────────────────────────────────────────────── */
 
 .ct-atlas {
-  min-height: 828px;
-  margin-top: 40px;
-  padding: 0 var(--pad);
+  min-height: 160vh;
+  padding-top: 24vh;
 }
 
 .ct-atlas-list {
-  width: 424px;
-  margin: 40px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -499,45 +462,41 @@ main,
 .ct-atlas-list li {
   display: grid;
   grid-template-columns: 170px 1fr;
-  gap: 16px;
-  align-items: baseline;
-  padding: 10px 0;
-  border-bottom: 1px solid #ffffff14;
+  gap: 4px 16px;
+  margin-bottom: 6px;
+  padding: 10px 0 10px 14px;
+  border-left: 4px solid var(--c);
+  border-bottom: 1px solid #ffffff12;
   cursor: default;
-  outline-offset: 2px;
 }
 
-.ct-atlas-list li:hover .ct-atlas-name,
-.ct-atlas-list li:focus-visible .ct-atlas-name {
-  color: var(--c);
-}
-
-.ct-atlas-no {
-  display: none;
-}
-
-.ct-atlas-label {
+.ct-atlas-list small {
+  grid-row: span 2;
   font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--c);
 }
 
-.ct-atlas-name {
-  font-weight: 800;
-  font-size: 24px;
+.ct-atlas-list b {
+  font-size: 22px;
   transition: color var(--transition-hover);
 }
 
-.ct-atlas-sub {
-  display: block;
+.ct-atlas-list li:hover b,
+.ct-atlas-list li:focus-visible b {
+  color: var(--c);
+}
+
+.ct-atlas-list span {
   font-size: 13px;
   color: var(--muted);
 }
 
-.ct-atlas-claim {
+.ct-atlas-list em {
   display: block;
   margin-top: 4px;
+  font-style: normal;
   font-size: 12px;
   line-height: 1.5;
   color: #b4bcc6;
@@ -545,83 +504,58 @@ main,
 
 /* ── anamnesis ────────────────────────────────────────────────────── */
 
-/* One column, left: the skull turns back to face you on the right. */
-.ct-anamnesis {
-  display: grid;
-  gap: 32px;
-  width: var(--col);
-  margin-top: 140px;
-  padding: 0 var(--pad);
+.ct-about {
+  min-height: 100vh;
+  padding-top: 24vh;
 }
 
-.ct-history {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ct-history li {
+.ct-cv {
   display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 24px;
-  padding: 22px 0;
+  grid-template-columns: 80px 1fr;
+  padding: 18px 0;
   border-top: 1px solid var(--rule);
 }
 
-.ct-history li > span:first-child {
-  font-size: 13px;
-  letter-spacing: 2px;
+.ct-cv small {
   color: var(--blue);
 }
 
-.ct-history b {
+.ct-cv b {
   display: block;
-  font-size: 30px;
-  font-weight: 800;
+  font-size: 26px;
 }
 
-.ct-history b + span {
-  display: block;
-  margin-top: 4px;
+.ct-cv span {
+  font-size: 15px;
   color: var(--muted);
 }
 
-.ct-quote {
-  margin: 28px 0 0;
-  padding: 18px 22px;
+.ct-about blockquote {
+  margin: 24px 0 0;
+  padding: 16px 20px;
   border-left: 3px solid var(--red);
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.5;
 }
 
 /* ── contact ──────────────────────────────────────────────────────── */
 
-/* Tall enough that it reaches the reading line: the skull comes to the
-   middle on the right and the blades fly (page.ts, saw.ts). */
 .ct-contact {
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: 100vh;
-  margin-top: 140px;
-  padding: 0 var(--pad);
-  box-sizing: border-box;
+  min-height: 130vh;
+  padding-top: 30vh;
 }
 
-.ct-contact-text {
-  width: min(620px, 50vw);
+.ct-contact .ct-h2 {
+  margin-top: 16px;
+  font-size: clamp(60px, 8vw, 130px);
 }
 
-.ct-contact .ct-eyebrow {
-  font-size: 12px;
-  display: block;
-  line-height: 1.6;
+.ct-contact .ct-claim {
+  margin-top: 16px;
 }
 
 .ct-mail {
-  display: inline-block;
-  margin-top: 28px;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 800;
   word-break: break-all;
 }
@@ -633,10 +567,13 @@ main,
 /* ── footer ───────────────────────────────────────────────────────── */
 
 .ct-footer {
+  position: relative;
+  z-index: 3;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px var(--pad) 28px;
+  padding: 40px 48px;
   font-size: 13px;
   color: var(--muted);
 }
@@ -646,222 +583,118 @@ main,
   gap: 24px;
 }
 
-/* ── phones ───────────────────────────────────────────────────────── */
+/* ── phones: the skull small at the top right, the text under a band ─ */
 
-@media (max-width: 900px) {
-  :root {
-    --pad: 16px;
-    --col: 100%;
-  }
-
-  .ct-progress {
-    display: none;
-  }
-
-  /* Starts big over the hero, shrinks into the corner (page.ts). */
+@media (max-width: 700px) {
   .ct-skull {
-    top: 58px;
-    right: 4px;
-    width: 46vw;
+    top: 56px;
+    z-index: 5;
+    width: 56vw;
+    height: 56vw;
+  }
+
+  /* A dark band behind the skull, so the text scrolls away under it. */
+  .ct-body::before {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 4;
+    height: calc(56vw + 70px);
+    background: linear-gradient(#07070c 75%, transparent);
+    pointer-events: none;
   }
 
   .ct-header {
-    height: 56px;
-    position: sticky;
-    top: 0;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(6px);
+    z-index: 6;
+    padding: 14px 16px;
+    background: none;
   }
 
-  .ct-menu {
-    display: block;
-    min-height: 40px;
-    padding: 0 14px;
-    border: 1px solid var(--violet);
-    background: var(--bg);
-    color: var(--text);
-    font: inherit;
-    font-size: 14px;
-  }
-
-  .ct-nav {
+  .ct-nav,
+  .ct-pointers {
     display: none;
-    position: absolute;
-    top: 56px;
-    right: 16px;
-    flex-direction: column;
-    gap: 0;
-    padding: 8px 18px;
-    background: var(--bg);
-    border: 1px solid var(--rule);
   }
 
-  .is-menu .ct-nav {
-    display: flex;
-  }
-
-  .ct-hero {
+  main {
+    z-index: 0;
     width: auto;
-    min-height: 0;
-    padding-top: calc(66vw + 24px);
-    gap: 16px;
+    margin: 0 16px;
+  }
+
+  .ct-sec,
+  .ct-atlas,
+  .ct-about,
+  .ct-contact {
+    padding-top: 60vw;
+  }
+
+  .ct-pin {
+    justify-content: flex-end;
+    padding-bottom: 60px;
   }
 
   .ct-h1 {
     font-size: 64px;
   }
 
-  .ct-h2 {
-    font-size: 54px;
+  .ct-sec .ct-h,
+  .ct-h2,
+  .ct-contact .ct-h2 {
+    font-size: 48px;
   }
 
-  .ct-title {
-    font-size: 50px;
-  }
-
-  .ct-hero-lead,
-  .ct-lead {
+  .ct-lead,
+  .ct-claim {
     font-size: 15px;
   }
 
-  .ct-button--red {
-    display: block;
-    text-align: center;
-  }
-
-  .ct-actions .ct-button--ghost {
-    display: none;
-  }
-
-  .ct-note {
-    font-size: 11px;
-  }
-
-  .ct-intro {
-    padding-top: 48px;
-  }
-
-  .ct-finding {
-    min-height: 0;
-    padding-bottom: 56px;
-  }
-
-  /* Room for the skull in the corner next to the section head. */
-  .ct-finding article {
-    padding-top: 40px;
-  }
-
-  .ct-finding .ct-eyebrow,
-  .ct-finding .ct-sub {
-    max-width: 50%;
-    font-size: 11px;
-  }
-
-  .ct-finding .ct-title {
-    margin-top: 72px;
-  }
-
   .ct-stats dd {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .ct-stats dt {
     font-size: 9px;
   }
 
-  .ct-points {
+  .ct-points li {
     font-size: 13px;
   }
 
-  .ct-atlas {
-    min-height: 0;
-    margin-top: 0;
-  }
-
-  .ct-atlas .ct-h2 {
-    margin-bottom: calc(46vw);
-  }
-
-  .ct-atlas-list {
-    width: auto;
-  }
-
   .ct-atlas-list li {
-    grid-template-columns: 30px 1fr;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .ct-atlas-no {
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 2px solid var(--c);
-    color: var(--c);
-    font-size: 12px;
-    font-weight: 800;
-  }
-
-  .ct-atlas-label {
-    display: none;
-  }
-
-  .ct-atlas-name {
-    font-size: 17px;
-  }
-
-  .ct-atlas-sub {
-    font-size: 11px;
-  }
-
-  .ct-anamnesis {
     grid-template-columns: 1fr;
-    gap: 16px;
-    margin-top: 72px;
   }
 
-  .ct-history li {
-    grid-template-columns: 1fr;
-    gap: 4px;
+  .ct-atlas-list small {
+    grid-row: auto;
   }
 
-  .ct-history b {
-    font-size: 22px;
-  }
-
-  .ct-quote {
-    font-size: 16px;
-  }
-
-  /* Text on top, the skull comes to the middle below it. */
-  .ct-contact {
-    margin-top: 72px;
-    align-items: flex-start;
-    padding-top: 24px;
-  }
-
-  .ct-contact-text {
-    width: auto;
-  }
-
-  .ct-links a {
-    width: 60px;
-    height: 60px;
+  .ct-cv b {
+    font-size: 21px;
   }
 
   .ct-mail {
     font-size: 16px;
   }
 
+  .ct-shard {
+    z-index: 7;
+    width: 58px;
+    height: 58px;
+  }
+
+  .ct-status {
+    right: 16px;
+    top: 40vw;
+  }
+
   .ct-footer {
-    flex-direction: column;
+    padding: 32px 16px;
   }
 }
 
-
-/* Thrown objects (src/lab/throws.ts): green outlines, as before. */
+/* Thrown objects (src/lab/throws.ts): green outlines. */
 .ct-body .ml-slice {
   stroke: var(--color-throw);
 }

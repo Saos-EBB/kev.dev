@@ -27,16 +27,18 @@ export interface CtScene {
   readonly skull: THREE.Group;
   readonly rig: THREE.Group;
   readonly camera: THREE.PerspectiveCamera;
-  /** The finale (saw.ts), when links were handed in. */
+  /** The finale (saw.ts), when asked for. */
   readonly saw: Saw | null;
+  /** Canvas CSS px of a world-space point. */
+  project(p: THREE.Vector3): [number, number];
   requestRender(): void;
 }
 
 type Options = {
   phone?: boolean;
   distance?: number; // camera distance (6.2 as in the mockup renders; closer = bigger)
-  // The finale's link shards and its hooks (throws pause on the first hit).
-  links?: HTMLElement[];
+  // The finale (saw.ts) and its hooks (throws pause on the first hit).
+  saw?: boolean;
   onFirstHit?(): void;
   onReset?(): void;
 };
@@ -71,9 +73,9 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
   rig.add(skull, brain.group);
   scene.add(rig);
 
-  const saw = opts.links
+  const saw = opts.saw
     ? createSaw({
-        skull, geo: skullGeo, scene, camera, links: opts.links, tall: phone,
+        skull, geo: skullGeo,
         onFirstHit: () => opts.onFirstHit?.(),
         onReset: () => opts.onReset?.(),
       })
@@ -113,6 +115,10 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
       brain.setHighlight(parts, colors);
       api.requestRender();
     },
+    project(p) {
+      const q = p.clone().project(camera);
+      return [((q.x + 1) / 2) * canvas.clientWidth, ((1 - q.y) / 2) * canvas.clientHeight];
+    },
     anchor(p) {
       rig.updateMatrixWorld(true);
       return brain.anchor(p, camera, canvas.clientWidth, canvas.clientHeight);
@@ -132,7 +138,7 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
     const dt = Math.min((now - last) / 1000, 1 / 20);
     last = now;
     const fading = brain.tick(dt);
-    const sawing = saw?.running ? saw.tick(dt, camera.aspect) : false;
+    const sawing = saw?.running ? saw.tick(dt) : false;
     if (dirty || fading || sawing) {
       dirty = false;
       renderer.render(scene, camera);
