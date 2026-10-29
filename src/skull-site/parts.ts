@@ -1,6 +1,6 @@
-// Shared 3D parts for the skull scenes (saos.html #dev#skull and the main
-// page's contact section): the craniumCut01 skull from the 2D renderer's
-// models, turned to face the camera, and an extruded saw blade.
+// 3D parts for the skull variant's contact scene (skull-scene.ts): the
+// craniumCut01 skull from the 2D renderer's models, turned to face the
+// camera, and an extruded saw blade.
 import * as THREE from "three";
 
 interface Model { vs: { x: number; y: number; z: number }[]; fs: number[][] }

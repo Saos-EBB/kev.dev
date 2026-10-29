@@ -3,14 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="robots" content="noindex, nofollow" />
+    <link rel="preload" href="/fonts/urban-sign.woff" as="font" type="font/woff" crossorigin />
     <title>Hinter dir</title>
   </head>
-  <!-- Hidden page: /saos renders nothing unless the URL hash is
-       #dev#horror (src/horror/horror.ts) or #dev#skull (src/skull/skull-saw.ts). -->
+  <!-- Hidden page: /saos renders nothing unless the URL hash names a
+       variant (#dev#horror, #dev#skull, #dev#skull#saw) — see
+       src/saos-entry.ts. #app is the skull variant's mount point
+       (the main page's src/main.ts). -->
   <body>
-    <script type="module" src="/src/horror/horror.ts"></script>
-    <script type="module" src="/src/skull/skull-saw.ts"></script>
+    <div id="app"></div>
+    <script type="module" src="/src/saos-entry.ts"></script>
   </body>
 </html>

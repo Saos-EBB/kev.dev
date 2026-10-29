@@ -1,4 +1,4 @@
-// Contact section's 3D scene (loaded lazily by contact.ts): the craniumCut01
+// Skull variant's contact 3D scene (loaded lazily by contact-skull.ts): the craniumCut01
 // skull rises from the bottom as you scroll in (setRise), and once it's up,
 // three saw blades hit it one after another. Each hit throws bone shards
 // that slow down and hang in the air — and one shard of each hit is a real
@@ -8,7 +8,7 @@
 // Everything after the rise is a closed-form function of the time since the
 // sequence started (no stepping), so reduced motion just jumps to the end.
 import * as THREE from "three";
-import { BLADE_R, bladeGeometry, loadSkullGeometry, wireMesh } from "../skull/parts";
+import { BLADE_R, bladeGeometry, loadSkullGeometry, wireMesh } from "./parts";
 
 const BLADE_FLIGHT = 0.45; // s from off-screen to stuck
 const HIT_AT = [0.5, 1.9, 3.3]; // s after the skull is up

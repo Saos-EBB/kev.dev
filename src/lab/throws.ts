@@ -1,24 +1,22 @@
-// Thrown objects: every 5–15 s something (a can, a saw blade, a poop
-// pile, an axe — throwables.ts) flies at the viewer from a
+// Thrown objects: every 5–15 s something (cans, balls, a saw blade, a
+// skull, a knife, a teapot — throwables.ts) flies at the viewer from a
 // random side, with its own synthesized sound (sound.ts), and always
 // leaves the same way: through the screen, past the viewer. Grab one and it
 // comes to the front and follows the pointer; let go and it is thrown on,
 // through you.
 // Studied from wodniack.dev, rebuilt with our own shapes and code:
-//  1. CSS-3D: JS only writes --x/--y/--z/--rx/--ry per frame, the
-//     transform lives in throws.css.
-//  2. Vanish: a 30-frame dissolve sprite (painted here on a canvas, not
-//     copied) used as a mask and stepped through with steps(29) — used by
-//     the Motion Lab's cards (.is-vanishing in throws.css).
+// CSS-3D — JS only writes --x/--y/--z/--rx/--ry per frame, the transform
+// lives in throws.css.
 // The layer is position: fixed over the viewport, so whatever is thrown is
 // always in view, wherever the page is scrolled.
 import "./throws.css";
 import { gsap } from "gsap";
-import { THROWABLES, renderThrowable } from "./throwables";
+import { THROWABLES, renderThrowable, type Throwable } from "./throwables";
 import { pass, whoosh } from "./sound";
 
-// The contact section's skull stops the throws while its saw blades fly
-// (contact.ts): no new launches, and whatever is in the air fades out.
+// The skull variant's contact section (src/skull-site/contact-skull.ts)
+// stops the throws while its saw blades fly: no new launches, and
+// whatever is in the air fades out.
 let paused = false;
 let clearFlying: () => void = () => {};
 export function pauseThrows(p: boolean) {
@@ -26,8 +24,7 @@ export function pauseThrows(p: boolean) {
   if (p) clearFlying();
 }
 
-export function startThrows(scene: HTMLElement, firstDelay = 1) {
-  const FRAMES = 30;
+export function startThrows(scene: HTMLElement, firstDelay = 1, items: Throwable[] = THROWABLES) {
   const START_Z = -1200;
   // The camera sits at z = 1000 (perspective 1000px): ending past it makes
   // the thing fly right through the viewer — it fills the screen, crosses
@@ -37,32 +34,6 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const GAP_S: [number, number] = [5, 15]; // pause between throws
   const FLIGHT_S: [number, number] = [4.5, 7]; // one throw, start to end
   const RETHROW_S: [number, number] = [1.1, 1.6]; // after a drag: on through you
-
-  // ---- Vanish sprite --------------------------------------------------
-  // Each frame is a 16x16 cell grid; every cell gets a random threshold
-  // and is opaque until the frame index passes it, so cells drop out in a
-  // random but stable order across the 30 frames.
-  function paintVanishSprite(): string {
-    const cells = 16;
-    const px = 8; // per cell -> 128px frames
-    const size = cells * px;
-    const canvas = document.createElement("canvas");
-    canvas.width = size * FRAMES;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d")!;
-    const order = Array.from({ length: cells * cells }, () => Math.random());
-    ctx.fillStyle = "#000";
-    for (let f = 0; f < FRAMES; f++) {
-      const cut = f / (FRAMES - 1);
-      order.forEach((t, i) => {
-        if (t < cut) return;
-        ctx.fillRect(f * size + (i % cells) * px, Math.floor(i / cells) * px, px, px);
-      });
-    }
-    return `url(${canvas.toDataURL("image/png")})`;
-  }
-
-  document.documentElement.style.setProperty("--vanish-sprite", paintVanishSprite());
 
   // ---- 3D objects -----------------------------------------------------
   // One throw every 5–15 s, each from a random direction. The path is laid
@@ -105,7 +76,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const worldX = (sx: number, z: number) => (sx * (1000 - z)) / 1000;
 
   function launch() {
-    const t = THROWABLES[Math.floor(Math.random() * THROWABLES.length)];
+    const t = items[Math.floor(Math.random() * items.length)];
     const el = document.createElement("div");
     el.className = "ml-obj";
     el.style.setProperty("--w", `${t.w}px`);
