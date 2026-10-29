@@ -479,6 +479,24 @@ const cards: ProjectCard[] = [
           "Die Texte liegen verteilt in mehreren Dateien",
         ],
       },
+      {
+        name: "Mobile",
+        line: "Eine eigene Seite fürs Handy, nicht der Desktop in klein.",
+        does: "Unter 900 px Breite oder 760 px Höhe lädt eine eigene Lite-Variante: kein 3D-Aufzug, kein Monitor-Zoom, kein gepinntes Karussell — ein flaches Grid, die Projekte als Liste, ein Tipp öffnet das Projekt als Sheet. Das Tuch rechnet am Handy mit weniger als halb so vielen Knoten.",
+        files: ["viewport.ts", "main.ts", "projects/project-sheet.ts", "hero/cloth.ts"],
+        reuse: "viewportHeight(): eine 100vh-Sonde statt innerHeight — Pins sitzen richtig, auch wenn die Adressleiste ein- und ausfährt.",
+        pros: [
+          "Alles ist da — jedes Projekt, jede Live-Demo, nur ohne die teuren Szenen",
+          "Schwere Demos laden erst, wenn man sie öffnet",
+          "Die Zurück-Geste des Handys schließt das Sheet",
+        ],
+        cons: [
+          "Platz: Was nebeneinander stand, muss untereinander — jede Karte braucht ein zweites Layout",
+          "Speed: Die Aufzugswände waren Layer so hoch wie die ganze Section — am Handy Ruckeln",
+          "Die Adressleiste ändert die Höhe; Pins wurden vermessen, bevor das Layout stand",
+          "Zwei Varianten heißt: jede Änderung zweimal testen",
+        ],
+      },
     ],
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [

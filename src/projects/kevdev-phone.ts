@@ -1,6 +1,6 @@
 // kev.dev's card: a phone in the middle with this page in skeletons, one
 // screen per section (hero cloth, elevator, the bench, falling letters,
-// the legal overlay, the languages). Scrolling it picks the matching tab of
+// the legal overlay, the languages, the phone version). Scrolling it picks the matching tab of
 // the parts table beside it, a tab scrolls it there; left alone it scrolls
 // itself. The skeletons take the project note colors in a wave that moves
 // with time and scroll, a ring of light runs down at each section change.
@@ -35,6 +35,9 @@ const SCREENS = [
   // languages: four of them, the text lines change length with each
   `<span class="kp-langs">${["de", "en", "ru", "ja"].map((l) => `<b>${l}</b>`).join("")}</span>
    <span class="kp-lines">${rep(6, () => sk())}</span>`,
+  // mobile: the lite list, a frame graph under it
+  `<span class="kp-list">${rep(4, (i) => `<span class="kp-ol kp-row" data-w>${sk("kp-sq")}<span>${sk("", `width:${55 + ((i * 19) % 35)}%`)}${sk("", `width:${30 + ((i * 13) % 25)}%`)}</span></span>`)}</span>
+   <span class="kp-frames">${rep(18, () => sk())}</span>`,
 ];
 
 // The phone's markup, one screen per section name (the parts' names).
@@ -93,6 +96,8 @@ function initPhone(stage: HTMLElement) {
   const floors = [...stage.querySelectorAll<HTMLElement>(".kp-floors .kp-sk")];
   const lines = [...stage.querySelectorAll<HTMLElement>(".kp-lines .kp-sk")];
   const langs = [...stage.querySelectorAll<HTMLElement>(".kp-langs b")];
+  const bars = [...stage.querySelectorAll<HTMLElement>(".kp-frames .kp-sk")];
+  thumb.style.height = `${100 / secs.length}%`;
   const waved = secs.map((s) => [...s.querySelectorAll<HTMLElement | SVGElement>("[data-w]")]);
 
   // The note colors as one loop, so the wave never jumps.
@@ -200,6 +205,8 @@ function initPhone(stage: HTMLElement) {
     const lang = Math.floor(t / 1.6) % langs.length;
     langs.forEach((b, k) => b.classList.toggle("is-on", k === lang));
     lines.forEach((l, k) => (l.style.width = `${40 + ((k * 29 + lang * 37) % 55)}%`));
+    // mobile: frame times, low and even, running left
+    bars.forEach((b, k) => (b.style.height = `${30 + 18 * Math.sin(k * 1.7 - t * 4) * Math.sin(k * 0.6 + t)}%`));
 
     // The wave: color by place on the screen, time and scroll; the ring
     // brightens what it passes. Only the screens in view.
