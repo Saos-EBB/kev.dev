@@ -86,96 +86,29 @@ export const TIMINGS = {
   },
 
   // ------------------------------------------------------------------
-  // Contact — src/contact/contact.ts. Grid dissolve → black hold →
-  // headline/mail/icons falling in, all one pinned & scrubbed timeline.
+  // Contact — src/contact/contact.ts. Grid dissolve → the skull rising
+  // from the bottom, one pinned & scrubbed timeline; then the saw blades
+  // (their timing lives in src/contact/skull-scene.ts).
   // ------------------------------------------------------------------
   contact: {
-    pinScroll: "+=140%", // scroll distance (relative to section height) the whole dissolve+hold+fall plays over — extra room so the fall doesn't feel rushed at normal scroll speed
-    scrub: 0.85, // lag (seconds) between scroll position and timeline position — high enough that everything reads as an eased animation catching up to scroll rather than snapping 1:1 to it; safe to push since this page's scroll is already Lenis-smoothed, not the raw native scrollbar
+    pinScroll: "+=120%", // scroll distance the dissolve + rise play over
+    scrub: 0.85, // lag (seconds) between scroll position and timeline position — reads as eased catching-up; this page's scroll is already Lenis-smoothed
 
     grid: {
       travel: 440, // px the bg grid keeps drifting down as it dissolves; no actual gap between #projects and #contact, this drift is what sells "still descending into the tunnel" instead
-      duration: 1, // carved out of the front of hold below — fast, so most of the hold afterward is still plain black
+      duration: 1,
       ease: "power1.in",
       staggerEach: 0.01, // gap between each line starting its own wipe
     },
 
-    hold: 0.9, // total black-hold budget — grid.duration above is carved out of the front of it, the rest stays pure black before the fall-in starts
+    rise: 1.5, // timeline units the skull takes to come up, after the grid
 
-    // Letter fall durations are timeline units, and the auto-scroll below
-    // plays the timeline at autoScroll.secondsPerUnit — so 1 = one second
-    // from a letter appearing to it landing.
-    headline: {
-      duration: 1,
-      ease: "back.out(2.4)", // higher overshoot than a "plain" back.out — reads as a small bounce settling after each letter lands
-      staggerEach: 0.035, // random order + small `each` = letters read as tumbling in independently, several falling at once
-    },
-
-    mail: {
-      duration: 1,
-      ease: "back.out(2.4)",
-      staggerEach: 0.03,
-      startOffset: 0.25, // starts this far into the headline's own fall — overlapping, not sequential
-    },
-
-    icons: {
-      duration: 0.7,
-      ease: "back.out(2.2)",
-      stagger: 0.1,
-      startOffset: 0.2, // pulled back this far from the mail tween's end — overlapping
-    },
-
-    // Once the user has scrolled this far into the pin (a little past the
-    // black hold — see `hold` above), the page finishes the rest of the
-    // scroll itself so the headline/mail/icons land without further manual
-    // scrolling — see the ScrollTrigger onUpdate in contact.ts.
-    autoScrollAt: 0.08,
+    // At this fraction of the skull's way up, the page scrolls the rest by
+    // itself, at the speed the user was scrolling (contact.ts).
+    autoScrollAt: 0.7,
     autoScroll: {
-      // Real seconds per timeline unit while the page scrolls itself: the
-      // scroll's duration is worked out from how much timeline is left
-      // (contact.ts), so a letter's `duration: 1` really takes 1 s.
-      secondsPerUnit: 1,
-      // Linear on purpose: an eased scroll runs the middle faster than
-      // the average and would rush the letters falling there. The scrub
-      // lag above already softens the start and the stop.
-      easing: (t: number) => t,
-    },
-
-    // Ambient per-letter float once landed (progress 1) — killed the
-    // instant the user scrolls back out. Applied to `.letter-inner`, never
-    // the outer `.letter` the entrance tween drives, so the two can't fight.
-    idle: {
-      minDuration: 0.9,
-      maxDuration: 1.6,
-      maxDelay: 1, // random per-letter start offset, so they don't all bob in sync
-      yAmplitude: 5, // px, up/down
-      rotateAmplitude: 3, // deg
-    },
-
-    // Click-to-shatter — src/contact/contact-physics.ts. One click on the
-    // headline (not the mail link/icons, see contact.ts's isBreakTarget)
-    // drops everything into gravity/collision physics; scrolling back away
-    // tweens it back to rest. Physics constants ported as-is from the old
-    // SAOS.ME site's SaosAnimation.js — tuned there for similarly
-    // letter-sized elements, so they carry over as reasonable starting
-    // values. The shatter is also what reveals the raygun button under the
-    // headline (see contact.ts's startBreak/returnHome) — limit stays at 1
-    // click so that reveal is immediate.
-    shake: {
-      limit: 1, // clicks until break
-      maxIntensity: 40, // px, jitter amplitude cap on the strongest shake
-    },
-
-    break: {
-      gravity: 0.4,
-      restitution: 0.22, // energy kept per bounce — lower = settles faster
-      frictionAir: 0.018, // velocity drained per frame in-air
-      frictionFloorX: 0.9, // horizontal damping on each floor contact
-      frictionFloorAng: 0.85, // angular damping on each floor contact
-      mouseRadius: 60, // px, how close the pointer must be to push a fallen piece
-      floorPad: 20, // px, floor sits this far above the very bottom of the viewport
-      returnDuration: 0.8, // seconds — the animated "wander back" once scrolling away
-      returnEase: "power2.inOut",
+      minSpeed: 700, // px/s, floor for a very slow scroll so it still finishes promptly
+      maxDuration: 1.2, // s, cap for the same reason
     },
   },
 

@@ -5,16 +5,11 @@
 import "./skull-saw.css";
 import * as THREE from "three";
 
-interface Model { vs: { x: number; y: number; z: number }[]; fs: number[][] }
+import { BLADE_R as R, bladeGeometry, loadSkullGeometry } from "./parts";
 
 const PINK = 0xff4fb8, SOFT = 0xff9ad6, DIM = 0x7a2459;
 const T_FLY = 0.9, T_HIT = 1.38, T_FADE = 5.2, T_END = 6.0;
-const R = 0.62, R_IN = 0.53, DEPTH_IN = 0.24;
-
-const loaders = import.meta.glob("../projects/widgets/renderer-models/craniumCut01.js") as Record<
-  string,
-  () => Promise<{ default: Model }>
->;
+const DEPTH_IN = 0.24;
 
 const wire = (geo: THREE.BufferGeometry, color: number, opacity: number) =>
   new THREE.LineSegments(
@@ -23,41 +18,6 @@ const wire = (geo: THREE.BufferGeometry, color: number, opacity: number) =>
   );
 const blackFill = () =>
   new THREE.MeshBasicMaterial({ color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-
-function skullGeometry(m: Model) {
-  const pos = new Float32Array(m.vs.length * 3);
-  // model: face +y, vault -z  →  three: face +z (camera), vault +y
-  m.vs.forEach((v, i) => { pos[i * 3] = v.x; pos[i * 3 + 1] = -v.z; pos[i * 3 + 2] = v.y; });
-  const idx: number[] = [];
-  for (const f of m.fs) for (let k = 1; k < f.length - 1; k++) idx.push(f[0], f[k], f[k + 1]);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  g.setIndex(idx);
-  g.center();
-  return g;
-}
-
-function bladeGeometry() {
-  const s = new THREE.Shape();
-  const teeth = 30;
-  for (let i = 0; i < teeth; i++) {
-    const a0 = (i / teeth) * Math.PI * 2, a1 = ((i + 0.7) / teeth) * Math.PI * 2;
-    const p = (r: number, a: number) => [Math.cos(a) * r, Math.sin(a) * r] as const;
-    const [x0, y0] = p(R_IN, a0), [x1, y1] = p(R, a1);
-    if (i === 0) s.moveTo(x0, y0); else s.lineTo(x0, y0);
-    s.lineTo(x1, y1);
-  }
-  s.closePath();
-  const hole = new THREE.Path(); hole.absarc(0, 0, 0.09, 0, Math.PI * 2, true); s.holes.push(hole);
-  for (let i = 0; i < 3; i++) {
-    const a = (i / 3) * Math.PI * 2, slot = new THREE.Path();
-    slot.absarc(Math.cos(a) * 0.3, Math.sin(a) * 0.3, 0.05, 0, Math.PI * 2, true);
-    s.holes.push(slot);
-  }
-  const g = new THREE.ExtrudeGeometry(s, { depth: 0.035, bevelEnabled: false, curveSegments: 6 });
-  g.translate(0, 0, -0.0175);
-  return g;
-}
 
 async function mount() {
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -93,11 +53,10 @@ async function mount() {
   (grid.material as THREE.Material).opacity = 0.5;
   scene.add(grid);
 
-  const model = (await Object.values(loaders)[0]()).default;
+  const geo = await loadSkullGeometry();
   load.remove();
 
   // ── skull ──
-  const geo = skullGeometry(model);
   const skull = new THREE.Group();
   skull.add(new THREE.Mesh(geo, blackFill()), wire(geo, PINK, 0.3));
   scene.add(skull);

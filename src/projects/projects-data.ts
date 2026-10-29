@@ -450,9 +450,9 @@ const cards: ProjectCard[] = [
         reuse: "Ein neues Projekt ist ein Eintrag in projects-data.ts — Desktop-Karte, Handy-Liste und Sheet kommen mit.",
       },
       {
-        does: "Die Buchstaben fallen scroll-gesteuert ein; dreimal klicken zerbricht alles in echte Physik, dann kommt die Raygun.",
-        files: ["contact/contact.ts", "contact/contact-physics.ts", "raygun/raygun.ts"],
-        reuse: "Die Raygun ist ein eigenständiger Button (mountRaygunButton) in zwei Varianten, fixed oder inline — an jede Seite steckbar.",
+        does: "Der Schädel aus dem 3D-Renderer steigt beim Scrollen auf, ab 70 % scrollt die Seite selbst weiter; drei Sägeblätter treffen ihn, die Splitter bleiben in der Luft stehen — drei davon sind GitHub, Mail und Telefon.",
+        files: ["contact/contact.ts", "contact/skull-scene.ts", "skull/parts.ts"],
+        reuse: "Alles nach dem Aufstieg ist eine geschlossene Funktion der Zeit — reduzierte Bewegung springt einfach ans Ende.",
       },
       {
         does: "Impressum und Datenschutz als Overlay über der Seite — Musik, Theme und Scrollposition bleiben; die alten Adressen leiten dorthin um.",

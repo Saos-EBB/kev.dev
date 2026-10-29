@@ -1,5 +1,5 @@
-// Thrown objects: every 5–15 s something (cans, balls, a saw blade, a
-// skull, a knife, a teapot — throwables.ts) flies at the viewer from a
+// Thrown objects: every 5–15 s something (a can, a saw blade, a poop
+// pile, an axe — throwables.ts) flies at the viewer from a
 // random side, with its own synthesized sound (sound.ts), and always
 // leaves the same way: through the screen, past the viewer. Grab one and it
 // comes to the front and follows the pointer; let go and it is thrown on,
@@ -16,6 +16,15 @@ import "./throws.css";
 import { gsap } from "gsap";
 import { THROWABLES, renderThrowable } from "./throwables";
 import { pass, whoosh } from "./sound";
+
+// The contact section's skull stops the throws while its saw blades fly
+// (contact.ts): no new launches, and whatever is in the air fades out.
+let paused = false;
+let clearFlying: () => void = () => {};
+export function pauseThrows(p: boolean) {
+  paused = p;
+  if (p) clearFlying();
+}
 
 export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const FRAMES = 30;
@@ -166,6 +175,13 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
     o.el.remove();
   }
 
+  clearFlying = () => {
+    for (const o of flying) {
+      flying.delete(o);
+      gsap.to(o.el, { opacity: 0, duration: 0.3, onComplete: () => o.el.remove() });
+    }
+  };
+
   // Nobody sees a throw in a background tab: wait until it is visible
   // again, then throw.
   function whenVisible(fn: () => void) {
@@ -180,7 +196,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   function scheduleNext() {
     gsap.delayedCall(rand(GAP_S), () =>
       whenVisible(() => {
-        launch();
+        if (!paused) launch();
         scheduleNext();
       }),
     );
@@ -188,7 +204,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
 
   // First throw right away, then the 5–15 s gaps count from each throw.
   gsap.delayedCall(firstDelay, () => {
-    launch();
+    if (!paused) launch();
     scheduleNext();
   });
 
