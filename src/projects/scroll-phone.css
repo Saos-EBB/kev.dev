@@ -256,19 +256,26 @@
   grid-template-columns: var(--sp-cols);
 }
 
-/* The phone in the pinned projects section, over the current card's slot
-   (big-cards.ts measures it) and over everything else there, the fixed
-   headline (z-index 50) too; the carousel brings it in and out. */
+/* The phone in the pinned projects section, in the middle of the screen
+   (the section is pinned at its top, so 50vh is the screen's middle) and
+   over everything else there, the fixed headline (z-index 50) too; the
+   carousel brings it in and out. The cards leave their middle column free
+   for it. */
 .projects > .sp-stage {
   --pc: var(--note-9);
   position: absolute;
   z-index: 60;
-  left: var(--sp-x, 50%);
-  top: var(--sp-y, 50%);
-  width: var(--sp-w, 15rem);
-  height: var(--sp-h, 60vh);
+  left: 50%;
+  top: 50vh;
+  width: clamp(13rem, 17vw, 16rem);
+  height: min(64vh, 36rem);
   translate: -50% -50%;
-  transition: left 0.6s, top 0.6s, width 0.6s, height 0.6s;
+  overflow: visible;
+}
+
+/* The heads' claim stays left of the phone. */
+.pcard--phone .pcard-claim {
+  max-width: 30ch;
 }
 
 /* One app on the phone at a time. */

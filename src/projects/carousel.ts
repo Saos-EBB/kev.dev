@@ -297,7 +297,7 @@ export function initCarousel(section: HTMLElement, lenis: Lenis) {
         p: 1,
         duration: rideUnits,
         ease: "none",
-        onUpdate: () => cards[0].dispatchEvent(new CustomEvent("ride", { detail: ride.p, bubbles: true })),
+        onUpdate: () => cards[0].dispatchEvent(new CustomEvent("ride", { detail: ride.p })),
       });
     }
     tl.to({}, { duration: holdUnits }).to(group, {

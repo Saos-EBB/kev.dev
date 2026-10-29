@@ -168,9 +168,8 @@ export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
   });
 }
 
-// The phone sits in the current card's slot: measured with the card and its
-// group at rest (their transforms off for the moment of reading — nothing
-// paints in between), so it stands still while the cards slide.
+// The phone stands in the middle of the screen (scroll-phone.css) while the
+// cards slide past; it shows the current card's app.
 function initSharedPhone(root: HTMLElement, stage: HTMLElement, cards: ProjectCard[]) {
   const phone = runPhone(stage);
   root.querySelectorAll<HTMLElement>(".pcard--big").forEach((el) => {
@@ -181,43 +180,7 @@ function initSharedPhone(root: HTMLElement, stage: HTMLElement, cards: ProjectCa
     else if (card.layout === "storyboard") initKevApp(el, phone);
   });
 
-  let current: HTMLElement | null = null;
-  const place = () => {
-    if (!current) return;
-    const group = current.closest<HTMLElement>(".carousel-project");
-    const slot = current.querySelector<HTMLElement>(".sp-slot")!;
-    const held = [group?.style.transform ?? "", current.style.transform];
-    if (group) group.style.transform = "translate(-50%, -50%)";
-    current.style.transform = "translate(-50%, -50%)";
-    const r = slot.getBoundingClientRect();
-    const p = stage.parentElement!.getBoundingClientRect();
-    if (group) group.style.transform = held[0];
-    current.style.transform = held[1];
-    stage.style.setProperty("--sp-x", `${r.left - p.left + r.width / 2}px`);
-    stage.style.setProperty("--sp-y", `${r.top - p.top + r.height / 2}px`);
-    stage.style.setProperty("--sp-w", `${r.width}px`);
-    stage.style.setProperty("--sp-h", `${r.height}px`);
-  };
-  root.addEventListener("bigcard", (e) => {
-    current = (e as CustomEvent<HTMLElement>).detail;
-    phone.use(current.dataset.card!);
-    place();
-  });
-  // Measured again whenever the layout may have moved: resize, the web
-  // fonts (they change the heads' height), and once per frame while a card
-  // rides — it holds still then, so the slot is where the phone belongs.
-  let queued = false;
-  const placeSoon = () => {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(() => {
-      queued = false;
-      place();
-    });
-  };
-  window.addEventListener("resize", placeSoon);
-  document.fonts?.ready.then(placeSoon);
-  root.addEventListener("ride", placeSoon);
+  root.addEventListener("bigcard", (e) => phone.use((e as CustomEvent<HTMLElement>).detail.dataset.card!));
 }
 
 // AniScript: a player with its six features pinned where they act, and
