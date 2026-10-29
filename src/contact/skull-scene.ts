@@ -14,18 +14,16 @@ const BLADE_FLIGHT = 0.45; // s from off-screen to stuck
 const HIT_AT = [0.5, 1.9, 3.3]; // s after the skull is up
 const FREEZE = 2.6; // how fast shards slow down (1/s) — higher stops sooner
 const SHARDS_PER_HIT = 16;
+const BLADE_SCALE = 0.6; // three blades in one skull: smaller than the #dev#skull one
 
-// Where each hit lands on the skull (a point in skull space: face +z, vault
-// +y; the nearest vertex on the front half is the hit point) and where its link shard comes to
+// Where each hit lands on the skull (direction from its centre; the vertex
+// furthest that way is the hit point) and where its link shard comes to
 // rest, in normalized screen coords (-1..1, y up) — portrait screens get
 // their own spots above/below the skull, landscape ones beside it.
-// Spread like real throws, not a pattern: crown (top left, steep), right
-// temple (from the side, flat), left cheekbone (from below) — each with
-// its own size, depth and tilt out of the screen plane (radians, around x/y).
 const HITS = [
-  { want: [-0.3, 0.72, 0.25], scale: 0.62, depth: 0.17, tilt: [0.25, -0.35], wide: [-0.62, 0.55], tall: [-0.55, 0.72] },
-  { want: [0.72, 0.22, 0.2], scale: 0.52, depth: 0.12, tilt: [-0.15, 0.5], wide: [0.64, 0.25], tall: [0.55, 0.72] },
-  { want: [-0.6, -0.15, 0.55], scale: 0.46, depth: 0.1, tilt: [0.4, 0.2], wide: [-0.62, -0.5], tall: [0, -0.72] },
+  { want: [-0.5, 0.7, 0.5], wide: [-0.6, 0.5], tall: [-0.55, 0.7] },
+  { want: [0.5, 0.7, 0.5], wide: [0.6, 0.5], tall: [0.55, 0.7] },
+  { want: [0.65, -0.15, 0.75], wide: [0.62, -0.45], tall: [0, -0.72] },
 ] as const;
 
 export type SkullScene = { setRise(r: number): void; finish(): void };
@@ -62,14 +60,13 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const pos = geo.getAttribute("position") as THREE.BufferAttribute;
 
   const v = new THREE.Vector3();
-  const nearestTo = (p: THREE.Vector3) => {
-    let best = Infinity;
+  const nearestOut = (dir: THREE.Vector3) => {
+    let best = -Infinity;
     const out = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i);
-      if (v.z < 0) continue; // front half only, so the hit is visible
-      const d = v.distanceToSquared(p);
-      if (d < best) { best = d; out.copy(v); }
+      const d = v.dot(dir);
+      if (d > best) { best = d; out.copy(v); }
     }
     return out;
   };
@@ -106,16 +103,15 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const bladeFills: THREE.MeshBasicMaterial[] = [];
 
   const hits = HITS.map((h, i) => {
-    const hit = nearestTo(new THREE.Vector3(...h.want));
+    const hit = nearestOut(new THREE.Vector3(...h.want).normalize());
     const inDir = new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
-    const stuck = hit.clone().addScaledVector(inDir, BLADE_R * h.scale - h.depth);
+    const stuck = hit.clone().addScaledVector(inDir, BLADE_R * BLADE_SCALE - 0.15);
     const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
 
     const blade = wireMesh(bladeGeo, throwColor, bgColor, 0.95);
     throwMats.push(blade.lineMat); bladeFills.push(blade.fillMat);
     blade.group.visible = false;
-    blade.group.scale.setScalar(h.scale);
-    blade.group.rotation.set(h.tilt[0], h.tilt[1], 0); // spin (rotation.z) stays around the blade's own axis
+    blade.group.scale.setScalar(BLADE_SCALE);
     skull.add(blade.group); // rides along with the skull's knock-back
 
     const pts = crackLines(hit);
@@ -161,7 +157,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // narrow screens: step back so skull + blades fit the width
     const tall = w / h < 0.8;
     camera.position.set(0, 0.2, tall ? 8 : 5.4);
-    camera.lookAt(0, tall ? 0.1 : 0.08, 0);
+    camera.lookAt(0, tall ? 0.1 : -0.05, 0);
     camera.updateProjectionMatrix();
     dirty = true;
   };
