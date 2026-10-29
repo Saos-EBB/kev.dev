@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as sfx from "./horror-audio";
 import { createLife } from "./horror-life";
+import { createFigures } from "./horror-figures";
 
 
 const MARKUP = `
@@ -407,6 +408,7 @@ function mount() {
     });
     itHead.remove(placeholderHead);
     itHead.add(fit(headG.scene.clone(true), 0.3));
+    figures.setHead(() => fit(headG.scene.clone(true), 0.28));
     placeWallHeads(headG.scene);
     faceG.scene.traverse((o) => {
       if (o instanceof THREE.Mesh) {
@@ -600,6 +602,10 @@ function mount() {
     if (ok(pos.x, pos.z + dz)) pos.z += dz;
   }
 
+  // figures that only move while you don't look (from the 2nd note on)
+  const figures = createFigures({ scene, C, corridors: straight, openDirs, solidAt, clearLine });
+  const inView = (p: THREE.Vector3) => { sph.center.copy(p); return frustum.intersectsSphere(sph); };
+
   const updateLife = createLife({
     scene, camera, C, WH, corridors: straight, openDirs, solidAt, clearLine,
     pixelRatio: () => renderer.getPixelRatio(),
@@ -724,6 +730,8 @@ function mount() {
       if (d < 1.4 && got >= 2) { h.gone = 0.01; sfx.crack(); }
     }
 
+    figures.update(dt, eye, inView, flick > 0.3, got >= 2);
+
     // --- jumpscare: the face rushes in and shakes
     if (face && scareT >= 0) {
       scareT += dt;
@@ -743,8 +751,6 @@ function mount() {
     it.position.set(p.x, 0, p.z);
     it.lookAt(tmp.set(pos.x, 0, pos.z));
     itHead.lookAt(camera.position);
-    pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-    frustum.setFromProjectionMatrix(pv);
     sph.center.set(p.x, 1.2, p.z);
     const seen = crumbs.length > k && frustum.intersectsSphere(sph) && clearLine(camera.position, sph.center) && flick > 0.3;
     if (S.reveal > 0) {
@@ -768,6 +774,8 @@ function mount() {
     camera.position.set(pos.x, EYE + Math.sin(stepPhase) * 0.035, pos.z);
     camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006, "YXZ");
     camera.updateMatrixWorld();
+    pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(pv); // what you can see this frame (stalker + figures)
     lamp.intensity = 22 * flick * (scareT >= 0 ? 1.6 : 1);
     hemi.intensity = (emergency ? 0.7 : 0.6) * (0.25 + 0.75 * flick);
     if (S.active && running && !paused && G.t < 0 && AP.t < 0) updateStalker(dt);
