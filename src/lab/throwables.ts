@@ -1,4 +1,4 @@
-// Things the Motion Lab throws at the viewer. Every object is a stack of
+// Things thrown at the viewer (throws.ts). Every object is a stack of
 // flat hairline SVG "slices" placed in CSS 3D (translate/rotate per
 // slice): silhouettes stacked along z give a solid with thickness, rings
 // rotated around an axis give a wireframe (ball, can). All shapes are

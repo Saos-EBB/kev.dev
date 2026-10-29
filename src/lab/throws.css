@@ -1,7 +1,6 @@
 /* Thrown objects — a fixed full-viewport layer that things fly through
-   (src/lab/throws.ts). Used by the Motion Lab and the main page. Studied
-   from wodniack.dev: CSS-3D objects posed only via custom properties, and
-   a "vanish" dissolve: a 30-frame sprite mask stepped with steps(). */
+   (src/lab/throws.ts), used on the main page. Studied from wodniack.dev:
+   CSS-3D objects posed only via custom properties. */
 
 /* ---- 1. 3D objects ------------------------------------------------ */
 
@@ -69,27 +68,6 @@
 /* Cavities (the skull's eye sockets and nose): darker holes. */
 .ml-slice .hole {
   fill: color-mix(in srgb, var(--color-line) 35%, transparent);
-}
-
-/* --vanish-sprite is a data: URL throws.ts paints once (30 frames
-   side by side). 3000% = 30 frames wide; steps(29) lands exactly on each
-   frame from 0% to 100%. The element's own look is swapped for the
-   hairline-stripe fill so the dissolve reads as the grid eating it. */
-.is-vanishing {
-  --strip: 1px;
-  --gap: 12px;
-  background:
-    linear-gradient(90deg, var(--color-line) var(--strip), transparent var(--strip)) center / calc(var(--strip) + var(--gap)) 100%,
-    linear-gradient(0deg, var(--color-line) var(--strip), transparent var(--strip)) center / 100% calc(var(--strip) + var(--gap)),
-    var(--color-bg);
-  -webkit-mask: var(--vanish-sprite) left / 3000% 100%;
-  mask: var(--vanish-sprite) left / 3000% 100%;
-  animation: ml-vanish 0.75s steps(29, end) both;
-}
-
-@keyframes ml-vanish {
-  from { -webkit-mask-position: left 0; mask-position: left 0; }
-  to { -webkit-mask-position: right 0; mask-position: right 0; }
 }
 
 /* Main page: the throw-sound mute button (main.ts), fixed bottom right

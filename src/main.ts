@@ -702,7 +702,7 @@ function maybeStart() {
   startThrowLayer();
 }
 
-// Thrown objects (src/lab/throws.ts, from the Motion Lab): a fixed layer
+// Thrown objects (src/lab/throws.ts): a fixed layer
 // over the whole viewport, so a throw is always in view wherever the page
 // is scrolled. Above the header (150), below sheets/overlays (180+).
 // Imported statically on purpose: loading it with import() made the

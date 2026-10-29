@@ -5,11 +5,8 @@
 // comes to the front and follows the pointer; let go and it is thrown on,
 // through you.
 // Studied from wodniack.dev, rebuilt with our own shapes and code:
-//  1. CSS-3D: JS only writes --x/--y/--z/--rx/--ry per frame, the
-//     transform lives in throws.css.
-//  2. Vanish: a 30-frame dissolve sprite (painted here on a canvas, not
-//     copied) used as a mask and stepped through with steps(29) — used by
-//     the Motion Lab's cards (.is-vanishing in throws.css).
+// CSS-3D — JS only writes --x/--y/--z/--rx/--ry per frame, the transform
+// lives in throws.css.
 // The layer is position: fixed over the viewport, so whatever is thrown is
 // always in view, wherever the page is scrolled.
 import "./throws.css";
@@ -18,7 +15,6 @@ import { THROWABLES, renderThrowable } from "./throwables";
 import { pass, whoosh } from "./sound";
 
 export function startThrows(scene: HTMLElement, firstDelay = 1) {
-  const FRAMES = 30;
   const START_Z = -1200;
   // The camera sits at z = 1000 (perspective 1000px): ending past it makes
   // the thing fly right through the viewer — it fills the screen, crosses
@@ -28,32 +24,6 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const GAP_S: [number, number] = [5, 15]; // pause between throws
   const FLIGHT_S: [number, number] = [4.5, 7]; // one throw, start to end
   const RETHROW_S: [number, number] = [1.1, 1.6]; // after a drag: on through you
-
-  // ---- Vanish sprite --------------------------------------------------
-  // Each frame is a 16x16 cell grid; every cell gets a random threshold
-  // and is opaque until the frame index passes it, so cells drop out in a
-  // random but stable order across the 30 frames.
-  function paintVanishSprite(): string {
-    const cells = 16;
-    const px = 8; // per cell -> 128px frames
-    const size = cells * px;
-    const canvas = document.createElement("canvas");
-    canvas.width = size * FRAMES;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d")!;
-    const order = Array.from({ length: cells * cells }, () => Math.random());
-    ctx.fillStyle = "#000";
-    for (let f = 0; f < FRAMES; f++) {
-      const cut = f / (FRAMES - 1);
-      order.forEach((t, i) => {
-        if (t < cut) return;
-        ctx.fillRect(f * size + (i % cells) * px, Math.floor(i / cells) * px, px, px);
-      });
-    }
-    return `url(${canvas.toDataURL("image/png")})`;
-  }
-
-  document.documentElement.style.setProperty("--vanish-sprite", paintVanishSprite());
 
   // ---- 3D objects -----------------------------------------------------
   // One throw every 5–15 s, each from a random direction. The path is laid

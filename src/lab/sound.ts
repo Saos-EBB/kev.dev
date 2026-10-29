@@ -1,4 +1,4 @@
-// Motion Lab sounds, synthesized with Web Audio — no sound files, so
+// Sounds for the thrown objects, synthesized with Web Audio — no sound files, so
 // nothing to license or copy. Silent until unlock() runs from a click
 // (browsers block audio before a user gesture anyway).
 
