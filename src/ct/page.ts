@@ -20,6 +20,7 @@ import { startThrowLayer } from "../lab/throw-layer";
 import { pauseThrows } from "../lab/throws";
 import { projectCards } from "../projects/projects-data";
 import { esc } from "../projects/project-cards";
+import { initScrollProgress } from "../scroll/progress";
 import type { Part } from "./brain-build";
 import type { CtScene } from "./ct-scene";
 
@@ -134,6 +135,7 @@ document.body.innerHTML = `
   <canvas class="ct-skull" aria-label="Schädel-CT aus Punkten, dreht sich und öffnet sich beim Scrollen"></canvas>
   <svg class="ct-pointers" aria-hidden="true"></svg>
   <p class="ct-status" aria-hidden="true">lädt …</p>
+  <div class="scrollbar" aria-hidden="true"><div class="scrollbar-thumb"></div></div>
 
   <header class="ct-header">
     <span class="ct-brand">Kevin Schaberl / <span>SAOS</span></span>
@@ -195,6 +197,7 @@ document.body.innerHTML = `
 const lenis = new Lenis({ smoothWheel: !REDUCED });
 gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
+initScrollProgress(lenis); // the main page's scrollbar (src/scroll/progress.ts)
 
 // In-page links scroll without touching the URL, so /saos#dev#skull stays
 // in the address bar and a reload still lands on this page.

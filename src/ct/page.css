@@ -30,6 +30,55 @@ html {
   background: var(--bg);
 }
 
+/* Native scrollbar hidden in favour of .scrollbar, as on the main page
+   (style.css) — purely visual, scrolling itself is untouched. */
+html,
+.ct-body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+.ct-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* The main page's scroll bar (src/scroll/progress.ts writes the thumb's
+   translateY from lenis.progress; dragging it scrolls). */
+.scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  width: 18px;
+  display: flex;
+  justify-content: center;
+  padding: 3px 0;
+}
+
+.scrollbar-thumb {
+  width: 3px;
+  height: 64px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--violet) 55%, transparent);
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+  transition: background-color var(--transition-hover);
+}
+
+.scrollbar-thumb:hover,
+.scrollbar-thumb:active {
+  background: var(--hot);
+  cursor: grabbing;
+}
+
+@media (max-width: 640px) {
+  .scrollbar {
+    display: none;
+  }
+}
+
 .ct-body {
   margin: 0;
   background: var(--bg) radial-gradient(60vw 60vh at 80% 20%, #1a1440 0%, transparent 70%) fixed no-repeat;
