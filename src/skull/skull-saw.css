@@ -1,0 +1,14 @@
+#sk-gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #000; z-index: 0; }
+.sk-hud {
+  position: fixed; z-index: 2; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  font: 12px/1.4 ui-monospace, "JetBrains Mono", Menlo, monospace; color: #ff9ad6; letter-spacing: .08em; text-transform: uppercase;
+}
+.sk-hud .sk-tag { margin-right: auto; }
+.sk-btn {
+  min-height: 44px; padding: 0 16px; border: 1px solid #ff4fb8; border-radius: 999px; background: #000;
+  color: #ff9ad6; font: inherit; cursor: pointer;
+}
+.sk-btn:hover { background: #ff4fb8; color: #000; }
+.sk-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.sk-load { position: fixed; z-index: 2; inset: 0; display: grid; place-items: center; font: 12px ui-monospace, monospace; color: #7a2459; letter-spacing: .2em; }
