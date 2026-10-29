@@ -256,12 +256,13 @@
   grid-template-columns: var(--sp-cols);
 }
 
-/* The phone in the carousel, over the current card's slot (big-cards.ts
-   measures it); the carousel brings it in and out. */
-.carousel-stage > .sp-stage {
+/* The phone in the pinned projects section, over the current card's slot
+   (big-cards.ts measures it) and over everything else there, the fixed
+   headline (z-index 50) too; the carousel brings it in and out. */
+.projects > .sp-stage {
   --pc: var(--note-9);
   position: absolute;
-  z-index: 50;
+  z-index: 60;
   left: var(--sp-x, 50%);
   top: var(--sp-y, 50%);
   width: var(--sp-w, 15rem);

@@ -297,7 +297,7 @@ export function initCarousel(section: HTMLElement, lenis: Lenis) {
         p: 1,
         duration: rideUnits,
         ease: "none",
-        onUpdate: () => cards[0].dispatchEvent(new CustomEvent("ride", { detail: ride.p })),
+        onUpdate: () => cards[0].dispatchEvent(new CustomEvent("ride", { detail: ride.p, bubbles: true })),
       });
     }
     tl.to({}, { duration: holdUnits }).to(group, {
@@ -347,7 +347,7 @@ export function initCarousel(section: HTMLElement, lenis: Lenis) {
   // The shared phone flies in with the first of its cards and out with the
   // last; in between the current card is the one whose span the timeline is
   // in, announced to the section as "bigcard" (detail: the card).
-  const phone = section.querySelector<HTMLElement>(".carousel-stage > .sp-stage");
+  const phone = section.querySelector<HTMLElement>(".projects > .sp-stage");
   if (phone && phoned.length) {
     const first = phoned[0], last = phoned[phoned.length - 1];
     gsap.set(phone, { autoAlpha: 0, y: "35vh", rotation: -16, scale: 0.6 });

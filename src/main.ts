@@ -215,8 +215,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               </div>
             `))
               .join("")}
-            ${bigPhone(projectCards.filter((c) => c.group === "big"))}
-          </div>`
+          </div>
+          ${bigPhone(projectCards.filter((c) => c.group === "big"))}`
     }
   </section>
 

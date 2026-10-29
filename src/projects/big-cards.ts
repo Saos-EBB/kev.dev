@@ -147,7 +147,7 @@ export function bigPhone(cards: ProjectCard[]): string {
 // The shared phone, the text fitting and the tab boxes. The cards are
 // rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
-  const stage = root.querySelector<HTMLElement>(".carousel-stage > .sp-stage");
+  const stage = root.querySelector<HTMLElement>(".projects > .sp-stage");
   if (stage) initSharedPhone(root, stage, cards);
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
@@ -203,7 +203,21 @@ function initSharedPhone(root: HTMLElement, stage: HTMLElement, cards: ProjectCa
     phone.use(current.dataset.card!);
     place();
   });
-  window.addEventListener("resize", place);
+  // Measured again whenever the layout may have moved: resize, the web
+  // fonts (they change the heads' height), and once per frame while a card
+  // rides — it holds still then, so the slot is where the phone belongs.
+  let queued = false;
+  const placeSoon = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      place();
+    });
+  };
+  window.addEventListener("resize", placeSoon);
+  document.fonts?.ready.then(placeSoon);
+  root.addEventListener("ride", placeSoon);
 }
 
 // AniScript: a player with its six features pinned where they act, and
