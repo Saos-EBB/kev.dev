@@ -1,0 +1,936 @@
+/* YourBrand's card (yourbrand-card.ts): the module graph, the phone with
+   the app, the texts with the ride's step first. --brand is the color the
+   app wears — the ride's tenant, on the home screen each tenant in turn. */
+
+.yb {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(13rem, 0.5fr) minmax(0, 0.95fr);
+  gap: 1.5rem;
+}
+
+/* --- the graph ---------------------------------------------------- */
+
+.yb-graphbox {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--pc-soft);
+}
+
+.yb-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.yb-flowname {
+  color: var(--brand);
+  text-align: end;
+}
+
+.yb-graph {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.yb-graph svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.yb-col {
+  fill: var(--lc);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.yb-edge {
+  fill: none;
+  stroke: var(--color-text);
+  stroke-opacity: 0.08;
+  transition: stroke-opacity 0.4s, stroke 0.4s;
+}
+
+.yb-edge.is-flow {
+  stroke: var(--brand);
+  stroke-opacity: 0.45;
+  stroke-width: 1.4;
+}
+
+.yb-edge.is-cur {
+  stroke-opacity: 1;
+  stroke-width: 2.2;
+  stroke-dasharray: 5 5;
+  filter: drop-shadow(0 0 4px var(--brand));
+  animation: yb-dash 0.6s linear infinite;
+}
+
+@keyframes yb-dash {
+  to { stroke-dashoffset: -10; }
+}
+
+.yb-node {
+  cursor: pointer;
+}
+
+.yb-node rect {
+  fill: var(--projects-bg);
+  stroke: var(--lc);
+  stroke-opacity: 0.35;
+  transition: fill 0.35s, stroke-opacity 0.35s;
+}
+
+.yb-node text {
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 8.8px;
+  letter-spacing: -0.02em;
+  pointer-events: none;
+  transition: fill 0.35s;
+}
+
+.yb-node:hover rect,
+.yb-node.is-flow rect {
+  stroke-opacity: 0.9;
+}
+
+.yb-node.is-flow text {
+  fill: var(--color-text);
+}
+
+.yb-node.is-cur rect {
+  fill: var(--brand);
+  stroke: var(--color-text);
+  stroke-opacity: 0.9;
+  filter: drop-shadow(0 0 8px var(--brand));
+}
+
+.yb-node.is-cur text {
+  fill: #111;
+  font-weight: 700;
+}
+
+.yb-node.is-pick rect {
+  stroke: var(--color-text);
+  stroke-width: 2;
+  stroke-opacity: 1;
+}
+
+.yb-dot {
+  fill: #fff;
+  filter: drop-shadow(0 0 6px var(--brand));
+  pointer-events: none;
+}
+
+/* --- the step tab ------------------------------------------------- */
+
+.yb-segs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1rem;
+}
+
+.yb-segs button {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-align: start;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.yb-segs button.is-on {
+  color: var(--color-text);
+}
+
+.yb-segs i {
+  display: block;
+  height: 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  overflow: hidden;
+}
+
+.yb-segs b {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  transition: width 0.35s;
+}
+
+.yb-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  animation: yb-rise 0.45s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes yb-rise {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+.yb-where {
+  color: var(--brand);
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.yb-step h4 {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.yb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.yb-chip {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--lc, var(--pc)) 60%, transparent);
+  border-radius: 99px;
+  color: var(--lc, var(--pc));
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  text-decoration: none;
+}
+
+.yb-step ol {
+  display: grid;
+  gap: 0.2rem;
+  list-style: none;
+}
+
+.yb-step li {
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.6rem;
+  color: var(--color-text-muted);
+  font-size: var(--fs-small);
+}
+
+.yb-step li.is-on {
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  color: var(--color-text);
+}
+
+.yb-open {
+  align-self: flex-start;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--pc-soft);
+  border-radius: 99px;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-tiny);
+  text-decoration: none;
+}
+
+.yb-open:hover,
+.yb-open:focus-visible {
+  background: var(--pc-faint);
+}
+
+/* --- the app ------------------------------------------------------ */
+
+.yb-app {
+  position: absolute;
+  inset: 0;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+.yb-tiny {
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff80;
+}
+
+.yb-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.yb-logo {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--brand);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--brand) 60%, transparent);
+  transition: background 0.5s;
+}
+
+.yb-logo--s {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+}
+
+.yb-tname {
+  font-size: 0.62rem;
+}
+
+.yb-tkind {
+  font-size: 0.5rem;
+  color: #ffffffa0;
+}
+
+.yb-tabbar {
+  position: absolute;
+  z-index: 3;
+  inset: auto 0.9rem 1rem;
+  height: 2.1rem;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border: 1px solid #ffffff12;
+  border-radius: 99px;
+  background: #15121b;
+}
+
+.yb-tabbar i {
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ffffff26;
+  transition: background 0.3s, width 0.3s;
+}
+
+.yb-tabbar i.is-on {
+  width: 26px;
+  background: var(--brand);
+}
+
+/* new tenant */
+.yb-file {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 0.6rem;
+}
+
+.yb-json::before {
+  content: "{ } ";
+  color: var(--brand);
+}
+
+.yb-kv {
+  display: grid;
+  grid-template-columns: 9px 1fr;
+  gap: 6px;
+  align-items: center;
+}
+
+.yb-kv u {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.yb-ok {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--note-1);
+  color: #111;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.yb-slug {
+  align-self: center;
+  padding: 3px 10px;
+  border: 1px dashed var(--brand);
+  border-radius: 99px;
+  color: var(--brand);
+  font-size: 0.55rem;
+}
+
+.yb-infra {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.yb-inf {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 0.55rem 0.4rem;
+  border-radius: 12px;
+}
+
+.yb-ic {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--brand);
+  border-radius: 9px;
+}
+
+.yb-db .yb-ic { border-radius: 50% / 22%; }
+.yb-bucket .yb-ic { border-radius: 4px 4px 12px 12px; }
+.yb-redis .yb-ic { width: 24px; height: 24px; transform: rotate(45deg); }
+
+.yb-rows {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+}
+
+.yb-rows .sp-sk {
+  height: 4px;
+}
+
+/* home: the tenants' modules */
+.yb-mods {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.yb-mod {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.5rem;
+  border: 1.5px solid #2a2530;
+  border-radius: 10px;
+  opacity: 0.35;
+  transition: border-color 0.4s, opacity 0.4s, background 0.4s;
+}
+
+.yb-mod b {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: #2a2530;
+  transition: background 0.4s;
+}
+
+.yb-mod span {
+  font-size: 0.45rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffffb0;
+}
+
+.yb-mod.is-lit {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--brand) 70%, transparent);
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+.yb-mod.is-lit b {
+  background: var(--brand);
+}
+
+/* login */
+.yb-load i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: #ffffff14;
+  overflow: hidden;
+}
+
+.yb-load b {
+  display: block;
+  width: 92%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--note-1), var(--term-3), var(--term-1));
+}
+
+.yb-login {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 0.4rem 0;
+}
+
+.yb-login .yb-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.yb-field {
+  position: relative;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1.5px solid #2a2530;
+  border-radius: 10px;
+}
+
+.yb-hash {
+  position: absolute;
+  color: var(--brand);
+  font-size: 0.55rem;
+}
+
+.yb-plain {
+  width: 60%;
+  transition: opacity 0.3s;
+}
+
+.yb-plain.on {
+  opacity: 0;
+}
+
+.yb-pw i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff70;
+}
+
+.yb-go {
+  position: relative;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 99px;
+  background: var(--brand);
+  color: #111;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.yb-go > * {
+  grid-area: 1 / 1;
+}
+
+.yb-spin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #11111155;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: yb-spin 0.7s linear infinite;
+}
+
+@keyframes yb-spin {
+  to { rotate: 360deg; }
+}
+
+/* The meters only take room on their own step. */
+.yb-load:not(.on),
+.yb-meter:not(.on) {
+  display: none;
+}
+
+.yb-meter {
+  display: grid;
+  gap: 4px;
+}
+
+.yb-dots,
+.yb-slots {
+  display: flex;
+  gap: 5px;
+}
+
+.yb-dots i {
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--brand);
+  border-radius: 50%;
+}
+
+.yb-slots i {
+  flex: 1;
+  height: 9px;
+  border: 1.5px solid #ffffff30;
+  border-radius: 3px;
+}
+
+.yb-dots i.f,
+.yb-slots i.f {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.yb-toks {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.yb-toks span {
+  padding: 4px 10px;
+  border: 1px solid var(--brand);
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+  font-size: 0.52rem;
+}
+
+/* swipe */
+.yb-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.58rem;
+}
+
+.yb-deck {
+  position: relative;
+  flex: 1;
+}
+
+.yb-pc {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 0.7rem;
+  border: 1px solid #ffffff14;
+  border-radius: 16px;
+  background: linear-gradient(170deg, color-mix(in srgb, var(--brand) 30%, #1a1720), #121017 70%);
+  transition: transform 0.7s cubic-bezier(0.3, 0.8, 0.3, 1), opacity 0.6s;
+}
+
+.yb-c2 { transform: translateY(8px) scale(0.95); opacity: 0.7; }
+.yb-c3 { transform: translateY(16px) scale(0.9); opacity: 0.4; }
+.yb-c1.on { transform: translateX(150%) rotate(22deg); opacity: 0; }
+
+.yb-deck.is-load .yb-pc {
+  background: linear-gradient(100deg, #15121b 30%, #2a2530 50%, #15121b 70%) 0 0 / 300% 100%;
+  animation: yb-shimmer 1.1s linear infinite;
+}
+
+@keyframes yb-shimmer {
+  to { background-position: -300% 0; }
+}
+
+.yb-deck.is-flash::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: var(--brand);
+  pointer-events: none;
+  animation: yb-flash 0.8s ease-out forwards;
+}
+
+@keyframes yb-flash {
+  from { opacity: 0.55; }
+  to { opacity: 0; }
+}
+
+.yb-av {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  translate: -50% 0;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #ffffff1a;
+}
+
+.yb-radar {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  width: 110px;
+  height: 110px;
+  margin-left: -55px;
+  border: 1.5px dashed var(--brand);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--brand) 25%, transparent), transparent 70%);
+}
+
+.yb-radar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(color-mix(in srgb, var(--brand) 55%, transparent), transparent 25%);
+  animation: yb-spin 1.8s linear infinite;
+}
+
+.yb-score {
+  position: absolute;
+  top: 46%;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.yb-score span {
+  padding: 3px 7px;
+  border: 1px solid var(--note-1);
+  border-radius: 99px;
+  background: #000a;
+  color: var(--note-1);
+  font-size: 0.55rem;
+}
+
+.yb-score .neg {
+  border-color: var(--term-1);
+  color: var(--term-1);
+}
+
+.yb-acts {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.yb-acts i {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #ffffff30;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-style: normal;
+}
+
+.yb-acts .yb-like {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.yb-match {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #000000b0;
+}
+
+.yb-pair {
+  display: flex;
+}
+
+.yb-pair i {
+  width: 50px;
+  height: 50px;
+  border: 2px solid var(--brand);
+  border-radius: 50%;
+  background: #2a2530;
+}
+
+.yb-match.on .yb-pair i:first-child { animation: yb-in-l 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+.yb-match.on .yb-pair i:last-child { margin-left: -12px; animation: yb-in-r 0.6s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+
+@keyframes yb-in-l { from { transform: translateX(-60px); } }
+@keyframes yb-in-r { from { transform: translateX(60px); } }
+
+.yb-burst {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border: 2px solid var(--brand);
+  border-radius: 50%;
+  animation: yb-burst 1.2s ease-out infinite;
+}
+
+@keyframes yb-burst {
+  from { transform: scale(0.3); opacity: 1; }
+  to { transform: scale(1.3); opacity: 0; }
+}
+
+.yb-tochat {
+  position: absolute;
+  inset: auto 18% 14%;
+  height: 28px;
+  border-radius: 99px;
+  background: var(--brand);
+}
+
+/* chat */
+.yb-chead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #ffffff12;
+}
+
+.yb-chead .yb-av {
+  position: relative;
+  top: auto;
+  left: auto;
+  translate: none;
+  width: 26px;
+  height: 26px;
+  background: #2a2530;
+}
+
+.yb-chead .yb-av::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #0a090d;
+  border-radius: 50%;
+  background: #555;
+  transition: background 0.3s;
+}
+
+.yb-chead.is-live .yb-av::after {
+  background: var(--note-1);
+}
+
+.yb-room {
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid var(--brand);
+  border-radius: 99px;
+  color: var(--brand);
+  font-size: 0.5rem;
+}
+
+.yb-relay {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.yb-relay i {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--brand);
+  border-radius: 6px;
+}
+
+.yb-relay i::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 2px;
+  background: var(--brand);
+  animation: yb-blink 0.8s ease-in-out infinite alternate;
+}
+
+.yb-relay i:nth-child(2)::after { animation-delay: 0.25s; }
+.yb-relay i:nth-child(3)::after { animation-delay: 0.5s; }
+
+@keyframes yb-blink {
+  to { opacity: 0.15; }
+}
+
+.yb-msgs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.yb-bub {
+  position: relative;
+  max-width: 72%;
+  display: grid;
+  gap: 4px;
+  padding: 0.5rem 0.6rem;
+  border-radius: 14px;
+}
+
+.yb-them {
+  border-bottom-left-radius: 4px;
+  background: #1c1922;
+}
+
+.yb-me {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: color-mix(in srgb, var(--brand) 35%, #1c1922);
+}
+
+.yb-tick {
+  position: absolute;
+  right: 6px;
+  bottom: -11px;
+  color: var(--note-1);
+  font-size: 0.5rem;
+}
+
+.yb-flag {
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--term-3);
+  font-size: 0.65rem;
+}
+
+.yb-typing {
+  align-self: flex-start;
+  display: flex;
+  gap: 3px;
+  padding: 0.5rem 0.6rem;
+  border-radius: 14px;
+  background: #1c1922;
+}
+
+.yb-typing i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff90;
+  animation: yb-bob 1s ease-in-out infinite;
+}
+
+.yb-typing i:nth-child(2) { animation-delay: 0.15s; }
+.yb-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes yb-bob {
+  50% { transform: translateY(-3px); }
+}
+
+.yb-input {
+  height: 28px;
+  border: 1.5px solid #2a2530;
+  border-radius: 99px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) :is(.yb-edge.is-cur, .yb-spin, .yb-burst, .yb-typing i, .yb-deck.is-load .yb-pc),
+  :root:not(.force-motion) .yb-radar::before,
+  :root:not(.force-motion) .yb-relay i::after {
+    animation: none;
+  }
+}

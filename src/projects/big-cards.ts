@@ -1,78 +1,15 @@
 // The three big projects' desktop cards. Instead of the shared chrome
 // (visual + Why?/Learned!/Code teaser boxes), each gets a structure of its
-// own built from the same card data — YourBrand reads as its database
-// diagram (yourbrand-schema.ts).
+// own built from the same card data — YourBrand rides its module graph
+// with a phone (yourbrand-card.ts).
 // Phone list and sheet keep the shared layout (project-cards.ts).
 
 import { cardBodies, esc, type MailFolder, type ProjectCard } from "./project-cards";
 import { editor, orders, ramp, terminal, viewport } from "./project-visuals";
-import { initSchema, schemaCard } from "./yourbrand-schema";
+import { initYourBrand, ybCard } from "./yourbrand-card";
 import { initPhones, phone } from "./kevdev-phone";
-import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
-
-// Small charts for YourBrand's inspector (yourbrand-schema.ts). One hue
-// throughout: the row's own part in --pc, the context dimmed — never a
-// color per series.
-
-// The layer stack with one layer lit (none: -1, all at full strength).
-export function vizStack(active: number, caption = true): string {
-  const layers = UI.vizLayers;
-  return `
-    ${caption ? `<p class="viz-caption">${UI.vizFig1}</p>` : ""}
-    <ol class="viz-stack er-stack${caption ? "" : " er-stack--tight"}${active < 0 ? " er-stack--all" : ""}">
-      ${layers
-        .map(([name, sub], i) => `<li class="${i === active ? "hl" : ""}" style="--i: ${layers.length - 1 - i}"><b>${esc(name)}</b><span>${esc(sub)}</span></li>`)
-        .join("")}
-    </ol>`;
-}
-
-// The compact form of one matrix row or column: a square per item, filled
-// where it's booked.
-export function vizList(items: { label: string; on: boolean }[]): string {
-  return `
-    <ul class="er-list${items.length > 5 ? " er-list--2" : ""}">
-      ${items.map((it) => `<li class="${it.on ? "on" : ""}">${esc(it.label)}</li>`).join("")}
-    </ul>`;
-}
-
-// Hours as bars on one scale: the solid part is the low estimate, the
-// lighter part the rest of the range. Every bar carries its value.
-export function vizHours(rows: [string, number, number][]): string {
-  const max = Math.ceil(Math.max(...rows.map(([, , hi]) => hi)) / 100) * 100;
-  const pct = (v: number) => `${(v / max) * 100}%`;
-  const value = (lo: number, hi: number) => (lo === hi ? `~${lo} h` : `${lo}–${hi} h`);
-  return `
-    <div class="er-bars">
-      ${rows
-        .map(
-          ([label, lo, hi]) => `
-        <div class="er-bar" title="${esc(label)}: ${value(lo, hi)}">
-          <span class="er-bar-label">${esc(label)}</span>
-          <span class="er-bar-track"><i style="width: ${pct(lo)}"></i>${hi > lo ? `<i class="er-bar-range" style="width: ${pct(hi - lo)}"></i>` : ""}<b>${value(lo, hi)}</b></span>
-        </div>`,
-        )
-        .join("")}
-    </div>`;
-}
-
-// The timeline as phases over months (April 2026 on), the current one lit.
-export function vizTimeline(rows: [string, number, number][]): string {
-  const months = Math.max(...rows.map(([, , to]) => to)) + 1;
-  const name = new Intl.DateTimeFormat(LANG, { month: "short" });
-  return `
-    <div class="er-gantt" style="--months: ${months}">
-      ${Array.from({ length: months }, (_, i) => `<span class="er-gantt-m">${esc(name.format(new Date(2026, 3 + i, 1)))}</span>`).join("")}
-      ${rows
-        .map(
-          ([label, from, to], i) => `
-        <span class="er-gantt-l">${esc(label)}</span>
-        <i class="${i === rows.length - 1 ? "hl" : ""}" style="grid-column: ${from + 1} / ${to + 2}" title="${esc(label)}"></i>`,
-        )
-        .join("")}
-    </div>`;
-}
 
 // A decision reads "Head: the rest" or "Head — the rest"; the head becomes
 // the list row's title, like a mail subject.
@@ -295,7 +232,7 @@ function partsCard(card: ProjectCard, head: string): string {
 // --fit factor (big-cards.css). A ResizeObserver refits on resize
 // and when a hidden tab panel shows (its size goes from 0); content that
 // changes in place (TschoBBo's letters) calls fitText itself.
-const FIT_BOXES = ".big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code, .sch-insp";
+const FIT_BOXES = ".big-panel, .parts-panel, .mail-list, .mail-paper, .mail-code";
 const MIN_FIT = 0.65;
 
 export function fitText(el: HTMLElement) {
@@ -313,7 +250,7 @@ export function fitText(el: HTMLElement) {
 // opens on its code instead); a mail shows its letter. One listener per
 // big card; the cards are rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
-  initSchema(root, cards);
+  initYourBrand(root, cards);
   initPhones(root);
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
@@ -594,7 +531,7 @@ export const hasBigCard = (card: ProjectCard) => BIG_LAYOUTS.has(card.layout);
 export function renderBigCard(card: ProjectCard, head: string): string {
   switch (card.layout) {
     case "blueprint":
-      return schemaCard(card, head);
+      return ybCard(card, head, (first) => textTabs(card, [first]));
     case "inbox":
       return mailCard(card, head);
     case "storyboard":

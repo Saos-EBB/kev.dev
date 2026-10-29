@@ -221,6 +221,25 @@
   border-radius: 6px;
 }
 
+/* A card's app screens: one shows at a time, under the status bar and
+   above the app's own tab bar. */
+.sp-page {
+  position: absolute;
+  inset: 0;
+  padding: 2.6rem 0.9rem 3.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s, visibility 0.35s;
+}
+
+.sp-page.is-show {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* One step's state on a screen (paintStates): .on from data-from (to
    data-to), the step itself lit (data-at). */
 .sp-st {
