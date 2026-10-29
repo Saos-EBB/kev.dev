@@ -15,7 +15,7 @@ const MARKUP = `
   <div class="ml-scene js-scene"></div>
   <header class="ml-head">
     <h1 class="ml-title">Motion Lab</h1>
-    <p class="ml-hint">Something gets thrown at you every 5–15 s. Grab it and let go — it dissolves. Click a card to vanish it.</p>
+    <p class="ml-hint">Something gets thrown at you every 5–15 s. Grab it and let go — it flies on, through you. Click a card to vanish it.</p>
     <button class="ml-sound js-sound" type="button" aria-pressed="false">Sound: off</button>
   </header>
   <section class="ml-cards">

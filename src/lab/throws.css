@@ -71,14 +71,6 @@
   fill: color-mix(in srgb, var(--color-line) 35%, transparent);
 }
 
-/* A mask flattens 3D, so while vanishing the object drops to one flat
-   box (its slices hide) that carries the stripe fill — the original
-   hides its sides the same way. */
-.ml-obj.is-vanishing {
-  transform-style: flat;
-  pointer-events: none;
-}
-
 /* --vanish-sprite is a data: URL throws.ts paints once (30 frames
    side by side). 3000% = 30 frames wide; steps(29) lands exactly on each
    frame from 0% to 100%. The element's own look is swapped for the
@@ -93,10 +85,6 @@
   -webkit-mask: var(--vanish-sprite) left / 3000% 100%;
   mask: var(--vanish-sprite) left / 3000% 100%;
   animation: ml-vanish 0.75s steps(29, end) both;
-}
-
-.ml-obj.is-vanishing .ml-slice {
-  visibility: hidden;
 }
 
 @keyframes ml-vanish {
