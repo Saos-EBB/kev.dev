@@ -278,3 +278,8 @@ export function glass() {
   for (let k = 0; k < 14; k++) tone(out, { t: 0.05 + Math.random() * 0.8, f: 2500 + Math.random() * 3000, vol: 0.05, len: 0.15, type: "triangle" });
   noiseHit(out, { t: 0.02, f: 300, vol: 0.5, len: 0.3 });
 }
+
+// headshot confirm: short and dry
+export function tick() {
+  tone(out, { f: 2200, f2: 1700, type: "square", vol: 0.06, len: 0.05, att: 0.001 });
+}

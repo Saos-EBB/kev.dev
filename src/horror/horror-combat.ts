@@ -13,7 +13,7 @@ import { loadSkullGeometry } from "../skull-site/parts";
 
 export type ZombieKind = "normal" | "big" | "boss";
 export type PickupKind = "shotgun" | "bat" | "shells" | "health";
-export type Kill = { kind: ZombieKind; hits: number; head: boolean };
+export type Kill = { kind: ZombieKind; hits: number; head: boolean; at: THREE.Vector3 };
 
 export type CombatWorld = {
   scene: THREE.Scene;
@@ -25,7 +25,8 @@ export type CombatWorld = {
   onHurt: (damage: number) => void; // the game shows it and handles death
   onShot: () => void; // muzzle flash: the game brightens the lamp for a moment
   onKill: (k: Kill) => void;
-  onImpact: (head: boolean, kill: boolean) => void; // bat connects: the game freezes a beat, shakes, splatters the lens
+  onImpact: (head: boolean, kill: boolean) => void;
+  onHitmarker: (head: boolean) => void; // a shot that found flesh: the crosshair flashes // bat connects: the game freezes a beat, shakes, splatters the lens
 };
 
 const PELLETS = 8, SPREAD = 0.07, RANGE = 30;
@@ -73,7 +74,7 @@ export function createCombat(w: CombatWorld) {
   let weapon: "shotgun" | "bat" | null = null;
   let ammo = 0, cooldown = 0, recoil = 0, flashT = 0, bobPhase = 0, swingT = -1, swung = false;
 
-  type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3 };
+  type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3; amount: number };
   const pickups: Pickup[] = [];
 
   /* ---------- assets: load once, in the background ---------- */
@@ -266,11 +267,12 @@ export function createCombat(w: CombatWorld) {
   }
 
   /* ---------- pickups ---------- */
-  function addPickup(kind: PickupKind, at: THREE.Vector3) {
+  function addPickup(kind: PickupKind, at: THREE.Vector3, amount = SHELLS_PER_BOX) {
     const obj = kind === "shotgun" || kind === "bat" ? new THREE.Group() : makeBox(kind);
+    if (kind === "shells") obj.scale.setScalar(0.6 + amount * 0.08); // the more inside, the bigger the box
     obj.position.set(at.x, w.floorAt(at.x, at.z) + (kind === "shells" || kind === "health" ? 0.15 : 0.3), at.z);
     scene.add(obj);
-    const p = { kind, obj, at: obj.position.clone() };
+    const p = { kind, obj, at: obj.position.clone(), amount };
     pickups.push(p);
     if ((kind === "shotgun" || kind === "bat") && props[kind]) dressPickup(p);
   }
@@ -289,13 +291,73 @@ export function createCombat(w: CombatWorld) {
     const t = tmp.dot(d), d2 = tmp.lengthSq() - t * t;
     return t > 0 && d2 < r * r ? t - Math.sqrt(r * r - d2) : Infinity;
   };
-  const wallDistance = (o: THREE.Vector3, d: THREE.Vector3) => {
-    for (let t = 0.1; t < RANGE; t += 0.08) {
+  // march the ray until it's inside a wall, under the floor or above the ceiling;
+  // the normal says which face it came through (for the marks left behind)
+  const normal = new THREE.Vector3();
+  const wallDistance = (o: THREE.Vector3, d: THREE.Vector3, maxT = RANGE) => {
+    for (let t = 0.1; t < maxT; t += 0.08) {
       const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t;
-      if (w.solidAt(x, z) || y < w.floorAt(x, z) || y > 2.8) return t;
+      const pz = z - d.z * 0.08; // where the ray was one step ago, in z
+      if (w.solidAt(x, z)) {
+        // stepping only in x would already be inside: it came through an x-facing wall
+        if (w.solidAt(x, pz)) normal.set(-Math.sign(d.x), 0, 0); else normal.set(0, 0, -Math.sign(d.z));
+        return t;
+      }
+      if (y < w.floorAt(x, z)) { normal.set(0, 1, 0); return t; }
+      if (y > 2.8) { normal.set(0, -1, 0); return t; }
     }
-    return RANGE;
+    return Infinity;
   };
+
+  /* ---------- marks: bullet holes and blood that stay (two instanced pools, ring buffers) ---------- */
+  function markTexture(kind: "hole" | "blood") {
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 128;
+    const g = cv.getContext("2d")!;
+    if (kind === "hole") {
+      const grd = g.createRadialGradient(64, 64, 0, 64, 64, 60);
+      grd.addColorStop(0, "rgba(0,0,0,1)"); grd.addColorStop(0.25, "rgba(10,8,6,0.95)"); grd.addColorStop(0.5, "rgba(40,34,28,0.6)"); grd.addColorStop(1, "rgba(40,34,28,0)");
+      g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+      g.strokeStyle = "rgba(0,0,0,0.7)"; g.lineWidth = 2;
+      for (let i = 0; i < 6; i++) { const a = Math.random() * 7; g.beginPath(); g.moveTo(64, 64); g.lineTo(64 + Math.cos(a) * (30 + Math.random() * 28), 64 + Math.sin(a) * (30 + Math.random() * 28)); g.stroke(); }
+    } else {
+      g.fillStyle = "rgba(90,4,4,0.95)";
+      for (let i = 0; i < 9; i++) { const x = 34 + Math.random() * 60, y = 34 + Math.random() * 60; g.beginPath(); g.arc(x, y, 6 + Math.random() * 18, 0, 7); g.fill(); }
+      for (let i = 0; i < 40; i++) { const a = Math.random() * 7, d = 30 + Math.random() * 30; g.beginPath(); g.arc(64 + Math.cos(a) * d, 64 + Math.sin(a) * d, 1 + Math.random() * 3, 0, 7); g.fill(); }
+      for (let i = 0; i < 4; i++) g.fillRect(40 + Math.random() * 48, 64, 3, 20 + Math.random() * 40); // drips (only read right on walls)
+    }
+    const t = new THREE.CanvasTexture(cv);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+  function makeMarks(kind: "hole" | "blood", max: number) {
+    const map = markTexture(kind);
+    const mat = new THREE.MeshStandardMaterial({ map, alphaTest: 0.25, roughness: kind === "blood" ? 0.35 : 1, polygonOffset: true, polygonOffsetFactor: -4 });
+    const mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), mat, max);
+    mesh.count = 0; mesh.frustumCulled = false; mesh.receiveShadow = true;
+    scene.add(mesh);
+    let next = 0;
+    const q = new THREE.Quaternion(), roll = new THREE.Quaternion(), m = new THREE.Matrix4(), s = new THREE.Vector3(), z = new THREE.Vector3(0, 0, 1), p = new THREE.Vector3();
+    return (at: THREE.Vector3, n: THREE.Vector3, size: number) => {
+      q.setFromUnitVectors(z, n).multiply(roll.setFromAxisAngle(z, Math.random() * Math.PI * 2));
+      m.compose(p.copy(at).addScaledVector(n, 0.012), q, s.setScalar(size));
+      mesh.setMatrixAt(next, m);
+      next = (next + 1) % max;
+      mesh.count = Math.min(max, mesh.count + 1);
+      mesh.instanceMatrix.needsUpdate = true;
+    };
+  }
+  const hole = makeMarks("hole", 300), blood = makeMarks("blood", 220);
+  const markAt = new THREE.Vector3(), up1 = new THREE.Vector3(0, 1, 0);
+  // blood on whatever is behind a zombie (exit wound) or under it
+  function bloodBehind(from: THREE.Vector3, dir: THREE.Vector3, reach: number, size: number) {
+    const t = wallDistance(from, dir, reach);
+    if (t < reach) blood(markAt.copy(from).addScaledVector(dir, t), normal.clone(), size * (0.8 + Math.random() * 0.5));
+  }
+  function bloodPool(at: THREE.Vector3, size: number) {
+    markAt.set(at.x + (Math.random() - 0.5) * 0.4, w.floorAt(at.x, at.z), at.z + (Math.random() - 0.5) * 0.4);
+    blood(markAt, up1, size);
+  }
   // two spheres per zombie: body, and head
   const bodyHit = (z: Zombie, o: THREE.Vector3, d: THREE.Vector3) => { const p = z.root.position, s = z.height / ZOMBIE_HEIGHT; return raySphere(o, d, center.set(p.x, p.y + z.height * 0.55, p.z), 0.32 * s); };
   const headHit = (z: Zombie, o: THREE.Vector3, d: THREE.Vector3, grow = 1) => { const p = z.root.position, s = z.height / ZOMBIE_HEIGHT; return raySphere(o, d, center.set(p.x, p.y + z.height * 0.88, p.z), 0.17 * s * grow); };
@@ -308,7 +370,8 @@ export function createCombat(w: CombatWorld) {
       z.dying = 0; play(z, "Death", true);
       sfx.die(z.root.position);
       burst(hitAt.copy(z.root.position).setY(z.root.position.y + z.height * 0.6), z.kind === "boss" ? 60 : 20, 0.4, 0.02, 0.02, 3);
-      w.onKill({ kind: z.kind, hits: z.hits, head });
+      bloodPool(z.root.position, z.kind === "boss" ? 2.4 : 1 + Math.random() * 0.5);
+      w.onKill({ kind: z.kind, hits: z.hits, head, at: z.root.position.clone() });
     } else {
       if (z.kind !== "boss" || Math.random() < 0.25) play(z, "HitReact", true);
       sfx.pain(z.root.position);
@@ -342,10 +405,20 @@ export function createCombat(w: CombatWorld) {
         if (th < bestT) { best = z; bestT = th; head = true; }
       }
       hitAt.copy(origin).addScaledVector(ray, bestT);
-      if (best) { hits.set(best, (hits.get(best) ?? false) || head); burst(hitAt, 4, 0.45, 0.02, 0.02, 2.5); }
-      else if (wall < RANGE) { burst(hitAt, 2, 0.5, 0.48, 0.44, 1.2); if (k === 0) sfx.impact(hitAt); }
+      if (best) {
+        hits.set(best, (hits.get(best) ?? false) || head);
+        burst(hitAt, 6, 0.45, 0.02, 0.02, 2.8);
+        if (k % 2 === 0) bloodBehind(hitAt, ray, 2.6, 0.45); // what goes in comes out the back
+      } else if (wall < RANGE) {
+        burst(hitAt, 3, 0.5, 0.48, 0.44, 1.4);
+        hole(hitAt, normal, 0.07 + Math.random() * 0.04);
+        if (k === 0) sfx.impact(hitAt);
+      }
     }
+    // the empty shell flies out to the right
+    burst(tmp.copy(origin).addScaledVector(right, 0.25).addScaledVector(up, -0.15).addScaledVector(fwd, 0.4), 1, 0.7, 0.08, 0.05, 1.5);
     for (const [z, head] of hits) damage(z, head, head ? DMG.shotgun.head : DMG.shotgun.body);
+    if (hits.size) w.onHitmarker([...hits.values()].some((h) => h));
   }
 
   // the bat connects mid-swing: the closest zombie in front of you, head if you're aiming at it
@@ -365,6 +438,8 @@ export function createCombat(w: CombatWorld) {
     hitAt.copy(best.root.position).setY(best.root.position.y + best.height * (head ? 0.88 : 0.55));
     // blood flies the way the bat went (to your left), plus a cloud, plus a few dark chunks
     spray(hitAt, -right.x, -right.z, head ? 46 : 30);
+    bloodBehind(hitAt, tmp.set(-right.x, 0, -right.z).normalize(), 2.2, head ? 1.1 : 0.8);
+    bloodPool(best.root.position, 0.6);
     burst(hitAt, head ? 20 : 12, 0.5, 0.02, 0.02, 3.5);
     burst(hitAt, 6, 0.18, 0.02, 0.02, 2);
     sfx.chop(hitAt);
@@ -494,7 +569,7 @@ export function createCombat(w: CombatWorld) {
       if (Math.hypot(player.x - p.at.x, player.z - p.at.z) < 0.9) {
         if (p.kind === "shotgun") { have.shotgun = true; ammo += 30; weapon = "shotgun"; }
         if (p.kind === "bat") { have.bat = true; weapon = "bat"; }
-        if (p.kind === "shells") ammo += SHELLS_PER_BOX;
+        if (p.kind === "shells") ammo += p.amount;
         scene.remove(p.obj); pickups.splice(i, 1);
         sfx.pickup(); onPickup(p.kind);
       }

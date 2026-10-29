@@ -27,7 +27,7 @@ import { createCombat } from "./horror-combat";
 
 const MARKUP = `
   <canvas id="gl"></canvas>
-  <div class="hud" id="count"><p>Gegenstände <b id="got">0</b> / <b>3</b></p><p id="goal">Irgendwo liegen drei Dinge.</p></div>
+  <div class="hud" id="count"><p><span id="clabel">Gegenstände</span> <b id="got">0</b> / <b id="tot">3</b></p><p id="goal">Irgendwo liegen drei Dinge.</p></div>
   <div class="hud" id="bossbar" hidden><small>Der Große</small><i><b id="bosshp"></b></i></div>
   <p class="hud" id="fps" hidden></p>
   <div class="hud" id="dot"></div>
@@ -61,6 +61,8 @@ const MARKUP = `
       <p class="muted dev">Dev, Startpunkt:
         <label><input type="radio" name="from" value="start" checked> Anfang</label>
         <label><input type="radio" name="from" value="stairs"> Treppe</label>
+        <label><input type="radio" name="from" value="hall1"> Welle 1</label>
+        <label><input type="radio" name="from" value="hall2"> Welle 2</label>
         <label><input type="radio" name="from" value="boss"> Endkampf</label>
       </p>
       <p class="muted">Am Handy: rechts wischen zum Umsehen, Kreis links unten zum Gehen.</p>
@@ -95,7 +97,7 @@ const MARKUP = `
 /* ============================ LEVEL ============================
    Upper level (floor 0 m) and lower level (floor -2.8 m, halls 5.6 m high).
    # wall · . corridor (upper) · S start, facing the wall
-   a b c  the three items, at the ends of the side passages
+   a b c  the three items, hidden in dead ends of the little maze up top
    D      heavy door, opens once you have all three
    v      stairs down (east)
    , h H B  lower floor: corridor, hall 1, hall 2, boss hall (twisty, with pillars)
@@ -104,17 +106,17 @@ const MARKUP = `
    r      mirror room · W the glass · m the room behind the glass (unreachable) */
 const MAP = [
   "####################################################################",
-  "##############################################BBBBBBBBBBB###########",
-  "##############################################BB##BBBB##B###########",
-  "###a###b###c##########hhhh#hhhh###HHH#HHHHH###BB##BBBB##B###########",
-  "###.###.###.##########h##h#h##h###H#H#H##HH###BBBBB##BBBB###########",
-  "###.###.###.##########h#hhhhh#h###H#HHH#HH####BBBBB##BBBB##rrrWmmm##",
-  "#S.............Dvvvv,Ghhh###hhh1,GHH##H#HHH2,GBBBBBBBBBBB3,rrrWmmmm#",
-  "######################h#hhhhh#h###H#HHHHH#H###BBBBBBBBBBB##rrrWmmm##",
-  "######################h##h#h##h###HHH#H##HH###BBBBB##BBBB###########",
-  "######################hhhh#hhhh####HHHHH#HH###BB##B##B##B###########",
-  "##############################################BB##BBBB##B###########",
-  "##############################################BBBBBBBBBBB###########",
+  "#..b#........c################################BBBBBBBBBBB###########",
+  "#.###.#####.##################################BB##BBBB##B###########",
+  "#...#.....#...########hhhh#hhhh###HHH#HHHHH###BB##BBBB##B###########",
+  "###.#####.###.########h##h#h##h###H#H#H##HH###BBBBB##BBBB###########",
+  "#S....#...#...########h#hhhhh#h###H#HHH#HH####BBBBB##BBBB##rrrWmmm##",
+  "#####.#.###.#..Dvvvv,Ghhh###hhh1,GHH##H#HHH2,GBBBBBBBBBBB3,rrrWmmmm#",
+  "#...#.#.#...#.########h#hhhhh#h###H#HHHHH#H###BBBBBBBBBBB##rrrWmmm##",
+  "#.#.#.#.#.###.########h##h#h##h###HHH#H##HH###BBBBB##BBBB###########",
+  "#.#.#...#.#a#.########hhhh#hhhh####HHHHH#HH###BB##B##B##B###########",
+  "#.#.#####.#.#.################################BB##BBBB##B###########",
+  "#.........#...################################BBBBBBBBBBB###########",
   "####################################################################",
 ];
 const UPPER = new Set([".", "S", "a", "b", "c", "D"]);
@@ -414,7 +416,18 @@ function mount() {
     return wr;
   }
   // who I am, chalked along the hub (the first one is the wall you face at the start)
-  const textSpots: [number, number, Cell][] = [[1, 6, [-1, 0]], [3, 6, [0, 1]], [5, 6, [0, 1]], [8, 6, [0, 1]], [11, 6, [0, 1]], [13, 6, [0, 1]]];
+  // the first text is the wall you face at the start; the rest go on walls of straight passages,
+  // spread from near the start to deep in the maze, so you read them while you search
+  const upper = reachable.filter(([x, z]) => UPPER.has(MAP[z][x]) && MAP[z][x] !== "D");
+  const far = Math.max(...upper.map((c) => dist.get(key(c))!));
+  const textSpots: [number, number, Cell][] = [[start[0], start[1], [-openDirs(...start)[0][0], -openDirs(...start)[0][1]] as Cell]];
+  for (let i = 1; i < WALL_TEXTS.length; i++) {
+    const want = (far * i) / WALL_TEXTS.length;
+    const c = upper.filter(([x, z]) => MAP[z][x] === "." && openDirs(x, z).length === 2 && !textSpots.some((t) => t[0] === x && t[1] === z))
+      .sort((a, b) => Math.abs(dist.get(key(a))! - want) - Math.abs(dist.get(key(b))! - want))[0];
+    const side = DIRS.find(([dx, dz]) => cell(c[0] + dx, c[1] + dz) === "#")!;
+    textSpots.push([c[0], c[1], side]);
+  }
   WALL_TEXTS.forEach((t, i) => writeOn(textSpots[i][0], textSpots[i][1], textSpots[i][2], t, "#efe6d6"));
   // the heavy door says what it wants
   {
@@ -558,7 +571,7 @@ function mount() {
   const keys: Record<string, boolean> = {};
   const crumbs = [pos.clone()]; // your path, every 30 cm; the thing walks it behind you
   const S = { active: false, hidden: false, outSince: 0, reveal: 0, revealCD: 0, back: 0, lookCD: 0, nextBreath: 0, nextHeart: 0, nextWhisper: 0, flickUntil: 0 };
-  let shake = 0, fallen = 0, fovKick = 0; // fallen: how far the camera has sunk in the ending
+  let shake = 0, fallen = 0, fovKick = 0, kick = 0; // kick: the view jumping up after a shot // fallen: how far the camera has sunk in the ending
   let flick = 1, nextFlick = 4, blackUntil = 0, scareT = -1, stepPhase = 0, lastStep = 0, now = 0, nextSlam = 30, behindIdx = 0;
   const yawHist: [number, number][] = [];
 
@@ -643,7 +656,11 @@ function mount() {
   /* ---------- part 2: the halls ---------- */
   type Phase = "puzzle" | "stairs" | "normals" | "bigs" | "boss" | "mirror" | "end";
   let phase: Phase = "puzzle";
-  const W = { spawned: 0, killed: 0, total: 0, streak: 0 }; // spawned counts the ones still loading too
+  // 100 zombies before the boss door opens: 50 normal ones, then 50 more with 15 big ones among them
+  const WAVES = { normals: { total: 50, big: 0, start: 6, goal: "Fünfzig. Kopf ist einfacher." }, bigs: { total: 50, big: 15, start: 4, goal: "Noch fünfzig. Manche sind größer." } };
+  const MAX_ALIVE = 8, SPAWN_EVERY = 1.1; // seconds between two new ones
+  // spawned counts the ones still loading too
+  const W = { spawned: 0, killed: 0, total: 0, bigLeft: 0, streak: 0, streakOpen: true, nextSpawn: 0, drop: 0 };
   // zombies come in from the far side of the hall, away from you
   function spawnIn(cells: Cell[], kind: "normal" | "big" | "boss", n: number) {
     const far = cells.filter(([x, z]) => Math.hypot(x * C - pos.x, z * C - pos.z) > 9);
@@ -653,37 +670,59 @@ function mount() {
     }
     W.spawned += n;
   }
+  // in the second hall the big ones are mixed in, evenly over the wave
+  function spawnMixed(cells: Cell[], n: number) {
+    for (let i = 0; i < n; i++) {
+      const big = W.bigLeft > 0 && Math.random() < W.bigLeft / Math.max(1, W.total - W.spawned);
+      if (big) W.bigLeft--;
+      spawnIn(cells, big ? "big" : "normal", 1);
+    }
+  }
   function enterHall(next: Phase, gate: Cell) {
     phase = next;
     dropGate(...gate);
-    W.killed = 0;
-    if (next === "normals") { W.total = 10; W.spawned = 0; spawnIn(halls.h, "normal", 4); $("goal").textContent = "Zehn. Kopf ist einfacher."; }
-    if (next === "bigs") { W.total = 4; W.spawned = 0; spawnIn(halls.H, "big", 2); $("goal").textContent = "Die sind größer."; }
-    if (next === "boss") { W.total = 1; W.spawned = 0; spawnIn(halls.B, "boss", 1); $("count").hidden = true; $("bossbar").hidden = false; }
+    W.killed = 0; W.spawned = 0; W.nextSpawn = now + SPAWN_EVERY;
+    if (next === "normals" || next === "bigs") {
+      const wave = WAVES[next];
+      W.total = wave.total; W.bigLeft = wave.big;
+      spawnMixed(next === "normals" ? halls.h : halls.H, wave.start);
+      $("goal").textContent = wave.goal;
+      $("clabel").textContent = "Zombies"; $("got").textContent = "0"; $("tot").textContent = String(wave.total);
+    }
+    if (next === "boss") { W.total = 1; spawnIn(halls.B, "boss", 1); $("count").hidden = true; $("bossbar").hidden = false; }
   }
-  // keep a few on the floor at a time until the wave is through
+  // keep the hall busy: two more every SPAWN_EVERY seconds while fewer than MAX_ALIVE are up
   function feedWave() {
-    const cells = phase === "normals" ? halls.h : halls.H, kind = phase === "normals" ? "normal" : "big";
-    const max = phase === "normals" ? 4 : 2;
-    if (W.spawned < W.total && W.spawned - W.killed < max - 1) spawnIn(cells, kind, Math.min(2, W.total - W.spawned));
+    if (W.spawned >= W.total || now < W.nextSpawn || W.spawned - W.killed >= MAX_ALIVE) return;
+    W.nextSpawn = now + SPAWN_EVERY;
+    spawnMixed(phase === "normals" ? halls.h : halls.H, Math.min(2, W.total - W.spawned, MAX_ALIVE - (W.spawned - W.killed)));
   }
-  function onKill(k: { kind: string; hits: number; head: boolean }) {
+  // ammo comes from the dead: 2–3 shells for a normal one (2 shots needed), 5 for a big one (4 needed).
+  // That's break-even at 80 % hits — miss more than 20 % and you slowly run dry. Headshots save shells.
+  function onKill(k: { kind: string; hits: number; head: boolean; at: THREE.Vector3 }) {
     W.killed++;
-    if (k.kind === "normal" && k.hits === 1 && k.head) W.streak++;
+    if (phase === "normals" && W.streakOpen) {
+      if (k.kind === "normal" && k.hits === 1 && k.head) W.streak++; else W.streakOpen = false;
+      if (W.streak === 10 && !combat.has.bat) {
+        W.streakOpen = false;
+        combat.addPickup("bat", k.at);
+        card("Säge-Schläger", "Zehn Köpfe, zehn Schüsse. Für den Rest gibt es was Besseres.", 7000);
+      }
+    }
+    if (k.kind === "normal") combat.addPickup("shells", k.at, 2 + (W.drop++ % 2));
+    if (k.kind === "big") combat.addPickup("shells", k.at, 5);
+    if (k.kind !== "boss" && Math.random() < 0.07) combat.addPickup("health", k.at.clone().add(new THREE.Vector3(0.5, 0, 0.3)));
+    if (phase === "normals" || phase === "bigs") $("got").textContent = String(W.killed);
     hud();
   }
   function waveDone() {
     if (phase === "normals") {
       openDoor("1");
-      if (W.streak === 10 && !combat.has.bat) {
-        combat.addPickup("bat", hallCenter(halls.h));
-        card("Säge-Schläger", "Zehn von zehn mit einem Treffer. Für die Großen gibt es jetzt was Besseres.", 7000);
-      }
+      if (!combat.has.bat) { combat.addPickup("bat", hallCenter(halls.h)); card("Säge-Schläger", "Für den Kopf. Ein Schlag reicht.", 6000); }
       $("goal").textContent = "Weiter.";
     } else if (phase === "bigs") {
       openDoor("2");
-      if (!combat.has.bat) { combat.addPickup("bat", hallCenter(halls.H)); card("Säge-Schläger", "Für den Kopf. Ein Schlag reicht.", 6000); }
-      $("goal").textContent = "Weiter.";
+      $("goal").textContent = "Weiter. Der Große wartet.";
     } else if (phase === "boss") {
       openDoor("3");
       $("bossbar").hidden = true;
@@ -846,20 +885,27 @@ function mount() {
     if (isTouch) pad.classList.add("on"); else lock();
     const from = (document.querySelector<HTMLInputElement>('input[name="from"]:checked')?.value ?? "start");
     if (from === "start") setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
-    else jumpTo(from as "stairs" | "boss");
+    else jumpTo(from as "stairs" | "hall1" | "hall2" | "boss");
   });
 
   // dev shortcut: skip ahead. Doors you'd have opened stand open, items you'd have found are found.
-  function jumpTo(where: "stairs" | "boss") {
+  function jumpTo(where: "stairs" | "hall1" | "hall2" | "boss") {
     const openNow = (id: string) => { open.add(id); const s = slab(id); s.mesh.visible = false; s.t = 1; };
     for (const it of items) if (!it.got) { it.got = true; got++; scene.remove(it.obj); }
     $("got").textContent = String(got);
     openNow("D");
     S.active = false; dread = 0;
+    const gates = cellsOf("G");
     if (where === "stairs") {
       phase = "stairs";
       pos.set(stairs[0][0] * C - C, 0, stairs[0][1] * C); // just above the top step
       $("goal").textContent = "Runter.";
+    } else if (where === "hall1" || where === "hall2") {
+      combat.grant("shotgun"); onPickup("shotgun");
+      const g = where === "hall1" ? gates[0] : gates[1];
+      if (where === "hall2") { openNow("1"); combat.grant("bat"); }
+      pos.set((g[0] + 2) * C, 0, g[1] * C); // two cells into the hall: the gate drops behind you
+      enterHall(where === "hall1" ? "normals" : "bigs", g);
     } else {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
@@ -929,7 +975,14 @@ function mount() {
   let health = 100, flashUntil = 0;
   const combat = createCombat({
     scene, camera, solidAt, floorAt, steer, clearLine,
-    onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.05); },
+    // a shot you feel: muzzle flash lights the room, the view kicks up and punches in
+    onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.07); kick = 0.075; fovKick = Math.max(fovKick, 3); },
+    // crosshair flashes red when it hit, bigger and with a tick on a headshot
+    onHitmarker: (head) => {
+      const dot = $("dot");
+      dot.classList.remove("hit", "headhit"); void dot.offsetWidth; dot.classList.add(head ? "headhit" : "hit");
+      if (head) sfx.tick();
+    },
     // a bat hit you can feel: the world stops for a beat, the view jolts, blood on the lens
     onImpact: (head, kill) => {
       hitstopUntil = performance.now() + (kill ? 110 : 70);
@@ -950,9 +1003,7 @@ function mount() {
   const midStair = stairs[Math.floor(stairs.length / 2)];
   combat.addPickup("shotgun", new THREE.Vector3(midStair[0] * C, 0, midStair[1] * C));
   const spot = (cells: Cell[], f: number) => { const [x, z] = cells[Math.floor(f * (cells.length - 1))]; return new THREE.Vector3(x * C, 0, z * C); };
-  combat.addPickup("shells", spot(halls.h, 0.1));
-  combat.addPickup("shells", spot(halls.H, 0.15));
-  combat.addPickup("shells", spot(halls.H, 0.85));
+  combat.addPickup("health", spot(halls.h, 0.5));
   combat.addPickup("health", spot(halls.H, 0.5));
   combat.addPickup("health", spot(halls.B, 0.2));
   combat.addPickup("health", spot(halls.B, 0.8));
@@ -1182,7 +1233,8 @@ function mount() {
 
   function render(dt: number) {
     camera.position.set(pos.x + (Math.random() - 0.5) * shake, floorAt(pos.x, pos.z) + EYE - fallen + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
-    camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006 + combat.swingLean() * 0.05, "YXZ"); // lean into the swing
+    kick *= 0.86;
+    camera.rotation.set(pitch + kick, yaw, Math.sin(stepPhase * 0.5) * 0.006 + combat.swingLean() * 0.05, "YXZ"); // lean into the swing
     // FOV punch on a hit, settles back fast
     fovKick *= 0.82;
     const fov = 72 - fovKick;
