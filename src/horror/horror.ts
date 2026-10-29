@@ -19,7 +19,7 @@ import { createFigures } from "./horror-figures";
 
 const MARKUP = `
   <canvas id="gl"></canvas>
-  <div class="hud" id="count"><p>Erinnerungen <b id="got">0</b> / <b id="tot">6</b></p><p id="goal">Folge den Kreidepfeilen am Boden</p></div>
+  <div class="hud" id="count"><p>Erinnerungen <b id="got">0</b> / <b id="tot">6</b></p><p id="goal">Geh weiter. Es gibt kein Zurück.</p></div>
   <p class="hud" id="fps" hidden></p>
   <div class="hud" id="dot"></div>
   <div class="hud" id="card"><small id="card-tag"></small><span id="card-text"></span></div>
@@ -64,24 +64,25 @@ const MARKUP = `
   </div>`;
 
 /* ============================ LEVEL ============================
-   # wall · . corridor · S start (facing the wall) · X exit (steel door
-   until all notes are found). The notes land in the dead ends by themselves. */
+   One long winding corridor, no junctions: you can't get lost.
+   # wall · . corridor · S start (facing the wall, first note on it)
+   1–5 notes: written on the wall straight ahead when you get there
+   G gate: slams shut behind you once you're two cells past it, no way back
+   X exit: steel door until all notes are found, the last words behind it */
 const MAP = [
-  "###############",
-  "#S..#.....#...#",
-  "###.#.###.#.#.#",
-  "#...#...#...#.#",
-  "#.#####.#####.#",
-  "#.#...#.....#.#",
-  "#.#.#.#####.#.#",
-  "#...#.....#...#",
-  "#####.###.###.#",
-  "#.....#.#...#.#",
-  "#.#####.###.#.#",
-  "#.#.....#...#.#",
-  "#.#.###.#.###.#",
-  "#...#.....#..X#",
-  "###############",
+  "#############",
+  "#S.........1#",
+  "###########G#",
+  "#2..........#",
+  "#G###########",
+  "#..........3#",
+  "###########G#",
+  "#4..........#",
+  "#G###########",
+  "#..........5#",
+  "###########G#",
+  "#X..........#",
+  "#############",
 ];
 
 type Note = { tag: string; wall: string; text: string };
@@ -130,23 +131,29 @@ function mount() {
   /* ---------- map analysis ---------- */
   const start = findCell("S"), exitCell = findCell("X");
   let exitOpen = false;
-  const solid = (cx: number, cz: number) => { const k = cell(cx, cz); return k === "#" || (k === "X" && !exitOpen); };
+  const closed = new Set<string>(); // gates that have slammed shut
+  const solid = (cx: number, cz: number) => { const k = cell(cx, cz); return k === "#" || (k === "X" && !exitOpen) || closed.has(`${cx},${cz}`); };
   const solidAt = (x: number, z: number) => solid(Math.round(x / C), Math.round(z / C));
 
-  // BFS from the start: distances, then the dead ends sorted by distance
+  // BFS from the start: distance along the corridor for every cell (and where you came from)
+  const parent = new Map<string, Cell>();
   const dist = new Map<string, number>([[key(start), 0]]);
   const reachable: Cell[] = [start];
   for (let i = 0; i < reachable.length; i++) {
     const [x, z] = reachable[i];
     for (const [dx, dz] of DIRS) {
       const n: Cell = [x + dx, z + dz];
-      if (cell(...n) !== "#" && !dist.has(key(n))) { dist.set(key(n), dist.get(key([x, z]))! + 1); reachable.push(n); }
+      if (cell(...n) !== "#" && !dist.has(key(n))) { dist.set(key(n), dist.get(key([x, z]))! + 1); parent.set(key(n), [x, z]); reachable.push(n); }
     }
   }
-  const deadEnds = reachable.filter(([x, z]) => openDirs(x, z).length === 1 && MAP[z][x] === ".");
-  // spread the five maze notes evenly over the dead ends (the first one is at the start)
-  const noteCells: Cell[] = [start];
-  for (let i = 0; i < 5; i++) noteCells.push(deadEnds[Math.round(((i + 0.5) * deadEnds.length) / 5 - 0.5)]);
+  // the wall straight ahead when you walk into a cell (at the start: the wall you face)
+  const wallAhead = ([x, z]: Cell): Cell => {
+    const from = parent.get(key([x, z]));
+    if (!from) { const [ox, oz] = openDirs(x, z)[0]; return [-ox, -oz]; }
+    return [x - from[0], z - from[1]];
+  };
+  const noteCells: Cell[] = [start, ...[1, 2, 3, 4, 5].map((n) => findCell(String(n)))];
+  const gates = reachable.filter(([x, z]) => MAP[z][x] === "G");
 
   /* ============================ RENDERER ============================ */
   const canvas = $("gl") as HTMLCanvasElement;
@@ -291,51 +298,21 @@ function mount() {
     return wr;
   }
   const notes = noteCells.map(([x, z], i) => {
-    const [ox, oz] = openDirs(x, z)[0]; // write on the wall facing the way in
-    const wr = writeOn(x, z, [-ox, -oz], NOTES[i].wall, "#efe6d6");
+    const wr = writeOn(x, z, wallAhead([x, z]), NOTES[i].wall, "#efe6d6");
     return { x, z, i, got: false, mat: wr.mesh.material };
   });
-  writeOn(exitCell[0], exitCell[1], [1, 0], FINAL.wall, "#e8473c", 1.6, 0.6); // behind the steel door
+  writeOn(exitCell[0], exitCell[1], wallAhead(exitCell), FINAL.wall, "#e8473c", 1.6, 0.6); // behind the steel door
   $("tot").textContent = String(notes.length);
 
-  /* ---------- chalk arrows on the floor: at every junction, the way to the nearest note left (then to the exit) ---------- */
-  const junctions = reachable.filter(([x, z]) => openDirs(x, z).length >= 3);
-  const arrowCv = document.createElement("canvas");
-  arrowCv.width = arrowCv.height = 256;
-  {
-    const g = arrowCv.getContext("2d")!;
-    g.strokeStyle = g.fillStyle = "#f2e9d8"; g.lineWidth = 22; g.lineCap = "round";
-    g.beginPath(); g.moveTo(128, 220); g.lineTo(128, 70); g.stroke();
-    g.beginPath(); g.moveTo(128, 28); g.lineTo(196, 110); g.lineTo(60, 110); g.closePath(); g.fill();
-    g.globalCompositeOperation = "destination-out";
-    for (let i = 0; i < 1800; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.8})`; g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 1 + Math.random() * 2); }
-  }
-  const arrowTex = new THREE.CanvasTexture(arrowCv);
-  arrowTex.colorSpace = THREE.SRGBColorSpace;
-  const arrowMat = new THREE.MeshStandardMaterial({ map: arrowTex, emissiveMap: arrowTex, emissive: 0xffffff, emissiveIntensity: 0.3, alphaTest: 0.3, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2 });
-  const arrows = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.9, 0.9), arrowMat, junctions.length);
-  arrows.receiveShadow = true;
-  scene.add(arrows);
-  const arrowRot = new THREE.Euler(0, 0, 0, "YXZ"), arrowQ = new THREE.Quaternion(), arrowP = new THREE.Vector3(), ONE = new THREE.Vector3(1, 1, 1), ZERO = new THREE.Vector3();
-  function updateArrows() {
-    // distance field from every target cell, then each junction points downhill
-    const targets: Cell[] = notes.some((n) => !n.got) ? notes.filter((n) => !n.got).map((n) => [n.x, n.z]) : [exitCell];
-    const d = new Map<string, number>(targets.map((c) => [key(c), 0]));
-    const q = [...targets];
-    for (let i = 0; i < q.length; i++) {
-      const [x, z] = q[i];
-      for (const [dx, dz] of DIRS) { const n: Cell = [x + dx, z + dz]; if (cell(...n) !== "#" && !d.has(key(n))) { d.set(key(n), d.get(key([x, z]))! + 1); q.push(n); } }
-    }
-    junctions.forEach(([x, z], i) => {
-      const best = openDirs(x, z).reduce((a, b) => (d.get(key([x + b[0], z + b[1]]))! < d.get(key([x + a[0], z + a[1]]))! ? b : a));
-      arrowRot.set(-Math.PI / 2, Math.atan2(-best[0], -best[1]), 0);
-      arrowQ.setFromEuler(arrowRot);
-      arrowP.set(x * C + best[0] * 0.3, 0.01, z * C + best[1] * 0.3);
-      arrows.setMatrixAt(i, m4.compose(arrowP, arrowQ, d.get(key([x, z])) === 0 ? ZERO : ONE));
-    });
-    arrows.instanceMatrix.needsUpdate = true;
-  }
-  updateArrows();
+  /* ---------- gates: a concrete slab drops from the ceiling behind you ---------- */
+  const gateSlabs = gates.map(([x, z]) => {
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(C, WH, C), wallMat);
+    slab.position.set(x * C, WH * 1.5, z * C); // hidden above the ceiling
+    slab.castShadow = slab.receiveShadow = true;
+    slab.visible = false;
+    scene.add(slab);
+    return { x, z, slab, t: -1 };
+  });
   // the chalk font arrives async: redraw everything once it's there
   document.fonts.load('80px "Caveat Brush"').then(() => {
     for (const w of writings) { const m = w.mesh.material; m.map?.dispose(); m.map = m.emissiveMap = chalk(w.lines, w.color); m.needsUpdate = true; }
@@ -434,6 +411,7 @@ function mount() {
   const keys: Record<string, boolean> = {};
   const crumbs = [pos.clone()]; // your path, every 30 cm; the thing walks it behind you
   const S = { active: false, hidden: false, outSince: 0, reveal: 0, revealCD: 0, back: 0, lookCD: 0, nextBreath: 0, nextHeart: 0, nextWhisper: 0, flickUntil: 0 };
+  let shake = 0;
   let flick = 1, nextFlick = 4, blackUntil = 0, scareT = -1, stepPhase = 0, lastStep = 0, now = 0, nextSlam = 30, behindIdx = 0;
   const yawHist: [number, number][] = [];
 
@@ -504,8 +482,7 @@ function mount() {
     n.got = true; got++;
     n.mat.emissiveIntensity = 0.08; // found: the chalk stops glowing
     $("got").textContent = String(got);
-    updateArrows();
-    if (got === notes.length) $("goal").textContent = "Zum Ausgang – den Pfeilen nach";
+    if (got === notes.length) $("goal").textContent = "Zum Ausgang. Lauf.";
     card(NOTES[n.i].tag, NOTES[n.i].text);
     if (got >= 2) setTimeout(writeBehind, 4000);
     if (got === 1) setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 3500);
@@ -690,6 +667,21 @@ function mount() {
       dread = Math.max(0, dread - 28); S.back = Math.min(S.back + 1.5, 4);
     }
 
+    // --- gates: two cells past one, it slams shut behind you
+    const here = dist.get(key([Math.round(pos.x / C), Math.round(pos.z / C)])) ?? 0;
+    for (const g of gateSlabs) {
+      if (g.t < 0 && here >= dist.get(key([g.x, g.z]))! + 2) {
+        g.t = 0; g.slab.visible = true; closed.add(`${g.x},${g.z}`);
+        crumbs.length = 0; crumbs.push(pos.clone()); // what follows you is cut off, for now
+      }
+      if (g.t >= 0 && g.t < 1) {
+        g.t = Math.min(1, g.t + dt / 0.35);
+        g.slab.position.y = WH * 1.5 - WH * g.t * g.t; // falls, accelerating
+        if (g.t >= 1) { sfx.slam(g.slab.position); shake = 0.12; }
+      }
+    }
+    shake *= 0.88;
+
     // --- notes, exit
     for (const n of notes) if (!n.got && Math.hypot(pos.x - n.x * C, pos.z - n.z * C) < 1.2) collect(n);
     if (exitOpen && !ended && Math.hypot(pos.x - exitCell[0] * C, pos.z - exitCell[1] * C) < 1) finish();
@@ -771,7 +763,7 @@ function mount() {
   }
 
   function render(dt: number) {
-    camera.position.set(pos.x, EYE + Math.sin(stepPhase) * 0.035, pos.z);
+    camera.position.set(pos.x + (Math.random() - 0.5) * shake, EYE + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
     camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006, "YXZ");
     camera.updateMatrixWorld();
     pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
