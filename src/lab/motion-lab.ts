@@ -3,7 +3,9 @@
 // file). Two effects studied from wodniack.dev, rebuilt here with our own
 // tokens and code.
 //  1. CSS-3D objects: JS only writes --x/--y/--z/--rx/--ry per frame, the
-//     transform lives in CSS. Cubes fly in from deep z; grab one and it
+//     transform lives in CSS. Things (cans, balls, a saw
+//     blade, a skull, a knife, a teapot — src/lab/throwables.ts) fly in
+//     from deep z; grab one and it
 //     comes to the front and follows the pointer; let go and it vanishes.
 //  2. Vanish: a 30-frame dissolve sprite (painted here on a canvas, not
 //     copied) used as a mask and stepped through with steps(29).
@@ -12,12 +14,13 @@ import "../reading.css";
 import "./motion-lab.css";
 import "@fontsource-variable/jetbrains-mono";
 import { gsap } from "gsap";
+import { THROWABLES, renderThrowable } from "./throwables";
 
 const MARKUP = `
   <div class="ml-scene js-scene"></div>
   <header class="ml-head">
     <h1 class="ml-title">Motion Lab</h1>
-    <p class="ml-hint">Grab a cube and let go — it dissolves. Click a card to vanish it.</p>
+    <p class="ml-hint">Grab something and let go — it dissolves. Click a card to vanish it.</p>
   </header>
   <section class="ml-cards">
     <article class="ml-card js-vanish"><h2>Why?</h2><p>Hairline box, see-through, grid underneath.</p></article>
@@ -36,7 +39,7 @@ function mount() {
 
   const FRAMES = 30;
   const VANISH_MS = 750;
-  const COUNT = 7;
+  const COUNT = 9;
   const FAR_Z = -20000;
   const NEAR_Z = 900; // past the camera (perspective 1000px) -> respawn
 
@@ -96,12 +99,16 @@ function mount() {
     o.vry = 0.02 + Math.random() * 0.06;
     o.state = "flying";
     o.el.classList.remove("is-vanishing", "is-dragging");
+    // A new random thing on every throw.
+    const t = THROWABLES[Math.floor(Math.random() * THROWABLES.length)];
+    o.el.style.setProperty("--w", `${t.w}px`);
+    o.el.style.setProperty("--h", `${t.h}px`);
+    o.el.innerHTML = renderThrowable(t);
   }
 
   const objects: Obj[] = Array.from({ length: COUNT }, () => {
     const el = document.createElement("div");
     el.className = "ml-obj";
-    el.innerHTML = '<div class="ml-face"></div>'.repeat(6);
     scene.append(el);
     const o: Obj = { el, x: 0, y: 0, z: 0, rx: 0, ry: 0, vz: 0, vrx: 0, vry: 0, state: "flying" };
     spawn(o, true);

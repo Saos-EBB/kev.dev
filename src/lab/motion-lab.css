@@ -54,13 +54,14 @@
   --z: -20000;
   --rx: 0;
   --ry: 0;
-  --size: 7.5rem;
+  --w: 7.5rem;
+  --h: 7.5rem;
   position: absolute;
   top: 50%;
   left: 50%;
-  width: var(--size);
-  height: var(--size);
-  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  width: var(--w);
+  height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
   transform-style: preserve-3d;
   transform: translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), calc(var(--z) * 1px))
     rotateX(calc(var(--rx) * 1deg)) rotateY(calc(var(--ry) * 1deg));
@@ -73,22 +74,31 @@
   cursor: grabbing;
 }
 
-.ml-face {
+/* One flat hairline layer of an object (throwables.ts sets its size and
+   its own transform inline). Filled slices stack into a body; wire
+   slices (rings) stay see-through. */
+.ml-slice {
   position: absolute;
-  inset: 0;
-  border: 1px solid var(--color-line);
-  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  top: 50%;
+  left: 50%;
+  overflow: visible;
+  fill: color-mix(in srgb, var(--color-bg) 60%, transparent);
+  stroke: var(--color-line);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.ml-face:nth-child(1) { transform: translateZ(calc(var(--size) / 2)); }
-.ml-face:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--size) / 2)); }
-.ml-face:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--size) / 2)); }
-.ml-face:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
-.ml-face:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--size) / 2)); }
-.ml-face:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
+.ml-slice * {
+  vector-effect: non-scaling-stroke;
+}
 
-/* A mask flattens 3D, so while vanishing the cube drops to one flat
-   square (its faces hide) that carries the stripe fill — the original
+.ml-slice.is-wire {
+  fill: none;
+}
+
+/* A mask flattens 3D, so while vanishing the object drops to one flat
+   box (its slices hide) that carries the stripe fill — the original
    hides its sides the same way. */
 .ml-obj.is-vanishing {
   transform-style: flat;
@@ -145,7 +155,7 @@
 }
 
 .ml-card.is-vanishing > *,
-.ml-obj.is-vanishing .ml-face {
+.ml-obj.is-vanishing .ml-slice {
   visibility: hidden;
 }
 
