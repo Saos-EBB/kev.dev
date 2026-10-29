@@ -1,8 +1,15 @@
-// Hinter dir — hidden first-person horror maze (saos.html; only mounts when
-// the URL hash is #dev#horror — obscurity, not protection: the hash ships in
-// this file). Six notes about me are chalked on the walls of the dead ends;
-// something walks your own path a few metres behind you and gets closer
-// while you don't look back. Find all six, the steel door opens.
+// Hinter dir — hidden first-person game (saos.html; only mounts when the URL
+// hash is #dev#horror — obscurity, not protection: the hash ships in this file).
+//
+// The story, top to bottom:
+//  1. Horror: a short hub with three side passages. Chalk on the walls says
+//     who I am; three items lie at the ends. Something follows you.
+//  2. All three found: a heavy door opens somewhere. Behind it stairs lead
+//     down; the shotgun lies on the steps.
+//  3. Hall 1: ten normal zombies. Kill all ten with one headshot each and the
+//     saw bat drops right there; otherwise it drops after hall 2.
+//  4. Hall 2: big zombies (2x the life). Hall 3: the boss (20x, throws skulls).
+//  5. A mirror. You are one of them.
 //
 // Rendering: three.js, one spotlight (the flashlight) with a short shadow
 // camera, fog hides everything past ~15 m, walls are one InstancedMesh.
@@ -20,7 +27,8 @@ import { createCombat } from "./horror-combat";
 
 const MARKUP = `
   <canvas id="gl"></canvas>
-  <div class="hud" id="count"><p>Erinnerungen <b id="got">0</b> / <b id="tot">6</b></p><p id="goal">Geh weiter. Es gibt kein Zurück.</p></div>
+  <div class="hud" id="count"><p>Gegenstände <b id="got">0</b> / <b>3</b></p><p id="goal">Irgendwo liegen drei Dinge.</p></div>
+  <div class="hud" id="bossbar" hidden><small>Der Große</small><i><b id="bosshp"></b></i></div>
   <p class="hud" id="fps" hidden></p>
   <div class="hud" id="dot"></div>
   <div class="hud" id="card"><small id="card-tag"></small><span id="card-text"></span></div>
@@ -28,19 +36,21 @@ const MARKUP = `
   <div class="hud" id="red"></div>
   <div class="hud" id="vig"></div>
   <div id="touch" aria-hidden="true"></div>
-  <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p>Schrot <b id="ammo">0</b></p></div>
+  <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p><span id="wname">Schrot</span> <b id="ammo">0</b></p></div>
   <button id="fire" type="button" hidden>Feuer</button>
   <p id="err"></p>
 
   <div class="overlay" id="start">
     <div class="box">
       <h1>Hinter <span>dir</span></h1>
-      <p>Sechs Erinnerungen an Kevin Schaberl stehen an den Betonwänden dieses Labyrinths. Finde alle, dann öffnet sich der Ausgang.</p>
+      <p>Kevin Schaberl hat hier ein paar Dinge hinterlassen. Finde drei davon, dann geht es weiter.</p>
       <p>Etwas folgt dir. Es kommt näher, solange du nicht hinsiehst.</p>
       <div class="keys">
         <b>Maus</b><span>umsehen</span>
         <b>W A S D</b><span>gehen</span>
         <b>Shift</b><span>rennen (laut, es hört dich)</span>
+        <b>Klick</b><span>schießen / zuschlagen</span>
+        <b>1 · 2</b><span>Waffe wechseln</span>
         <b>Esc</b><span>Pause</span>
       </div>
       <p class="warn">Kopfhörer empfohlen · Jumpscares · flackerndes Licht</p>
@@ -68,49 +78,61 @@ const MARKUP = `
   <div class="overlay" id="end" hidden>
     <div class="box">
       <h1>Du bist <span>raus</span></h1>
-      <p>Das hast du über Kevin gefunden:</p>
+      <p>Das war Kevin. Oder das, was von ihm übrig ist:</p>
       <ul class="end-list" id="end-list"></ul>
       <button class="btn" id="again" type="button">Noch mal rein</button>
     </div>
   </div>`;
 
 /* ============================ LEVEL ============================
-   One long winding corridor, no junctions: you can't get lost.
-   # wall · . corridor · S start (facing the wall, first note on it)
-   1–5 notes: written on the wall straight ahead when you get there
-   G gate: slams shut behind you once you're two cells past it, no way back
-   X exit: steel door until all notes are found, the last words behind it */
+   Upper level (floor 0 m) and lower level (floor -2.8 m, halls 5.6 m high).
+   # wall · . corridor (upper) · S start, facing the wall
+   a b c  the three items, at the ends of the side passages
+   D      heavy door, opens once you have all three
+   v      stairs down (east)
+   , h H B  lower floor: corridor, hall 1, hall 2, boss hall
+   G      gate: drops behind you once you're in the next hall
+   1 2 3  exit doors of hall 1, 2 and the boss hall: open when it's cleared
+   r      mirror room · W the glass · m the room behind the glass (unreachable) */
 const MAP = [
-  "#############",
-  "#S.........1#",
-  "###########G#",
-  "#2..........#",
-  "#G###########",
-  "#..........3#",
-  "###########G#",
-  "#4..........#",
-  "#G###########",
-  "#..........5#",
-  "###########G#",
-  "#X..........#",
-  "#############",
+  "####################################################################",
+  "##############################################BBBBBBBBBBB###########",
+  "##############################################BBBBBBBBBBB###########",
+  "###a###b###c##########hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
+  "###.###.###.##########hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
+  "###.###.###.##########hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB##rrrWmmm##",
+  "#S.............Dvvvv,Ghhhhhhhhh1,GHHHHHHHHH2,GBBBBBBBBBBB3,rrrWmmmm#",
+  "######################hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB##rrrWmmm##",
+  "######################hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
+  "######################hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
+  "##############################################BBBBBBBBBBB###########",
+  "##############################################BBBBBBBBBBB###########",
+  "####################################################################",
 ];
+const UPPER = new Set([".", "S", "a", "b", "c", "D"]);
+const DEPTH = 2.8; // how far the stairs go down
 
-type Note = { tag: string; wall: string; text: string };
-const NOTES: Note[] = [
-  { tag: "Über mich", wall: "Junior\nSoftware Developer", text: "Junior Software Developer." },
-  { tag: "Wo", wall: "Raum Linz\nremote im DACH-Raum\nsofort verfügbar", text: "Raum Linz · remote im DACH-Raum · sofort verfügbar." },
-  { tag: "Was", wall: "TypeScript-Fullstack\nBootcamp +\nviel Eigenregie", text: "TypeScript-Fullstack · Bootcamp + viel Eigenregie." },
-  { tag: "Davor", wall: "7 Jahre Bodenleger\nSonnenschutztechniker\n2 Jahre Sanierung", text: "Bevor ich Software gebaut habe, habe ich mit den Händen gebaut: fast sieben Jahre als Bodenleger und Sonnenschutztechniker, danach zwei Jahre Sanierung unseres Wohnhauses." },
-  { tag: "Prinzip", wall: "„Geht nicht“ heißt meistens:\nnoch nicht verstanden.", text: "„Geht nicht“ heißt meistens: noch nicht verstanden. Ist das Konzept durchdacht, ist die Implementierung der einfachere Teil." },
-  { tag: "Prinzip", wall: "Wer nach mir kommt,\nsoll meinen Code\nohne mich verstehen.", text: "Wer nach mir kommt, soll meinen Code ohne mich verstehen." },
+// chalk on the walls up top, in the order you pass them (drafts: edit freely)
+const WALL_TEXTS = [
+  "Hi, ich bin Kev.",
+  "Ich bau gern\nunterschiedlichen Stuff.",
+  "Warum ein Spiel?\nIch zock gern.\nZombie-Modi vor allem.",
+  "Am meisten Spaß machen mir\n3D-Renderer und C++.",
+  "„Geht nicht“ heißt meistens:\nnoch nicht verstanden.",
+  "Wer nach mir kommt,\nsoll meinen Code\nohne mich verstehen.",
 ];
-const FINAL: Note = { tag: "Am Ende", wall: "Natur. Familie.\nMein Sohn.", text: "Ausgleich finde ich in der Natur und bei meiner Familie, allen voran bei meinem Sohn." };
+// the three items: name, what the info card says
+type Item = { id: "a" | "b" | "c"; name: string; text: string };
+const ITEMS: Item[] = [
+  { id: "a", name: "Zollstock", text: "Fast sieben Jahre Bodenleger und Sonnenschutztechniker, danach zwei Jahre Sanierung unseres Wohnhauses. Bevor ich Software gebaut habe, habe ich mit den Händen gebaut." },
+  { id: "b", name: "Laptop", text: "Junior Software Developer. TypeScript-Fullstack, Bootcamp und viel Eigenregie. Raum Linz, remote im DACH-Raum, sofort verfügbar." },
+  { id: "c", name: "Foto", text: "Ausgleich finde ich in der Natur und bei meiner Familie, allen voran bei meinem Sohn." },
+];
 // red writing that appears on walls you already passed
 const BEHIND = ["DREH DICH UM", "ICH BIN\nHINTER DIR", "NICHT\nRENNEN", "DU HAST MICH\nGESEHEN", "LAUF"];
 
 const C = 2.6; // cell size (m)
-const WH = 2.8; // wall height
+const WH = 2.8; // ceiling height (above the upper floor)
 const EYE = 1.62;
 const PR = 0.28; // player radius
 const ROWS = MAP.length, COLS = MAP[0].length;
@@ -120,10 +142,19 @@ const DIRS: Cell[] = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const cell = (cx: number, cz: number) => (cz < 0 || cz >= ROWS || cx < 0 || cx >= COLS ? "#" : MAP[cz][cx]);
 const openDirs = (x: number, z: number) => DIRS.filter(([dx, dz]) => cell(x + dx, z + dz) !== "#");
 const key = (c: Cell) => `${c[0]},${c[1]}`;
-
+const cellsOf = (ch: string) => { const out: Cell[] = []; for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) if (MAP[z][x] === ch) out.push([x, z]); return out; };
 function findCell(ch: string): Cell {
-  for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) if (MAP[z][x] === ch) return [x, z];
-  throw new Error(`map has no ${ch}`);
+  const c = cellsOf(ch)[0];
+  if (!c) throw new Error(`map has no ${ch}`);
+  return c;
+}
+// floor height: 0 up top, -DEPTH below, a straight ramp across the stairs
+const stairs = cellsOf("v");
+const stairFrom = (stairs[0][0] - 0.5) * C, stairTo = (stairs[stairs.length - 1][0] + 0.5) * C;
+function floorAt(x: number, z: number) {
+  const k = cell(Math.round(x / C), Math.round(z / C));
+  if (k === "v") return -DEPTH * Math.min(1, Math.max(0, (x - stairFrom) / (stairTo - stairFrom)));
+  return UPPER.has(k) ? 0 : -DEPTH;
 }
 
 function mount() {
@@ -140,31 +171,34 @@ function mount() {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* ---------- map analysis ---------- */
-  const start = findCell("S"), exitCell = findCell("X");
-  let exitOpen = false;
-  const closed = new Set<string>(); // gates that have slammed shut
-  const solid = (cx: number, cz: number) => { const k = cell(cx, cz); return k === "#" || (k === "X" && !exitOpen) || closed.has(`${cx},${cz}`); };
+  const start = findCell("S");
+  const open = new Set<string>(); // doors that are open (D, 1, 2, 3)
+  const closed = new Set<string>(); // gates that have dropped
+  const solid = (cx: number, cz: number) => {
+    const k = cell(cx, cz);
+    if (k === "#" || k === "W" || closed.has(`${cx},${cz}`)) return true;
+    return (k === "D" || k === "1" || k === "2" || k === "3") && !open.has(k);
+  };
   const solidAt = (x: number, z: number) => solid(Math.round(x / C), Math.round(z / C));
+  const charAt = (x: number, z: number) => cell(Math.round(x / C), Math.round(z / C));
 
-  // BFS from the start: distance along the corridor for every cell (and where you came from)
-  const parent = new Map<string, Cell>();
+  // BFS from the start over everything walkable: distances along the way
   const dist = new Map<string, number>([[key(start), 0]]);
   const reachable: Cell[] = [start];
   for (let i = 0; i < reachable.length; i++) {
     const [x, z] = reachable[i];
     for (const [dx, dz] of DIRS) {
       const n: Cell = [x + dx, z + dz];
-      if (cell(...n) !== "#" && !dist.has(key(n))) { dist.set(key(n), dist.get(key([x, z]))! + 1); parent.set(key(n), [x, z]); reachable.push(n); }
+      if (!["#", "W", "m"].includes(cell(...n)) && !dist.has(key(n))) { dist.set(key(n), dist.get(key([x, z]))! + 1); reachable.push(n); }
     }
   }
-  // the wall straight ahead when you walk into a cell (at the start: the wall you face)
-  const wallAhead = ([x, z]: Cell): Cell => {
-    const from = parent.get(key([x, z]));
-    if (!from) { const [ox, oz] = openDirs(x, z)[0]; return [-ox, -oz]; }
-    return [x - from[0], z - from[1]];
+  const halls = { h: cellsOf("h"), H: cellsOf("H"), B: cellsOf("B") };
+  const hallCenter = (cells: Cell[]) => {
+    const x = cells.reduce((a, c) => a + c[0], 0) / cells.length, z = cells.reduce((a, c) => a + c[1], 0) / cells.length;
+    return new THREE.Vector3(x * C, 0, z * C);
   };
-  const noteCells: Cell[] = [start, ...[1, 2, 3, 4, 5].map((n) => findCell(String(n)))];
-  const gates = reachable.filter(([x, z]) => MAP[z][x] === "G");
+  const glass = cellsOf("W");
+  const mirrorX = glass[0][0] * C; // the mirror plane
 
   /* ============================ RENDERER ============================ */
   const canvas = $("gl") as HTMLCanvasElement;
@@ -180,7 +214,8 @@ function mount() {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x050505);
-  scene.fog = new THREE.FogExp2(0x050505, 0.11);
+  const fog = new THREE.FogExp2(0x050505, 0.11);
+  scene.fog = fog;
   const camera = new THREE.PerspectiveCamera(72, 1, 0.08, 22); // fog swallows everything past ~15 m
   scene.add(camera);
   const resize = () => { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
@@ -239,31 +274,91 @@ function mount() {
   const wallCv = concreteCanvas(512, 7, [150, 143, 132]);
   const wallMat = new THREE.MeshStandardMaterial({ map: tex(wallCv, 1, 1), bumpMap: tex(wallCv, 1, 1), bumpScale: 2.5, roughness: 0.95 });
   const floorCv = concreteCanvas(512, 31, [92, 86, 78]);
-  const floorMat = new THREE.MeshStandardMaterial({ map: tex(floorCv, COLS, ROWS), bumpMap: tex(floorCv, COLS, ROWS), bumpScale: 1.5, roughness: 0.85 });
+  const floorMat = new THREE.MeshStandardMaterial({ map: tex(floorCv, 1, 1), bumpMap: tex(floorCv, 1, 1), bumpScale: 1.5, roughness: 0.85 });
   const ceilMat = new THREE.MeshStandardMaterial({ map: tex(concreteCanvas(256, 77, [70, 66, 60]), COLS, ROWS), roughness: 1 });
 
-  // walls: every '#' one instance of a box -> one draw call
-  const walls: Cell[] = [];
-  for (let z = 0; z < ROWS; z++) for (let x = 0; x < COLS; x++) if (MAP[z][x] === "#") walls.push([x, z]);
-  const wallMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(C, WH, C), wallMat, walls.length);
+  // walls: every '#' one instance of a box reaching from the lower floor to the ceiling -> one draw call
+  const walls = cellsOf("#");
+  const wallMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(C, WH + DEPTH, C), wallMat, walls.length);
   const m4 = new THREE.Matrix4();
-  walls.forEach(([x, z], i) => wallMesh.setMatrixAt(i, m4.makeTranslation(x * C, WH / 2, z * C)));
+  walls.forEach(([x, z], i) => wallMesh.setMatrixAt(i, m4.makeTranslation(x * C, (WH - DEPTH) / 2, z * C)));
   wallMesh.castShadow = wallMesh.receiveShadow = true;
   scene.add(wallMesh);
-  const plane = (mat: THREE.Material, y: number, rotX: number) => {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(COLS * C, ROWS * C), mat);
-    m.rotation.x = rotX; m.position.set(((COLS - 1) * C) / 2, y, ((ROWS - 1) * C) / 2); m.receiveShadow = true;
-    scene.add(m);
-  };
-  plane(floorMat, 0, -Math.PI / 2);
-  plane(ceilMat, WH, Math.PI / 2);
+  // floor tiles at their height (one draw call), steps on the stairs, one ceiling for everything
+  const tiles = reachable.concat(cellsOf("m")).filter(([x, z]) => !["v", "W"].includes(MAP[z][x]));
+  const floorMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(C, C).rotateX(-Math.PI / 2), floorMat, tiles.length);
+  tiles.forEach(([x, z], i) => floorMesh.setMatrixAt(i, m4.makeTranslation(x * C, floorAt(x * C, z * C), z * C)));
+  floorMesh.receiveShadow = true;
+  scene.add(floorMesh);
+  const STEPS = 4; // per stair cell
+  const stepMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(C / STEPS, 1, C), floorMat, stairs.length * STEPS);
+  stairs.forEach(([x, z], i) => {
+    for (let k = 0; k < STEPS; k++) {
+      const sx = (x - 0.5 + (k + 0.5) / STEPS) * C, top = floorAt(sx, z * C);
+      stepMesh.setMatrixAt(i * STEPS + k, m4.makeScale(1, top + DEPTH + 0.01, 1).setPosition(sx, (top - DEPTH) / 2, z * C));
+    }
+  });
+  stepMesh.castShadow = stepMesh.receiveShadow = true;
+  scene.add(stepMesh);
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(COLS * C, ROWS * C), ceilMat);
+  ceiling.rotation.x = Math.PI / 2; ceiling.position.set(((COLS - 1) * C) / 2, WH, ((ROWS - 1) * C) / 2);
+  scene.add(ceiling);
 
-  // exit: rusted steel door
+  /* ---------- doors and gates: concrete / steel slabs that move up and down ---------- */
   const doorMat = new THREE.MeshStandardMaterial({ map: tex(concreteCanvas(256, 5, [96, 52, 32]), 1, 1), metalness: 0.6, roughness: 0.6 });
-  const door = new THREE.Mesh(new THREE.BoxGeometry(C, WH, C), doorMat);
-  door.position.set(exitCell[0] * C, WH / 2, exitCell[1] * C);
-  door.castShadow = door.receiveShadow = true;
-  scene.add(door);
+  type Slab = { id: string; x: number; z: number; mesh: THREE.Mesh; from: number; to: number; t: number };
+  const slabs: Slab[] = [];
+  const slabGeo = new THREE.BoxGeometry(C, WH + DEPTH, C);
+  const slabDown = (WH - DEPTH) / 2, slabUp = slabDown + WH + DEPTH; // closed / hidden above the ceiling
+  for (const id of ["D", "1", "2", "3"]) {
+    const [x, z] = findCell(id);
+    const mesh = new THREE.Mesh(slabGeo, doorMat);
+    mesh.position.set(x * C, slabDown, z * C);
+    mesh.castShadow = mesh.receiveShadow = true;
+    scene.add(mesh);
+    slabs.push({ id, x, z, mesh, from: slabDown, to: slabDown, t: 1 });
+  }
+  for (const [x, z] of cellsOf("G")) {
+    const mesh = new THREE.Mesh(slabGeo, wallMat);
+    mesh.position.set(x * C, slabUp, z * C);
+    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.visible = false;
+    scene.add(mesh);
+    slabs.push({ id: key([x, z]), x, z, mesh, from: slabUp, to: slabUp, t: 1 });
+  }
+  const slab = (id: string) => slabs.find((s) => s.id === id)!;
+  // doors rise slowly with a rumble; gates drop fast with a slam
+  function openDoor(id: string) {
+    const s = slab(id);
+    Object.assign(s, { from: slabDown, to: slabUp, t: 0 });
+    open.add(id);
+    sfx.doorAt(s.mesh.position);
+  }
+  function dropGate(x: number, z: number) {
+    const s = slab(key([x, z]));
+    if (s.t < 1 || closed.has(s.id)) return;
+    s.mesh.visible = true;
+    Object.assign(s, { from: slabUp, to: slabDown, t: 0 });
+    closed.add(s.id);
+  }
+  function moveSlabs(dt: number) {
+    for (const s of slabs) {
+      if (s.t >= 1) continue;
+      const opening = s.to > s.from;
+      s.t = Math.min(1, s.t + dt / (opening ? 2.6 : 0.35));
+      const e = opening ? s.t * s.t * (3 - 2 * s.t) : s.t * s.t;
+      s.mesh.position.y = s.from + (s.to - s.from) * e;
+      if (s.t >= 1 && !opening) { sfx.slam(s.mesh.position); shake = 0.12; }
+      if (s.t >= 1 && opening) s.mesh.visible = false;
+    }
+  }
+
+  /* ---------- the mirror: a glass pane; behind it the same room, mirrored ---------- */
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x9fb4c0, metalness: 0.9, roughness: 0.08, transparent: true, opacity: 0.16, depthWrite: false });
+  const pane = new THREE.Mesh(new THREE.PlaneGeometry(glass.length * C, WH + DEPTH), glassMat);
+  pane.rotation.y = -Math.PI / 2;
+  pane.position.set(mirrorX, (WH - DEPTH) / 2, (glass[0][1] + (glass.length - 1) / 2) * C);
+  scene.add(pane);
 
   /* ---------- writing on the walls ---------- */
   function chalk(lines: string, color: string) {
@@ -308,22 +403,53 @@ function mount() {
     writings.push(wr);
     return wr;
   }
-  const notes = noteCells.map(([x, z], i) => {
-    const wr = writeOn(x, z, wallAhead([x, z]), NOTES[i].wall, "#efe6d6");
-    return { x, z, i, got: false, mat: wr.mesh.material };
-  });
-  writeOn(exitCell[0], exitCell[1], wallAhead(exitCell), FINAL.wall, "#e8473c", 1.6, 0.6); // behind the steel door
-  $("tot").textContent = String(notes.length);
+  // who I am, chalked along the hub (the first one is the wall you face at the start)
+  const textSpots: [number, number, Cell][] = [[1, 6, [-1, 0]], [3, 6, [0, 1]], [5, 6, [0, 1]], [8, 6, [0, 1]], [11, 6, [0, 1]], [13, 6, [0, 1]]];
+  WALL_TEXTS.forEach((t, i) => writeOn(textSpots[i][0], textSpots[i][1], textSpots[i][2], t, "#efe6d6"));
+  // the heavy door says what it wants
+  {
+    const d = slab("D"), map = chalk("Drei Dinge.", "#e8473c");
+    const m = new THREE.Mesh(writeGeo, new THREE.MeshStandardMaterial({ map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.4, alphaTest: 0.3, roughness: 1 }));
+    m.position.set(-C / 2 - 0.01, 1.6 - slabDown, 0);
+    m.rotation.y = -Math.PI / 2;
+    d.mesh.add(m);
+    writings.push({ mesh: m, lines: "Drei Dinge.", color: "#e8473c" });
+  }
 
-  /* ---------- gates: a concrete slab drops from the ceiling behind you ---------- */
-  const gateSlabs = gates.map(([x, z]) => {
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(C, WH, C), wallMat);
-    slab.position.set(x * C, WH * 1.5, z * C); // hidden above the ceiling
-    slab.castShadow = slab.receiveShadow = true;
-    slab.visible = false;
-    scene.add(slab);
-    return { x, z, slab, t: -1 };
+  /* ---------- the three items: simple shapes, glowing a little, turning in the air ---------- */
+  function itemModel(id: Item["id"]) {
+    const g = new THREE.Group();
+    const glow = (color: number, i = 0.35) => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: i, roughness: 0.6 });
+    if (id === "a") { // folding rule: yellow segments in a zigzag
+      for (let k = 0; k < 5; k++) {
+        const seg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.025, 0.006), glow(0xe8c21c));
+        seg.position.set(-0.3 + k * 0.15, (k % 2) * 0.06, 0); seg.rotation.z = k % 2 ? -0.4 : 0.4;
+        g.add(seg);
+      }
+    } else if (id === "b") { // laptop: base, lid, a lit screen
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.02, 0.24), glow(0x2a2c30, 0.1));
+      const lid = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.22, 0.015), glow(0x2a2c30, 0.1));
+      lid.position.set(0, 0.11, -0.12); lid.rotation.x = -0.25;
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.18), new THREE.MeshBasicMaterial({ color: 0x7fb4ff }));
+      screen.position.set(0, 0.11, -0.11); screen.rotation.x = -0.25;
+      g.add(base, lid, screen);
+    } else { // photo in a frame, warm
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.28, 0.02), glow(0x5a3a22, 0.15));
+      const photo = new THREE.Mesh(new THREE.PlaneGeometry(0.17, 0.22), new THREE.MeshBasicMaterial({ color: 0xd8b48a }));
+      photo.position.z = 0.011;
+      g.add(frame, photo);
+    }
+    g.traverse((o) => { o.castShadow = true; });
+    return g;
+  }
+  const items = ITEMS.map((it) => {
+    const [x, z] = findCell(it.id);
+    const obj = itemModel(it.id);
+    obj.position.set(x * C, 0.95, z * C);
+    scene.add(obj);
+    return { ...it, obj, got: false };
   });
+
   // the chalk font arrives async: redraw everything once it's there
   document.fonts.load('80px "Caveat Brush"').then(() => {
     for (const w of writings) { const m = w.mesh.material; m.map?.dispose(); m.map = m.emissiveMap = chalk(w.lines, w.color); m.needsUpdate = true; }
@@ -418,7 +544,7 @@ function mount() {
   const [sx, sz] = openDirs(...start)[0];
   let yaw = Math.atan2(sx, sz); // looking away from the only opening = at the first note
   let pitch = 0;
-  let running = false, paused = false, ended = false, got = 0, dread = 0, emergency = false, turnedOnce = false;
+  let running = false, paused = false, ended = false, got = 0, dread = 0, turnedOnce = false, batDropped = false;
   const keys: Record<string, boolean> = {};
   const crumbs = [pos.clone()]; // your path, every 30 cm; the thing walks it behind you
   const S = { active: false, hidden: false, outSince: 0, reveal: 0, revealCD: 0, back: 0, lookCD: 0, nextBreath: 0, nextHeart: 0, nextWhisper: 0, flickUntil: 0 };
@@ -488,45 +614,115 @@ function mount() {
     }
   }
 
-  // the story: each note found moves it one step further
-  function collect(n: (typeof notes)[number]) {
-    n.got = true; got++;
-    n.mat.emissiveIntensity = 0.08; // found: the chalk stops glowing
+  /* ---------- part 1: three items, then the door ---------- */
+  function takeItem(it: (typeof items)[number]) {
+    it.got = true; got++;
+    scene.remove(it.obj);
+    sfx.pickup();
     $("got").textContent = String(got);
-    if (got === notes.length) $("goal").textContent = "Zum Ausgang. Lauf.";
-    card(NOTES[n.i].tag, NOTES[n.i].text);
+    card(it.name, it.text);
     if (got >= 2) setTimeout(writeBehind, 4000);
-    if (got === 1) setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 3500);
-    if (got === 2) { S.active = true; setTimeout(() => sfx.whisper(sfx.ear, 2.4), 1500); blackout(1.4, apparition); }
-    if (got === 4) { setTimeout(() => { whisperText("Es ist direkt hinter dir."); sfx.whisper(sfx.ear, 1.6); }, 2500); S.back = -2; }
-    if (got === 5) { blackout(0.9); setTimeout(() => sfx.step(sfx.ear, 0.5), 200); setTimeout(() => sfx.step(sfx.ear, 0.5), 650); }
-    if (got === notes.length) {
-      blackout(1.2, () => {
-        emergency = true; exitOpen = true; door.visible = false; sfx.door();
-        lamp.color.set(0xff6b55); hemi.color.set(0x5a0c08);
-        behindIdx = BEHIND.length - 1; writeBehind(); // "LAUF"
-        card("Ausgang", "Irgendwo hat sich eine Stahltür geöffnet. Lauf.", 5000);
-      });
+    if (got === 1) { S.active = true; setTimeout(() => sfx.whisper(sfx.ear, 2.4), 1500); }
+    if (got === 2) blackout(1.4, apparition);
+    if (got === 3) {
+      $("goal").textContent = "Da ist eine Tür aufgegangen.";
+      setTimeout(() => openDoor("D"), 1200); // you hear it before you see it
+    }
+  }
+
+  /* ---------- part 2: the halls ---------- */
+  type Phase = "puzzle" | "stairs" | "normals" | "bigs" | "boss" | "mirror" | "end";
+  let phase: Phase = "puzzle";
+  const W = { spawned: 0, killed: 0, total: 0, streak: 0 }; // spawned counts the ones still loading too
+  // zombies come in from the far side of the hall, away from you
+  function spawnIn(cells: Cell[], kind: "normal" | "big" | "boss", n: number) {
+    const far = cells.filter(([x, z]) => Math.hypot(x * C - pos.x, z * C - pos.z) > 9);
+    for (let i = 0; i < n; i++) {
+      const [x, z] = (far.length ? far : cells)[Math.floor(Math.random() * (far.length || cells.length))];
+      combat.spawn(kind, new THREE.Vector3(x * C + (Math.random() - 0.5), 0, z * C + (Math.random() - 0.5)));
+    }
+    W.spawned += n;
+  }
+  function enterHall(next: Phase, gate: Cell) {
+    phase = next;
+    dropGate(...gate);
+    W.killed = 0;
+    if (next === "normals") { W.total = 10; W.spawned = 0; spawnIn(halls.h, "normal", 4); $("goal").textContent = "Zehn. Kopf ist einfacher."; }
+    if (next === "bigs") { W.total = 4; W.spawned = 0; spawnIn(halls.H, "big", 2); $("goal").textContent = "Die sind größer."; }
+    if (next === "boss") { W.total = 1; W.spawned = 0; spawnIn(halls.B, "boss", 1); $("goal").textContent = ""; $("bossbar").hidden = false; }
+  }
+  // keep a few on the floor at a time until the wave is through
+  function feedWave() {
+    const cells = phase === "normals" ? halls.h : halls.H, kind = phase === "normals" ? "normal" : "big";
+    const max = phase === "normals" ? 4 : 2;
+    if (W.spawned < W.total && W.spawned - W.killed < max - 1) spawnIn(cells, kind, Math.min(2, W.total - W.spawned));
+  }
+  function onKill(k: { kind: string; hits: number; head: boolean }) {
+    W.killed++;
+    if (k.kind === "normal" && k.hits === 1 && k.head) W.streak++;
+    hud();
+  }
+  function waveDone() {
+    if (phase === "normals") {
+      openDoor("1");
+      if (W.streak === 10 && !combat.has.bat) {
+        combat.addPickup("bat", hallCenter(halls.h));
+        card("Säge-Schläger", "Zehn von zehn mit einem Treffer. Für die Großen gibt es jetzt was Besseres.", 7000);
+      }
+      $("goal").textContent = "Weiter.";
+    } else if (phase === "bigs") {
+      openDoor("2");
+      if (!combat.has.bat) { combat.addPickup("bat", hallCenter(halls.H)); card("Säge-Schläger", "Für den Kopf. Ein Schlag reicht.", 6000); }
+      $("goal").textContent = "Weiter.";
+    } else if (phase === "boss") {
+      openDoor("3");
+      $("bossbar").hidden = true;
+      $("goal").textContent = "";
+      card("", "Es ist still. Da hinten ist noch ein Raum.", 5000);
+    }
+  }
+
+  /* ---------- part 3: the mirror ---------- */
+  let mirror: Awaited<ReturnType<typeof combat.mirrorZombie>> | null = null;
+  let mirrorT = -1;
+  function updateMirror(dt: number, moving: boolean) {
+    if (!mirror) return;
+    // your reflection: same distance behind the glass, facing the mirrored way
+    const mx = 2 * mirrorX - pos.x;
+    mirror.root.position.set(mx, floorAt(pos.x, pos.z), pos.z);
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    mirror.root.lookAt(mx - fx, mirror.root.position.y, pos.z + fz);
+    mirror.setWalking(moving);
+    mirror.mixer.update(dt);
+    // close to the glass and looking at it: that's when it sinks in
+    if (mirrorT < 0 && pos.x > mirrorX - 6 && fx > 0.7) mirrorT = 0;
+    if (mirrorT >= 0) {
+      mirrorT += dt;
+      if (mirrorT > 1.2 && mirrorT - dt <= 1.2) { sfx.lowSting(); whisperText("Das bist du.", 2600); }
+      if (mirrorT > 5 && phase !== "end") { phase = "end"; finish(); }
     }
   }
 
   function finish() {
     ended = true;
-    card(FINAL.tag, FINAL.text, 9000);
-    grab();
-    setTimeout(() => blackout(99), 1250);
+    blackout(99);
     setTimeout(() => {
       running = false;
       document.exitPointerLock?.();
-      const list = $("end-list");
-      list.replaceChildren(...[...NOTES, FINAL].map((n) => Object.assign(document.createElement("li"), { textContent: n.text })));
+      const lines = [...WALL_TEXTS.map((t) => t.replace(/\n/g, " ")), ...ITEMS.map((i) => `${i.name}: ${i.text}`)];
+      $("end-list").replaceChildren(...lines.map((t) => Object.assign(document.createElement("li"), { textContent: t })));
       $("end").hidden = false;
       $("again").focus();
-    }, 1700);
+    }, 1500);
   }
 
   /* ============================ INPUT ============================ */
-  window.addEventListener("keydown", (e) => { keys[e.code] = true; });
+  window.addEventListener("keydown", (e) => {
+    keys[e.code] = true;
+    if (e.code === "Digit1") combat.select("shotgun");
+    if (e.code === "Digit2") combat.select("bat");
+  });
+  window.addEventListener("wheel", () => combat.select(combat.weapon === "bat" ? "shotgun" : "bat"), { passive: true });
   window.addEventListener("keyup", (e) => { keys[e.code] = false; });
   const look = (dx: number, dy: number, k = 0.0022) => { yaw -= dx * k; pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * k)); };
   const lock = () => { try { const p = canvas.requestPointerLock() as unknown as Promise<void> | undefined; p?.catch?.(() => {}); } catch { /* drag-to-look fallback */ } };
@@ -575,6 +771,7 @@ function mount() {
     sfx.init();
     $("start").hidden = true; running = true;
     if (isTouch) pad.classList.add("on"); else lock();
+    setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
   });
   $("resume").addEventListener("click", () => { paused = false; $("pause").hidden = true; lock(); });
   $("again").addEventListener("click", () => location.reload());
@@ -598,10 +795,10 @@ function mount() {
   const figures = createFigures({ scene, C, corridors: straight, openDirs, solidAt, clearLine });
   const inView = (p: THREE.Vector3) => { sph.center.copy(p); return frustum.intersectsSphere(sph); };
 
-  /* ---------- the Doom part: shotgun at the 3rd note, then zombies ---------- */
-  let health = 100, waves = 0, flashUntil = 0;
+  /* ---------- the Doom part ---------- */
+  let health = 100, flashUntil = 0;
   const combat = createCombat({
-    scene, camera, solidAt,
+    scene, camera, solidAt, floorAt,
     onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.05); },
     onHurt: (d) => {
       if (ended) return;
@@ -609,46 +806,34 @@ function mount() {
       redFlash(400); shake = 0.1;
       if (health <= 0) die();
     },
+    onKill,
   });
-  // weapon on the floor in front of the 3rd note; shells and a medkit in every row after it
-  const [wx, wz] = noteCells[3];
-  combat.addPickup("shotgun", new THREE.Vector3(wx * C, 0, wz * C));
-  const after = straight.filter(([x, z]) => dist.get(key([x, z]))! > dist.get(key([wx, wz]))!);
-  after.forEach(([x, z], i) => {
-    if (i % 5 === 2) combat.addPickup("shells", new THREE.Vector3(x * C + (Math.random() - 0.5), 0, z * C + (Math.random() - 0.5) * 0.8));
-    if (i % 11 === 6) addHealth(x, z);
-  });
-  function addHealth(x: number, z: number) { combat.addPickup("health", new THREE.Vector3(x * C, 0, z * C + 0.5)); }
-  const hud = () => { $("hp").textContent = String(health); $("ammo").textContent = String(combat.ammo); };
+  // the shotgun on the stairs; shells and medkits in the halls. Ammo budget: 30 + 15 = 45 shells.
+  // Without a single headshot you need 10x2 + 4x4 = 36 (the boss gets the bat) — miss more than 20 % and you run dry.
+  const midStair = stairs[Math.floor(stairs.length / 2)];
+  combat.addPickup("shotgun", new THREE.Vector3(midStair[0] * C, 0, midStair[1] * C));
+  const spot = (cells: Cell[], f: number) => { const [x, z] = cells[Math.floor(f * (cells.length - 1))]; return new THREE.Vector3(x * C, 0, z * C); };
+  combat.addPickup("shells", spot(halls.h, 0.1));
+  combat.addPickup("shells", spot(halls.H, 0.15));
+  combat.addPickup("shells", spot(halls.H, 0.85));
+  combat.addPickup("health", spot(halls.H, 0.5));
+  combat.addPickup("health", spot(halls.B, 0.2));
+  combat.addPickup("health", spot(halls.B, 0.8));
+  const hud = () => {
+    $("hp").textContent = String(health);
+    $("wname").textContent = combat.weapon === "bat" ? "Säge" : "Schrot";
+    $("ammo").textContent = combat.weapon === "bat" ? "∞" : String(combat.ammo);
+  };
   function onPickup(kind: string) {
     if (kind === "health") health = Math.min(100, health + 25);
     if (kind === "shotgun") {
-      S.active = false; it.visible = false; dread = 0; // nothing creeps up on you any more; now they come at you
       $("status").hidden = false; $("dot").classList.add("cross");
       if (isTouch) $("fire").hidden = false;
-      card("Schrotflinte", "Jetzt bist du dran. Klicken zum Schießen.", 6000);
-      $("goal").textContent = "Mach den Weg frei.";
-      // the first two are already behind you
-      blackout(0.6, () => { spawnBehind(2); whisperText("Hinter dir."); });
+      card("Schrotflinte", "30 Schuss. Kopf: ein Treffer. Körper: zwei. Mehr gibt es nicht.", 7000);
+      $("goal").textContent = "Runter.";
     }
+    if (kind === "bat") card("Säge-Schläger", "Klick zum Zuschlagen, 1 und 2 wechseln. Auf den Kopf.", 5000);
     hud();
-  }
-  // zombies at the far end of the row you just entered
-  function spawnRowAhead(entryX: number, z: number, n: number) {
-    const far = reachable.filter(([x, zz]) => zz === z && Math.abs(x - entryX) >= 5);
-    for (let i = 0; i < n; i++) {
-      const [x] = far[Math.floor(Math.random() * far.length)];
-      combat.spawn(new THREE.Vector3(x * C + (Math.random() - 0.5), 0, z * C + (Math.random() - 0.5) * 0.8));
-    }
-  }
-  // zombies coming down the corridor you just walked
-  function spawnBehind(n: number) {
-    const here = dist.get(key([Math.round(pos.x / C), Math.round(pos.z / C)]))!;
-    const behind = reachable.filter((c) => { const d = dist.get(key(c))!; return d < here - 3 && d > here - 7 && !solid(...c); });
-    for (let i = 0; i < n && behind.length; i++) {
-      const [x, z] = behind[Math.floor(Math.random() * behind.length)];
-      combat.spawn(new THREE.Vector3(x * C + (Math.random() - 0.5) * 0.6, 0, z * C + (Math.random() - 0.5) * 0.6));
-    }
   }
   function die() {
     ended = true; blackout(99);
@@ -711,15 +896,16 @@ function mount() {
       if (AP.seen > 0.4 || AP.t > 4) { AP.t = -1; it.visible = false; itHead.rotation.z = 0; S.flickUntil = now + 0.3; nextFlick = now + 3; }
     }
 
-    // --- notes you haven't found yet breathe a little
-    for (const n of notes) if (!n.got) n.mat.emissiveIntensity = 0.3 + 0.12 * Math.sin(now * 2.2 + n.i);
+    // --- items turn in the air
+    for (const it of items) if (!it.got) { it.obj.rotation.y += dt * 1.2; it.obj.position.y = 0.95 + Math.sin(now * 2 + it.id.charCodeAt(0)) * 0.05; }
 
     // --- move (not while it has you)
     const mx = G.t >= 0 ? 0 : (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx;
     const mz = G.t >= 0 ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
     const len = Math.hypot(mx, mz), moving = len > 0.1;
     if (moving) {
-      const sp = ((combat.armed ? (sprint ? 4.8 : 3.2) : sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
+      const armed = combat.weapon !== null;
+      const sp = ((armed ? (sprint ? 4.8 : 3.2) : sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
       const s = Math.sin(yaw), c = Math.cos(yaw);
       tryMove((mx * c + mz * s) * sp, (-mx * s + mz * c) * sp);
       stepPhase += dt * (sprint ? 11 : 8);
@@ -739,30 +925,44 @@ function mount() {
       dread = Math.max(0, dread - 28); S.back = Math.min(S.back + 1.5, 4);
     }
 
-    // --- gates: two cells past one, it slams shut behind you
-    const here = dist.get(key([Math.round(pos.x / C), Math.round(pos.z / C)])) ?? 0;
-    for (const g of gateSlabs) {
-      if (g.t < 0 && here >= dist.get(key([g.x, g.z]))! + 2) {
-        g.t = 0; g.slab.visible = true; closed.add(`${g.x},${g.z}`);
-        crumbs.length = 0; crumbs.push(pos.clone()); // what follows you is cut off, for now
-        if (combat.armed) spawnRowAhead(g.x, g.z + 1, 3 + 2 * waves++);
-      }
-      if (g.t >= 0 && g.t < 1) {
-        g.t = Math.min(1, g.t + dt / 0.35);
-        g.slab.position.y = WH * 1.5 - WH * g.t * g.t; // falls, accelerating
-        if (g.t >= 1) { sfx.slam(g.slab.position); shake = 0.12; }
-      }
-    }
+    // --- the story, by where you are
+    moveSlabs(dt);
     shake *= 0.88;
-    combat.update(dt, pos, moving, onPickup);
-    if (combat.armed) hud();
-
-    // --- notes, exit
-    for (const n of notes) if (!n.got && Math.hypot(pos.x - n.x * C, pos.z - n.z * C) < 1.2) collect(n);
-    if (exitOpen && !ended && Math.hypot(pos.x - exitCell[0] * C, pos.z - exitCell[1] * C) < 1) finish();
+    for (const it of items) if (!it.got && Math.hypot(pos.x - it.obj.position.x, pos.z - it.obj.position.z) < 1.1) takeItem(it);
+    const here = charAt(pos.x, pos.z);
+    if (phase === "puzzle" && here === "v") {
+      phase = "stairs";
+      S.active = false; it.visible = false; dread = 0; // the horror part is over; now they come at you
+      crumbs.length = 0; crumbs.push(pos.clone());
+    }
+    if (phase === "stairs" && here === "h" && combat.weapon) enterHall("normals", findCell("G"));
+    if (phase === "normals" && here === "H") enterHall("bigs", cellsOf("G")[1]);
+    if (phase === "bigs" && here === "B") enterHall("boss", cellsOf("G")[2]);
+    if ((phase === "normals" || phase === "bigs") && W.total) {
+      feedWave();
+      if (W.killed >= W.total) { waveDone(); W.total = 0; }
+    }
+    if (phase === "boss" && W.total) {
+      const hp = combat.bossHealth();
+      $("bosshp").style.width = `${Math.max(0, hp) * 100}%`;
+      if (W.killed >= W.total) { waveDone(); W.total = 0; }
+    }
+    if (phase === "boss" && !W.total && here === "r") {
+      phase = "mirror";
+      void combat.mirrorZombie().then((m) => { mirror = m; scene.add(m.root); });
+    }
+    // no shells and no bat yet while zombies are still coming: don't leave you stuck
+    if (combat.has.shotgun && !combat.has.bat && combat.ammo === 0 && W.total && !batDropped) {
+      batDropped = true;
+      combat.addPickup("bat", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5));
+      card("Leer", "Die Flinte ist leer. Da liegt was.", 5000);
+    }
+    combat.update(dt, pos, floorAt(pos.x, pos.z) + EYE, moving, onPickup);
+    if (combat.weapon) hud();
+    updateMirror(dt, moving);
 
     // --- dread: grows while it follows (faster when you run), drops when you look back
-    if (S.active) dread += dt * (2.6 + (moving ? 1.4 : 0) + (moving && sprint ? 2.5 : 0)) * (emergency ? 1.6 : 1);
+    if (S.active) dread += dt * (2.6 + (moving ? 1.4 : 0) + (moving && sprint ? 2.5 : 0));
     vig.style.opacity = S.active ? Math.min(1, dread / 110).toFixed(2) : "0";
     S.back = Math.max(0, S.back - dt * 0.4);
     if (dread >= 100 && G.t < 0 && scareT < 0) grab(); // it caught you
@@ -838,13 +1038,16 @@ function mount() {
   }
 
   function render(dt: number) {
-    camera.position.set(pos.x + (Math.random() - 0.5) * shake, EYE + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
+    camera.position.set(pos.x + (Math.random() - 0.5) * shake, floorAt(pos.x, pos.z) + EYE + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
     camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006, "YXZ");
     camera.updateMatrixWorld();
     pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(pv); // what you can see this frame (stalker + figures)
     lamp.intensity = 22 * flick * (scareT >= 0 ? 1.6 : 1);
-    hemi.intensity = (emergency ? 0.7 : 0.6) * (0.25 + 0.75 * flick);
+    // down in the halls it's brighter and redder: you need to see what's coming
+    const below = phase !== "puzzle";
+    hemi.intensity = (below ? 3.2 : 0.6) * (0.25 + 0.75 * flick);
+    if (below && fog.density > 0.065) { fog.density = 0.065; hemi.color.set(0xa0503a); hemi.groundColor.set(0x2a140c); }
     if (S.active && running && !paused && G.t < 0 && AP.t < 0) updateStalker(dt);
     updateLife(dt, flick, dread, running && !paused);
     if (sfx.ready()) {
@@ -854,7 +1057,7 @@ function mount() {
     }
     if (now < flashUntil) { lamp.intensity *= 3; hemi.intensity += 1.5; }
     renderer.render(scene, camera);
-    if (combat.armed) { // the gun: own scene, drawn over the world
+    if (combat.weapon) { // the weapon: own scene, drawn over the world
       renderer.autoClear = false;
       renderer.clearDepth();
       renderer.render(combat.viewScene, camera);
