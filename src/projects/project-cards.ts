@@ -62,7 +62,7 @@ export interface TenantShowcase {
 export type FacetKind ="live-demo" | "b2b" | "screens" | "self";
 
 // Which arrangement + signature visual a card uses (see the file header).
-export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "keys" | "pinboard" | "storyboard" | "portrait";
+export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "terminal" | "keys" | "pinboard" | "storyboard" | "portrait" | "ramp" | "orders";
 
 // Which of the three project groups a card belongs to. The cards are
 // ordered by group (projects-data.ts); the group's word shows up around
@@ -76,8 +76,8 @@ export const GROUP_LABELS: Record<ProjectGroup, string> = {
 
 // The group words, one span each; CSS places them (fixed spots around the
 // desktop headline, all on one spot in the phone title).
-export const groupTagsHtml = () =>
-  (Object.keys(GROUP_LABELS) as ProjectGroup[])
+export const groupTagsHtml = (groups: ProjectGroup[] = Object.keys(GROUP_LABELS) as ProjectGroup[]) =>
+  groups
     .map((g) => `<span class="projects-group" data-group="${g}">${GROUP_LABELS[g]}</span>`)
     .join("");
 
@@ -133,6 +133,11 @@ export interface ProjectCard {
   steps?: string[];
   sources?: [string, string][];
   modes?: [string, string][];
+  // The big three's engineering flows (#eng/<id>, src/engineering/): a
+  // link tile beside the facet buttons.
+  graph?: string;
+  // Loadtest's visual: the latest ramp as [req/s, p95 ms, within budget].
+  ramp?: [number, number, boolean][];
   // kev.dev's desktop card: per section of this page (same order as
   // UI.vizStory) what it does, the files behind it and what is reusable.
   // Past UI.vizStory's sections a part brings its own name and line (the
@@ -188,6 +193,8 @@ const BOXES: Record<CardLayout, ("why" | "learned" | "code")[]> = {
   pinboard: ["why"],
   storyboard: ["why", "learned", "code"],
   portrait: ["why", "learned", "code"],
+  ramp: ["why", "learned", "code"],
+  orders: ["why", "learned", "code"],
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -232,7 +239,7 @@ export function cardBodies(card: ProjectCard) {
   return boxes.map((kind) => ({ kind, heading: headings[kind], body: { why, learned, code }[kind] }));
 }
 
-const indexLine = (card: ProjectCard, index: number, total: number) =>
+export const indexLine = (card: ProjectCard, index: number, total: number) =>
   `<span>${pad(index + 1)}</span> / ${pad(total)} · ${esc(card.kind)}`;
 
 const visualHidden = (card: ProjectCard) =>
@@ -261,6 +268,9 @@ export function renderProjectCard(card: ProjectCard, index = 0, total = 1): stri
   `;
 }
 
+// Layouts outside the big three whose visual also tops their phone list entry.
+const TEASER_VISUALS = new Set<CardLayout>(["ramp", "orders"]);
+
 // Phone list entry (lite): index, title, three bullet points, a few tags.
 // The title's button is stretched over the whole entry (project-sheet.css)
 // and opens the project sheet.
@@ -268,11 +278,14 @@ export function renderProjectTeaser(card: ProjectCard, index = 0, total = 1): st
   const tags = card.tags?.slice(0, 4) ?? [];
   // The big three show their signature visual on top, as tall as FaceDots'
   // face — a look only (inert): a tap anywhere still opens the sheet.
+  // Loadtest's ramp and the shop's order flow are small enough to show
+  // too, a bit shorter.
   const big = card.group === "big";
+  const visual = big || TEASER_VISUALS.has(card.layout);
   return `
-    <article class="ptease${big ? ` ptease--big pcard--${card.layout}` : ""}" data-card="${esc(card.id)}" data-group="${card.group}" style="--pc: ${card.accent}">
+    <article class="ptease${big ? " ptease--big" : ""}${visual ? ` ptease--visual pcard--${card.layout}` : ""}" data-card="${esc(card.id)}" data-group="${card.group}" style="--pc: ${card.accent}">
       ${card.layout === "portrait" ? `<canvas class="ptease-face" data-face-dots aria-hidden="true"></canvas>` : ""}
-      ${big ? `<div class="pcard-visual ptease-visual" aria-hidden="true" inert>${renderVisual(card)}</div>` : ""}
+      ${visual ? `<div class="pcard-visual ptease-visual" aria-hidden="true" inert>${renderVisual(card)}</div>` : ""}
       <p class="pcard-index">${indexLine(card, index, total)}</p>
       <h3 class="ptease-title">
         <button type="button" data-open-project="${esc(card.id)}" aria-label="${esc(card.title)} — ${esc(UI.projectOpen)}">${displayText(card.title)}</button>

@@ -1,0 +1,145 @@
+/* Grundlagen arcade (arcade.ts): a line drawing in the About room's colour,
+   HTML laid over it at the cabinet's proportions (360 x 640). */
+.arcade {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--color-room-line) 55%, transparent);
+  background: color-mix(in srgb, var(--projects-bg) 82%, transparent);
+}
+
+.arcade .pcard-index {
+  margin: 0;
+}
+
+.arcade-cab {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 360 / 640;
+  justify-self: center;
+  container-type: inline-size;
+}
+
+.arcade-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--color-room-line);
+  stroke-width: 2;
+}
+
+.arcade-marquee {
+  position: absolute;
+  left: 11%;
+  right: 11%;
+  top: 4.5%;
+  height: 12%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 10cqi;
+  line-height: 1;
+  color: var(--color-text);
+  text-shadow: 0 0 0.25em var(--color-room-line), 0 0 0.6em var(--color-room-line);
+}
+
+/* A green phosphor screen in either theme — it's a screen, not the page. */
+.arcade-crt {
+  position: absolute;
+  left: 21.5%;
+  right: 21.5%;
+  top: 23%;
+  height: 29%;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: hidden;
+  background: #040805;
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px);
+  color: #a8ff57;
+  font-family: var(--font-mono);
+  font-size: 3cqi;
+  line-height: 1.4;
+  white-space: pre;
+  text-shadow: 0 0 0.4em rgba(168, 255, 87, 0.55);
+}
+
+.arcade-games {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 62%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.arcade-games button {
+  min-height: 44px;
+  padding: 0.4rem 0.2rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-room-line) 40%, transparent);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 3cqi;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.arcade-games button[aria-pressed="true"] {
+  color: #a8ff57;
+  border-bottom: 2px solid #a8ff57;
+  background: rgba(168, 255, 87, 0.08);
+}
+
+.arcade-coin {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 75.5%;
+  min-height: 44px;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid #ffcf3f;
+  background: var(--projects-bg);
+  color: #ffcf3f;
+  font-family: var(--font-mono);
+  font-size: 3.2cqi;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.arcade-coin:hover {
+  background: rgba(255, 207, 63, 0.1);
+}
+
+.arcade-games button:focus-visible,
+.arcade-coin:focus-visible {
+  outline: 2px solid #ffcf3f;
+  outline-offset: 3px;
+}
+
+.arcade-note {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* In the desktop catalog the cabinet takes the third column, two rows high. */
+.catalog-grid .arcade {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+}
+
+@media (max-width: 1100px) {
+  .catalog-grid .arcade {
+    grid-column: 2;
+  }
+}

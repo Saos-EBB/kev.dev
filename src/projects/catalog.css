@@ -1,0 +1,256 @@
+/* ---------------------------------------------------------------- */
+/* Catalog (catalog.ts): the small projects under the carousel.     */
+/* Same language as the cards: square boxes, 1px border in the       */
+/* project's own colour (--pc), see-through over the grid.          */
+/* ---------------------------------------------------------------- */
+
+.catalog {
+  position: relative;
+  padding: clamp(4rem, 10vh, 7rem) clamp(1rem, 4vw, 3rem) clamp(4rem, 10vh, 7rem);
+  background-color: var(--projects-bg);
+  background-image:
+    linear-gradient(var(--grid-ink) var(--grid-line), transparent var(--grid-line)),
+    linear-gradient(90deg, var(--grid-ink) var(--grid-line), transparent var(--grid-line));
+  background-size: var(--grid-cell) var(--grid-cell);
+  background-position: calc(50% + var(--grid-cell) / 2) 0;
+}
+
+.catalog-head {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin-bottom: clamp(2rem, 5vh, 3.5rem);
+  text-align: center;
+}
+
+.catalog-title-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.catalog-title {
+  position: relative;
+  overflow: clip; /* the shine window travels past the edges */
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(3.5rem, 8vw, 7rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.catalog-tag {
+  padding-bottom: 0.4em;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.6vw, 2.3rem);
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--note-3);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--note-3) 55%, transparent);
+}
+
+.catalog-lead {
+  margin: 0;
+  max-width: 60ch;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 1.25rem;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.ctile {
+  --pc-soft: color-mix(in srgb, var(--pc) 45%, transparent);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--pc-soft);
+  background: color-mix(in srgb, var(--projects-bg) 82%, transparent);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ctile:hover,
+.ctile:focus-within {
+  border-color: var(--pc);
+  box-shadow: inset 0 -2px 0 var(--pc);
+}
+
+.ctile .pcard-index {
+  margin: 0;
+}
+
+.ctile-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 2.6vw, 2.6rem);
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.ctile-claim {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+/* The project's own signature visual, cropped into a fixed box. */
+.ctile-viz {
+  position: relative;
+  height: 9.5rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--pc) 32%, transparent);
+  background: color-mix(in srgb, var(--projects-bg) 92%, transparent);
+}
+
+.ctile-viz > .pcard-visual {
+  position: absolute;
+  inset: 0;
+  grid-area: auto;
+  font-size: 0.8rem;
+}
+
+.ctile-face {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ctile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ctile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ctile-tags li {
+  padding: 0.05rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--pc) 40%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.ctile-open {
+  flex: none;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--pc-soft);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ctile-open:hover,
+.ctile-open:focus-visible {
+  border-color: var(--pc);
+  color: var(--pc);
+}
+
+.ctile-open:focus-visible,
+.catalog-close:focus-visible {
+  outline: 2px solid var(--pc, var(--color-accent));
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* "Open": the full card, sliding in from the right over the page. */
+.catalog-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 180; /* above header/footer (150), below the facet overlay (200) */
+  overflow: auto;
+  overscroll-behavior: contain;
+  background-color: var(--projects-bg);
+  background-image:
+    linear-gradient(var(--grid-ink) var(--grid-line), transparent var(--grid-line)),
+    linear-gradient(90deg, var(--grid-ink) var(--grid-line), transparent var(--grid-line));
+  background-size: var(--grid-cell) var(--grid-cell);
+  border-left: 1px solid var(--color-line);
+  transform: translateX(100%);
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.catalog-dialog.is-open {
+  transform: none;
+}
+
+.catalog-close {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--color-line);
+  background: var(--projects-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.catalog-dialog-body {
+  padding: 4.5rem clamp(1rem, 3vw, 2.5rem) 2rem;
+}
+
+/* The carousel places its cards with GSAP transforms; here they sit in flow. */
+.catalog-full .pcard {
+  position: relative;
+  transform: none;
+  opacity: 1;
+  margin: 0 auto;
+  will-change: auto;
+}
+
+.catalog-full .pcard.pcard--big {
+  width: 100%;
+  height: calc(100vh - 6.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .catalog-dialog {
+    transition: none;
+  }
+}
+
+/* Phone list: the heading above the small ones. */
+.catalog-sub {
+  margin: 2.5rem 0 0.5rem;
+  text-align: center;
+}
+
+.catalog-sub .catalog-tag {
+  font-size: 2rem;
+}

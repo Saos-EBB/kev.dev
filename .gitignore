@@ -27,3 +27,5 @@ dist-ssr
 # Interne Notizen und Hilfsskripte, bleiben nur lokal
 docs/
 scripts/
+CLAUDE.md
+.claude/

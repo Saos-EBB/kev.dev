@@ -21,6 +21,7 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-text);
+  text-decoration: none;
   cursor: pointer;
   transition: color var(--transition-hover), border-color var(--transition-hover);
 }

@@ -372,10 +372,30 @@ export function mountSaosLoader(
     shown += (target - shown) * (1 - Math.exp(-dt * 8));
     if (target >= 1 && shown > 0.97) shown = 1;
     render(shown, (now - start) / 1000);
-    if (shown >= 1) settleTimer ??= setTimeout(triggerShatter, SETTLE_MS);
+    if (shown >= 1) {
+      shardImage ??= encodeShardImage();
+      settleTimer ??= setTimeout(triggerShatter, SETTLE_MS);
+    }
     else raf = requestAnimationFrame(frame);
   }
   raf = requestAnimationFrame(frame);
+
+  // The full pour canvas as an image for the shards, encoded during the
+  // settle beat with toBlob (off the main thread). toDataURL at the moment
+  // of the shatter used to block it: a synchronous PNG encode of a
+  // full-screen canvas, ~60 ms on a laptop and several times that on a phone.
+  let shardImage: Promise<string> | null = null;
+  // Decoded up front too, so the shards never show a blank frame while the
+  // canvas underneath is already gone.
+  function encodeShardImage() {
+    return new Promise<string>((resolve) =>
+      canvas.toBlob((blob) => resolve(blob ? URL.createObjectURL(blob) : canvas.toDataURL())),
+    ).then((url) => {
+      const img = new Image();
+      img.src = url;
+      return img.decode().then(() => url, () => url);
+    });
+  }
 
   // Escape / Space = emergency skip in case loading hangs.
   function onKeyDown(e: KeyboardEvent) {
@@ -391,9 +411,14 @@ export function mountSaosLoader(
     shatterFired = true;
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", onKeyDown);
-
     // The shards carry the pour canvas as it stands (full, normally).
-    const image = `url(${canvas.toDataURL()})`;
+    (shardImage ??= encodeShardImage()).then((url) => {
+      if (!destroyed) breakApart(url);
+    });
+  }
+
+  function breakApart(url: string) {
+    const image = `url(${url})`;
     const shards = SHARDS.map((poly, i) => {
       const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
       const cy = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
@@ -407,7 +432,12 @@ export function mountSaosLoader(
     });
     canvas.remove();
 
-    const tl = gsap.timeline({ onComplete: () => { if (!destroyed) onShatterDone(); } });
+    const tl = gsap.timeline({
+      onComplete: () => {
+        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+        if (!destroyed) onShatterDone();
+      },
+    });
 
     for (const { el, i, cx, cy } of shards) {
       const dx = ((cx - IMPACT.x) / 100) * w;

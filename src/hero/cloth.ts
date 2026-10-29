@@ -8,7 +8,7 @@
 
 import { TIMINGS } from "../timings";
 import { COLORS, hexToRgb } from "../colors";
-import { DRIFT_ENABLED, driftOffset } from "./cloth-drift"; // cloth-drift
+import { DRIFT_ENABLED, makeGridDrift } from "./cloth-drift"; // cloth-drift
 import {
   PULLS_ENABLED,
   INTRO_DELAY_MS,
@@ -49,7 +49,13 @@ const ITERATIONS = 4; // constraint relaxation passes per frame
 const IS_LITE = window.matchMedia("(pointer: coarse), (max-width: 640px)").matches;
 const REST_EXPANSE_LITE = 1.6;
 const ITERATIONS_LITE = 3;
-const DAMPING = 0.98; // velocity retained per frame (energy loss)
+const DAMPING = 0.98; // velocity retained per step (energy loss)
+// The simulation steps at a fixed 60 Hz, whatever the display does: on a
+// 120 Hz screen it used to run (and cost) twice as fast, and a dropped
+// frame froze it for that frame. Now a slow frame catches up with a
+// second step instead, and a fast screen just redraws less often.
+const STEP_MS = 1000 / 60;
+const MAX_STEPS = 2; // per frame; a longer stall drops the backlog instead of spiralling
 const ANCHOR_K = 0.02; // pull-back strength toward the resting grid point
 const GRAVITY = 0; // floating field, tunable
 
@@ -132,6 +138,9 @@ export class Cloth {
   private ctx: CanvasRenderingContext2D;
   private nodes: Node[] = [];
   private constraints: Constraint[] = [];
+  // The same pairs as flat index arrays for the solver's hot loop.
+  private conA = new Int32Array(0);
+  private conB = new Int32Array(0);
   private cols = 0;
   private rows = 0;
   private width = 0;
@@ -479,6 +488,11 @@ export class Cloth {
       }
     }
 
+    this.gridDrift = makeGridDrift( // cloth-drift
+      Array.from({ length: this.cols }, (_, c) => offsetX + c * SPACING),
+      Array.from({ length: this.rows }, (_, r) => offsetY + r * SPACING),
+    );
+
     this.constraints = [];
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
@@ -495,6 +509,9 @@ export class Cloth {
         }
       }
     }
+
+    this.conA = Int32Array.from(this.constraints, (k) => k.a);
+    this.conB = Int32Array.from(this.constraints, (k) => k.b);
 
     this.buildWarpCells();
   }
@@ -691,10 +708,13 @@ export class Cloth {
   };
 
   private drift = { x: 0, y: 0 }; // cloth-drift
+  private gridDrift: ReturnType<typeof makeGridDrift> | null = null; // cloth-drift
 
   private update() {
-    const seconds = performance.now() / 1000; // cloth-drift
-    for (const node of this.nodes) {
+    if (DRIFT_ENABLED) this.gridDrift?.update(performance.now() / 1000); // cloth-drift
+    const cols = this.cols;
+    for (let i = 0; i < this.nodes.length; i++) {
+      const node = this.nodes[i];
       const vx = (node.x - node.px) * DAMPING;
       const vy = (node.y - node.py) * DAMPING;
       node.px = node.x;
@@ -702,7 +722,7 @@ export class Cloth {
       node.x += vx;
       node.y += vy + GRAVITY;
       // Spring back toward the resting grid position.
-      if (DRIFT_ENABLED) driftOffset(node.ox, node.oy, seconds, this.drift); // cloth-drift
+      if (DRIFT_ENABLED) this.gridDrift?.at(i % cols, (i / cols) | 0, this.drift); // cloth-drift
       node.x += (node.ox + this.drift.x - node.x) * ANCHOR_K;
       node.y += (node.oy + this.drift.y - node.y) * ANCHOR_K;
     }
@@ -763,12 +783,19 @@ export class Cloth {
   private satisfyConstraints() {
     const grabbed = this.activeIndex;
 
-    for (const { a, b, restLength } of this.constraints) {
-      const nodeA = this.nodes[a];
-      const nodeB = this.nodes[b];
+    const conA = this.conA, conB = this.conB, nodes = this.nodes;
+    // every constraint is one grid edge, so they all share SPACING as rest length
+    const restLength = SPACING;
+    for (let k = 0; k < conA.length; k++) {
+      const a = conA[k], b = conB[k];
+      const nodeA = nodes[a];
+      const nodeB = nodes[b];
       const dx = nodeB.x - nodeA.x;
       const dy = nodeB.y - nodeA.y;
-      const dist = Math.hypot(dx, dy) || 0.0001;
+      // sqrt, not Math.hypot: hypot guards against overflow we can't hit
+      // here and is several times slower — this line runs per constraint,
+      // per pass, per frame.
+      const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
       const diff = (dist - restLength) / dist;
       const offsetX = dx * 0.5 * diff;
       const offsetY = dy * 0.5 * diff;
@@ -837,11 +864,19 @@ export class Cloth {
 
     for (const bucket of this.bucketed) bucket.length = 0;
 
+    // Most of the mesh rests outside the card (REST_EXPANSE): skip lines
+    // that lie entirely off one side of it instead of stroking them unseen.
+    const w = this.width + 2, h = this.height + 2;
     for (let i = 0; i < this.constraints.length; i++) {
       const { a, b, restLength } = this.constraints[i];
       const nodeA = this.nodes[a];
       const nodeB = this.nodes[b];
-      const dist = Math.hypot(nodeB.x - nodeA.x, nodeB.y - nodeA.y);
+      if (
+        (nodeA.x < -2 && nodeB.x < -2) || (nodeA.x > w && nodeB.x > w) ||
+        (nodeA.y < -2 && nodeB.y < -2) || (nodeA.y > h && nodeB.y > h)
+      ) continue;
+      const ex = nodeB.x - nodeA.x, ey = nodeB.y - nodeA.y;
+      const dist = Math.sqrt(ex * ex + ey * ey);
       const stretch = Math.abs(dist - restLength) / restLength;
       const step = Math.min(
         Math.floor((stretch / this.LIGHT_STRETCH_CAP) * this.LIGHT_STEPS),
@@ -947,10 +982,26 @@ export class Cloth {
     }
   }
 
-  private loop = () => {
-    if (!this.running) return;
-    this.update();
-    this.draw();
+  private simClock = 0; // ms of simulation time not stepped yet
+  private lastFrame = 0;
+
+  private loop = (now: number) => {
+    if (!this.running) {
+      this.lastFrame = 0;
+      return;
+    }
+    this.simClock += this.lastFrame ? Math.min(now - this.lastFrame, 100) : STEP_MS;
+    this.lastFrame = now;
+    // 0.8: rAF timestamps jitter around 16.7 ms on a 60 Hz screen; without
+    // the slack a 16.5 ms frame would skip its step and the next do two.
+    let steps = 0;
+    while (this.simClock >= STEP_MS * 0.8 && steps < MAX_STEPS) {
+      this.update();
+      this.simClock -= STEP_MS;
+      steps++;
+    }
+    if (this.simClock > STEP_MS) this.simClock = 0;
+    if (steps > 0) this.draw();
     requestAnimationFrame(this.loop);
   };
 }

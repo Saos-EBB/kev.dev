@@ -16,8 +16,11 @@ import { renderAboutBlocks, renderAboutFooter, initCvLinks } from "./about/about
 import { initYoutubeButton } from "./music/youtube";
 import { initThemeToggle } from "./theme/theme";
 import { initLegalOverlay } from "./legal/legal-overlay";
+import { initEngineering } from "./engineering";
 import { initCarousel } from "./projects/carousel";
-import { hasBigCard, initBigCards } from "./projects/big-cards";
+import { initCatalog, renderCatalog } from "./projects/catalog";
+import { initArcade, renderArcade } from "./projects/arcade";
+import { bigPhone, hasBigCard, initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
@@ -183,7 +186,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   </section>
 
   <div class="projects-headline" aria-hidden="true">${titleFx(UI.projects)}</div>
-  ${LITE ? "" : `<div class="projects-groups projects-groups--spots" aria-hidden="true">${groupTagsHtml()}</div>`}
+  ${LITE ? "" : `<div class="projects-groups projects-groups--spots" aria-hidden="true">${groupTagsHtml(["big"])}</div>`}
 
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
@@ -194,21 +197,30 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     ${
       LITE
         ? `<div class="project-list">
-            ${projectCards.map((card, i) => renderProjectTeaser(card, i, projectCards.length)).join("")}
-          </div>`
-        : `<div class="carousel-stage">
             ${projectCards
               .map(
-                (card, i) => `
-              <div class="carousel-project" data-project="${i}" data-group="${card.group}" data-count="1"${hasBigCard(card) ? " data-big" : ""}>
-                ${renderProjectCard(card, i, projectCards.length)}
-              </div>
-            `,
+                (card, i) =>
+                  // the small ones get their own heading, like the desktop catalog
+                  (card.group !== "big" && projectCards[i - 1]?.group === "big"
+                    ? `<h3 class="catalog-sub"><span class="catalog-tag">${UI.catalogTag}</span></h3>`
+                    : "") + (card.id === "grundlagen" ? renderArcade : renderProjectTeaser)(card, i, projectCards.length),
               )
               .join("")}
           </div>`
+        : `<div class="carousel-stage">
+            ${projectCards
+              .map((card, i) => (card.group !== "big" ? "" : `
+              <div class="carousel-project" data-project="${i}" data-group="${card.group}" data-count="1"${hasBigCard(card) ? " data-big" : ""}>
+                ${renderProjectCard(card, i, projectCards.length)}
+              </div>
+            `))
+              .join("")}
+          </div>
+          ${bigPhone(projectCards.filter((c) => c.group === "big"))}`
     }
   </section>
+
+  ${LITE ? "" : `<section class="catalog" id="catalog">${renderCatalog(projectCards, titleFx)}</section>`}
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
@@ -246,6 +258,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <footer class="footer footer--floating">
     <div class="footer-inner">
       <p class="footer-copy">© 2026 <span class="footer-copy-name">Kevin Schaberl / </span><span class="brand-accent">SAOS</span>${LANG_AI ? `<span class="footer-ai"> · <span class="footer-ai-long">${UI.langAiNote}</span><span class="footer-ai-short">${UI.langAi}</span></span>` : ""}</p>
+      <nav class="footer-links footer-sites" aria-label="${UI.sitesAria}">
+        <a href="https://kev-dev-gamma.vercel.app" aria-current="page">Portfolio</a>
+        <a href="https://kevdev-engineering.vercel.app">Engineering</a>
+        <a href="https://kevdev-casual.vercel.app">Casual</a>
+      </nav>
       <nav class="footer-links" aria-label="${UI.legalAria}">
         <a href="https://github.com/" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="mailto:kevin.schaberl.work@gmail.com">Mail</a>
@@ -608,10 +625,17 @@ mountFaceVisuals(projectsSection);
 if (LITE) {
   initProjectSheet(projectsSection, projectCards, lenis);
   initProjectWheel(projectsSection);
+  initArcade(projectsSection);
 }
 else {
-  initCarousel(projectsSection);
-  initBigCards(projectsSection);
+  initCarousel(projectsSection, lenis);
+  initBigCards(projectsSection, projectCards);
+  const catalogSection = document.querySelector<HTMLElement>("#catalog")!;
+  initCatalog(catalogSection, lenis);
+  initArcade(catalogSection);
+  initBigCards(catalogSection, projectCards);
+  initFacetOverlay(catalogSection, projectCards, lenis);
+  mountFaceVisuals(catalogSection);
 }
 
 initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
@@ -651,6 +675,7 @@ initThemeToggle();
 initLangSwitch();
 initCvLinks();
 initLegalOverlay(lenis);
+initEngineering(lenis);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Start gate: lenis.start() runs exactly once, only after BOTH:

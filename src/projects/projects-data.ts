@@ -13,6 +13,7 @@ const cards: ProjectCard[] = [
   {
     id: "yourbrand",
     group: "big",
+    graph: "yourbrand",
     layout: "blueprint",
     kind: "White-Label-SaaS",
     // YourBrand's own brand pink (its default tenant's primary color).
@@ -53,6 +54,7 @@ const cards: ProjectCard[] = [
       "Moderation, die trägt: Melde-System, Sofort-Sperren/Entsperren, alles mit Notizen",
       "DSGVO-konform durchgezogen (Kopfweh ohne Ende)",
       "Bewusst nicht alles gebaut, was ginge: manche Mechaniken aus ethischen Gründen zurückgehalten",
+      "Belastbarkeit gemessen statt geschätzt: eigener C++-Lastgenerator mit festem Takt und realistischem Nutzer-Mix (viel Chat, Admin unter 1 %). Hält 1.200 req/s in allen Budgets, grob 6.000–8.000 gleichzeitige Nutzer. Gemessen auf einem Laptop (8 Kerne, 32 GB), auf einem Server dürfte mehr gehen. Das Audit fand eine Admin-Route, die bei 150.000 offenen Medien 34 MB pro Aufruf lieferte und Nachbar-Routen mitriss — jetzt seitenweise, 8 ms. Die Uhren-Race im Chat ist behoben. Ein CPU-Profil zeigte, dass die JWT-Prüfung das Secret bei jedem Request neu einlas (rund 30 % CPU), und das Discover-Deck wird jetzt einmal pro Nutzer gerankt statt bei jedem Aufruf. Über der Grenze wird es nur langsamer: Ein Lastabwurf verhindert, dass sich Überlast zum Kollaps aufschaukelt",
       "Architektur, Datenmodell und Businesslogik von mir. Die APIs habe ich selbst gebaut, weil sie mich interessiert haben — den Rest der Umsetzung mit CC als Implementierungs-Agent.",
     ],
     // Desktop ER card: the core's layers (UI.vizLayers order, top to
@@ -84,7 +86,7 @@ const cards: ProjectCard[] = [
           "Row-Level Security als Grundzustand; Bio, Stadt, Alter & Co. schaltet jede Person einzeln sichtbar",
           "E-Mail AES-256-verschlüsselt, gefunden über einen SHA-256-Hash — kein Klartext in der DB",
           "JWT 15 Minuten, Refresh-Token 30 Tage mit Einmal-Rotation im HttpOnly-Cookie",
-          "bcrypt (Kosten 12) im eigenen Thread-Pool — im Loadtest rund 3× mehr Logins",
+          "bcrypt (Kosten 10) im eigenen Thread-Pool — im Loadtest rund 3× mehr Logins",
           "Rate-Limits in Redis (global 100/min, Login 5/min) — halten über mehrere Instanzen",
           "Geschützte Personen tauchen schon auf DB-Ebene in keiner Suche auf",
         ],
@@ -306,6 +308,7 @@ const cards: ProjectCard[] = [
   {
     id: "tschobbo",
     group: "big",
+    graph: "tschobbo",
     layout: "inbox",
     kind: "Bewerbungs-Bot",
     accent: "var(--note-5)",
@@ -314,24 +317,24 @@ const cards: ProjectCard[] = [
     title: "TschoBBo",
     claim:
       "Beweist Urteilsvermögen — lokale Sprachmodelle statt Cloud, Versand bewusst manuell.",
-    points: ["Scrapt österreichische Jobbörsen, filtert per Regex", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
-    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; per Knopf läuft die ganze Kette bis zum Entwurf automatisch, abgeschickt wird immer von mir. Ein Gmail-Sync sortiert Gesendetes und Absagen ein, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
+    points: ["Scrapt österreichische Jobbörsen, filtert per Regex oder JEV, einem kleinen lokalen Modell", "Schreibt Anschreiben lokal mit llama.cpp und Gemma 4 — keine Cloud", "Versand bleibt bewusst manuell"],
+    what: "Mein persönliches Bewerbungs-Tool. Scrapt österreichische Jobbörsen, speichert die Stellen und generiert deutsche Anschreiben lokal per llama.cpp mit Gemma 4. Jobseiten absuchen ist repetitiv — das übernimmt der Bot, die Entscheidung bleibt bei mir. Mit dabei: Tschobbo, ein lila Slime-Blob mit Sonnenbrille und endlosen Armen, der beim Scrapen sichtbar für dich arbeitet. Der Gedanke dahinter — Software, die sich lebendig anfühlt und an die man sich bindet. Nervt er, ist er mit einem Klick weg. Die Pipeline: Scrape → Filter → Anschreiben → Review → Gmail-Entwurf; abgeschickt wird immer von mir. Ein Gmail-Sync erkennt Abgeschicktes von selbst, JEV liest die Antworten und erkennt Absage, Zusage oder „bitte übers Portal bewerben“, ein Kalender zeigt den Verlauf, und fürs AMS druckt er einen Bewerbungsnachweis.",
     tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
     links: [
-      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/jobsuche-apply-bot" },
+      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/JoBBoT" },
       { label: "läuft lokal — Screenshots in den Details" },
     ],
     decisions: [
       "Lokal statt Cloud: llama.cpp auf der eigenen Maschine — meine Daten bleiben hier",
       "Modell nach Messung gewählt: von Ollama/Mistral auf llama.cpp mit Gemma 4 26B (MoE) — gleicher Prompt, gleiche Jobs: Anschreiben rund viermal schneller, weniger Floskeln, keine erfundenen Behauptungen mehr",
       "Versand bleibt manuell: der Bot generiert, feuert aber nie selbst eine Bewerbung ab",
-      "Filter über Regex, nicht LLM: was ein Regex in Sekunden macht, muss kein Sprachmodell langsam erledigen — LLM nur noch fürs Anschreiben",
+      "Filter über Regex als Standard: was ein Regex in Sekunden macht, muss kein großes Sprachmodell langsam erledigen. Wahlweise JEV — ein kleines lokales Modell (Bespoke Nimble 9B), das pro Kriterium nur einen Buchstaben antwortet: rund 7 s pro Job, im Test bis 92 % richtig. Derselbe JEV ordnet im Gmail-Sync auch die Antworten ein",
       "Mail-Client-UI (Gmail/Proton als Referenz) für maximale Übersicht",
       "Fünf Portale hinter einem Scraper-Interface: karriere.at, devjobs.at, LinkedIn, AMS, jobs.at — Playwright nur dort, wo eine Seite ohne Browser nichts hergibt (AMS, devjobs.at)",
       "Eigene JSON-Ablage statt Datenbank: ein Job = eine Datei, das Anschreiben als .md daneben, geschrieben über Temp-Datei + rename — nie halb geschriebene Daten",
-      "Das Modell hinter einer Schnittstelle (LlmProvider): llama.cpp oder OpenAI-kompatibel, Modelle als Presets — Wechsel ohne Codeänderung",
-      "Rund 575 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
+      "Das Modell hinter einer Schnittstelle (LlmProvider): heute nur llama.cpp im Router-Modus, Modelle als Presets — ein neues Backend ist eine Datei plus ein Eintrag",
+      "590 Tests mit node:test gegen Temp-Verzeichnisse und einen lokalen Mock-Server — laufen ohne Netz und ohne Modell",
     ],
     // The architecture as code on the desktop card: the pipeline (stage,
     // file, the job status it leaves behind) and an excerpt of the real
@@ -358,13 +361,13 @@ const cards: ProjectCard[] = [
         "  getBrief(job: { id: string }): Promise<string | null>;",
         "}",
         "",
-        "// lib/llm/types.ts — llama.cpp or OpenAI-compatible",
+        "// lib/llm/types.ts — one interface, llama.cpp behind it",
         "interface LlmProvider {",
         "  chat(req: ChatRequest): Promise<string>;",
         "  ensureReady(host?: string): Promise<void>;",
         "}",
         "",
-        "// test/ — ~575 tests, node:test, offline",
+        "// test/ — 590 tests, node:test, offline",
       ].join("\n"),
     },
     // Desktop card: the mails behind each folder, from the JoBBoT README.
@@ -372,8 +375,8 @@ const cards: ProjectCard[] = [
       what: [
         ["Die Pipeline", "Scrape → Filter → Anschreiben → Review → Gmail-Entwurf. Jeder Schritt startet aus der Seitenleiste, läuft im Hintergrund weiter und zeigt seinen Fortschritt, auch wenn man währenddessen woanders klickt. Am Ende kommt eine Kurzbilanz wie „14 neu, 6 dedup“, und die Liste lädt neu."],
         ["Fünf Portale, eine Suche", "karriere.at, devjobs.at, LinkedIn, AMS und jobs.at. Suchbegriffe pro Portal stehen auf einer Einstellungsseite im Browser; jedes Portal beschreibt seine Felder selbst, und dieselbe Prüfung läuft im Formular, im Server und im Scraper. Ein Umkreisfilter wirkt danach auf alle fünf."],
-        ["Urteil statt Liste", "Der Regex-Filter sortiert jede Stelle in Match, Offstack oder Brutal. Das Urteil lässt sich in der UI überschreiben, mehrere Jobs auf einmal verschieben, bewerten oder löschen. Duplikate quer über die Portale werden gefunden und zusammengeführt — ein schon geschriebenes Anschreiben wandert mit."],
-        ["Nachfassen und Kalender", "Nach drei Tagen ohne Antwort ist eine Bewerbung fällig zum Nachfassen — im selben Gmail-Thread, damit die Antwort wieder zum Job findet. Der Kalender zeigt pro Tag, was rausging, wann nachgehakt wurde und wann Antworten kamen."],
+        ["Urteil statt Liste", "Der Regex-Filter (oder wahlweise JEV) sortiert jede Stelle in Match, Offstack oder Brutal. Das Urteil lässt sich in der UI überschreiben, mehrere Jobs auf einmal verschieben, bewerten oder löschen. Duplikate quer über die Portale werden gefunden und zusammengeführt — ein schon geschriebenes Anschreiben wandert mit."],
+        ["Nachfassen und Kalender", "Nach drei Tagen ohne Antwort ist eine Bewerbung fällig zum Nachfassen — im selben Gmail-Thread, damit die Antwort wieder zum Job findet. Der Kalender zeigt pro Tag, was rausging, wann nachgehakt wurde und wann Antworten kamen. Jede Antwort ordnet JEV ein: Absage, Zusage, Datenschutz zustimmen, übers Portal bewerben oder nur Eingangsbestätigung."],
         ["Offline-Archiv", "Beim Scrapen prüft der Bot, ob gespeicherte Inserate noch online sind. Erst wenn ein Einzelabruf es bestätigt, wandert ein Job ins Archiv — taucht er wieder auf, holt ihn derselbe Lauf zurück. Jobs mit eigener Arbeit drin (Anschreiben, Versand) fasst er nie an."],
       ],
       why: [
@@ -393,11 +396,12 @@ const cards: ProjectCard[] = [
         ["Dann AMS und devjobs", "Zwei Portale, die ohne echten Browser nichts hergeben — dort kam Playwright dazu. Mit LinkedIn und jobs.at wurden es fünf hinter einem gemeinsamen Interface."],
         ["UI und Maskottchen", "Als Freunde Potenzial gesehen haben: eine React-Oberfläche im Look eines Mail-Clients, auf einem nackten node:http-Server ohne Framework, und Tschobbo dazu."],
         ["Ein anderes Modell", "Erst Ollama mit Mistral Small, nach einem Vergleich auf denselben Jobs llama.cpp mit Gemma 4 26B — schneller, weniger Floskeln, nichts mehr erfunden."],
+        ["Dann JEV", "Ein kleines Modell nur für Ja/Nein-Fragen: Bespoke Nimble 9B, ein Buchstabe pro Kriterium. Erst als Filter neben Regex, dann auch für die Antworten im Gmail-Sync. Der alte LLM-Filter mit Gemma ist dafür rausgeflogen."],
         ["Nebenbei: Release Watcher", "Aus derselben Scraping-Logik ein kleines CLI-Tool, das Manga-Seiten auf neue Kapitel prüft. Gleiche Idee, kleiner Rahmen."],
       ],
     },
     challenge:
-      "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern.",
+      "Ich habe viel zu lange am LLM-Filter herumprobiert, obwohl klar war, dass er für eine Aufgabe zu langsam ist, die ein Regex in Sekunden löst. Die Lehre habe ich mitgenommen: das Sprachmodell nur dort einsetzen, wo es wirklich etwas bringt — beim Anschreiben, nicht beim Filtern. Später kam doch ein Modell-Filter dazu, aber anders gebaut: JEV, ein kleines Modell, das pro Kriterium nur einen Buchstaben antwortet — rund 7 s pro Job. Regex bleibt der Standard.",
     origin:
       "Angefangen als reiner Scraper (karriere.at zuerst, weil am leichtesten), dann AMS und devjobs dazu. Erst alles CLI; UI und Maskottchen kamen später, nachdem Freunde Potenzial gesehen haben. Aus derselben Logik ist nebenbei ein kleines CLI-Tool entstanden — Release Watcher, das Manga-Seiten auf neue Kapitel prüft, weil ich zu oft gespoilert wurde. Gleiche Idee, kleiner Rahmen.",
     // UI screenshots: the real JoBBoT UI, fed offline with the real
@@ -415,6 +419,7 @@ const cards: ProjectCard[] = [
   {
     id: "kevdev",
     group: "big",
+    graph: "kevdev",
     layout: "storyboard",
     kind: "Dieses Portfolio",
     accent: "var(--note-9)",
@@ -474,6 +479,24 @@ const cards: ProjectCard[] = [
           "Die Texte liegen verteilt in mehreren Dateien",
         ],
       },
+      {
+        name: "Mobile",
+        line: "Eine eigene Seite fürs Handy, nicht der Desktop in klein.",
+        does: "Unter 900 px Breite oder 760 px Höhe lädt eine eigene Lite-Variante: kein 3D-Aufzug, kein Monitor-Zoom, kein gepinntes Karussell — ein flaches Grid, die Projekte als Liste, ein Tipp öffnet das Projekt als Sheet. Das Tuch rechnet am Handy mit weniger als halb so vielen Knoten.",
+        files: ["viewport.ts", "main.ts", "projects/project-sheet.ts", "hero/cloth.ts"],
+        reuse: "viewportHeight(): eine 100vh-Sonde statt innerHeight — Pins sitzen richtig, auch wenn die Adressleiste ein- und ausfährt.",
+        pros: [
+          "Alles ist da — jedes Projekt, jede Live-Demo, nur ohne die teuren Szenen",
+          "Schwere Demos laden erst, wenn man sie öffnet",
+          "Die Zurück-Geste des Handys schließt das Sheet",
+        ],
+        cons: [
+          "Platz: Was nebeneinander stand, muss untereinander — jede Karte braucht ein zweites Layout",
+          "Speed: Die Aufzugswände waren Layer so hoch wie die ganze Section — am Handy Ruckeln",
+          "Die Adressleiste ändert die Höhe; Pins wurden vermessen, bevor das Layout stand",
+          "Zwei Varianten heißt: jede Änderung zweimal testen",
+        ],
+      },
     ],
     links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [
@@ -501,11 +524,11 @@ const cards: ProjectCard[] = [
     title: "AniScript",
     claim: "Ein Userscript für den eigenen Gebrauch — von Grund auf neu geschrieben, schlank und durchkommentiert.",
     points: [
-      "Komplett neu geschrieben: ~800 statt ~5000 Zeilen",
+      "Komplett neu geschrieben: ~1000 statt ~5000 Zeilen",
       "Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt",
       "Jede Debug-Erkenntnis als Kommentar direkt im Code",
     ],
-    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Als Brave von Manifest V2 auf V3 umgestiegen ist, habe ich es komplett neu geschrieben: rund 800 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
+    what: "Angefangen hat es mit einem fremden Script von rund 5000 Zeilen, das ich adaptiert und erweitert habe. Als Brave von Manifest V2 auf V3 umgestiegen ist, habe ich es komplett neu geschrieben: rund 1000 Zeilen ohne externe Libraries, kein Code aus der Adaption mehr drin, dafür massig Kommentare. Jede Stunde Debugging steht als Erklärung im Code. Features: Autoplay, Intro-Skip, Auto-nächste-Folge, Skip-Hotkeys, Fortschritt pro Folge, Theater-Modus. Im selben Repo liegen Schwester-Scripts für Joyn, RTL+ und YouTube.",
     tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
     features: ["Autoplay", "Intro-Skip", "Auto-nächste-Folge", "Skip-Hotkeys X/C/V/B", "Fortschritt pro Folge", "Theater-Modus"],
     meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
@@ -589,6 +612,77 @@ const cards: ProjectCard[] = [
     ],
     challenge:
       "Gehämmert wird schneller, als eine Stimme sprechen kann. Die Sprache wird pro Taste in einem eigenen Thread berechnet, jeder Auftrag bekommt eine Nummer, und was veraltet ist, wird verworfen — sonst hinkt der Ton dem Kind hinterher.",
+    open: [
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
+    id: "loadtest",
+    group: "tools",
+    layout: "ramp",
+    kind: "Lasttest-Werkzeug",
+    accent: "var(--note-2)",
+    learnGoal: "Wissen statt raten, wie viel YourBrand aushält — und dabei lernen, wo ein Backend unter Last wirklich einknickt.",
+    title: "Loadtest",
+    claim: "Misst, wo ein Backend einknickt — mit einem eigenen C++-Lastgenerator ohne Libraries.",
+    points: [
+      "Eigener Lastgenerator in C++17: feste Rate, epoll, keep-alive, keine Libraries",
+      "Gewichteter Nutzer-Mix über einen Katalog von 200 YourBrand-Endpunkten, 101 davon unter Last",
+      "„check“ als Regel vor jeder größeren Änderung: bestanden nur ohne 5xx und in jedem p95-Budget",
+    ],
+    what: "Angefangen hat es Ende Juli als Bash-Skript im YourBrand-Repo: viele Worker, jeder ein eigener Prozess mit curl. Bei etwa 75 Requests pro Sekunde war mein eigener Rechner am Limit, nicht die App. Also habe ich einen Lastgenerator in C++ geschrieben: wenige Threads, jeder mit einer eigenen epoll-Schleife über viele keep-alive-Verbindungen, nur Standardbibliothek und Linux-Syscalls. Im Oktober habe ich das Ganze aus YourBrand herausgelöst: eine allgemeine Engine, die nichts über die App weiß, und austauschbare Ziele, die beschreiben, wie eine App angesprochen wird (Adresse, Login, Test-User, Endpunkte). Aktuell gibt es zwei Ziele, YourBrand und den Shop. Dazu ein Dashboard und eine UI für den Generator mit Durchsatz, p50/p95 und Statuscodes pro Sekunde. Letzte Messung gegen YourBrand: 1.200 Requests pro Sekunde sauber, 1.300 langsamer, aber ohne Kollaps, alles auf meinem Laptop.",
+    tags: ["C++17", "epoll", "Bash", "Node.js", "nginx", "Docker"],
+    // Fast-route p95 per rate from the latest YourBrand run (28.10.2026):
+    // [req/s, p95 in ms, within the 100 ms budget].
+    ramp: [
+      [600, 20, true],
+      [1000, 19, true],
+      [1100, 49, true],
+      [1200, 99, true],
+      [1300, 225, false],
+    ],
+    meta: "Solo · seit Juli 2026 als Teil von YourBrand, seit Oktober 2026 eigenständig · ~1.300 Zeilen C++",
+    links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (läuft lokal gegen den eigenen Stack)" }],
+    decisions: [
+      "Eigener Generator statt Bash-Prozessen: ab ~75 req/s hat der Bash-Modus den eigenen Rechner gemessen, nicht die App",
+      "Engine und Ziel getrennt: eine neue App ist ein Ordner mit target.sh und actions.sh, die Engine bleibt unverändert",
+      "Loadtest-Schlüssel als Handshake: nur Requests mit X-Loadtest-Key umgehen das Rate-Limit, ohne verhält sich das Backend normal",
+      "Gewichteter Mix statt Gleichverteilung: viel Chat und Discover, Admin-Routen zusammen unter 1 %, wie echte Nutzer",
+      "Bestanden heißt: kein Timeout, kein 5xx außer 503 vom Gate, jede Routen-Klasse (fast, heavy, auth) im p95-Budget",
+    ],
+    challenge:
+      "Die Engpässe lagen selten dort, wo ich sie vermutet habe. bcrypt beim Login blockierte den Thread-Pool und bremste alle anderen Routen mit, eine Admin-Route lieferte 34 MB pro Aufruf, und im Chat stellte die Node-Uhr Zeitstempel vor dem Datenbank-Commit aus, was unter Last Hunderte 500er erzeugte. Jeder Fix kam erst, nachdem der Lasttest das Problem sichtbar gemacht hatte: eigener Auth-Pool, seitenweise Abfragen, Zeitstempel aus der Datenbank. Die letzte Lektion: jede Verbesserung einzeln gegenprüfen. Den Sprung von 600 auf 800 req/s hatte ich erst dem Lastabwurf zugeschrieben; ein A/B-Vergleich zeigte, dass er vom Produktions-Build kam, der Test-Stack lief vorher im Dev-Modus. Der Lastabwurf hebt die Grenze nicht, verhindert aber, dass Überlast zum Kollaps wird.",
+    open: [
+      "Texte in Kevins Worten nachschärfen",
+    ],
+  },
+  {
+    id: "shop",
+    group: "along",
+    layout: "orders",
+    kind: "Shop-Modul",
+    accent: "var(--note-1)",
+    learnGoal: "YourBrand-Mandanten sollen etwas verkaufen können — und ich wollte lernen, einen Bestellablauf zu bauen, bei dem kein Geld fließt, bevor ein Verdacht geklärt ist.",
+    title: "Shop",
+    claim: "Das System hält an, ein Mensch entscheidet — ein Shop, der bei Verdacht nicht einfach abbucht.",
+    points: [
+      "Essen, Merch, Lizenz-Keys und Freischalt-Codes, bis ~1000 Artikel mit Filtern und Suche",
+      "Stripe reserviert nur: Auffälliges wartet auf einen Menschen, Unauffälliges bucht das System ab",
+      "Lückenlose Rechnungsnummern, Stornorechnungen und ein Protokoll, das sich nicht ändern lässt",
+    ],
+    what: "Ein Mandanten-Modul für YourBrand, seit Oktober auch als eigenständiges Projekt herausgelöst, damit ich es ohne den Rest der App entwickeln kann. Ein Mandant verkauft darüber Essen zum Abholen oder Liefern, Merch mit Versand, Lizenz-Keys und Freischalt-Codes, die in der App Premium oder Coins freischalten. Der Kern ist der Bestellablauf: Stripe reserviert den Betrag nur. Dann prüfen Risiko-Regeln die Bestellung, etwa Betrag, neuer Käufer, viele Bestellungen in einer Stunde, dieselbe Karte bei mehreren Konten, frühere Rückbuchungen und Stripe Radar. Ist alles unauffällig, nimmt das System an und bucht ab. Ist etwas auffällig, hält es an und alarmiert die Admins. Ein Mensch nimmt an oder lehnt mit Begründung ab; läuft die Frist ab, verfällt die Reservierung und der Kunde zahlt nichts. Danach werden Keys zugeteilt, Codes erzeugt und die Rechnung per Mail verschickt.",
+    tags: ["TypeScript", "NestJS", "Next.js", "PostgreSQL", "Stripe", "BullMQ", "Redis"],
+    meta: "Solo · seit Oktober 2026, zuerst als Modul in YourBrand, seit 22. Oktober eigenständig · 132 Tests im Backend",
+    links: [{ label: "GitHub (privat)" }, { label: "kein Live-Widget (braucht Stripe-Keys)" }],
+    decisions: [
+      "Reservieren statt sofort abbuchen (capture_method: manual): bis Regeln oder ein Mensch entschieden haben, fließt kein Geld",
+      "Ablehnen, Erstatten und Sperren macht nur ein Mensch, immer mit Begründung",
+      "Module reden nur über einen Broker: der Shop importiert weder Stripe noch das Zahlungs- oder Coin-Modul",
+      "Bestellprotokoll nur zum Anhängen: ein Datenbank-Trigger blockt UPDATE und DELETE",
+      "Keys verschlüsselt in der Datenbank, Zuteilung mit FOR UPDATE SKIP LOCKED, damit kein Key doppelt rausgeht",
+    ],
+    challenge:
+      "Geld und Recht verzeihen nichts. Stripe darf Webhooks doppelt und in beliebiger Reihenfolge schicken, also prüft jeder Zweig zuerst den Status. Nehmen zwei Admins dieselbe Bestellung gleichzeitig an, bekommt der zweite 409. Rechnungsnummern müssen lückenlos fortlaufen, Bestellungen zehn Jahre aufbewahrt werden, und digitale Ware braucht vor der Auslieferung den Widerrufs-Verzicht nach § 356 Abs. 5 BGB.",
     open: [
       "Texte in Kevins Worten nachschärfen",
     ],

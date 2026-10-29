@@ -24,6 +24,8 @@ export const IMPRESSUM: LegalText = pick<LegalText>({
     html: `
       <h1 class="legal-title">Impressum</h1>
 
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>Hier wird nichts verkauft.</strong><p>Diese Seite ist ein Portfolio. Sie zeigt nur meine Arbeit: Es werden keine Waren oder Dienstleistungen angeboten, nichts kostet Geld und über diese Seite kommt kein Vertrag zustande.</p></div></div>
+
       <h2>Offenlegung nach § 25 Mediengesetz</h2>
       <p>
         <strong>Kevin Schaberl</strong><br />
@@ -62,6 +64,8 @@ export const IMPRESSUM: LegalText = pick<LegalText>({
     html: `
       <h1 class="legal-title">Legal notice</h1>
 
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>Nothing is for sale here.</strong><p>This site is a portfolio. It only shows my work: no goods or services are offered, nothing costs money and no contract is concluded through this site.</p></div></div>
+
       <h2>Disclosure under § 25 Mediengesetz (Austrian Media Act)</h2>
       <p>
         <strong>Kevin Schaberl</strong><br />
@@ -98,6 +102,8 @@ export const IMPRESSUM: LegalText = pick<LegalText>({
     title: "Выходные данные",
     html: `
       <h1 class="legal-title">Выходные данные</h1>
+
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>Здесь ничего не продаётся.</strong><p>Этот сайт — портфолио. Он только показывает мою работу: здесь не предлагаются товары или услуги, ничего не стоит денег, и через этот сайт не заключается никаких договоров.</p></div></div>
 
       <h2>Раскрытие информации согласно § 25 Mediengesetz (австрийский закон о СМИ)</h2>
       <p>
@@ -136,6 +142,8 @@ export const IMPRESSUM: LegalText = pick<LegalText>({
     html: joinCjk(`
       <h1 class="legal-title">運営者情報</h1>
 
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>ここでは何も販売していません。</strong><p>このサイトはポートフォリオです。私の仕事を紹介するためだけのもので、商品やサービスの提供はなく、料金も発生せず、このサイトを通じて契約が成立することもありません。</p></div></div>
+
       <h2>メディア法（Mediengesetz）第25条に基づく開示</h2>
       <p>
         <strong>ケヴィン・シャーベル（Kevin Schaberl）</strong><br />
@@ -172,6 +180,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
     title: "Datenschutzerklärung",
     html: `
       <h1 class="legal-title">Datenschutzerklärung</h1>
+
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>Hier wird nichts verkauft.</strong><p>Diese Seite ist ein Portfolio. Sie zeigt nur meine Arbeit: Es werden keine Waren oder Dienstleistungen angeboten, nichts kostet Geld und über diese Seite kommt kein Vertrag zustande.</p></div></div>
 
       <h2>Verantwortlicher</h2>
       <p>
@@ -313,6 +323,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
     html: `
       <h1 class="legal-title">Privacy policy</h1>
 
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>Nothing is for sale here.</strong><p>This site is a portfolio. It only shows my work: no goods or services are offered, nothing costs money and no contract is concluded through this site.</p></div></div>
+
       <h2>Controller</h2>
       <p>
         Kevin Schaberl, Ottensheim, Austria<br />
@@ -442,6 +454,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
     title: "Политика конфиденциальности",
     html: `
       <h1 class="legal-title">Политика конфиденциальности</h1>
+
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>Здесь ничего не продаётся.</strong><p>Этот сайт — портфолио. Он только показывает мою работу: здесь не предлагаются товары или услуги, ничего не стоит денег, и через этот сайт не заключается никаких договоров.</p></div></div>
 
       <h2>Ответственное лицо</h2>
       <p>
@@ -573,6 +587,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
     title: "プライバシーポリシー",
     html: joinCjk(`
       <h1 class="legal-title">プライバシーポリシー</h1>
+
+      <div class="nosale" role="note"><svg class="nosale-arrow" viewBox="0 0 54 54" aria-hidden="true"><path d="M4 27h38M30 13l14 14-14 14" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="nosale-box"><strong>ここでは何も販売していません。</strong><p>このサイトはポートフォリオです。私の仕事を紹介するためだけのもので、商品やサービスの提供はなく、料金も発生せず、このサイトを通じて契約が成立することもありません。</p></div></div>
 
       <h2>管理者</h2>
       <p>

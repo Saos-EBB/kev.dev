@@ -1,0 +1,261 @@
+/* kev.dev's phone (kevdev-phone.ts): this page in skeletons on the shared
+   phone (scroll-phone.css), one screen per section. */
+
+
+.kp-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.kp-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- the screens -------------------------------------------------- */
+
+.kp-sec {
+  position: relative;
+  height: 100%;
+  padding: 3rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.kp-tag {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffffff70;
+}
+
+.kp-tag em {
+  font-style: normal;
+  color: var(--wave);
+}
+
+
+/* hero */
+.kp-cloth {
+  flex: 1;
+  min-height: 0;
+  margin: 0 -1rem;
+}
+
+.kp-cloth path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--c) calc(var(--a) + 30%), #000);
+  stroke-width: 1.4;
+}
+
+.kp-name { width: 74%; height: 20px; }
+.kp-sub { width: 48%; height: 8px; }
+
+.kp-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.kp-pills .sp-sk {
+  width: 25%;
+  height: 14px;
+}
+
+/* about */
+.kp-shaft {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.kp-shaft .sp-ol {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+}
+
+.kp-floors .sp-sk {
+  position: absolute;
+}
+
+.kp-life {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.sp-sk.kp-dot {
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* projects */
+.kp-bench {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.kp-pc {
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.kp-pc.kp-big {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+}
+
+.kp-big > span {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.sp-sk.kp-sq {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+}
+
+/* contact: the letters drop in when the screen comes up */
+.kp-letters {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
+  padding-bottom: 1rem;
+}
+
+.kp-letters .sp-sk {
+  width: 16%;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateY(-260px) rotate(-14deg);
+  transition: transform 0.7s cubic-bezier(0.2, 1.5, 0.4, 1), opacity 0.3s;
+}
+
+.kp-sec.is-in .kp-letters .sp-sk {
+  opacity: 1;
+  transform: none;
+}
+
+.kp-ray {
+  align-self: center;
+  width: 55%;
+  height: 26px;
+}
+
+/* legal: the sheet comes up over the dimmed page */
+.kp-behind {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  opacity: 0.35;
+}
+
+.kp-behind .sp-sk {
+  height: 26px;
+}
+
+.kp-sheet {
+  position: absolute;
+  inset: auto 6px 6px;
+  height: 62%;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #ffffff14;
+  border-radius: 20px;
+  background: #121017;
+  transform: translateY(105%);
+  transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.kp-sec.is-in .kp-sheet {
+  transform: none;
+}
+
+.kp-grab { align-self: center; width: 30px; height: 4px; }
+.sp-sk.kp-h { height: 10px; }
+.kp-note { align-self: center; width: 40%; height: 12px; margin-top: auto; }
+
+/* languages */
+.kp-langs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.kp-langs b {
+  padding: 0.45rem 0;
+  border: 1.5px solid #2a2530;
+  border-radius: 6px;
+  color: #ffffff60;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-align: center;
+  text-transform: uppercase;
+  transition: border-color 0.3s, color 0.3s;
+}
+
+.kp-langs b.is-on {
+  border-color: var(--wave);
+  color: var(--wave);
+}
+
+.kp-lines {
+  display: grid;
+  gap: 10px;
+  padding-top: 0.6rem;
+}
+
+.kp-lines .sp-sk {
+  transition: width 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* mobile: the lite list, the frame graph */
+.kp-list {
+  display: grid;
+  gap: 7px;
+}
+
+.kp-row {
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kp-row > span {
+  flex: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.kp-frames {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding-top: 1rem;
+}
+
+.kp-frames .sp-sk {
+  flex: 1;
+  border-radius: 2px;
+}
