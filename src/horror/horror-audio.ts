@@ -234,3 +234,33 @@ export function door() {
   tone(out, { f: 38, f2: 30, type: "sawtooth", vol: 0.25, len: 2.5, att: 0.3 });
   noiseHit(out, { f: 250, vol: 0.4, len: 2.2, att: 0.4 });
 }
+
+/* ---------- melee, boss, doors far away ---------- */
+export function swing() {
+  noiseHit(out, { f: 700, type: "bandpass", q: 1.2, vol: 0.4, len: 0.22, att: 0.08 });
+}
+export function chop(at: Vec3) {
+  const p = oneShot(at, 1, 1);
+  noiseHit(p, { f: 900, vol: 0.9, len: 0.25, att: 0.001 });
+  tone(p, { f: 120, f2: 60, vol: 0.6, len: 0.2 });
+}
+export function roar(at: Vec3) {
+  const p = oneShot(at, 3, 0.6, 3000);
+  for (const f of [55, 62, 83]) tone(p, { f, f2: f * 0.7, type: "sawtooth", vol: 0.35, len: 1.8, att: 0.2 });
+  noiseHit(p, { f: 300, type: "bandpass", q: 1, vol: 0.6, len: 1.6, att: 0.3 });
+}
+export function skullThrow(at: Vec3) {
+  noiseHit(oneShot(at, 2, 1), { f: 500, type: "bandpass", q: 2, vol: 0.4, len: 0.35, att: 0.1 });
+}
+export function skullBreak(at: Vec3) {
+  const p = oneShot(at, 1.5, 1);
+  noiseHit(p, { f: 2200, type: "highpass", vol: 0.5, len: 0.3, att: 0.001 });
+  noiseHit(p, { t: 0.04, f: 600, vol: 0.4, len: 0.2 });
+}
+// a heavy door opening somewhere you can't see yet
+export function doorAt(at: Vec3) {
+  const p = oneShot(at, 3, 0.5, 4000);
+  tone(p, { f: 42, f2: 30, type: "sawtooth", vol: 0.4, len: 2.8, att: 0.3 });
+  noiseHit(p, { f: 260, vol: 0.6, len: 2.5, att: 0.4 });
+  noiseHit(p, { t: 2.6, f: 400, vol: 0.9, len: 0.4, att: 0.001 }); // clunk: open
+}

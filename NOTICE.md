@@ -39,7 +39,7 @@ Full license texts ship with each package in `node_modules/<package>/`.
   three.js example states no separate license for it.
 
 - `public/horror/zombie_basic.glb`, `zombie_chubby.glb`, `zombie_ribcage.glb`,
-  `shotgun.glb` (same page): from the "Zombie Apocalypse Kit" by Quaternius
+  `shotgun.glb`, `bat_saw.glb` (same page): from the "Zombie Apocalypse Kit" by Quaternius
   (https://quaternius.com/packs/zombieapocalypsekit.html), CC0 1.0
   (https://creativecommons.org/publicdomain/zero/1.0/). Converted from glTF to
   GLB, otherwise unchanged; colors darkened in code.
