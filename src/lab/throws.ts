@@ -12,7 +12,7 @@
 import "./throws.css";
 import { gsap } from "gsap";
 import { THROWABLES, renderThrowable } from "./throwables";
-import * as sound from "./sound";
+import { dissolve, pass, whoosh } from "./sound";
 
 export function startThrows(scene: HTMLElement, firstDelay = 1) {
   const FRAMES = 30;
@@ -119,7 +119,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
       state: "flying",
     };
     flying.add(o);
-    sound.whoosh(o.dur, panOf(o.from[0]), panOf(o.to[0]));
+    whoosh(o.dur, panOf(o.from[0]), panOf(o.to[0]));
 
     el.addEventListener("pointerdown", (e) => {
       if (o.state !== "flying") return;
@@ -136,7 +136,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
       dragged = null;
       o.state = "vanishing";
       el.classList.add("is-vanishing");
-      sound.dissolve(panOf(o.x));
+      dissolve(panOf(o.x));
       gsap.delayedCall(VANISH_MS / 1000, () => remove(o));
     });
   }
@@ -197,7 +197,7 @@ export function startThrows(scene: HTMLElement, firstDelay = 1) {
         o.ry += o.vry * dt;
         if (!o.passed && o.z > 0) {
           o.passed = true;
-          sound.pass(o.name, panOf(screenX(o.x, o.z)));
+          pass(o.name, panOf(screenX(o.x, o.z)));
         }
         if (o.t >= o.dur) {
           remove(o);

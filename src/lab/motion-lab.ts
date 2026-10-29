@@ -9,7 +9,7 @@ import "./motion-lab.css";
 import "@fontsource-variable/jetbrains-mono";
 import { gsap } from "gsap";
 import { startThrows } from "./throws";
-import * as sound from "./sound";
+import { setMuted, unlock } from "./sound";
 
 const MARKUP = `
   <div class="ml-scene js-scene"></div>
@@ -41,8 +41,8 @@ function mount() {
   let soundOn = false;
   soundBtn.addEventListener("click", async () => {
     soundOn = !soundOn;
-    if (soundOn) await sound.unlock();
-    sound.setMuted(!soundOn);
+    if (soundOn) await unlock();
+    setMuted(!soundOn);
     soundBtn.textContent = `Sound: ${soundOn ? "on" : "off"}`;
     soundBtn.setAttribute("aria-pressed", String(soundOn));
   });
