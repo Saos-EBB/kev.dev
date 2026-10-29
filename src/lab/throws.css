@@ -52,7 +52,7 @@
   left: 50%;
   overflow: visible;
   fill: color-mix(in srgb, var(--color-bg) 60%, transparent);
-  stroke: var(--color-throw);
+  stroke: var(--color-line);
   stroke-width: 2;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -64,6 +64,11 @@
 
 .ml-slice.is-wire {
   fill: none;
+}
+
+/* Cavities (the skull's eye sockets and nose): darker holes. */
+.ml-slice .hole {
+  fill: color-mix(in srgb, var(--color-line) 35%, transparent);
 }
 
 /* --vanish-sprite is a data: URL throws.ts paints once (30 frames

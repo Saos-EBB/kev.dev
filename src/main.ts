@@ -226,9 +226,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
-    <canvas class="contact-skull" aria-hidden="true"></canvas>
     <div class="contact-inner">
       <h2 class="contact-headline">${UI.contactHeadline}</h2>
+      <div class="contact-raygun" hidden></div>
+      <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
       <ul class="contact-icons">
         <li>
           <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
@@ -644,7 +645,7 @@ initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 // A plain "#contact" anchor jump lands at the top of the pin, where the
 // grid has just started dissolving — not what "go to Contact" means.
 // Every link that points there jumps straight to the section already
-// landed with the skull up instead. Native anchor jumps on this page
+// landed on "Let's talk now" instead. Native anchor jumps on this page
 // are instant (no CSS scroll-behavior:smooth set), so this matches that
 // with `immediate: true` rather than introducing a different, smoother
 // feel just for this one link.

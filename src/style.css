@@ -19,7 +19,6 @@
   --color-line: #cd57ff; /* grid / cloth / rule lines, hover color */
   --color-text-muted: #8a8a93; /* secondary text */
   --color-accent: #cd57a6; /* focus outlines, highlights */
-  --color-throw: #89ff57; /* thrown objects + contact saw blades: --color-line's complementary hue (279° -> 99°) */
   --hero-bg: #08070a; /* hero section backdrop */
   --grid-color: #cd57ff; /* shared grid line color, all scenes */
   --about-bg: #08070a; /* about section backdrop */
@@ -173,7 +172,6 @@
   --projects-bg: #ffffff;
   --contact-bg: #ffffff;
   --color-room-accent: #2a2a30;
-  --color-throw: #32a800; /* darker complement, readable on white */
 }
 
 * {
@@ -1164,21 +1162,9 @@ button:focus-visible {
   width: var(--grid-line);
 }
 
-/* skull-scene.ts draws the skull + saw blades here (transparent, so
-   --contact-bg shows through and the theme toggle just works). */
-.contact-skull {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
-}
-
 .contact-inner {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1187,20 +1173,52 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* contact.ts skips the dissolve entirely under reduced motion. */
+  /* contact.ts skips the dissolve entirely under reduced motion (see
+     the reducedMotion guard there) — hide the grid outright instead of
+     leaving it statically opaque behind the plain text. */
   :root:not(.force-motion) .contact-bg-grid {
     display: none;
   }
 }
 
-/* Visible only while the skull scene isn't there (still loading, or no
-   WebGL) — then it's the plain fallback: heading + a row of links. */
 .contact-headline {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 8vw, 5rem);
   line-height: 1;
   text-transform: uppercase;
   color: var(--color-text);
+}
+
+.contact-mail {
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--transition-hover);
+}
+
+.contact-mail:hover,
+.contact-mail:focus-visible {
+  border-color: currentColor;
+}
+
+/* contact.ts splits the headline/mail text into one <span class="letter">
+   per character, each wrapping an inner <span class="letter-inner"> — two
+   layers so the entrance fall-in (outer, scrub-driven) and the ambient
+   idle float once landed (inner, see startIdle/stopIdle in contact.ts)
+   never animate the same element's transform. Both inline-block so
+   translate/rotate apply per letter instead of to the text run as a whole. */
+.contact-headline .letter,
+.contact-mail .letter {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.contact-headline .letter-inner,
+.contact-mail .letter-inner {
+  display: inline-block;
+  will-change: transform;
 }
 
 .contact-icons {
@@ -1213,52 +1231,54 @@ button:focus-visible {
 
 .contact-icons a {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border: 1px solid var(--color-throw);
-  border-radius: 50%;
-  background: var(--contact-bg);
-  color: var(--color-throw);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--color-throw) 35%, transparent);
-  transition: color var(--transition-hover), border-color var(--transition-hover);
+  color: var(--color-text-muted);
+  transition: color var(--transition-hover);
 }
 
+/* Same rgb(--color-line) hover as the hero nav icons — one hover color
+   used consistently everywhere. */
 .contact-icons a:hover,
 .contact-icons a:focus-visible {
   color: var(--color-line);
-  border-color: var(--color-line);
 }
 
 .contact-icons svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 
-/* Scene is up: the links become shards — skull-scene.ts sets each one's
-   left/top/transform and shows it once its saw blade has hit. The
-   heading stays for screen readers only. */
-.contact.has-skull .contact-inner {
-  position: absolute;
-  inset: 0;
+/* Raygun button (src/raygun/raygun.ts) — revealed under the headline once
+   it's been shattered (contact.ts's startBreak/returnHome toggle the
+   [hidden] attribute this pop-in keys off). */
+.contact-raygun {
+  display: flex;
+  justify-content: center;
 }
 
-.contact.has-skull .contact-headline {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+/* display: flex above would otherwise beat the hidden attribute. */
+.contact-raygun[hidden] {
+  display: none;
 }
 
-.contact.has-skull .contact-icons a {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  visibility: hidden;
-  will-change: transform;
+.contact-raygun:not([hidden]) {
+  animation: contact-raygun-in 0.4s ease-out;
+}
+
+@keyframes contact-raygun-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .contact-raygun:not([hidden]) {
+    animation: none;
+  }
 }
 
 /* ---------------------------------------------------------------- */
