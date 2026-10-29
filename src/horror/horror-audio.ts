@@ -290,6 +290,11 @@ export function rail() {
   noiseHit(out, { f: 5000, type: "highpass", vol: 0.6, len: 0.25, att: 0.001 });
   tone(out, { f: 80, f2: 40, vol: 0.7, len: 0.3, att: 0.001 });
 }
+// lightning crackle (fires ten times a second while held: kept quiet)
+export function zap() {
+  noiseHit(out, { f: 3500, type: "bandpass", q: 2, vol: 0.12, len: 0.08, att: 0.001 });
+  tone(out, { f: 900 + Math.random() * 600, f2: 200, type: "sawtooth", vol: 0.04, len: 0.07, att: 0.001 });
+}
 // grenade-style launch
 export function thunk() {
   tone(out, { f: 140, f2: 70, vol: 0.6, len: 0.18, att: 0.001 });
