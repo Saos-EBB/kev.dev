@@ -283,3 +283,9 @@ export function glass() {
 export function tick() {
   tone(out, { f: 2200, f2: 1700, type: "square", vol: 0.06, len: 0.05, att: 0.001 });
 }
+
+// pistol: short, sharp, less body than the shotgun
+export function pistol() {
+  noiseHit(out, { f: 3200, type: "lowpass", vol: 0.7, len: 0.18, att: 0.001 });
+  tone(out, { f: 160, f2: 60, vol: 0.5, len: 0.12, att: 0.001 });
+}

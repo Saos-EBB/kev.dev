@@ -29,8 +29,9 @@ import { carveUpper } from "./horror-maze";
 const MARKUP = `
   <canvas id="gl"></canvas>
   <div class="hud" id="count"><p><span id="clabel">Gegenstände</span> <b id="got">0</b> / <b id="tot">3</b></p><p id="goal">Irgendwo liegen drei Dinge.</p></div>
-  <div class="hud" id="bossbar" hidden><small>Der Große</small><i><b id="bosshp"></b></i></div>
+  <div class="hud" id="bossbar" hidden><small id="bossname">Der Große</small><i><b id="bosshp"></b></i></div>
   <p class="hud" id="fps" hidden></p>
+  <div class="hud" id="waves" hidden><p>Welle <b id="wave-n">1</b> / 5 · <b id="wave-k">0</b> / <b id="wave-t">50</b></p><p>Kopfschüsse <b id="heads">0</b></p></div>
   <div class="hud" id="dot"></div>
   <div class="hud" id="card"><small id="card-tag"></small><span id="card-text"></span></div>
   <div class="hud" id="whisper"></div>
@@ -63,7 +64,7 @@ const MARKUP = `
         <label><input type="radio" name="from" value="start" checked> Anfang</label>
         <label><input type="radio" name="from" value="stairs"> Treppe</label>
         <label><input type="radio" name="from" value="hall1"> Welle 1</label>
-        <label><input type="radio" name="from" value="hall2"> Welle 2</label>
+        <label><input type="radio" name="from" value="hall2"> Welle 3</label>
         <label><input type="radio" name="from" value="boss"> Endkampf</label>
       </p>
       <p class="muted">Am Handy: rechts wischen zum Umsehen, Kreis links unten zum Gehen.</p>
@@ -658,11 +659,13 @@ function mount() {
   /* ---------- part 2: the halls ---------- */
   type Phase = "puzzle" | "stairs" | "normals" | "bigs" | "boss" | "mirror" | "end";
   let phase: Phase = "puzzle";
-  // 100 zombies before the boss door opens: 50 normal ones, then 50 more with 15 big ones among them
-  const WAVES = { normals: { total: 50, big: 0, start: 6, goal: "Fünfzig. Kopf ist einfacher." }, bigs: { total: 50, big: 15, start: 4, goal: "Noch fünfzig. Manche sind größer." } };
-  const MAX_ALIVE = 8, SPAWN_EVERY = 1.1; // seconds between two new ones
+  // five waves, each 50 bigger than the last (50 … 250). Waves 1–2 in hall 1, 3–5 in hall 2;
+  // from wave 3 on, one in five is a big one. A short breather between waves.
+  const WAVES = [1, 2, 3, 4, 5].map((n) => ({ n, total: 50 * n, bigShare: n >= 3 ? 0.2 : 0, hall: n <= 2 ? "h" : "H" }));
+  const LAST_IN_HALL1 = 2, BREATHER = 5; // seconds
+  const maxAlive = (n: number) => 8 + 2 * n, spawnEvery = (n: number) => Math.max(0.5, 1.1 - 0.12 * n);
   // spawned counts the ones still loading too
-  const W = { spawned: 0, killed: 0, total: 0, bigLeft: 0, streak: 0, streakOpen: true, nextSpawn: 0, drop: 0 };
+  const W = { n: 0, spawned: 0, killed: 0, total: 0, bigLeft: 0, nextSpawn: 0, nextWave: 0, pending: 0, drop: 0, heads: 0 };
   // zombies come in from the far side of the hall, away from you
   function spawnIn(cells: Cell[], kind: "normal" | "big" | "boss", n: number) {
     const far = cells.filter(([x, z]) => Math.hypot(x * C - pos.x, z * C - pos.z) > 9);
@@ -672,59 +675,76 @@ function mount() {
     }
     W.spawned += n;
   }
-  // in the second hall the big ones are mixed in, evenly over the wave
-  function spawnMixed(cells: Cell[], n: number) {
+  // big ones mixed in evenly over the wave
+  function spawnMixed(n: number) {
+    const cells = WAVES[W.n - 1].hall === "h" ? halls.h : halls.H;
     for (let i = 0; i < n; i++) {
       const big = W.bigLeft > 0 && Math.random() < W.bigLeft / Math.max(1, W.total - W.spawned);
       if (big) W.bigLeft--;
       spawnIn(cells, big ? "big" : "normal", 1);
     }
   }
+  function startWave(n: number) {
+    const wave = WAVES[n - 1];
+    W.n = n; W.total = wave.total; W.bigLeft = Math.round(wave.total * wave.bigShare);
+    W.spawned = 0; W.killed = 0; W.pending = 0; W.nextSpawn = now + spawnEvery(n);
+    spawnMixed(6);
+    whisperText(`Welle ${n}`, 1800);
+    $("goal").textContent = n === 1 ? "Kopf ist einfacher." : n === 3 ? "Manche sind größer." : "";
+    waveHud();
+  }
   function enterHall(next: Phase, gate: Cell) {
     phase = next;
     dropGate(...gate);
-    W.killed = 0; W.spawned = 0; W.nextSpawn = now + SPAWN_EVERY;
-    if (next === "normals" || next === "bigs") {
-      const wave = WAVES[next];
-      W.total = wave.total; W.bigLeft = wave.big;
-      spawnMixed(next === "normals" ? halls.h : halls.H, wave.start);
-      $("goal").textContent = wave.goal;
-      $("clabel").textContent = "Zombies"; $("got").textContent = "0"; $("tot").textContent = String(wave.total);
-    }
-    if (next === "boss") { W.total = 1; spawnIn(halls.B, "boss", 1); $("count").hidden = true; $("bossbar").hidden = false; }
+    ($("got").parentElement as HTMLElement).hidden = true; // items are done; the wave counter is top right now
+    if (next === "normals") startWave(1);
+    if (next === "bigs") startWave(LAST_IN_HALL1 + 1);
+    if (next === "boss") { W.total = 1; W.spawned = 0; W.killed = 0; spawnIn(halls.B, "boss", 1); $("count").hidden = true; $("waves").hidden = true; $("bossbar").hidden = false; }
   }
-  // keep the hall busy: two more every SPAWN_EVERY seconds while fewer than MAX_ALIVE are up
+  // keep the hall busy while fewer than the wave's limit are up
   function feedWave() {
-    if (W.spawned >= W.total || now < W.nextSpawn || W.spawned - W.killed >= MAX_ALIVE) return;
-    W.nextSpawn = now + SPAWN_EVERY;
-    spawnMixed(phase === "normals" ? halls.h : halls.H, Math.min(2, W.total - W.spawned, MAX_ALIVE - (W.spawned - W.killed)));
+    if (W.spawned >= W.total || now < W.nextSpawn || W.spawned - W.killed >= maxAlive(W.n)) return;
+    W.nextSpawn = now + spawnEvery(W.n);
+    spawnMixed(Math.min(2, W.total - W.spawned, maxAlive(W.n) - (W.spawned - W.killed)));
   }
-  // ammo comes from the dead: 2–3 shells for a normal one (2 shots needed), 5 for a big one (4 needed).
-  // That's break-even at 80 % hits — miss more than 20 % and you slowly run dry. Headshots save shells.
+  const waveHud = () => {
+    $("waves").hidden = false;
+    $("wave-n").textContent = String(W.n);
+    $("wave-k").textContent = String(W.killed); $("wave-t").textContent = String(W.total);
+    $("heads").textContent = String(W.heads);
+  };
+
+  // headshot kills unlock things: 10 the saw, 50 a pistol, 100 a sword that hits everyone in front,
+  // 200 faster legs, 250 the boss's own trick: throwing skulls, twice a second
+  const REWARDS: [number, () => void][] = [
+    [10, () => { if (!combat.has.bat) { combat.addPickup("bat", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone()); card("10 Kopfschüsse", "Säge-Schläger. Ein Schlag auf den Kopf reicht. Taste 2.", 6000); } }],
+    [50, () => { combat.addPickup("pistol", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone()); card("50 Kopfschüsse", "Pistole. Unendlich Munition, schnell, genau. Taste 3.", 6000); }],
+    [100, () => { combat.addPickup("sword", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5).clone()); card("100 Kopfschüsse", "Schwert. Trifft alles vor dir. Taste 4.", 6000); }],
+    [200, () => { fast = 1.25; card("200 Kopfschüsse", "Du bist schneller.", 5000); }],
+    [250, () => { combat.unlockSkulls(); card("250 Kopfschüsse", "Du kannst jetzt, was er kann: F oder Rechtsklick wirft Schädel. Zweimal pro Sekunde.", 7000); }],
+  ];
+  let fast = 1; // movement multiplier (reward at 200)
+
+  // ammo from the dead, sparingly: half the normal ones leave 3 shells, a big one 4 (60 %);
+  // medkits are rare (2.5 %)
   function onKill(k: { kind: string; hits: number; head: boolean; at: THREE.Vector3 }) {
     W.killed++;
-    if (phase === "normals" && W.streakOpen) {
-      if (k.kind === "normal" && k.hits === 1 && k.head) W.streak++; else W.streakOpen = false;
-      if (W.streak === 10 && !combat.has.bat) {
-        W.streakOpen = false;
-        combat.addPickup("bat", k.at);
-        card("Säge-Schläger", "Zehn Köpfe, zehn Schüsse. Für den Rest gibt es was Besseres.", 7000);
-      }
+    if (k.head && k.kind !== "boss") {
+      W.heads++;
+      for (const [at, give] of REWARDS) if (W.heads === at) give();
     }
-    if (k.kind === "normal") combat.addPickup("shells", k.at, 2 + (W.drop++ % 2));
-    if (k.kind === "big") combat.addPickup("shells", k.at, 5);
-    if (k.kind !== "boss" && Math.random() < 0.07) combat.addPickup("health", k.at.clone().add(new THREE.Vector3(0.5, 0, 0.3)));
-    if (phase === "normals" || phase === "bigs") $("got").textContent = String(W.killed);
+    if (k.kind === "normal" && Math.random() < 0.5) combat.addPickup("shells", k.at, 3);
+    if (k.kind === "big" && Math.random() < 0.6) combat.addPickup("shells", k.at, 4);
+    if (k.kind !== "boss" && Math.random() < 0.025) combat.addPickup("health", k.at.clone().add(new THREE.Vector3(0.5, 0, 0.3)));
+    if (phase === "normals" || phase === "bigs") waveHud();
     hud();
   }
   function waveDone() {
-    if (phase === "normals") {
-      openDoor("1");
-      if (!combat.has.bat) { combat.addPickup("bat", hallCenter(halls.h)); card("Säge-Schläger", "Für den Kopf. Ein Schlag reicht.", 6000); }
-      $("goal").textContent = "Weiter.";
-    } else if (phase === "bigs") {
-      openDoor("2");
-      $("goal").textContent = "Weiter. Der Große wartet.";
+    if (phase === "normals" || phase === "bigs") {
+      if (W.n === LAST_IN_HALL1) { openDoor("1"); $("goal").textContent = "Die Tür ist auf. Weiter."; if (!combat.has.bat) combat.addPickup("bat", hallCenter(halls.h)); return; }
+      if (W.n === WAVES.length) { openDoor("2"); $("goal").textContent = "Weiter. Der Große wartet."; return; }
+      W.pending = W.n + 1; W.nextWave = now + BREATHER;
+      $("goal").textContent = `Durchatmen. Welle ${W.pending} kommt.`;
     } else if (phase === "boss") {
       openDoor("3");
       $("bossbar").hidden = true;
@@ -825,10 +845,17 @@ function mount() {
   /* ============================ INPUT ============================ */
   window.addEventListener("keydown", (e) => {
     keys[e.code] = true;
-    if (e.code === "Digit1") combat.select("shotgun");
-    if (e.code === "Digit2") combat.select("bat");
+    const slots = { Digit1: "shotgun", Digit2: "bat", Digit3: "pistol", Digit4: "sword" } as const;
+    if (e.code in slots) combat.select(slots[e.code as keyof typeof slots]);
+    if (e.code === "KeyF" && running && !paused) combat.throwOwnSkull();
   });
-  window.addEventListener("wheel", () => combat.select(combat.weapon === "bat" ? "shotgun" : "bat"), { passive: true });
+  // mouse wheel: next weapon you have
+  window.addEventListener("wheel", (e) => {
+    const order = (["shotgun", "bat", "pistol", "sword"] as const).filter((w) => combat.has[w]);
+    if (order.length < 2 || !combat.weapon) return;
+    const i = order.indexOf(combat.weapon);
+    combat.select(order[(i + (e.deltaY > 0 ? 1 : order.length - 1)) % order.length]);
+  }, { passive: true });
   window.addEventListener("keyup", (e) => { keys[e.code] = false; });
   const look = (dx: number, dy: number, k = 0.0022) => { if (cineT >= 0) return; yaw -= dx * k; pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * k)); };
   const lock = () => { try { const p = canvas.requestPointerLock() as unknown as Promise<void> | undefined; p?.catch?.(() => {}); } catch { /* drag-to-look fallback */ } };
@@ -842,7 +869,9 @@ function mount() {
   canvas.addEventListener("mousedown", (e) => {
     if (running && !locked) { lock(); dragging = true; return; }
     if (running && !paused && e.button === 0) pull();
+    if (running && !paused && e.button === 2) combat.throwOwnSkull();
   });
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   window.addEventListener("mouseup", () => { dragging = false; });
   // hidden tab: pause (no catch-up jump, no CPU burn)
   document.addEventListener("visibilitychange", () => { if (document.hidden && running && !ended && !paused) pause(); });
@@ -905,13 +934,14 @@ function mount() {
     } else if (where === "hall1" || where === "hall2") {
       combat.grant("shotgun"); onPickup("shotgun");
       const g = where === "hall1" ? gates[0] : gates[1];
-      if (where === "hall2") { openNow("1"); combat.grant("bat"); }
+      if (where === "hall2") { openNow("1"); combat.grant("bat"); combat.grant("shotgun"); }
       pos.set((g[0] + 2) * C, 0, g[1] * C); // two cells into the hall: the gate drops behind you
       enterHall(where === "hall1" ? "normals" : "bigs", g);
     } else {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
-      combat.grant("shotgun"); combat.grant("bat");
+      // the end fight as if you'd earned everything on the way
+      combat.grant("pistol"); combat.grant("sword"); combat.grant("bat"); combat.grant("shotgun"); combat.unlockSkulls(); fast = 1.25;
       onPickup("shotgun");
       const [gx, gz] = cellsOf("G")[2];
       pos.set((gx - 1) * C, 0, gz * C);
@@ -980,6 +1010,11 @@ function mount() {
     // a shot you feel: muzzle flash lights the room, the view kicks up and punches in
     onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.07); kick = 0.075; fovKick = Math.max(fovKick, 3); },
     // crosshair flashes red when it hit, bigger and with a tick on a headshot
+    onBossPhase: (n) => {
+      $("bossname").textContent = n === 1 ? "Der Große" : n === 2 ? "Der Große · wütend" : "Der Große · rasend";
+      whisperText(n === 2 ? "Er rennt." : "Jetzt alles.", 1800);
+      shake = 0.2;
+    },
     onHitmarker: (head) => {
       const dot = $("dot");
       dot.classList.remove("hit", "headhit"); void dot.offsetWidth; dot.classList.add(head ? "headhit" : "hit");
@@ -1011,8 +1046,9 @@ function mount() {
   combat.addPickup("health", spot(halls.B, 0.8));
   const hud = () => {
     $("hp").textContent = String(health);
-    $("wname").textContent = combat.weapon === "bat" ? "Säge" : "Schrot";
-    $("ammo").textContent = combat.weapon === "bat" ? "∞" : String(combat.ammo);
+    const names = { shotgun: "Schrot", bat: "Säge", pistol: "Pistole", sword: "Schwert" };
+    $("wname").textContent = combat.weapon ? names[combat.weapon] : "";
+    $("ammo").textContent = combat.weapon === "shotgun" ? String(combat.ammo) : "∞";
   };
   function onPickup(kind: string) {
     if (kind === "health") health = Math.min(100, health + 25);
@@ -1022,7 +1058,7 @@ function mount() {
       card("Schrotflinte", "30 Schuss. Kopf: ein Treffer. Körper: zwei. Mehr gibt es nicht.", 7000);
       $("goal").textContent = "Runter.";
     }
-    if (kind === "bat") card("Säge-Schläger", "Klick zum Zuschlagen, 1 und 2 wechseln. Auf den Kopf.", 5000);
+
     hud();
   }
   function die() {
@@ -1096,7 +1132,7 @@ function mount() {
     const len = Math.hypot(mx, mz), moving = len > 0.1;
     if (moving) {
       const armed = combat.weapon !== null;
-      const sp = ((armed ? (sprint ? 4.8 : 3.2) : sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
+      const sp = ((armed ? (sprint ? 4.8 : 3.2) * fast : sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
       const s = Math.sin(yaw), c = Math.cos(yaw);
       tryMove((mx * c + mz * s) * sp, (-mx * s + mz * c) * sp);
       stepPhase += dt * (sprint ? 11 : 8);
@@ -1136,6 +1172,7 @@ function mount() {
       feedWave();
       if (W.killed >= W.total) { waveDone(); W.total = 0; }
     }
+    if (W.pending && now >= W.nextWave) startWave(W.pending);
     if (phase === "boss" && W.total) {
       const hp = combat.bossHealth();
       $("bosshp").style.width = `${Math.max(0, hp) * 100}%`;
