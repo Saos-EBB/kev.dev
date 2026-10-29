@@ -264,3 +264,10 @@ export function doorAt(at: Vec3) {
   noiseHit(p, { f: 260, vol: 0.6, len: 2.5, att: 0.4 });
   noiseHit(p, { t: 2.6, f: 400, vol: 0.9, len: 0.4, att: 0.001 }); // clunk: open
 }
+
+// a big pane of glass breaking
+export function glass() {
+  noiseHit(out, { f: 3500, type: "highpass", vol: 0.8, len: 0.9, att: 0.001 });
+  for (let k = 0; k < 14; k++) tone(out, { t: 0.05 + Math.random() * 0.8, f: 2500 + Math.random() * 3000, vol: 0.05, len: 0.15, type: "triangle" });
+  noiseHit(out, { t: 0.02, f: 300, vol: 0.5, len: 0.3 });
+}
