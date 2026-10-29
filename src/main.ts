@@ -28,6 +28,7 @@ import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./project
 import { initFacetOverlay } from "./projects/facet-overlay";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
 import { initSkullContact, getSkullContactRevealScrollY } from "./skull-site/contact-skull";
+import { initCtSkull } from "./ct/ct-site";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
@@ -650,6 +651,7 @@ else {
 }
 
 (SKULL_SITE ? initSkullContact : initContact)(document.querySelector<HTMLElement>("#contact")!, lenis);
+if (SKULL_SITE) initCtSkull();
 
 // A plain "#contact" anchor jump lands at the top of the pin, where the
 // grid has just started dissolving — not what "go to Contact" means.
