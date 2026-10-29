@@ -31,6 +31,7 @@ export default defineConfig({
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
+        lab: root("saosebb43/index.html"),
       },
     },
   },

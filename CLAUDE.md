@@ -16,9 +16,9 @@ There is no unit/integration test suite. Verifying a change means running `npm r
 
 ## Multi-entry build
 
-`vite.config.ts` declares four Rollup entries — `index.html`, `impressum.html`, `datenschutz.html`, `yourbrand/index.html` — because Impressum/Datenschutz are separate static pages with full browser reload (no client-side router) and `yourbrand/` is its own React app (see below). Tailwind is only wired up for `yourbrand/`'s stylesheet.
+`vite.config.ts` declares five Rollup entries — `index.html`, `impressum.html`, `datenschutz.html`, `yourbrand/index.html`, `saosebb43/index.html` — because Impressum/Datenschutz are separate static pages with full browser reload (no client-side router) and `yourbrand/` is its own React app (see below). Tailwind is only wired up for `yourbrand/`'s stylesheet.
 
-`motion-lab.html` (+ `src/dev/motion-lab.*`) is a dev-only prototype page, served by `npm run dev` at `/motion-lab.html`; it is deliberately not a Rollup entry, so it never ships.
+`saosebb43/index.html` (+ `src/lab/motion-lab.*`) is a hidden prototype page ("Motion Lab"), a fifth Rollup entry. It is noindex and renders an empty body unless the URL is `/saosebb43#isking` — obscurity only, the hash is in the shipped JS.
 
 ## Main site architecture (`src/`)
 
