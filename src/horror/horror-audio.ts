@@ -237,12 +237,19 @@ export function door() {
 
 /* ---------- melee, boss, doors far away ---------- */
 export function swing() {
-  noiseHit(out, { f: 700, type: "bandpass", q: 1.2, vol: 0.4, len: 0.22, att: 0.08 });
+  const t = ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = noise; f.type = "bandpass"; f.Q.value = 1.4;
+  f.frequency.setValueAtTime(350, t); f.frequency.exponentialRampToValueAtTime(1600, t + 0.12); f.frequency.exponentialRampToValueAtTime(500, t + 0.25);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.55, t + 0.1); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+  s.connect(f).connect(g).connect(out); s.start(t, Math.random()); s.stop(t + 0.3);
 }
+// the bat lands: a wet crack, a deep thud you feel, and the saw teeth rasping
 export function chop(at: Vec3) {
   const p = oneShot(at, 1, 1);
-  noiseHit(p, { f: 900, vol: 0.9, len: 0.25, att: 0.001 });
-  tone(p, { f: 120, f2: 60, vol: 0.6, len: 0.2 });
+  noiseHit(p, { f: 900, vol: 1, len: 0.25, att: 0.001 });
+  noiseHit(p, { f: 2400, type: "bandpass", q: 1.5, vol: 0.5, len: 0.12, att: 0.001 });
+  noiseHit(p, { t: 0.03, f: 4200, type: "bandpass", q: 6, vol: 0.18, len: 0.18 });
+  tone(out, { f: 95, f2: 38, vol: 1, len: 0.32, att: 0.002 }); // the thud is in your hands, not out there
 }
 export function roar(at: Vec3) {
   const p = oneShot(at, 3, 0.6, 3000);

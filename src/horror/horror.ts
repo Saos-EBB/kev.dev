@@ -35,6 +35,7 @@ const MARKUP = `
   <div class="hud" id="whisper"></div>
   <div class="hud" id="red"></div>
   <div class="hud" id="vig"></div>
+  <canvas class="hud" id="gore"></canvas>
   <canvas class="hud" id="splat" hidden></canvas>
   <div class="hud" id="cut" hidden></div>
   <div id="touch" aria-hidden="true"></div>
@@ -557,7 +558,7 @@ function mount() {
   const keys: Record<string, boolean> = {};
   const crumbs = [pos.clone()]; // your path, every 30 cm; the thing walks it behind you
   const S = { active: false, hidden: false, outSince: 0, reveal: 0, revealCD: 0, back: 0, lookCD: 0, nextBreath: 0, nextHeart: 0, nextWhisper: 0, flickUntil: 0 };
-  let shake = 0, fallen = 0; // fallen: how far the camera has sunk in the ending
+  let shake = 0, fallen = 0, fovKick = 0; // fallen: how far the camera has sunk in the ending
   let flick = 1, nextFlick = 4, blackUntil = 0, scareT = -1, stepPhase = 0, lastStep = 0, now = 0, nextSlam = 30, behindIdx = 0;
   const yawHist: [number, number][] = [];
 
@@ -733,6 +734,22 @@ function mount() {
     if (cineT > 1.9 && cineT - dt <= 1.9) splatter();
     if (cineT > 2.8 && cineT - dt <= 2.8) { sfx.shotgun(); $("cut").hidden = false; }
     if (cineT > 4.6 && phase !== "end") { phase = "end"; finish(); }
+  }
+  // a bat hit: a few drops on the lens, near the side the blood came from, fading out
+  function goreOnLens(n: number) {
+    const cv = $("gore") as HTMLCanvasElement;
+    if (cv.width !== innerWidth || cv.height !== innerHeight) { cv.width = innerWidth; cv.height = innerHeight; }
+    const g = cv.getContext("2d")!, W = cv.width, H = cv.height;
+    g.clearRect(0, 0, W, H);
+    for (let i = 0; i < n; i++) {
+      const x = W * (0.05 + Math.random() * 0.35), y = H * (0.15 + Math.random() * 0.7), r = 8 + Math.random() * Math.min(W, H) * 0.05;
+      g.fillStyle = `rgba(${110 + Math.random() * 40},0,0,0.9)`;
+      g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+      for (let k = 0; k < 10; k++) { const a = Math.random() * 7, d = r * (1 + Math.random() * 1.6); g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, 1 + Math.random() * 3, 0, 7); g.fill(); }
+      if (Math.random() < 0.5) g.fillRect(x - 1.5, y, 3, r * (1 + Math.random() * 3)); // runs down
+    }
+    cv.getAnimations().forEach((a) => a.cancel());
+    cv.animate([{ opacity: 1 }, { opacity: 1, offset: 0.4 }, { opacity: 0 }], { duration: 1400, easing: "ease-in", fill: "forwards" });
   }
   // blood on the lens: blobs, spray, drips, drawn once onto a canvas over the view
   function splatter() {
@@ -913,6 +930,13 @@ function mount() {
   const combat = createCombat({
     scene, camera, solidAt, floorAt, steer, clearLine,
     onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.05); },
+    // a bat hit you can feel: the world stops for a beat, the view jolts, blood on the lens
+    onImpact: (head, kill) => {
+      hitstopUntil = performance.now() + (kill ? 110 : 70);
+      shake = Math.max(shake, head ? 0.16 : 0.1);
+      fovKick = head ? 7 : 4;
+      goreOnLens(head ? 6 : 3);
+    },
     onHurt: (d) => {
       if (ended) return;
       health = Math.max(0, health - d);
@@ -1158,7 +1182,11 @@ function mount() {
 
   function render(dt: number) {
     camera.position.set(pos.x + (Math.random() - 0.5) * shake, floorAt(pos.x, pos.z) + EYE - fallen + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
-    camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006, "YXZ");
+    camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006 + combat.swingLean() * 0.05, "YXZ"); // lean into the swing
+    // FOV punch on a hit, settles back fast
+    fovKick *= 0.82;
+    const fov = 72 - fovKick;
+    if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); }
     camera.updateMatrixWorld();
     pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(pv); // what you can see this frame (stalker + figures)
@@ -1184,11 +1212,12 @@ function mount() {
     }
   }
 
-  let last = performance.now(), drewPaused = false;
+  let last = performance.now(), drewPaused = false, hitstopUntil = 0;
   function frame(t: number) {
     requestAnimationFrame(frame);
     const raw = (t - last) / 1000, dt = Math.min(0.05, raw);
     last = t;
+    if (running && !paused && t < hitstopUntil) { render(0); return; } // hit-stop: everything holds still for a beat
     if (running && !paused) { update(dt); adapt(raw); drewPaused = false; }
     else if (paused) { if (drewPaused) return; drewPaused = true; } // paused: one frame, then idle
     render(dt);
