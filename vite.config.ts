@@ -32,6 +32,7 @@ export default defineConfig({
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
         lab: root("saosebb43/index.html"),
+        horror: root("saos.html"),
       },
     },
   },

@@ -1,0 +1,164 @@
+// Hinter dir — every sound is synthesized with WebAudio (no files).
+// Two HRTF panners give direction: `it` sits where the thing behind you
+// is, `ear` sits right behind your head (whispers).
+
+export type Vec3 = { x: number; y: number; z: number };
+
+let ctx: AudioContext;
+let out: GainNode;
+let noise: AudioBuffer;
+export let it: PannerNode;
+export let ear: PannerNode;
+export const ready = () => ctx !== undefined;
+
+export function init() {
+  ctx = new AudioContext();
+  const comp = ctx.createDynamicsCompressor();
+  comp.connect(ctx.destination);
+  out = ctx.createGain();
+  out.gain.value = 0.9;
+  out.connect(comp);
+
+  noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const d = noise.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+
+  // drone: brown noise through a slowly breathing lowpass + three low sines
+  const brown = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+  const b = brown.getChannelData(0);
+  let l = 0;
+  for (let i = 0; i < b.length; i++) { l = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02; b[i] = l * 3.5; }
+  const drone = ctx.createGain();
+  drone.gain.value = 0.5;
+  drone.connect(out);
+  const bs = ctx.createBufferSource();
+  bs.buffer = brown; bs.loop = true;
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass"; lp.frequency.value = 220;
+  const lfo = ctx.createOscillator(), lg = ctx.createGain();
+  lfo.frequency.value = 0.07; lg.gain.value = 120;
+  lfo.connect(lg).connect(lp.frequency); lfo.start();
+  bs.connect(lp).connect(drone); bs.start();
+  [43, 64.7, 91.2].forEach((f, i) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = f; g.gain.value = [0.06, 0.035, 0.015][i];
+    o.connect(g).connect(drone); o.start();
+  });
+
+  it = panner(1.2, 1.1);
+  ear = panner(0.5, 1);
+}
+
+function panner(refDistance: number, rolloffFactor: number) {
+  const p = new PannerNode(ctx, { panningModel: "HRTF", distanceModel: "inverse", refDistance, rolloffFactor });
+  p.connect(out);
+  return p;
+}
+
+export function setPos(p: PannerNode, v: Vec3) {
+  p.positionX.value = v.x; p.positionY.value = v.y; p.positionZ.value = v.z;
+}
+
+export function setListener(pos: Vec3, fwd: Vec3) {
+  const L = ctx.listener;
+  if (L.positionX) {
+    L.positionX.value = pos.x; L.positionY.value = pos.y; L.positionZ.value = pos.z;
+    L.forwardX.value = fwd.x; L.forwardY.value = fwd.y; L.forwardZ.value = fwd.z;
+    L.upX.value = 0; L.upY.value = 1; L.upZ.value = 0;
+  } else {
+    // Firefox: no AudioParams on the listener
+    L.setPosition(pos.x, pos.y, pos.z);
+    L.setOrientation(fwd.x, fwd.y, fwd.z, 0, 1, 0);
+  }
+}
+
+type HitOpts = { t?: number; f?: number; type?: BiquadFilterType; q?: number; vol?: number; len?: number; att?: number };
+function noiseHit(dest: AudioNode, { t = 0, f = 600, type = "lowpass", q = 1, vol = 0.3, len = 0.14, att = 0.006 }: HitOpts = {}) {
+  const t0 = ctx.currentTime + t, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = noise; fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + att); g.gain.exponentialRampToValueAtTime(0.0005, t0 + len);
+  s.connect(fl).connect(g).connect(dest); s.start(t0, Math.random()); s.stop(t0 + len + 0.05);
+}
+
+type ToneOpts = { t?: number; f?: number; f2?: number; type?: OscillatorType; vol?: number; len?: number; att?: number };
+function tone(dest: AudioNode, { t = 0, f = 60, f2, type = "sine", vol = 0.5, len = 0.4, att = 0.005 }: ToneOpts = {}) {
+  const t0 = ctx.currentTime + t, o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + len);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + att); g.gain.exponentialRampToValueAtTime(0.0005, t0 + len);
+  o.connect(g).connect(dest); o.start(t0); o.stop(t0 + len + 0.05);
+}
+
+export function step(dest: AudioNode = out, vol = 0.22, t = 0) {
+  noiseHit(dest, { t, f: 420 + Math.random() * 260, vol, len: 0.12 });
+  noiseHit(dest, { t: t + 0.02, f: 2200, type: "bandpass", q: 2, vol: vol * 0.25, len: 0.05 });
+}
+
+function thump() {
+  tone(out, { f: 70, f2: 28, vol: 0.9, len: 0.7 });
+  noiseHit(out, { f: 180, vol: 0.6, len: 0.5 });
+}
+
+export function sting() {
+  [1760, 1847, 2489, 2637].forEach((f, i) => tone(out, { f, vol: 0.07, len: 1.1 + i * 0.1, att: 0.01, type: "triangle" }));
+  thump();
+}
+
+export function scream() {
+  const t = ctx.currentTime, ws = ctx.createWaveShaper(), g = ctx.createGain(), curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) curve[i] = Math.tanh((i / 512 - 1) * 6);
+  ws.curve = curve;
+  ws.connect(g).connect(out);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.55, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 1.7);
+  for (const f of [430, 517, 611, 902]) {
+    const o = ctx.createOscillator(), v = ctx.createOscillator(), vg = ctx.createGain();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.7, t + 0.2); o.frequency.exponentialRampToValueAtTime(f * 0.6, t + 1.6);
+    v.frequency.value = 23 + Math.random() * 20; vg.gain.value = f * 0.06;
+    v.connect(vg).connect(o.frequency);
+    o.connect(ws); o.start(t); v.start(t); o.stop(t + 1.7); v.stop(t + 1.7);
+  }
+  noiseHit(ws, { f: 1800, type: "highpass", vol: 0.8, len: 1.4 });
+  thump();
+}
+
+export function whisper(dest: AudioNode = ear, len = 2) {
+  const t = ctx.currentTime, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = noise; s.loop = true;
+  f.type = "bandpass"; f.frequency.value = 2600; f.Q.value = 3;
+  g.gain.setValueAtTime(0, t);
+  for (let k = 0; k < len; k += 0.07) g.gain.setValueAtTime(Math.random() < 0.35 ? 0 : 0.5 + Math.random() * 0.6, t + k);
+  g.gain.linearRampToValueAtTime(0, t + len);
+  s.connect(f).connect(g).connect(dest); s.start(t); s.stop(t + len + 0.1);
+}
+
+export function breath() {
+  noiseHit(it, { f: 700, type: "bandpass", q: 0.8, vol: 0.5, len: 1.1, att: 0.5 });
+  noiseHit(it, { t: 1.3, f: 500, type: "bandpass", q: 0.8, vol: 0.4, len: 1.3, att: 0.2 });
+}
+
+export function heart(v: number) {
+  tone(out, { f: 52, f2: 40, vol: 0.5 * v, len: 0.25 });
+  tone(out, { t: 0.2, f: 48, f2: 38, vol: 0.35 * v, len: 0.25 });
+}
+
+export function crack() {
+  noiseHit(out, { f: 900, type: "highpass", vol: 0.5, len: 0.3 });
+  noiseHit(out, { t: 0.05, f: 300, vol: 0.4, len: 0.2 });
+}
+
+// a door slams somewhere far behind you
+export function slam(at: Vec3) {
+  const p = new PannerNode(ctx, { panningModel: "HRTF", distanceModel: "inverse", refDistance: 2, rolloffFactor: 0.6 });
+  setPos(p, at);
+  p.connect(out);
+  tone(p, { f: 90, f2: 35, vol: 0.9, len: 0.6 });
+  noiseHit(p, { f: 500, vol: 0.9, len: 0.5, att: 0.002 });
+  noiseHit(p, { t: 0.08, f: 3000, type: "bandpass", q: 4, vol: 0.15, len: 0.35 });
+  setTimeout(() => p.disconnect(), 1500);
+}
+
+export function door() {
+  tone(out, { f: 38, f2: 30, type: "sawtooth", vol: 0.25, len: 2.5, att: 0.3 });
+  noiseHit(out, { f: 250, vol: 0.4, len: 2.2, att: 0.4 });
+}

@@ -9,7 +9,8 @@ kev.dev itself is "All rights reserved" (see `LICENSE`). The parts below are
 |---|---|
 | `@mediapipe/tasks-vision` (incl. the wasm files it ships) | Apache-2.0, © Google LLC |
 | `gsap` | GSAP Standard "No Charge" License, © GreenSock / Webflow |
-| `lenis`, `react`, `react-dom`, `zustand`, `lucide-react`, `leo-profanity` | MIT |
+| `lenis`, `react`, `react-dom`, `zustand`, `lucide-react`, `leo-profanity`, `three` | MIT |
+| `@fontsource/caveat-brush` | OFL-1.1 (font) / MIT (package) |
 | `@fontsource-variable/jetbrains-mono` | OFL-1.1 (font) / MIT (package) |
 
 Full license texts ship with each package in `node_modules/<package>/`.
@@ -27,6 +28,15 @@ Full license texts ship with each package in `node_modules/<package>/`.
   Pochita is a fan model of a character from *Chainsaw Man*
   (© Tatsuki Fujimoto / Shueisha); the character itself belongs to its
   rights holders.
+
+- `public/horror/head.glb` (hidden page `/saos#dev#horror`): "Lee Perry-Smith"
+  3D head scan by Infinite-Realities, CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0/), based on a work at
+  www.triplegangers.com; taken from the three.js examples. Material
+  replaced in code.
+- `public/horror/face.glb` (same page): `facecap.glb` from the three.js
+  examples, model by Face Cap (https://www.bannaflak.com/face-cap). The
+  three.js example states no separate license for it.
 
 ## Fonts
 
