@@ -345,6 +345,13 @@ export function createCombat(w: CombatWorld) {
     p.y = w.floorAt(p.x, p.z);
   }
 
+  // dev shortcut: hand over a weapon without the pickup
+  function grant(kind: "shotgun" | "bat") {
+    have[kind] = true;
+    if (kind === "shotgun") ammo = Math.max(ammo, 30);
+    weapon = kind;
+  }
+
   function select(next: "shotgun" | "bat") { if (have[next] && weapon !== next) { weapon = next; cooldown = 0.25; swingT = -1; } }
 
   /* ---------- per frame ---------- */
@@ -458,7 +465,7 @@ export function createCombat(w: CombatWorld) {
 
   const boss = () => zombies.find((z) => z.kind === "boss");
   return {
-    fire, spawn, addPickup, update, select, mirrorZombie, viewScene, ready,
+    fire, spawn, addPickup, update, select, grant, mirrorZombie, viewScene, ready,
     get weapon() { return weapon; },
     get has() { return have; },
     get ammo() { return ammo; },
