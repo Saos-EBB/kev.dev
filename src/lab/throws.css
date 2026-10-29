@@ -1,0 +1,100 @@
+/* Thrown objects — a fixed full-viewport layer that things fly through
+   (src/lab/throws.ts). Used by the Motion Lab and the main page. Studied
+   from wodniack.dev: CSS-3D objects posed only via custom properties, and
+   a "vanish" dissolve: a 30-frame sprite mask stepped with steps(). */
+
+/* ---- 1. 3D objects ------------------------------------------------ */
+
+.ml-scene {
+  position: fixed;
+  inset: 0;
+  z-index: var(--throws-z, 1);
+  overflow: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* Every pose value is a custom property; throws.ts writes only
+   these, the transform itself lives here. */
+.ml-obj {
+  --x: 0;
+  --y: 0;
+  --z: -20000;
+  --rx: 0;
+  --ry: 0;
+  --w: 7.5rem;
+  --h: 7.5rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--w);
+  height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+  transform-style: preserve-3d;
+  transform: translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), calc(var(--z) * 1px))
+    rotateX(calc(var(--rx) * 1deg)) rotateY(calc(var(--ry) * 1deg));
+  cursor: grab;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.ml-obj.is-dragging {
+  cursor: grabbing;
+}
+
+/* One flat hairline layer of an object (throwables.ts sets its size and
+   its own transform inline). Filled slices stack into a body; wire
+   slices (rings) stay see-through. */
+.ml-slice {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  overflow: visible;
+  fill: color-mix(in srgb, var(--color-bg) 60%, transparent);
+  stroke: var(--color-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ml-slice * {
+  vector-effect: non-scaling-stroke;
+}
+
+.ml-slice.is-wire {
+  fill: none;
+}
+
+/* A mask flattens 3D, so while vanishing the object drops to one flat
+   box (its slices hide) that carries the stripe fill — the original
+   hides its sides the same way. */
+.ml-obj.is-vanishing {
+  transform-style: flat;
+  pointer-events: none;
+}
+
+/* --vanish-sprite is a data: URL throws.ts paints once (30 frames
+   side by side). 3000% = 30 frames wide; steps(29) lands exactly on each
+   frame from 0% to 100%. The element's own look is swapped for the
+   hairline-stripe fill so the dissolve reads as the grid eating it. */
+.is-vanishing {
+  --strip: 1px;
+  --gap: 12px;
+  background:
+    linear-gradient(90deg, var(--color-line) var(--strip), transparent var(--strip)) center / calc(var(--strip) + var(--gap)) 100%,
+    linear-gradient(0deg, var(--color-line) var(--strip), transparent var(--strip)) center / 100% calc(var(--strip) + var(--gap)),
+    var(--color-bg);
+  -webkit-mask: var(--vanish-sprite) left / 3000% 100%;
+  mask: var(--vanish-sprite) left / 3000% 100%;
+  animation: ml-vanish 0.75s steps(29, end) both;
+}
+
+.ml-obj.is-vanishing .ml-slice {
+  visibility: hidden;
+}
+
+@keyframes ml-vanish {
+  from { -webkit-mask-position: left 0; mask-position: left 0; }
+  to { -webkit-mask-position: right 0; mask-position: right 0; }
+}

@@ -697,6 +697,30 @@ function maybeStart() {
   // Give ScrollTrigger one frame to complete layout measurements before
   // Lenis starts processing scroll events (prevents stutter from stale pins).
   requestAnimationFrame(() => lenis.start());
+  startThrowLayer();
+}
+
+// Thrown objects (src/lab/throws.ts, from the Motion Lab): a fixed layer
+// over the whole viewport, so a throw is always in view wherever the page
+// is scrolled. Above the header (150), below sheets/overlays (180+).
+// Loaded only once the page is running. Sound unlocks on the visitor's
+// first click/tap/key — browsers allow audio only after a gesture.
+function startThrowLayer() {
+  import("./lab/throws").then(({ startThrows }) => {
+    const layer = document.createElement("div");
+    layer.className = "ml-scene";
+    layer.setAttribute("aria-hidden", "true");
+    layer.style.setProperty("--throws-z", "160");
+    document.body.appendChild(layer);
+    startThrows(layer, 3);
+  });
+  const unlock = () => {
+    import("./lab/sound").then((sound) => sound.unlock());
+    window.removeEventListener("pointerdown", unlock);
+    window.removeEventListener("keydown", unlock);
+  };
+  window.addEventListener("pointerdown", unlock);
+  window.addEventListener("keydown", unlock);
 }
 
 // Gate A — window.load
