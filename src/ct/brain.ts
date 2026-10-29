@@ -76,8 +76,10 @@ async function loadData(pointsScale: number): Promise<BrainData> {
 export async function createBrain(opts: { pointsScale?: number } = {}): Promise<Brain> {
   const data = await loadData(opts.pointsScale ?? 1);
   const group = new THREE.Group();
-  group.scale.setScalar(0.95);
-  group.position.set(0, -0.02, 0);
+  // Fitted into craniumCut01's vault (side view against the skull dots):
+  // back to the occiput, a little taller, frontal lobe behind the forehead.
+  group.scale.set(0.92, 1.012, 0.92);
+  group.position.set(0, -0.02, -0.2);
 
   // Current and target colours per part, linear RGB + alpha (alpha 0 = hidden).
   const cur = PARTS.map((p, i) => {

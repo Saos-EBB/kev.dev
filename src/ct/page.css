@@ -77,23 +77,58 @@ html {
   width: min(46vw, 680px);
   aspect-ratio: 1.3;
   pointer-events: none;
-  transform-origin: 100% 0;
-  transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+  transform-origin: 50% 50%; /* page.ts glides it: translate + scale */
 }
 
 .ct-skull:not(.is-ready) {
   visibility: hidden;
 }
 
+/* The canvas overhangs the box by 20 % each side, so the saw blades can
+   fly in from outside it (the camera steps back by as much). */
 .ct-skull canvas {
+  position: absolute;
+  inset: -20%;
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 140%;
+  height: 140%;
 }
 
-/* Atlas: the skull comes forward a little (mockup: 760 px wide there). */
-.ct-skull.is-atlas {
-  transform: translateY(80px) scale(1.12);
+/* The finale's link shards: a layer page.ts keeps exactly over the
+   canvas; saw.ts places each link in % and shows it once its blade hit.
+   Above the text, so they can be clicked. */
+.ct-links {
+  position: fixed;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ct-links a {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  visibility: hidden;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid #ff2a3d;
+  box-shadow: 0 0 26px #ff2a3d88;
+  color: #ff2a3d !important;
+  will-change: transform;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.ct-links a:hover,
+.ct-links a:focus-visible {
+  color: var(--hot) !important;
+  border-color: var(--hot);
+}
+
+.ct-links.no-skull {
+  display: none;
 }
 
 .ct-pointers {
@@ -270,8 +305,14 @@ main,
   color: var(--bg) !important;
 }
 
+.ct-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0 0;
+}
+
 .ct-button--hot {
-  margin-top: 22px;
   padding: 14px 22px;
   font-size: 15px;
   border: 1px solid var(--hot);
@@ -397,6 +438,49 @@ main,
   color: var(--blue);
 }
 
+/* The project's own text from the main page. */
+.ct-report {
+  margin-top: 28px;
+}
+
+.ct-report-h {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--hot);
+}
+
+.ct-report p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #c9d0d8;
+}
+
+.ct-report .ct-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.ct-tags span {
+  padding: 3px 9px;
+  border: 1px solid #ffffff26;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.ct-report .ct-meta {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
 /* ── atlas ────────────────────────────────────────────────────────── */
 
 .ct-atlas {
@@ -451,12 +535,21 @@ main,
   color: var(--muted);
 }
 
+.ct-atlas-claim {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b4bcc6;
+}
+
 /* ── anamnesis ────────────────────────────────────────────────────── */
 
+/* One column, left: the skull turns back to face you on the right. */
 .ct-anamnesis {
   display: grid;
-  grid-template-columns: minmax(240px, 420px) 1fr;
-  gap: 48px;
+  gap: 32px;
+  width: var(--col);
   margin-top: 140px;
   padding: 0 var(--pad);
 }
@@ -503,17 +596,20 @@ main,
 
 /* ── contact ──────────────────────────────────────────────────────── */
 
+/* Tall enough that it reaches the reading line: the skull comes to the
+   middle on the right and the blades fly (page.ts, saw.ts). */
 .ct-contact {
   position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
   margin-top: 140px;
-  min-height: 752px;
-  padding: 0 var(--pad) 80px;
+  padding: 0 var(--pad);
+  box-sizing: border-box;
 }
 
 .ct-contact-text {
-  position: relative;
   width: min(620px, 50vw);
-  padding-top: 120px;
 }
 
 .ct-contact .ct-eyebrow {
@@ -532,58 +628,6 @@ main,
 
 .ct-mail:hover {
   color: var(--hot);
-}
-
-.ct-stage {
-  position: absolute;
-  right: var(--pad);
-  top: 0;
-  width: min(640px, 46vw);
-  aspect-ratio: 1;
-}
-
-.ct-stage canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* The links are shards: saw-scene.ts places each one and shows it once
-   its blade has hit. Without the scene (no WebGL): a plain row. */
-.ct-stage a {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  visibility: hidden;
-  display: grid;
-  place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid #ff2a3d;
-  box-shadow: 0 0 26px #ff2a3d88;
-  color: #ff2a3d !important;
-  will-change: transform;
-  transition: color var(--transition-hover), border-color var(--transition-hover);
-}
-
-.ct-stage a:hover,
-.ct-stage a:focus-visible {
-  color: var(--hot) !important;
-  border-color: var(--hot);
-}
-
-.ct-stage.no-skull {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: center;
-}
-
-.ct-stage.no-skull a {
-  position: static;
-  visibility: visible;
 }
 
 /* ── footer ───────────────────────────────────────────────────────── */
@@ -619,8 +663,6 @@ main,
     top: 58px;
     right: 4px;
     width: 46vw;
-    transition: none;
-    transform-origin: 50% 0;
   }
 
   .ct-header {
@@ -793,40 +835,20 @@ main,
     font-size: 16px;
   }
 
-  /* Heading, then the skull with its shards, then the address. */
+  /* Text on top, the skull comes to the middle below it. */
   .ct-contact {
     margin-top: 72px;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 24px;
   }
 
   .ct-contact-text {
-    display: contents;
+    width: auto;
   }
 
-  .ct-contact .ct-title {
-    order: 1;
-  }
-
-  .ct-contact .ct-stage {
-    order: 2;
-  }
-
-  .ct-contact .ct-mail {
-    order: 3;
-  }
-
-  .ct-stage {
-    position: relative;
-    right: auto;
-    width: 100%;
-    margin-top: 16px;
-  }
-
-  .ct-stage a {
-    width: 64px;
-    height: 64px;
+  .ct-links a {
+    width: 60px;
+    height: 60px;
   }
 
   .ct-mail {
@@ -838,11 +860,6 @@ main,
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ct-skull {
-    transition: none;
-  }
-}
 
 /* Thrown objects (src/lab/throws.ts): green outlines, as before. */
 .ct-body .ml-slice {

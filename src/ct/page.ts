@@ -6,10 +6,11 @@
 //  - each finding: its brain region lights up, a pointer runs to the text
 //    (phones: a ring on the region instead)
 //  - atlas: the eight small projects' regions in colour, one line each
-//  - anamnesis: back to the front, fading out
-//  - contact: its own scene (saw-scene.ts) — skull rises, three saw blades,
-//    the shards that hang in the air are the links.
-// German only, like the mockup.
+//  - anamnesis: it turns back to face you
+//  - contact: it moves to the middle and three saw blades hit it
+//    (saw.ts); the shards that hang in the air are the links.
+// One skull for the whole page. Copy from the mockup, the project texts
+// from the main page's projects-data.ts. German, like the mockup.
 import "@fontsource-variable/jetbrains-mono";
 import "../lab/throws.css";
 import "./page.css";
@@ -17,6 +18,8 @@ import gsap from "gsap";
 import Lenis from "lenis";
 import { startThrowLayer } from "../lab/throw-layer";
 import { pauseThrows } from "../lab/throws";
+import { projectCards } from "../projects/projects-data";
+import { esc } from "../projects/project-cards";
 import type { Part } from "./brain-build";
 import type { CtScene, Pose } from "./ct-scene";
 
@@ -26,6 +29,9 @@ document.title = "Kevin Schaberl — Kopf-CT";
 const PHONE = matchMedia("(max-width: 900px)").matches;
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const HOT = "#ffe08a";
+
+// The main page's project texts (projects-data.ts), by id.
+const CARD = new Map(projectCards.map((c) => [c.id, c]));
 
 type Finding = {
   id: string; no: string; region: string; sub: string; title: string; lead: string;
@@ -70,15 +76,15 @@ const FINDINGS: Finding[] = [
 
 // Ordered by where their regions sit on screen, top to bottom, so no two
 // pointer lines cross.
-const ATLAS: { part: Part; label: string; name: string; sub: string; color: string }[] = [
-  { part: "motor", label: "Motorcortex", name: "Oskalizer", sub: "Tastatur-Spielplatz", color: "#57ff8f" },
-  { part: "parietal", label: "Parietallappen", name: "kev.dev", sub: "Aufzug, Stoff, Würfe", color: "#57b9ff" },
-  { part: "thalamus", label: "Thalamus", name: "ReleaseWatcher", sub: "CLI + Web-UI", color: "#ffffff" },
-  { part: "accumbens", label: "Belohnungssystem", name: "Shop", sub: "Shop-Modul für YourBrand", color: "#ffd400" },
-  { part: "temporal", label: "Schläfenlappen", name: "AniScript", sub: "Userscript", color: "#ff5fc8" },
-  { part: "hippocampus", label: "Hippocampus", name: "Grundlagen", sub: "Bootcamp · Java", color: "#7fe6ff" },
-  { part: "cerebellum", label: "Kleinhirn", name: "Loadtest", sub: "C++17-Lastgenerator ohne Libraries", color: "#ffd400" },
-  { part: "fusiform", label: "Gyrus fusiformis", name: "FaceDots", sub: "Foto zu Punkten", color: "#ff8a3d" },
+const ATLAS: { id: string; part: Part; label: string; name: string; sub: string; color: string }[] = [
+  { id: "oskalizer", part: "motor", label: "Motorcortex", name: "Oskalizer", sub: "Tastatur-Spielplatz", color: "#57ff8f" },
+  { id: "kevdev", part: "parietal", label: "Parietallappen", name: "kev.dev", sub: "Aufzug, Stoff, Würfe", color: "#57b9ff" },
+  { id: "releasewatcher", part: "thalamus", label: "Thalamus", name: "ReleaseWatcher", sub: "CLI + Web-UI", color: "#ffffff" },
+  { id: "shop", part: "accumbens", label: "Belohnungssystem", name: "Shop", sub: "Shop-Modul für YourBrand", color: "#ffd400" },
+  { id: "aniscript", part: "temporal", label: "Schläfenlappen", name: "AniScript", sub: "Userscript", color: "#ff5fc8" },
+  { id: "grundlagen", part: "hippocampus", label: "Hippocampus", name: "Grundlagen", sub: "Bootcamp · Java", color: "#7fe6ff" },
+  { id: "loadtest", part: "cerebellum", label: "Kleinhirn", name: "Loadtest", sub: "C++17-Lastgenerator ohne Libraries", color: "#ffd400" },
+  { id: "facedots", part: "fusiform", label: "Gyrus fusiformis", name: "FaceDots", sub: "Foto zu Punkten", color: "#ff8a3d" },
 ];
 
 const ICON = {
@@ -97,15 +103,42 @@ const finding = (f: Finding) => `
       <p class="ct-lead">${f.lead}</p>
       <dl class="ct-stats">${f.stats.map(([v, l], i) => `<div><dd${i === 0 ? ' class="is-red"' : ""}>${v}</dd><dt>${l}</dt></div>`).join("")}</dl>
       <ul class="ct-points">${f.points.map((p) => `<li>${p}</li>`).join("")}</ul>
-      <a class="ct-button ct-button--hot" href="${f.href}">Befund öffnen →</a>
+      ${report(f.id)}
+      <p class="ct-links-row">
+        <a class="ct-button ct-button--hot" href="${f.href}">Befund öffnen →</a>
+        ${repo(f.id)}
+      </p>
     </article>
   </section>`;
+
+// The project's own text from the main page: what it is, stack, effort.
+function report(id: string) {
+  const c = CARD.get(id);
+  if (!c) return "";
+  return `
+      <div class="ct-report">
+        <h3 class="ct-report-h">Befundbericht</h3>
+        ${c.what ? `<p>${esc(c.what)}</p>` : ""}
+        ${c.tags?.length ? `<p class="ct-tags">${c.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>` : ""}
+        ${c.meta ? `<p class="ct-meta">${esc(c.meta)}</p>` : ""}
+      </div>`;
+}
+
+function repo(id: string) {
+  const l = CARD.get(id)?.links?.find((x) => x.href?.includes("github.com"));
+  return l ? `<a class="ct-button ct-button--ghost" href="${l.href}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>` : "";
+}
 
 document.body.className = "ct-body";
 document.body.innerHTML = `
   <a class="ct-skip" href="#befunde">Zu den Befunden</a>
   <div class="ct-skull" aria-hidden="true"><canvas></canvas></div>
   <svg class="ct-pointers" aria-hidden="true"></svg>
+  <div class="ct-links">
+    <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">${icon(ICON.github)}</a>
+    <a href="mailto:kevin.schaberl.work@gmail.com" aria-label="E-Mail">${icon(ICON.mail)}</a>
+    <a href="#kontakt" aria-label="Telefon">${icon(ICON.phone)}</a>
+  </div>
   <div class="ct-progress" aria-hidden="true"><div></div></div>
 
   <header class="ct-header">
@@ -142,7 +175,7 @@ document.body.innerHTML = `
         <li tabindex="0" data-part="${a.part}" style="--c: ${a.color}">
           <span class="ct-atlas-no">${i + 1}</span>
           <span class="ct-atlas-label">${a.label}</span>
-          <span><span class="ct-atlas-name">${a.name}</span><span class="ct-atlas-sub">${a.sub}</span></span>
+          <span><span class="ct-atlas-name">${a.name}</span><span class="ct-atlas-sub">${a.sub}</span>${CARD.get(a.id)?.claim ? `<span class="ct-atlas-claim">${esc(CARD.get(a.id)!.claim)}</span>` : ""}</span>
         </li>`).join("")}
       </ol>
     </section>
@@ -160,12 +193,6 @@ document.body.innerHTML = `
     </section>
 
     <section class="ct-contact" id="kontakt" data-ct="kontakt" aria-labelledby="h-kontakt">
-      <div class="ct-stage">
-        <canvas></canvas>
-        <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">${icon(ICON.github)}</a>
-        <a href="mailto:kevin.schaberl.work@gmail.com" aria-label="E-Mail">${icon(ICON.mail)}</a>
-        <a href="#kontakt" aria-label="Telefon">${icon(ICON.phone)}</a>
-      </div>
       <div class="ct-contact-text">
         ${PHONE ? "" : `<p class="ct-eyebrow ct-eyebrow--hot">Schädel kommt frontal zurück · drei Sägeblätter · die Splitter sind die Links</p>`}
         <h2 class="ct-display ct-title" id="h-kontakt">Zweit&shy;meinung?</h2>
@@ -219,6 +246,7 @@ const introPose = (t: number): Pose => ({
 
 const wrap = document.querySelector<HTMLElement>(".ct-skull")!;
 const svg = document.querySelector<SVGSVGElement>(".ct-pointers")!;
+const linkLayer = document.querySelector<HTMLElement>(".ct-links")!;
 const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-ct]"));
 const sectionOf = (id: string) => sections.find((s) => s.dataset.ct === id)!;
 const atlasRows = Array.from(document.querySelectorAll<HTMLElement>(".ct-atlas-list li"));
@@ -230,13 +258,44 @@ atlasRows.forEach((li) => {
   li.addEventListener("pointerleave", off); li.addEventListener("blur", off);
 });
 
+// Where the skull sits on screen: centre (px) and scale. It glides between
+// these with a damped follow, never jumps.
+type Place = { cx: number; cy: number; s: number };
+function targetPlace(active: string, y: number): Place {
+  const w = wrap.offsetWidth, h = wrap.offsetHeight;
+  const cs = getComputedStyle(wrap);
+  const corner = { cx: innerWidth - parseFloat(cs.right) - w / 2, cy: parseFloat(cs.top) + h / 2, s: 1 };
+  if (active === "kontakt") return PHONE ? { cx: innerWidth / 2, cy: innerHeight * 0.55, s: 2 } : { ...corner, cy: innerHeight * 0.5, s: 1.08 };
+  if (active === "atlas" && !PHONE) return { ...corner, cy: corner.cy + 80, s: 1.12 };
+  if (PHONE) {
+    // Big over the hero, shrinking into the corner as you scroll on.
+    const k = ease(y / (innerHeight * 0.6));
+    const s = 1.5 - 0.5 * k;
+    return { cx: innerWidth / 2 + (corner.cx - innerWidth / 2) * k, cy: parseFloat(cs.top) + (h * s) / 2, s };
+  }
+  return corner;
+}
+
 import("./ct-scene").then(async ({ createCtScene }) => {
-  const ct = await createCtScene(wrap.querySelector("canvas")!, { phone: PHONE, distance: PHONE ? 5.6 : 5.2 });
+  const ct = await createCtScene(wrap.querySelector("canvas")!, {
+    phone: PHONE,
+    // The canvas overhangs the box by 20 % each side (page.css) so blades
+    // can fly in; the camera steps back by as much, the skull keeps its size.
+    distance: (PHONE ? 5.6 : 5.2) * 1.4,
+    links: Array.from(linkLayer.querySelectorAll<HTMLElement>("a")),
+    onFirstHit: () => pauseThrows(true),
+    onReset: () => pauseThrows(false),
+  });
   wrap.classList.add("is-ready");
   let lastKey = "";
   let lastHi = "";
+  let place: Place | null = null;
+  let last = performance.now();
 
   gsap.ticker.add(() => {
+    const now = performance.now();
+    const dt = Math.min((now - last) / 1000, 0.1);
+    last = now;
     const y = window.scrollY, vh = innerHeight;
     const max = document.documentElement.scrollHeight - vh;
     progressBar.style.transform = `scaleY(${(max > 0 ? y / max : 0).toFixed(4)})`;
@@ -247,28 +306,36 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const befundeTop = sectionOf("befunde").offsetTop;
     const ana = sectionOf("anamnese");
 
-    // Pose: intro over the hero, back to the front over the anamnesis.
+    // Pose: intro over the hero, back to the front over the anamnesis —
+    // facing you when the contact arrives, for the saw blades.
     let pose = introPose(REDUCED ? 1 : y / Math.max(befundeTop - vh * 0.35, 1));
-    const back = ease((y + line - ana.offsetTop) / (ana.offsetHeight * 0.6));
+    const back = ease((y + line - ana.offsetTop) / (ana.offsetHeight * 0.8));
     if (back > 0) pose = introPose(1 - back);
     const f = FINDINGS.find((x) => x.id === active);
     if (f?.brain !== undefined && pose.brain > 0) pose = { ...pose, brain: f.brain };
-    // Fades while it turns back: the anamnesis is text only, the contact
-    // has its own skull.
-    const fade = 1 - back;
-    wrap.style.opacity = fade.toFixed(3);
-    wrap.classList.toggle("is-atlas", active === "atlas" && !PHONE);
-
-    // Phones: the skull starts big in the hero and shrinks into the corner.
-    if (PHONE) {
-      const k = ease(y / (vh * 0.6));
-      const w = wrap.offsetWidth;
-      const x = (innerWidth - w) / 2 * (1 - k);
-      wrap.style.transform = `translateX(${(-x).toFixed(1)}px) scale(${(1.5 - 0.5 * k).toFixed(3)})`;
-    }
-
     const key = `${pose.rotY.toFixed(4)} ${pose.cut?.toFixed(4)} ${pose.brain.toFixed(3)}`;
     if (key !== lastKey) { lastKey = key; ct.setPose(pose); }
+
+    // Place: glide towards where this section wants the skull.
+    const t = targetPlace(active, y);
+    if (!place || REDUCED) place = t;
+    else {
+      const k = 1 - Math.exp(-dt * 5);
+      place = { cx: place.cx + (t.cx - place.cx) * k, cy: place.cy + (t.cy - place.cy) * k, s: place.s + (t.s - place.s) * k };
+    }
+    const bx = innerWidth - parseFloat(getComputedStyle(wrap).right) - wrap.offsetWidth / 2;
+    const by = parseFloat(getComputedStyle(wrap).top) + wrap.offsetHeight / 2;
+    wrap.style.transform = `translate(${(place.cx - bx).toFixed(1)}px, ${(place.cy - by).toFixed(1)}px) scale(${place.s.toFixed(4)})`;
+
+    // The links' layer lies exactly over the canvas.
+    const cr = wrap.querySelector("canvas")!.getBoundingClientRect();
+    Object.assign(linkLayer.style, { left: `${cr.left}px`, top: `${cr.top}px`, width: `${cr.width}px`, height: `${cr.height}px` });
+
+    // Saw blades once the skull faces you in the contact; back up: reset.
+    if (ct.saw) {
+      if (active === "kontakt" && back >= 1 && !ct.saw.running) { REDUCED ? ct.saw.finish() : ct.saw.start(); ct.requestRender(); }
+      else if (active !== "kontakt" && ct.saw.running) { ct.saw.reset(); ct.requestRender(); }
+    }
 
     // Highlight.
     let parts: Part[] = [];
@@ -280,12 +347,12 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const hi = parts.join() + (colors ? "c" : "");
     if (hi !== lastHi) { lastHi = hi; ct.setHighlight(parts, colors); }
 
-    drawPointers(ct, active, fade);
+    drawPointers(ct, active);
   });
-}).catch(() => wrap.remove()); // no WebGL: the page without the skull
+}).catch(() => { wrap.remove(); linkLayer.classList.add("no-skull"); }); // no WebGL: plain links
 
 // Pointer lines (desktop) or rings (phones) from the regions to the text.
-function drawPointers(ct: CtScene, active: string, fade: number) {
+function drawPointers(ct: CtScene, active: string) {
   const items: { part: Part; color: string; from?: HTMLElement; no?: number; dashed?: boolean }[] = [];
   const f = FINDINGS.find((x) => x.id === active);
   if (f) {
@@ -297,8 +364,8 @@ function drawPointers(ct: CtScene, active: string, fade: number) {
   const sec = sectionOf(active === "hero" ? "befunde" : active);
   const r = sec.getBoundingClientRect(), vh = innerHeight;
   // Fade in once the section is well on screen, out as it leaves.
-  const vis = Math.min(ease((vh * 0.75 - r.top) / (vh * 0.25)), ease((r.bottom - vh * 0.25) / (vh * 0.25))) * fade;
-  if (!items.length || vis <= 0.01 || wrap.style.display === "none") { if (svg.childElementCount) svg.replaceChildren(); return; }
+  const vis = Math.min(ease((vh * 0.75 - r.top) / (vh * 0.25)), ease((r.bottom - vh * 0.25) / (vh * 0.25)));
+  if (!items.length || vis <= 0.01) { if (svg.childElementCount) svg.replaceChildren(); return; }
 
   const canvas = wrap.querySelector("canvas")!;
   const cr = canvas.getBoundingClientRect();
@@ -323,34 +390,5 @@ function drawPointers(ct: CtScene, active: string, fade: number) {
   svg.style.opacity = vis.toFixed(3);
   svg.innerHTML = out;
 }
-
-// ── contact: skull rises, three blades, the shards are the links ────────
-const stage = document.querySelector<HTMLElement>(".ct-stage")!;
-const links = Array.from(stage.querySelectorAll<HTMLElement>("a"));
-const rise = { v: 0 };
-let riseTween: gsap.core.Tween | null = null;
-const loadIo = new IntersectionObserver(([e]) => {
-  if (!e.isIntersecting) return;
-  loadIo.disconnect();
-  import("./saw-scene").then(({ createSkullScene }) =>
-    createSkullScene(stage, stage.querySelector("canvas")!, links, {
-      onFirstHit: () => pauseThrows(true),
-      onReset: () => pauseThrows(false),
-    }),
-  ).then((scene) => {
-    if (REDUCED) { scene.finish(); return; }
-    // Up once the stage is half on screen; scrolled back above: reset.
-    new IntersectionObserver(([e]) => {
-      riseTween?.kill();
-      if (e.isIntersecting) {
-        riseTween = gsap.to(rise, { v: 1, duration: 1.3 * (1 - rise.v), ease: "none", onUpdate: () => scene.setRise(rise.v) });
-      } else if (e.boundingClientRect.top > 0) {
-        rise.v = 0;
-        scene.setRise(0);
-      }
-    }, { threshold: 0.5 }).observe(stage);
-  }).catch(() => stage.classList.add("no-skull"));
-}, { rootMargin: "300% 0px" });
-loadIo.observe(stage);
 
 startThrowLayer();

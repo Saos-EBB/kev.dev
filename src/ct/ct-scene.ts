@@ -8,6 +8,7 @@ import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { loadSkullGeometry } from "./parts";
 import { createBrain, type Part } from "./brain";
 import { dotMaterial, skullDots } from "./dots";
+import { createSaw, type Saw } from "./saw";
 
 export type Pose = {
   rotY: number; // 0 = from the front, π/2 = side view (left hemisphere to the camera)
@@ -26,11 +27,21 @@ export interface CtScene {
   readonly skull: THREE.Group;
   readonly rig: THREE.Group;
   readonly camera: THREE.PerspectiveCamera;
+  /** The finale (saw.ts), when links were handed in. */
+  readonly saw: Saw | null;
   requestRender(): void;
 }
 
-// distance: camera distance (6.2 as in the mockup renders; closer = bigger).
-export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: boolean; distance?: number } = {}): Promise<CtScene> {
+type Options = {
+  phone?: boolean;
+  distance?: number; // camera distance (6.2 as in the mockup renders; closer = bigger)
+  // The finale's link shards and its hooks (throws pause on the first hit).
+  links?: HTMLElement[];
+  onFirstHit?(): void;
+  onReset?(): void;
+};
+
+export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {}): Promise<CtScene> {
   const phone = !!opts.phone;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setClearColor(0, 0);
@@ -60,6 +71,14 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: b
   rig.add(skull, brain.group);
   scene.add(rig);
 
+  const saw = opts.links
+    ? createSaw({
+        skull, geo: skullGeo, scene, camera, links: opts.links, tall: phone,
+        onFirstHit: () => opts.onFirstHit?.(),
+        onReset: () => opts.onReset?.(),
+      })
+    : null;
+
   let cut: number | null = null;
   let dirty = true;
   let raf = 0;
@@ -82,7 +101,7 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: b
   }
 
   const api: CtScene = {
-    skull, rig, camera,
+    skull, rig, camera, saw,
     setPose(p) {
       rig.rotation.y = p.rotY;
       cut = p.cut;
@@ -113,12 +132,13 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: { phone?: b
     const dt = Math.min((now - last) / 1000, 1 / 20);
     last = now;
     const fading = brain.tick(dt);
-    if (dirty || fading) {
+    const sawing = saw?.running ? saw.tick(dt, camera.aspect) : false;
+    if (dirty || fading || sawing) {
       dirty = false;
       renderer.render(scene, camera);
       api.onFrame?.();
     }
-    if (fading) raf = requestAnimationFrame(frame);
+    if (fading || sawing) raf = requestAnimationFrame(frame);
   }
 
   size();
