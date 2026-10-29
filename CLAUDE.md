@@ -18,6 +18,8 @@ There is no unit/integration test suite. Verifying a change means running `npm r
 
 `vite.config.ts` declares four Rollup entries — `index.html`, `impressum.html`, `datenschutz.html`, `yourbrand/index.html` — because Impressum/Datenschutz are separate static pages with full browser reload (no client-side router) and `yourbrand/` is its own React app (see below). Tailwind is only wired up for `yourbrand/`'s stylesheet.
 
+`motion-lab.html` (+ `src/dev/motion-lab.*`) is a dev-only prototype page, served by `npm run dev` at `/motion-lab.html`; it is deliberately not a Rollup entry, so it never ships.
+
 ## Main site architecture (`src/`)
 
 `src/main.ts` is the orchestrator: it builds the whole page by injecting one large template string into `#app`, then calls per-feature `init*`/`mount*` functions imported from the sibling directories (`hero/`, `about/`, `projects/`, `contact/`, `scroll/`, `theme/`, `i18n/`, `legal/`, `intro/`, `music/`). There's no component framework or virtual DOM — each feature module owns its own DOM queries, event wiring, and (where relevant) CSS file.
