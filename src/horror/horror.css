@@ -117,3 +117,7 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 .dev { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .dev label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; color: var(--bone); }
 .dev input { accent-color: var(--sodium); }
+
+/* the ending: blood on the lens, then a hard cut to black */
+#splat { inset: 0; width: 100%; height: 100%; }
+#cut { inset: 0; background: #000; z-index: 15; }

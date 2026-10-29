@@ -20,6 +20,8 @@ export type CombatWorld = {
   camera: THREE.PerspectiveCamera;
   solidAt: (x: number, z: number) => boolean;
   floorAt: (x: number, z: number) => number;
+  steer: (from: THREE.Vector3, out: THREE.Vector3) => THREE.Vector3; // next point on the way to you
+  clearLine: (a: THREE.Vector3, b: THREE.Vector3) => boolean;
   onHurt: (damage: number) => void; // the game shows it and handles death
   onShot: () => void; // muzzle flash: the game brightens the lamp for a moment
   onKill: (k: Kill) => void;
@@ -29,13 +31,16 @@ const PELLETS = 8, SPREAD = 0.07, RANGE = 30;
 const DMG = { shotgun: { head: 100, body: 50 }, bat: { head: 500, body: 150 } };
 const BAT_RANGE = 2.1;
 const SHELLS_PER_BOX = 5;
+// the boss: skulls fly fast; below 40 % life it charges at where you stood when it started
+const SKULL_SPEED = 13, SKULL_EVERY: [number, number] = [1.4, 2.0];
+const CHARGE_BELOW = 0.4, CHARGE_EVERY = 4, CHARGE_WINDUP = 0.7, CHARGE_SPEED = 10, CHARGE_DMG = 35;
 const ZOMBIE_HEIGHT = 1.8; // a normal zombie
 
 type KindSpec = { file: string; scale: number; hp: number; speed: [number, number]; attack: string; dmg: number };
 const KINDS: Record<ZombieKind, KindSpec> = {
   normal: { file: "zombie_basic", scale: 1, hp: 100, speed: [1.3, 2.3], attack: "Punch", dmg: 12 },
   big: { file: "zombie_chubby", scale: 1.3, hp: 200, speed: [1.0, 1.3], attack: "Punch", dmg: 18 },
-  boss: { file: "zombie_chubby", scale: 2.1, hp: 2000, speed: [0.9, 0.9], attack: "Punch", dmg: 25 },
+  boss: { file: "zombie_chubby", scale: 2.1, hp: 2000, speed: [0.6, 0.6], attack: "Punch", dmg: 25 },
 };
 
 /* ---------- small helpers ---------- */
@@ -160,6 +165,7 @@ export function createCombat(w: CombatWorld) {
     current: string; busy: number; // seconds left of a one-shot animation (hit, attack)
     hp: number; hits: number; speed: number; move: string;
     attackCD: number; struck: boolean; dying: number; growlCD: number; throwCD: number;
+    charge: "none" | "windup" | "dash"; chargeT: number; chargeCD: number; chargeTo: THREE.Vector3; chargeHit: boolean;
   };
   const zombies: Zombie[] = [];
 
@@ -187,6 +193,7 @@ export function createCombat(w: CombatWorld) {
       const z: Zombie = {
         kind, spec, root, height: proto.height * spec.scale, mixer, actions, current: "", busy: 0,
         hp: spec.hp, hits: 0, speed, move, attackCD: 0, struck: false, dying: -1, growlCD: 1 + Math.random() * 3, throwCD: 3,
+        charge: "none", chargeT: 0, chargeCD: 0, chargeTo: new THREE.Vector3(), chargeHit: false,
       };
       // feet roughly match the ground
       actions[move].timeScale = (move === "Walk" ? speed / 1.3 : speed / 2.6) / spec.scale;
@@ -199,13 +206,24 @@ export function createCombat(w: CombatWorld) {
   }
 
   // a zombie that copies you, for the mirror at the end
+  // holding your weapon in its left hand: a mirror image of your right
   async function mirrorZombie() {
     await ready;
     const proto = protos.get("zombie_basic")!;
     const root = SkeletonUtils.clone(proto.scene);
+    // the weapon mesh node itself (not its scene wrapper), placed with the grip the pack
+    // uses for its armed characters (Characters_*_SingleWeapon: child of Middle1.L)
+    const held = weapon && props[weapon]?.getObjectByName(weapon === "bat" ? "WoodenBat_Saw" : "Shotgun")?.clone();
+    const hand = root.getObjectByName("Middle1L"); // GLTFLoader drops the dot from "Middle1.L"
+    if (held && hand) {
+      held.position.set(0.0116, 0.1046, -0.0458);
+      held.quaternion.set(0.4333, 0.5569, 0.4398, 0.5556);
+      held.traverse((o) => { o.castShadow = true; });
+      hand.add(held);
+    }
     const mixer = new THREE.AnimationMixer(root);
-    const walk = mixer.clipAction(proto.clips.find((c) => c.name === "Walk")!);
-    const idle = mixer.clipAction(proto.clips.find((c) => c.name === "Idle")!);
+    const clip = (n: string) => mixer.clipAction(proto.clips.find((c) => c.name === n)!);
+    const walk = clip("Walk"), idle = clip("Idle"), punch = clip("Punch");
     idle.play();
     let walking = false;
     return {
@@ -216,6 +234,8 @@ export function createCombat(w: CombatWorld) {
         (on ? idle : walk).fadeOut(0.2);
         (on ? walk : idle).reset().fadeIn(0.2).play();
       },
+      // raises the weapon at you
+      strike() { punch.reset().setLoop(THREE.LoopOnce, 1).play(); punch.clampWhenFinished = true; },
     };
   }
 
@@ -228,7 +248,7 @@ export function createCombat(w: CombatWorld) {
     const mesh = new THREE.Mesh(skullGeo, boneMat);
     mesh.castShadow = true;
     mesh.position.set(z.root.position.x, z.root.position.y + z.height * 0.8, z.root.position.z);
-    const vel = new THREE.Vector3().subVectors(target, mesh.position).normalize().multiplyScalar(8);
+    const vel = new THREE.Vector3().subVectors(target, mesh.position).normalize().multiplyScalar(SKULL_SPEED);
     scene.add(mesh);
     skulls.push({ mesh, vel, spin: new THREE.Vector3(Math.random() * 8, Math.random() * 8, 0), life: 5 });
     sfx.skullThrow(mesh.position);
@@ -354,6 +374,53 @@ export function createCombat(w: CombatWorld) {
 
   function select(next: "shotgun" | "bat") { if (have[next] && weapon !== next) { weapon = next; cooldown = 0.25; swingT = -1; } }
 
+  /* ---------- the boss: skulls, and below 40 % a charge ---------- */
+  const aimAt = new THREE.Vector3(), bossEye = new THREE.Vector3();
+  // returns true while the charge owns the boss (wind-up or dash)
+  function bossBrain(z: Zombie, dt: number, player: THREE.Vector3, d: number) {
+    const p = z.root.position;
+    bossEye.set(p.x, 1, p.z);
+    z.chargeCD -= dt;
+    if (z.charge === "windup") { // stands, roars, stares at the spot it's about to run to
+      z.chargeT -= dt;
+      z.root.lookAt(z.chargeTo.x, p.y, z.chargeTo.z);
+      if (z.chargeT <= 0) {
+        z.charge = "dash"; z.chargeHit = false;
+        play(z, "Run"); z.actions.Run.timeScale = 2.2;
+      }
+      return true;
+    }
+    if (z.charge === "dash") {
+      const tx = z.chargeTo.x - p.x, tz = z.chargeTo.z - p.z, tl = Math.hypot(tx, tz);
+      const step = Math.min(tl, CHARGE_SPEED * dt);
+      const bx = p.x, bz = p.z;
+      if (tl > 0.01) tryMove(z, (tx / tl) * step, (tz / tl) * step);
+      const blocked = Math.hypot(p.x - bx, p.z - bz) < step * 0.3; // ran into a pillar
+      if (!z.chargeHit && d < 1.3) { z.chargeHit = true; sfx.hurt(); w.onHurt(CHARGE_DMG); }
+      if (tl < 0.3 || blocked) {
+        z.charge = "none"; z.chargeCD = CHARGE_EVERY;
+        z.actions.Run.timeScale = 1;
+        play(z, "HitReact", true); // stumbles: your window
+        if (blocked) sfx.slam(p);
+      }
+      return true;
+    }
+    const sees = w.clearLine(bossEye, aimAt.set(player.x, 1, player.z));
+    if (z.hp / z.spec.hp <= CHARGE_BELOW && z.chargeCD <= 0 && z.busy <= 0 && sees && d > 2.5) {
+      z.charge = "windup"; z.chargeT = CHARGE_WINDUP;
+      z.chargeTo.set(player.x, 0, player.z); // where you are now, not where you'll be
+      play(z, "Idle"); sfx.roar(p);
+      return true;
+    }
+    z.throwCD -= dt;
+    if (z.throwCD <= 0 && d > 3 && z.busy <= 0 && sees) {
+      z.throwCD = SKULL_EVERY[0] + Math.random() * (SKULL_EVERY[1] - SKULL_EVERY[0]);
+      z.root.lookAt(player.x, p.y, player.z);
+      play(z, "Punch", true); throwSkull(z, target);
+    }
+    return false;
+  }
+
   /* ---------- per frame ---------- */
   function update(dt: number, player: THREE.Vector3, eyeY: number, moving: boolean, onPickup: (kind: PickupKind) => void) {
     cooldown = Math.max(0, cooldown - dt);
@@ -413,18 +480,19 @@ export function createCombat(w: CombatWorld) {
         continue;
       }
       const dx = player.x - p.x, dz = player.z - p.z, d = Math.hypot(dx, dz);
-      z.root.lookAt(player.x, p.y, player.z);
       z.growlCD -= dt;
       if (z.growlCD <= 0 && d < 14) { z.growlCD = 3 + Math.random() * 4; if (z.kind === "boss") sfx.roar(p); else sfx.growl(p); }
-      if (z.kind === "boss") {
-        z.throwCD -= dt;
-        if (z.throwCD <= 0 && d > 3 && z.busy <= 0) { z.throwCD = 2 + Math.random(); play(z, "Punch", true); throwSkull(z, target); }
-      }
+      if (z.kind === "boss" && bossBrain(z, dt, player, d)) continue; // charging: nothing else this frame
       const reach = Math.max(1, (z.height / ZOMBIE_HEIGHT) * 0.8);
       if (d > reach) {
+        // round corners: head for the next point on the way to you
+        w.steer(p, aimAt);
+        z.root.lookAt(aimAt.x, p.y, aimAt.z);
+        const sx = aimAt.x - p.x, sz = aimAt.z - p.z, sl = Math.hypot(sx, sz) || 1;
         if (z.busy <= 0) play(z, z.move);
-        if (z.current === z.move) tryMove(z, (dx / d) * z.speed * dt, (dz / d) * z.speed * dt);
+        if (z.current === z.move) tryMove(z, (sx / sl) * z.speed * dt, (sz / sl) * z.speed * dt);
       } else {
+        z.root.lookAt(player.x, p.y, player.z);
         z.attackCD -= dt;
         if (z.attackCD <= 0 && z.busy <= 0) { z.attackCD = 1.1; z.struck = false; play(z, z.spec.attack, true); }
         // the blow lands halfway through the swing, if you're still there
@@ -465,7 +533,7 @@ export function createCombat(w: CombatWorld) {
 
   const boss = () => zombies.find((z) => z.kind === "boss");
   return {
-    fire, spawn, addPickup, update, select, grant, mirrorZombie, viewScene, ready,
+    fire, spawn, addPickup, update, select, grant, mirrorZombie, burst, viewScene, ready,
     get weapon() { return weapon; },
     get has() { return have; },
     get ammo() { return ammo; },

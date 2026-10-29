@@ -35,6 +35,8 @@ const MARKUP = `
   <div class="hud" id="whisper"></div>
   <div class="hud" id="red"></div>
   <div class="hud" id="vig"></div>
+  <canvas class="hud" id="splat" hidden></canvas>
+  <div class="hud" id="cut" hidden></div>
   <div id="touch" aria-hidden="true"></div>
   <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p><span id="wname">Schrot</span> <b id="ammo">0</b></p></div>
   <button id="fire" type="button" hidden>Feuer</button>
@@ -95,22 +97,22 @@ const MARKUP = `
    a b c  the three items, at the ends of the side passages
    D      heavy door, opens once you have all three
    v      stairs down (east)
-   , h H B  lower floor: corridor, hall 1, hall 2, boss hall
+   , h H B  lower floor: corridor, hall 1, hall 2, boss hall (twisty, with pillars)
    G      gate: drops behind you once you're in the next hall
    1 2 3  exit doors of hall 1, 2 and the boss hall: open when it's cleared
    r      mirror room · W the glass · m the room behind the glass (unreachable) */
 const MAP = [
   "####################################################################",
   "##############################################BBBBBBBBBBB###########",
-  "##############################################BBBBBBBBBBB###########",
-  "###a###b###c##########hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
-  "###.###.###.##########hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
-  "###.###.###.##########hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB##rrrWmmm##",
-  "#S.............Dvvvv,Ghhhhhhhhh1,GHHHHHHHHH2,GBBBBBBBBBBB3,rrrWmmmm#",
-  "######################hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB##rrrWmmm##",
-  "######################hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
-  "######################hhhhhhhhh###HHHHHHHHH###BBBBBBBBBBB###########",
-  "##############################################BBBBBBBBBBB###########",
+  "##############################################BB##BBBB##B###########",
+  "###a###b###c##########hhhh#hhhh###HHH#HHHHH###BB##BBBB##B###########",
+  "###.###.###.##########h##h#h##h###H#H#H##HH###BBBBB##BBBB###########",
+  "###.###.###.##########h#hhhhh#h###H#HHH#HH####BBBBB##BBBB##rrrWmmm##",
+  "#S.............Dvvvv,Ghhh###hhh1,GHH##H#HHH2,GBBBBBBBBBBB3,rrrWmmmm#",
+  "######################h#hhhhh#h###H#HHHHH#H###BBBBBBBBBBB##rrrWmmm##",
+  "######################h##h#h##h###HHH#H##HH###BBBBB##BBBB###########",
+  "######################hhhh#hhhh####HHHHH#HH###BB##B##B##B###########",
+  "##############################################BB##BBBB##B###########",
   "##############################################BBBBBBBBBBB###########",
   "####################################################################",
 ];
@@ -198,9 +200,11 @@ function mount() {
     }
   }
   const halls = { h: cellsOf("h"), H: cellsOf("H"), B: cellsOf("B") };
+  // the walkable cell closest to the middle of a hall
   const hallCenter = (cells: Cell[]) => {
     const x = cells.reduce((a, c) => a + c[0], 0) / cells.length, z = cells.reduce((a, c) => a + c[1], 0) / cells.length;
-    return new THREE.Vector3(x * C, 0, z * C);
+    const [cx, cz] = cells.reduce((a, c) => (Math.hypot(c[0] - x, c[1] - z) < Math.hypot(a[0] - x, a[1] - z) ? c : a));
+    return new THREE.Vector3(cx * C, 0, cz * C);
   };
   const glass = cellsOf("W");
   const mirrorX = glass[0][0] * C; // the mirror plane
@@ -553,7 +557,7 @@ function mount() {
   const keys: Record<string, boolean> = {};
   const crumbs = [pos.clone()]; // your path, every 30 cm; the thing walks it behind you
   const S = { active: false, hidden: false, outSince: 0, reveal: 0, revealCD: 0, back: 0, lookCD: 0, nextBreath: 0, nextHeart: 0, nextWhisper: 0, flickUntil: 0 };
-  let shake = 0;
+  let shake = 0, fallen = 0; // fallen: how far the camera has sunk in the ending
   let flick = 1, nextFlick = 4, blackUntil = 0, scareT = -1, stepPhase = 0, lastStep = 0, now = 0, nextSlam = 30, behindIdx = 0;
   const yawHist: [number, number][] = [];
 
@@ -689,23 +693,62 @@ function mount() {
 
   /* ---------- part 3: the mirror ---------- */
   let mirror: Awaited<ReturnType<typeof combat.mirrorZombie>> | null = null;
-  let mirrorT = -1;
+  let mirrorT = -1, cineT = -1, cinePitch = 0;
   function updateMirror(dt: number, moving: boolean) {
     if (!mirror) return;
+    mirror.mixer.update(dt);
+    if (cineT >= 0) return; // glass is gone: it stops copying you
     // your reflection: same distance behind the glass, facing the mirrored way
     const mx = 2 * mirrorX - pos.x;
     mirror.root.position.set(mx, floorAt(pos.x, pos.z), pos.z);
     const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
     mirror.root.lookAt(mx - fx, mirror.root.position.y, pos.z + fz);
     mirror.setWalking(moving);
-    mirror.mixer.update(dt);
     // close to the glass and looking at it: that's when it sinks in
     if (mirrorT < 0 && pos.x > mirrorX - 6 && fx > 0.7) mirrorT = 0;
     if (mirrorT >= 0) {
       mirrorT += dt;
       if (mirrorT > 1.2 && mirrorT - dt <= 1.2) { sfx.lowSting(); whisperText("Das bist du.", 2600); }
-      if (mirrorT > 5 && phase !== "end") { phase = "end"; finish(); }
+      if (mirrorT > 5 && mirrorT - dt <= 5) $("goal").textContent = "…";
     }
+  }
+  // your shot (or swing) at the glass: it breaks, and then it's over
+  function breakMirror() {
+    cineT = 0; cinePitch = pitch;
+    $("count").hidden = $("status").hidden = $("dot").hidden = true;
+    pane.visible = false;
+    sfx.glass();
+    const g = new THREE.Vector3();
+    for (const [, z] of glass) for (let k = 0; k < 4; k++) combat.burst(g.set(mirrorX - 0.1, floorAt(pos.x, pos.z) + 0.5 + Math.random() * 2.5, z * C + (Math.random() - 0.5) * C), 12, 0.75, 0.85, 0.9, 4);
+    $("goal").textContent = "";
+  }
+  // the end, in one take: you fall back looking up, blood, one last shot, black
+  function updateCine(dt: number) {
+    if (cineT < 0) return;
+    cineT += dt;
+    const k = Math.min(1, Math.max(0, (cineT - 0.5) / 1.3)), e = k * k * (3 - 2 * k);
+    pitch = cinePitch + (1.35 - cinePitch) * e; // head goes back until you only see the ceiling
+    fallen = e * 1.1;
+    if (cineT > 0.9 && cineT - dt <= 0.9) mirror?.strike();
+    if (cineT > 1.9 && cineT - dt <= 1.9) splatter();
+    if (cineT > 2.8 && cineT - dt <= 2.8) { sfx.shotgun(); $("cut").hidden = false; }
+    if (cineT > 4.6 && phase !== "end") { phase = "end"; finish(); }
+  }
+  // blood on the lens: blobs, spray, drips, drawn once onto a canvas over the view
+  function splatter() {
+    const cv = $("splat") as HTMLCanvasElement;
+    cv.width = innerWidth; cv.height = innerHeight;
+    const g = cv.getContext("2d")!, W = cv.width, H = cv.height;
+    for (let i = 0; i < 26; i++) {
+      const x = Math.random() * W, y = Math.random() * H * 0.8, r = 20 + Math.random() * Math.min(W, H) * 0.12;
+      const grd = g.createRadialGradient(x, y, 0, x, y, r);
+      grd.addColorStop(0, "rgba(120,0,0,0.95)"); grd.addColorStop(0.7, "rgba(90,0,0,0.85)"); grd.addColorStop(1, "rgba(60,0,0,0)");
+      g.fillStyle = grd; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+      g.fillStyle = "rgba(100,0,0,0.9)";
+      for (let k = 0; k < 18; k++) { const a = Math.random() * 7, d = r * (1 + Math.random()); g.beginPath(); g.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, 1 + Math.random() * 4, 0, 7); g.fill(); }
+      if (Math.random() < 0.6) g.fillRect(x - 2, y, 3 + Math.random() * 3, r + Math.random() * H * 0.3); // drip
+    }
+    cv.hidden = false;
   }
 
   function finish() {
@@ -729,7 +772,7 @@ function mount() {
   });
   window.addEventListener("wheel", () => combat.select(combat.weapon === "bat" ? "shotgun" : "bat"), { passive: true });
   window.addEventListener("keyup", (e) => { keys[e.code] = false; });
-  const look = (dx: number, dy: number, k = 0.0022) => { yaw -= dx * k; pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * k)); };
+  const look = (dx: number, dy: number, k = 0.0022) => { if (cineT >= 0) return; yaw -= dx * k; pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * k)); };
   const lock = () => { try { const p = canvas.requestPointerLock() as unknown as Promise<void> | undefined; p?.catch?.(() => {}); } catch { /* drag-to-look fallback */ } };
   let locked = false, dragging = false;
   const pause = () => { paused = true; $("pause").hidden = false; $("resume").focus(); };
@@ -740,7 +783,7 @@ function mount() {
   document.addEventListener("mousemove", (e) => { if (locked) look(e.movementX, e.movementY); else if (dragging) look(e.movementX, e.movementY, 0.004); });
   canvas.addEventListener("mousedown", (e) => {
     if (running && !locked) { lock(); dragging = true; return; }
-    if (running && !paused && e.button === 0) combat.fire();
+    if (running && !paused && e.button === 0) pull();
   });
   window.addEventListener("mouseup", () => { dragging = false; });
   // hidden tab: pause (no catch-up jump, no CPU burn)
@@ -770,7 +813,15 @@ function mount() {
     }
   });
 
-  $("fire").addEventListener("touchstart", (e) => { e.stopPropagation(); combat.fire(); }, { passive: true });
+  $("fire").addEventListener("touchstart", (e) => { e.stopPropagation(); pull(); }, { passive: true });
+  // shoot / swing; at the mirror, aimed at the glass, that's the end
+  function pull() {
+    if (cineT >= 0) return;
+    const facingGlass = -Math.sin(yaw) > 0.6, reach = combat.weapon === "bat" ? 3.2 : 99;
+    const atMirror = phase === "mirror" && mirror && pos.x > mirrorX - 6 && mirrorX - pos.x < reach && facingGlass;
+    if (atMirror && (combat.weapon === "bat" || combat.ammo > 0)) { combat.fire(); breakMirror(); return; }
+    combat.fire();
+  }
   $("retry").addEventListener("click", () => location.reload());
   $("go").addEventListener("click", () => {
     sfx.init();
@@ -827,10 +878,40 @@ function mount() {
   const figures = createFigures({ scene, C, corridors: straight, openDirs, solidAt, clearLine });
   const inView = (p: THREE.Vector3) => { sph.center.copy(p); return frustum.intersectsSphere(sph); };
 
+  /* ---------- how zombies find you round corners: a distance map from your cell ---------- */
+  const flow = new Map<string, number>();
+  let flowFrom = "";
+  function updateFlow() {
+    const here: Cell = [Math.round(pos.x / C), Math.round(pos.z / C)];
+    if (key(here) === flowFrom) return;
+    flowFrom = key(here);
+    flow.clear(); flow.set(flowFrom, 0);
+    const q = [here];
+    for (let i = 0; i < q.length; i++) {
+      const [x, z] = q[i], d = flow.get(key([x, z]))!;
+      if (d > 40) continue;
+      for (const [dx, dz] of DIRS) {
+        const n: Cell = [x + dx, z + dz];
+        if (!solid(...n) && !flow.has(key(n))) { flow.set(key(n), d + 1); q.push(n); }
+      }
+    }
+  }
+  // where a zombie at p should head: straight at you if nothing is in between, else the next cell downhill
+  function steer(p: THREE.Vector3, out: THREE.Vector3) {
+    if (clearLine(p, pos)) return out.set(pos.x, 0, pos.z);
+    const cx = Math.round(p.x / C), cz = Math.round(p.z / C);
+    let best: Cell = [cx, cz], bestD = flow.get(key(best)) ?? Infinity;
+    for (const [dx, dz] of DIRS) {
+      const d = flow.get(key([cx + dx, cz + dz]));
+      if (d !== undefined && d < bestD) { best = [cx + dx, cz + dz]; bestD = d; }
+    }
+    return out.set(best[0] * C, 0, best[1] * C);
+  }
+
   /* ---------- the Doom part ---------- */
   let health = 100, flashUntil = 0;
   const combat = createCombat({
-    scene, camera, solidAt, floorAt,
+    scene, camera, solidAt, floorAt, steer, clearLine,
     onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.05); },
     onHurt: (d) => {
       if (ended) return;
@@ -932,8 +1013,9 @@ function mount() {
     for (const it of items) if (!it.got) { it.obj.rotation.y += dt * 1.2; it.obj.position.y = 0.95 + Math.sin(now * 2 + it.id.charCodeAt(0)) * 0.05; }
 
     // --- move (not while it has you)
-    const mx = G.t >= 0 ? 0 : (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx;
-    const mz = G.t >= 0 ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
+    const still = G.t >= 0 || cineT >= 0; // it has you / the end is playing
+    const mx = still ? 0 : (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx;
+    const mz = still ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
     const len = Math.hypot(mx, mz), moving = len > 0.1;
     if (moving) {
       const armed = combat.weapon !== null;
@@ -992,9 +1074,11 @@ function mount() {
       combat.addPickup("bat", tmp.set(pos.x - Math.sin(yaw) * 1.5, 0, pos.z - Math.cos(yaw) * 1.5));
       card("Leer", "Die Flinte ist leer. Da liegt was.", 5000);
     }
+    updateFlow();
     combat.update(dt, pos, floorAt(pos.x, pos.z) + EYE, moving, onPickup);
     if (combat.weapon) hud();
     updateMirror(dt, moving);
+    updateCine(dt);
 
     // --- dread: grows while it follows (faster when you run), drops when you look back
     if (S.active) dread += dt * (2.6 + (moving ? 1.4 : 0) + (moving && sprint ? 2.5 : 0));
@@ -1073,7 +1157,7 @@ function mount() {
   }
 
   function render(dt: number) {
-    camera.position.set(pos.x + (Math.random() - 0.5) * shake, floorAt(pos.x, pos.z) + EYE + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
+    camera.position.set(pos.x + (Math.random() - 0.5) * shake, floorAt(pos.x, pos.z) + EYE - fallen + Math.sin(stepPhase) * 0.035 + (Math.random() - 0.5) * shake, pos.z);
     camera.rotation.set(pitch, yaw, Math.sin(stepPhase * 0.5) * 0.006, "YXZ");
     camera.updateMatrixWorld();
     pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
