@@ -1,8 +1,9 @@
 // Hinter dir — the Doom part: a shotgun you find halfway, zombies that come
 // down the corridor at you, shells and health lying around.
-// Zombies are built from primitives for now; makeZombie() is the one place
-// to swap in real models later.
+// Models: Quaternius "Zombie Apocalypse Kit" (CC0), see NOTICE.md.
 import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import * as sfx from "./horror-audio";
 
 export type CombatWorld = {
@@ -15,63 +16,33 @@ export type CombatWorld = {
 
 type PickupKind = "shotgun" | "shells" | "health";
 const PELLETS = 8, SPREAD = 0.07, PELLET_DMG = 14, RANGE = 30;
-const ZOMBIE_HP = 70;
+const ZOMBIE_HEIGHT = 1.8; // the basic zombie is scaled to this; the others keep their size relative to it
+const GUN_SCALE = 0.55;
 
-/* ---------- zombie (placeholder look) ---------- */
-const skin = new THREE.MeshStandardMaterial({ color: 0x5d6152, roughness: 0.9 });
-const rags = new THREE.MeshStandardMaterial({ color: 0x2b2620, roughness: 1 });
-const limbGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.75, 6).translate(0, -0.37, 0); // pivot at the top
-const torsoGeo = new THREE.CylinderGeometry(0.17, 0.2, 0.75, 8);
-const headGeo = new THREE.SphereGeometry(0.13, 12, 9);
+/* ---------- zombie types ---------- */
+type ZombieType = { file: string; hp: number; speed: [number, number]; move: string; run?: string; attack: string };
+const TYPES: ZombieType[] = [
+  { file: "zombie_basic", hp: 70, speed: [1.2, 2.6], move: "Walk", run: "Run", attack: "Punch" },
+  { file: "zombie_chubby", hp: 130, speed: [0.9, 1.2], move: "Walk", attack: "Punch" },
+  { file: "zombie_ribcage", hp: 40, speed: [1.8, 2.4], move: "Run", attack: "Run" },
+];
+type Loaded = { type: ZombieType; proto: THREE.Object3D; clips: THREE.AnimationClip[]; height: number };
 
-function makeZombie(head?: () => THREE.Object3D) {
-  const root = new THREE.Group(); // faces +z
-  const torso = new THREE.Mesh(torsoGeo, rags);
-  torso.position.y = 1.2;
-  const h = head ? head() : new THREE.Mesh(headGeo, skin);
-  h.position.y = 1.72;
-  h.traverse((o) => { if (o instanceof THREE.Mesh) o.material = skin; });
-  const limb = (x: number, y: number, mat: THREE.Material) => { const m = new THREE.Mesh(limbGeo, mat); m.position.set(x, y, 0); root.add(m); return m; };
-  const armL = limb(-0.23, 1.5, skin), armR = limb(0.23, 1.5, skin);
-  const legL = limb(-0.1, 0.8, rags), legR = limb(0.1, 0.8, rags);
-  armL.rotation.x = armR.rotation.x = -1.35; // reaching for you
-  root.add(torso, h);
-  root.traverse((o) => { o.castShadow = true; });
-  return { root, head: h, armL, armR, legL, legR };
-}
-
-/* ---------- shotgun view model ---------- */
-function makeShotgun() {
-  const metal = new THREE.MeshStandardMaterial({ color: 0x3a3c40, metalness: 0.5, roughness: 0.4 });
-  const wood = new THREE.MeshStandardMaterial({ color: 0x7a4a26, roughness: 0.6 });
-  const gun = new THREE.Group();
-  for (const x of [-0.022, 0.022]) {
-    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 10), metal);
-    barrel.rotation.x = Math.PI / 2; barrel.position.set(x, 0, -0.3);
-    gun.add(barrel);
-  }
-  const pump = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.2), wood);
-  pump.position.set(0, -0.045, -0.25);
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.09, 0.2), metal);
-  body.position.set(0, -0.01, 0.05);
-  const stock = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.11, 0.3), wood);
-  stock.position.set(0, -0.06, 0.28); stock.rotation.x = 0.18;
-  gun.add(pump, body, stock);
-  // muzzle flash
+/* ---------- muzzle flash sprite ---------- */
+function makeFlash() {
   const cv = document.createElement("canvas");
   cv.width = cv.height = 64;
   const g = cv.getContext("2d")!, grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
   grd.addColorStop(0, "#fff6d0"); grd.addColorStop(0.3, "#ffb030cc"); grd.addColorStop(1, "#ff600000");
   g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
   const flash = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), blending: THREE.AdditiveBlending, depthWrite: false }));
-  flash.position.set(0, 0, -0.68); flash.scale.setScalar(0.35); flash.visible = false;
-  gun.add(flash);
-  return { gun, pump, flash };
+  flash.scale.setScalar(0.35);
+  flash.visible = false;
+  return flash;
 }
 
-/* ---------- pickups ---------- */
-function makePickup(kind: PickupKind) {
-  if (kind === "shotgun") { const s = makeShotgun().gun; s.scale.setScalar(1.3); s.rotation.set(0, 0.6, Math.PI / 2); return s; }
+/* ---------- pickups (boxes; the shotgun pickup uses the model) ---------- */
+function makeBox(kind: "shells" | "health") {
   const g = new THREE.Group();
   const color = kind === "shells" ? 0xb52a1a : 0xe8e2d6;
   const box = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.18), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.25, roughness: 0.6 }));
@@ -86,20 +57,58 @@ function makePickup(kind: PickupKind) {
 export function createCombat(w: CombatWorld) {
   const { scene, camera } = w;
   let armed = false, ammo = 0, cooldown = 0, recoil = 0, flashT = 0, bobPhase = 0;
-  let headMaker: (() => THREE.Object3D) | undefined;
 
-  // the gun lives in its own little scene, drawn after the world with a cleared
-  // depth buffer: it never pokes into walls and has its own light
+  type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3 };
+  const pickups: Pickup[] = [];
+
+  /* ---------- assets: load once, in the background ---------- */
+  let types: Loaded[] = [];
+  let gunProto: THREE.Object3D | null = null;
+  const loader = new GLTFLoader();
+  const ready = (async () => {
+    const [gun, ...zs] = await Promise.all([loader.loadAsync("/horror/shotgun.glb"), ...TYPES.map((t) => loader.loadAsync(`/horror/${t.file}.glb`))]);
+    gunProto = gun.scene;
+    // one scale for all zombies, taken from the basic one, so their sizes stay relative
+    const box = (o: THREE.Object3D) => new THREE.Box3().setFromObject(o, true);
+    const k = ZOMBIE_HEIGHT / (box(zs[0].scene).max.y - box(zs[0].scene).min.y);
+    types = zs.map((g, n) => {
+      g.scene.scale.setScalar(k);
+      g.scene.traverse((o) => {
+        o.castShadow = true;
+        if (o instanceof THREE.SkinnedMesh) {
+          o.frustumCulled = false;
+          // the pack is bright and cartoony; grime it down for the dark
+          const m = (o.material as THREE.MeshStandardMaterial).clone();
+          m.color.multiplyScalar(0.55); m.roughness = 1; m.metalness = 0;
+          o.material = m;
+        }
+      });
+      const b = box(g.scene);
+      return { type: TYPES[n], proto: g.scene, clips: g.animations, height: b.max.y - b.min.y };
+    });
+    buildViewGun();
+    for (const p of pickups) if (p.kind === "shotgun") swapShotgunPickup(p);
+  })();
+
+  /* ---------- the gun in your hands: own scene, drawn after the world with a
+     cleared depth buffer, so it never pokes into walls and has its own light ---------- */
   const viewScene = new THREE.Scene();
   const viewRoot = new THREE.Group();
   viewScene.add(viewRoot, new THREE.HemisphereLight(0xc8b49a, 0x2a2018, 2.2));
   const viewLight = new THREE.DirectionalLight(0xffd0a0, 2.5);
   viewLight.position.set(0.3, 1, 0.5);
   viewRoot.add(viewLight, viewLight.target);
-  const view = makeShotgun();
-  view.gun.position.set(0.13, -0.15, -0.5);
-  view.gun.scale.setScalar(0.8);
-  viewRoot.add(view.gun);
+  const gun = new THREE.Group(); // muzzle points to -z
+  const flash = makeFlash();
+  gun.add(flash);
+  viewRoot.add(gun);
+  function buildViewGun() {
+    const m = gunProto!.clone();
+    m.rotation.y = Math.PI; // the model's barrel points to +z
+    m.scale.setScalar(GUN_SCALE);
+    gun.add(m);
+    flash.position.set(0, 0.03, -0.97 * GUN_SCALE - 0.05);
+  }
 
   /* ---------- blood + dust particles: one pool, one draw call ---------- */
   const P = 300;
@@ -122,27 +131,62 @@ export function createCombat(w: CombatWorld) {
   }
 
   /* ---------- zombies ---------- */
-  type Zombie = ReturnType<typeof makeZombie> & { hp: number; speed: number; phase: number; attackCD: number; dying: number; growlCD: number; hitT: number };
+  type Zombie = {
+    root: THREE.Object3D; mixer: THREE.AnimationMixer; actions: Record<string, THREE.AnimationAction>; t: Loaded;
+    current: string; busy: number; // seconds left of a one-shot animation (hit, attack)
+    hp: number; speed: number; move: string; attackCD: number; dying: number; growlCD: number; struck: boolean;
+  };
   const zombies: Zombie[] = [];
+
+  function play(z: Zombie, name: string, once = false) {
+    const next = z.actions[name];
+    if (!next || (z.current === name && !once)) return;
+    z.actions[z.current]?.fadeOut(0.15);
+    next.reset().setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity).fadeIn(0.15).play();
+    next.clampWhenFinished = once;
+    z.current = name;
+    if (once) z.busy = next.getClip().duration / next.timeScale;
+  }
+
+  // spawning waits for the models if they're still loading
   function spawn(at: THREE.Vector3) {
-    const z: Zombie = { ...makeZombie(headMaker), hp: ZOMBIE_HP, speed: 1.4 + Math.random() * 0.9, phase: Math.random() * 6, attackCD: 0, dying: -1, growlCD: 1 + Math.random() * 3, hitT: 0 };
-    z.root.position.copy(at).setY(0);
-    scene.add(z.root);
-    zombies.push(z);
+    void ready.then(() => {
+      // mostly basic ones, now and then a fat one or a fast little one
+      const r = Math.random(), t = types[r < 0.6 ? 0 : r < 0.8 ? 1 : 2];
+      const root = SkeletonUtils.clone(t.proto);
+      root.position.copy(at).setY(0);
+      const mixer = new THREE.AnimationMixer(root);
+      const actions = Object.fromEntries(t.clips.map((c) => [c.name, mixer.clipAction(c)]));
+      const speed = t.type.speed[0] + Math.random() * (t.type.speed[1] - t.type.speed[0]);
+      const move = t.type.run && speed > 2 ? t.type.run : t.type.move;
+      const z: Zombie = { root, mixer, actions, t, current: "", busy: 0, hp: t.type.hp, speed, move, attackCD: 0, dying: -1, growlCD: 1 + Math.random() * 3, struck: false };
+      actions[move].timeScale = move === "Walk" ? speed / 1.3 : speed / 2.6; // feet roughly match the ground
+      play(z, move);
+      mixer.update(Math.random()); // not all in step
+      scene.add(root);
+      zombies.push(z);
+    });
   }
 
   /* ---------- pickups ---------- */
-  type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3 };
-  const pickups: Pickup[] = [];
   function addPickup(kind: PickupKind, at: THREE.Vector3) {
-    const obj = makePickup(kind);
-    obj.position.copy(at).setY(kind === "shotgun" ? 0.25 : 0.15);
+    const obj = kind === "shotgun" ? new THREE.Group() : makeBox(kind);
+    obj.position.copy(at).setY(kind === "shotgun" ? 0.3 : 0.15);
     scene.add(obj);
-    pickups.push({ kind, obj, at: obj.position.clone() });
+    const p = { kind, obj, at: obj.position.clone() };
+    pickups.push(p);
+    if (kind === "shotgun" && gunProto) swapShotgunPickup(p);
+  }
+  function swapShotgunPickup(p: Pickup) {
+    const m = gunProto!.clone();
+    m.scale.setScalar(0.9);
+    m.rotation.set(0, 0, Math.PI / 2); // lying on its side
+    m.position.z = -0.4; // centre the 1.1 m long gun on the spot
+    p.obj.add(m);
   }
 
   /* ---------- shooting ---------- */
-  const ray = new THREE.Vector3(), origin = new THREE.Vector3(), tmp = new THREE.Vector3(), hitAt = new THREE.Vector3();
+  const ray = new THREE.Vector3(), origin = new THREE.Vector3(), tmp = new THREE.Vector3(), hitAt = new THREE.Vector3(), center = new THREE.Vector3();
   const raySphere = (o: THREE.Vector3, d: THREE.Vector3, c: THREE.Vector3, r: number) => {
     tmp.subVectors(c, o);
     const t = tmp.dot(d), d2 = tmp.lengthSq() - t * t;
@@ -169,9 +213,10 @@ export function createCombat(w: CombatWorld) {
       let best: Zombie | null = null, bestT = wall, head = false;
       for (const z of zombies) {
         if (z.dying >= 0) continue;
-        const p = z.root.position;
-        const tb = raySphere(origin, ray, tmp.set(p.x, 1.1, p.z).clone(), 0.32);
-        const th = raySphere(origin, ray, tmp.set(p.x, 1.7, p.z).clone(), 0.17);
+        const p = z.root.position, h = z.t.height;
+        // two spheres per zombie: body, and head (counts double)
+        const tb = raySphere(origin, ray, center.set(p.x, h * 0.55, p.z), 0.3 * (h / ZOMBIE_HEIGHT) + 0.05);
+        const th = raySphere(origin, ray, center.set(p.x, h * 0.88, p.z), 0.16);
         if (tb < bestT) { best = z; bestT = tb; head = false; }
         if (th < bestT) { best = z; bestT = th; head = true; }
       }
@@ -180,12 +225,16 @@ export function createCombat(w: CombatWorld) {
       else if (wall < RANGE) { burst(hitAt, 2, 0.5, 0.48, 0.44, 1.2); if (k === 0) sfx.impact(hitAt); }
     }
     for (const [z, d] of dmg) {
-      z.hp -= d; z.hitT = 0.15;
+      z.hp -= d;
       // knockback away from you
       tmp.subVectors(z.root.position, origin).setY(0).normalize();
       tryMove(z, tmp.x * 0.35 * Math.min(1, d / 40), tmp.z * 0.35 * Math.min(1, d / 40));
-      if (z.hp <= 0) { z.dying = 0; sfx.die(z.root.position); burst(tmp.copy(z.root.position).setY(1.2), 20, 0.4, 0.02, 0.02, 3); if (Math.random() < 0.5) addPickup("shells", z.root.position); }
-      else sfx.pain(z.root.position);
+      if (z.hp <= 0) {
+        z.dying = 0; play(z, "Death", true);
+        sfx.die(z.root.position);
+        burst(tmp.copy(z.root.position).setY(z.t.height * 0.6), 20, 0.4, 0.02, 0.02, 3);
+        if (Math.random() < 0.5) addPickup("shells", z.root.position);
+      } else { play(z, "HitReact", true); sfx.pain(z.root.position); }
     }
   }
 
@@ -200,20 +249,19 @@ export function createCombat(w: CombatWorld) {
   function update(dt: number, player: THREE.Vector3, moving: boolean, onPickup: (kind: PickupKind) => void) {
     cooldown = Math.max(0, cooldown - dt);
 
-    // view model: Doom-style figure-eight bob, recoil kick, pump slide
+    // view model: Doom-style figure-eight bob, recoil kick, a dip while pumping
     if (armed) {
       camera.updateMatrixWorld();
       camera.matrixWorld.decompose(viewRoot.position, viewRoot.quaternion, tmp);
       viewLight.intensity = flashT > 0 ? 9 : 2.5;
       if (moving) bobPhase += dt * 9;
       recoil = Math.max(0, recoil - dt * 5);
-      view.gun.position.set(0.13 + Math.sin(bobPhase * 0.5) * 0.018, -0.15 - Math.abs(Math.cos(bobPhase * 0.5)) * 0.014 + recoil * 0.02, -0.5 + recoil * 0.09);
-      view.gun.rotation.x = recoil * 0.25;
-      const pumpK = cooldown > 0.15 && cooldown < 0.55 ? Math.sin(((0.55 - cooldown) / 0.4) * Math.PI) : 0;
-      view.pump.position.z = -0.25 + pumpK * 0.09;
+      const pump = cooldown > 0.15 && cooldown < 0.55 ? Math.sin(((0.55 - cooldown) / 0.4) * Math.PI) : 0;
+      gun.position.set(0.14 + Math.sin(bobPhase * 0.5) * 0.018, -0.16 - Math.abs(Math.cos(bobPhase * 0.5)) * 0.014 + recoil * 0.02 - pump * 0.03, -0.3 + recoil * 0.09);
+      gun.rotation.set(recoil * 0.25 - pump * 0.12, 0, pump * 0.2);
       flashT -= dt;
-      view.flash.visible = flashT > 0;
-      view.flash.material.rotation = Math.random() * 6;
+      flash.visible = flashT > 0;
+      flash.material.rotation = Math.random() * 6;
     }
 
     // pickups spin, and you take them by walking over them
@@ -229,31 +277,31 @@ export function createCombat(w: CombatWorld) {
       }
     }
 
-    // zombies: shamble straight at you, swing when close
+    // zombies: come straight at you, hit when close
     for (let i = zombies.length - 1; i >= 0; i--) {
       const z = zombies[i], p = z.root.position;
-      if (z.dying >= 0) { // fall over backwards, sink, gone
+      z.mixer.update(dt);
+      z.busy -= dt;
+      if (z.dying >= 0) { // the death animation plays, then it sinks away
         z.dying += dt;
-        z.root.rotation.x = -Math.min(1, z.dying / 0.45) * Math.PI / 2;
-        if (z.dying > 2.5) p.y -= dt * 0.4;
-        if (z.dying > 4) { scene.remove(z.root); zombies.splice(i, 1); }
+        if (z.dying > 3) p.y -= dt * 0.4;
+        if (z.dying > 5) { scene.remove(z.root); zombies.splice(i, 1); }
         continue;
       }
       tmp.set(player.x - p.x, 0, player.z - p.z);
       const d = tmp.length();
       z.root.lookAt(player.x, 0, player.z);
-      z.phase += dt * z.speed * 4;
-      z.legL.rotation.x = Math.sin(z.phase) * 0.5; z.legR.rotation.x = -Math.sin(z.phase) * 0.5;
-      z.armL.rotation.x = -1.35 + Math.sin(z.phase * 0.5) * 0.15; z.armR.rotation.x = -1.35 - Math.sin(z.phase * 0.5) * 0.15;
-      z.head.rotation.z = Math.sin(z.phase * 0.3) * 0.25;
-      z.root.position.y = z.hitT > 0 ? 0.03 : 0;
-      z.hitT -= dt;
       z.growlCD -= dt;
       if (z.growlCD <= 0 && d < 14) { z.growlCD = 3 + Math.random() * 4; sfx.growl(p); }
-      if (d > 0.95) { tmp.multiplyScalar((z.speed * dt) / d); tryMove(z, tmp.x, tmp.z); }
-      else {
+      if (d > 1.0) {
+        if (z.busy <= 0) play(z, z.move);
+        if (z.current === z.move) { tmp.multiplyScalar((z.speed * dt) / d); tryMove(z, tmp.x, tmp.z); }
+      } else {
         z.attackCD -= dt;
-        if (z.attackCD <= 0) { z.attackCD = 0.9; z.armL.rotation.x = z.armR.rotation.x = -0.6; sfx.hurt(); w.onHurt(12); }
+        if (z.attackCD <= 0 && z.busy <= 0) { z.attackCD = 1.1; z.struck = false; play(z, z.t.type.attack, true); }
+        // the blow lands halfway through the swing, if you're still there
+        if (!z.struck && z.current === z.t.type.attack && z.busy < 0.5) { z.struck = true; sfx.hurt(); w.onHurt(12); }
+        if (z.busy <= 0 && z.current !== z.t.type.attack) play(z, "Idle");
       }
     }
 
@@ -272,7 +320,6 @@ export function createCombat(w: CombatWorld) {
 
   return {
     fire, spawn, addPickup, update, viewScene,
-    setHead: (make: () => THREE.Object3D) => { headMaker = make; },
     get armed() { return armed; },
     get ammo() { return ammo; },
     get alive() { return zombies.filter((z) => z.dying < 0).length; },

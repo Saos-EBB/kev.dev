@@ -396,7 +396,6 @@ function mount() {
     });
     itHead.remove(placeholderHead);
     itHead.add(fit(headG.scene.clone(true), 0.3));
-    combat.setHead(() => fit(headG.scene.clone(true), 0.27));
     figures.setHead(() => fit(headG.scene.clone(true), 0.28));
     placeWallHeads(headG.scene);
     faceG.scene.traverse((o) => {
