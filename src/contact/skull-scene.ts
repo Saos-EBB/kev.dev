@@ -111,7 +111,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     const stuck = hit.clone().addScaledVector(inDir, BLADE_R * h.scale - h.depth);
     const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
 
-    const blade = wireMesh(bladeGeo, throwColor, bgColor, 0.95);
+    const blade = wireMesh(bladeGeo, throwColor, bgColor, 0.95, true);
     throwMats.push(blade.lineMat); bladeFills.push(blade.fillMat);
     blade.group.visible = false;
     blade.group.scale.setScalar(h.scale);
