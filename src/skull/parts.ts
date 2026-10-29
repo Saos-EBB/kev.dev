@@ -51,10 +51,12 @@ export function bladeGeometry() {
 
 // Pink/violet "mesh look": a fill in the background color hides the back
 // faces' lines, the wireframe sits on top of it.
-export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, fill: THREE.Color | number, opacity: number) {
+// `outline`: only the real edges (EdgesGeometry) instead of every triangle —
+// for flat shapes like the saw blade, whose triangulation would cross its face.
+export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, fill: THREE.Color | number, opacity: number, outline = false) {
   const fillMat = new THREE.MeshBasicMaterial({ color: fill, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
   const lineMat = new THREE.LineBasicMaterial({ color: line, transparent: true, opacity });
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(geo, fillMat), new THREE.LineSegments(new THREE.WireframeGeometry(geo), lineMat));
+  g.add(new THREE.Mesh(geo, fillMat), new THREE.LineSegments(outline ? new THREE.EdgesGeometry(geo, 30) : new THREE.WireframeGeometry(geo), lineMat));
   return { group: g, fillMat, lineMat };
 }

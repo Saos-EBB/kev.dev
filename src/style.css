@@ -19,6 +19,7 @@
   --color-line: #cd57ff; /* grid / cloth / rule lines, hover color */
   --color-text-muted: #8a8a93; /* secondary text */
   --color-accent: #cd57a6; /* focus outlines, highlights */
+  --color-contact-icon: #ff2a3d; /* contact link shards (GitHub/mail/phone) */
   --color-throw: #89ff57; /* thrown objects + contact saw blades: --color-line's complementary hue (279° -> 99°) */
   --hero-bg: #08070a; /* hero section backdrop */
   --grid-color: #cd57ff; /* shared grid line color, all scenes */
@@ -174,6 +175,7 @@
   --contact-bg: #ffffff;
   --color-room-accent: #2a2a30;
   --color-throw: #32a800; /* darker complement, readable on white */
+  --color-contact-icon: #d10f24;
 }
 
 * {
@@ -1214,13 +1216,13 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border: 1px solid var(--color-throw);
+  width: 5rem;
+  height: 5rem;
+  border: 2px solid var(--color-contact-icon);
   border-radius: 50%;
   background: var(--contact-bg);
-  color: var(--color-throw);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--color-throw) 35%, transparent);
+  color: var(--color-contact-icon);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-contact-icon) 45%, transparent);
   transition: color var(--transition-hover), border-color var(--transition-hover);
 }
 
@@ -1231,8 +1233,8 @@ button:focus-visible {
 }
 
 .contact-icons svg {
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
 }
 
 /* The links are shards of the skull — skull-scene.ts sets each one's
