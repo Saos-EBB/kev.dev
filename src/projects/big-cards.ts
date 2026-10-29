@@ -7,6 +7,7 @@
 import { cardBodies, esc, type MailFolder, type ProjectCard } from "./project-cards";
 import { editor, orders, ramp, terminal, viewport } from "./project-visuals";
 import { initSchema, schemaCard } from "./yourbrand-schema";
+import { initPhones, phone } from "./kevdev-phone";
 import { LANG } from "../i18n";
 import { UI } from "../i18n/ui";
 import "./big-cards.css";
@@ -202,18 +203,6 @@ function mailCard(card: ProjectCard, head: string): string {
   `;
 }
 
-// One small looping animation per section of this page (CSS in
-// big-cards.css), in UI.vizStory's order: cloth, elevator, project cards,
-// falling letters, the legal overlay with the music still going.
-const DEMOS = [
-  `<span class="demo-cloth"><b>Kev</b></span>`,
-  `<span class="demo-shaft"></span><span class="demo-car"></span>`,
-  `<span class="demo-card"></span><span class="demo-card"></span><span class="demo-card"></span>`,
-  `<span class="demo-fall">H</span><span class="demo-fall">I</span><span class="demo-fall">!</span>`,
-  `<span class="demo-page"></span><span class="demo-sheet"></span><span class="demo-bars"><i></i><i></i><i></i></span>`,
-  `<span class="demo-lang"><b>Hallo</b><b>Hello</b><b>Привет</b><b>こんにちは</b></span>`,
-];
-
 // The card's texts (Why? / Learned! / Code, cardBodies) as tabs, with any
 // extra panels first — a box every big card can use. Clicks: initBigCards.
 type Panel = { kind: string; heading: string; body: string };
@@ -239,10 +228,11 @@ function textTabs(card: ProjectCard, extra: Panel[] = [], edit = (p: Panel) => p
     </section>`;
 }
 
-// kev.dev: Why? / Learned! / Code as tabs on the left, the page's own
-// sections on the right as tabs over one table — each with a mini demo,
-// what it does, the files behind it, what of it is reusable and, where
-// there are some, pros and cons.
+// kev.dev: Why? / Learned! / Code as tabs on the left, in the middle a
+// phone with this page in skeletons (kevdev-phone.ts), on the right the
+// page's own sections as tabs over one table — what each does, the files
+// behind it, what of it is reusable and, where there are some, pros and
+// cons. Scrolling the phone picks the tab, a tab scrolls the phone.
 function partsCard(card: ProjectCard, head: string): string {
   const story = UI.vizStory;
   const parts = Array.from({ length: Math.max(story.length, card.parts?.length ?? 0) }, (_, i) => {
@@ -256,6 +246,7 @@ function partsCard(card: ProjectCard, head: string): string {
       ${head.replace("</header>", `<span class="parts-here" aria-hidden="true">${esc(UI.touchHere)}</span></header>`)}
       <div class="parts">
         ${textTabs(card)}
+        ${phone(parts.map((p) => p.name))}
         <div class="parts-side">
           <p class="parts-head">${esc(UI.partsHead)}</p>
           <section class="parts-box" data-tabs>
@@ -272,7 +263,6 @@ function partsCard(card: ProjectCard, head: string): string {
                 (p, i) => `
             <div class="parts-panel" role="tabpanel" id="${pid(i)}" aria-labelledby="${pid(i)}-tab" data-panel="p${i}"${i === 0 ? "" : " hidden"}>
               <div class="parts-top">
-                <span class="parts-demo" aria-hidden="true">${DEMOS[i] ?? ""}</span>
                 <p><b>${esc(p.name)}</b><span>${esc(p.line)}</span></p>
               </div>
               <table class="parts-table">
@@ -324,6 +314,7 @@ export function fitText(el: HTMLElement) {
 // big card; the cards are rendered once, so nothing to tear down.
 export function initBigCards(root: HTMLElement, cards: ProjectCard[]) {
   initSchema(root, cards);
+  initPhones(root);
   const boxes = Array.from(root.querySelectorAll<HTMLElement>(`.pcard--big :is(${FIT_BOXES})`));
   const sizes = new ResizeObserver((entries) => entries.forEach((e) => fitText(e.target as HTMLElement)));
   boxes.forEach((box) => sizes.observe(box));
