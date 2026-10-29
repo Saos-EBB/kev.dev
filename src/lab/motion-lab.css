@@ -1,0 +1,159 @@
+/* Motion Lab — two effects studied from wodniack.dev, rebuilt in SAOS
+   tokens: (1) CSS-3D objects driven only by custom properties, flying in
+   from depth and draggable; (2) the "vanish" dissolve: a 30-frame sprite
+   mask stepped through with steps(), over a hairline-stripe fill. */
+
+.ml {
+  min-height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, var(--grid-ink) var(--grid-line), transparent var(--grid-line)) 0 0 / var(--grid-cell) var(--grid-cell),
+    linear-gradient(0deg, var(--grid-ink) var(--grid-line), transparent var(--grid-line)) 0 0 / var(--grid-cell) var(--grid-cell),
+    var(--color-bg);
+}
+
+.ml-head {
+  position: relative;
+  z-index: 2;
+  padding: var(--grid-cell);
+  pointer-events: none;
+}
+
+.ml-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--color-line);
+}
+
+.ml-hint {
+  margin-top: 0.75rem;
+  font-family: var(--font-read);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* ---- 1. 3D objects ------------------------------------------------ */
+
+.ml-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* Every pose value is a custom property; motion-lab.ts writes only
+   these, the transform itself lives here. */
+.ml-obj {
+  --x: 0;
+  --y: 0;
+  --z: -20000;
+  --rx: 0;
+  --ry: 0;
+  --size: 7.5rem;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  transform-style: preserve-3d;
+  transform: translate3d(calc(var(--x) * 1px), calc(var(--y) * 1px), calc(var(--z) * 1px))
+    rotateX(calc(var(--rx) * 1deg)) rotateY(calc(var(--ry) * 1deg));
+  cursor: grab;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.ml-obj.is-dragging {
+  cursor: grabbing;
+}
+
+.ml-face {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+}
+
+.ml-face:nth-child(1) { transform: translateZ(calc(var(--size) / 2)); }
+.ml-face:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--size) / 2)); }
+.ml-face:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--size) / 2)); }
+.ml-face:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--size) / 2)); }
+.ml-face:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--size) / 2)); }
+.ml-face:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--size) / 2)); }
+
+/* A mask flattens 3D, so while vanishing the cube drops to one flat
+   square (its faces hide) that carries the stripe fill — the original
+   hides its sides the same way. */
+.ml-obj.is-vanishing {
+  transform-style: flat;
+  pointer-events: none;
+}
+
+/* ---- 2. Vanish ---------------------------------------------------- */
+
+.ml-cards {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--grid-cell);
+  padding: 0 var(--grid-cell);
+  max-width: 60rem;
+}
+
+.ml-card {
+  padding: 1.5rem;
+  border: 1px solid var(--color-line);
+  background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+  font-family: var(--font-read);
+  cursor: pointer;
+}
+
+.ml-card h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.5rem;
+  color: var(--color-accent);
+}
+
+.ml-card p {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* --vanish-sprite is a data: URL motion-lab.ts paints once (30 frames
+   side by side). 3000% = 30 frames wide; steps(29) lands exactly on each
+   frame from 0% to 100%. The element's own look is swapped for the
+   hairline-stripe fill so the dissolve reads as the grid eating it. */
+.is-vanishing {
+  --strip: 1px;
+  --gap: 12px;
+  background:
+    linear-gradient(90deg, var(--color-line) var(--strip), transparent var(--strip)) center / calc(var(--strip) + var(--gap)) 100%,
+    linear-gradient(0deg, var(--color-line) var(--strip), transparent var(--strip)) center / 100% calc(var(--strip) + var(--gap)),
+    var(--color-bg);
+  -webkit-mask: var(--vanish-sprite) left / 3000% 100%;
+  mask: var(--vanish-sprite) left / 3000% 100%;
+  animation: ml-vanish 0.75s steps(29, end) both;
+}
+
+.ml-card.is-vanishing > *,
+.ml-obj.is-vanishing .ml-face {
+  visibility: hidden;
+}
+
+@keyframes ml-vanish {
+  from { -webkit-mask-position: left 0; mask-position: left 0; }
+  to { -webkit-mask-position: right 0; mask-position: right 0; }
+}
+
+.ml-card.is-gone {
+  visibility: hidden;
+}
