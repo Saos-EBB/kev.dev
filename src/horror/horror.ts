@@ -15,6 +15,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as sfx from "./horror-audio";
 import { createLife } from "./horror-life";
 import { createFigures } from "./horror-figures";
+import { createCombat } from "./horror-combat";
 
 
 const MARKUP = `
@@ -27,6 +28,8 @@ const MARKUP = `
   <div class="hud" id="red"></div>
   <div class="hud" id="vig"></div>
   <div id="touch" aria-hidden="true"></div>
+  <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p>Schrot <b id="ammo">0</b></p></div>
+  <button id="fire" type="button" hidden>Feuer</button>
   <p id="err"></p>
 
   <div class="overlay" id="start">
@@ -51,6 +54,14 @@ const MARKUP = `
       <h1>Pause</h1>
       <p>Es wartet. Es ist geduldig.</p>
       <button class="btn" id="resume" type="button">Weiter</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="dead" hidden>
+    <div class="box">
+      <h1>Du bist <span>tot</span></h1>
+      <p>Sie waren zu viele. Oder du warst zu langsam.</p>
+      <button class="btn" id="retry" type="button">Noch mal rein</button>
     </div>
   </div>
 
@@ -385,6 +396,7 @@ function mount() {
     });
     itHead.remove(placeholderHead);
     itHead.add(fit(headG.scene.clone(true), 0.3));
+    combat.setHead(() => fit(headG.scene.clone(true), 0.27));
     figures.setHead(() => fit(headG.scene.clone(true), 0.28));
     placeWallHeads(headG.scene);
     faceG.scene.traverse((o) => {
@@ -486,8 +498,7 @@ function mount() {
     card(NOTES[n.i].tag, NOTES[n.i].text);
     if (got >= 2) setTimeout(writeBehind, 4000);
     if (got === 1) setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 3500);
-    if (got === 2) { S.active = true; setTimeout(() => sfx.whisper(sfx.ear, 2.4), 1500); }
-    if (got === 3) { blackout(1.4, apparition); setTimeout(sfx.breath, 300); }
+    if (got === 2) { S.active = true; setTimeout(() => sfx.whisper(sfx.ear, 2.4), 1500); blackout(1.4, apparition); }
     if (got === 4) { setTimeout(() => { whisperText("Es ist direkt hinter dir."); sfx.whisper(sfx.ear, 1.6); }, 2500); S.back = -2; }
     if (got === 5) { blackout(0.9); setTimeout(() => sfx.step(sfx.ear, 0.5), 200); setTimeout(() => sfx.step(sfx.ear, 0.5), 650); }
     if (got === notes.length) {
@@ -527,7 +538,10 @@ function mount() {
     if (!locked && running && !ended && !isTouch) pause();
   });
   document.addEventListener("mousemove", (e) => { if (locked) look(e.movementX, e.movementY); else if (dragging) look(e.movementX, e.movementY, 0.004); });
-  canvas.addEventListener("mousedown", () => { if (running && !locked) { lock(); dragging = true; } });
+  canvas.addEventListener("mousedown", (e) => {
+    if (running && !locked) { lock(); dragging = true; return; }
+    if (running && !paused && e.button === 0) combat.fire();
+  });
   window.addEventListener("mouseup", () => { dragging = false; });
   // hidden tab: pause (no catch-up jump, no CPU burn)
   document.addEventListener("visibilitychange", () => { if (document.hidden && running && !ended && !paused) pause(); });
@@ -556,6 +570,8 @@ function mount() {
     }
   });
 
+  $("fire").addEventListener("touchstart", (e) => { e.stopPropagation(); combat.fire(); }, { passive: true });
+  $("retry").addEventListener("click", () => location.reload());
   $("go").addEventListener("click", () => {
     sfx.init();
     $("start").hidden = true; running = true;
@@ -582,6 +598,63 @@ function mount() {
   // figures that only move while you don't look (from the 2nd note on)
   const figures = createFigures({ scene, C, corridors: straight, openDirs, solidAt, clearLine });
   const inView = (p: THREE.Vector3) => { sph.center.copy(p); return frustum.intersectsSphere(sph); };
+
+  /* ---------- the Doom part: shotgun at the 3rd note, then zombies ---------- */
+  let health = 100, waves = 0, flashUntil = 0;
+  const combat = createCombat({
+    scene, camera, solidAt,
+    onShot: () => { flashUntil = now + 0.06; shake = Math.max(shake, 0.05); },
+    onHurt: (d) => {
+      if (ended) return;
+      health = Math.max(0, health - d);
+      redFlash(400); shake = 0.1;
+      if (health <= 0) die();
+    },
+  });
+  // weapon on the floor in front of the 3rd note; shells and a medkit in every row after it
+  const [wx, wz] = noteCells[3];
+  combat.addPickup("shotgun", new THREE.Vector3(wx * C, 0, wz * C));
+  const after = straight.filter(([x, z]) => dist.get(key([x, z]))! > dist.get(key([wx, wz]))!);
+  after.forEach(([x, z], i) => {
+    if (i % 5 === 2) combat.addPickup("shells", new THREE.Vector3(x * C + (Math.random() - 0.5), 0, z * C + (Math.random() - 0.5) * 0.8));
+    if (i % 11 === 6) addHealth(x, z);
+  });
+  function addHealth(x: number, z: number) { combat.addPickup("health", new THREE.Vector3(x * C, 0, z * C + 0.5)); }
+  const hud = () => { $("hp").textContent = String(health); $("ammo").textContent = String(combat.ammo); };
+  function onPickup(kind: string) {
+    if (kind === "health") health = Math.min(100, health + 25);
+    if (kind === "shotgun") {
+      S.active = false; it.visible = false; dread = 0; // nothing creeps up on you any more; now they come at you
+      $("status").hidden = false; $("dot").classList.add("cross");
+      if (isTouch) $("fire").hidden = false;
+      card("Schrotflinte", "Jetzt bist du dran. Klicken zum Schießen.", 6000);
+      $("goal").textContent = "Mach den Weg frei.";
+      // the first two are already behind you
+      blackout(0.6, () => { spawnBehind(2); whisperText("Hinter dir."); });
+    }
+    hud();
+  }
+  // zombies at the far end of the row you just entered
+  function spawnRowAhead(entryX: number, z: number, n: number) {
+    const far = reachable.filter(([x, zz]) => zz === z && Math.abs(x - entryX) >= 5);
+    for (let i = 0; i < n; i++) {
+      const [x] = far[Math.floor(Math.random() * far.length)];
+      combat.spawn(new THREE.Vector3(x * C + (Math.random() - 0.5), 0, z * C + (Math.random() - 0.5) * 0.8));
+    }
+  }
+  // zombies coming down the corridor you just walked
+  function spawnBehind(n: number) {
+    const here = dist.get(key([Math.round(pos.x / C), Math.round(pos.z / C)]))!;
+    const behind = reachable.filter((c) => { const d = dist.get(key(c))!; return d < here - 3 && d > here - 7 && !solid(...c); });
+    for (let i = 0; i < n && behind.length; i++) {
+      const [x, z] = behind[Math.floor(Math.random() * behind.length)];
+      combat.spawn(new THREE.Vector3(x * C + (Math.random() - 0.5) * 0.6, 0, z * C + (Math.random() - 0.5) * 0.6));
+    }
+  }
+  function die() {
+    ended = true; blackout(99);
+    setTimeout(() => { running = false; document.exitPointerLock?.(); $("dead").hidden = false; $("retry").focus(); }, 900);
+  }
 
   const updateLife = createLife({
     scene, camera, C, WH, corridors: straight, openDirs, solidAt, clearLine,
@@ -647,7 +720,7 @@ function mount() {
     const mz = G.t >= 0 ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
     const len = Math.hypot(mx, mz), moving = len > 0.1;
     if (moving) {
-      const sp = ((sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
+      const sp = ((combat.armed ? (sprint ? 4.8 : 3.2) : sprint ? 3.4 : 2.0) * dt) / Math.max(1, len);
       const s = Math.sin(yaw), c = Math.cos(yaw);
       tryMove((mx * c + mz * s) * sp, (-mx * s + mz * c) * sp);
       stepPhase += dt * (sprint ? 11 : 8);
@@ -673,6 +746,7 @@ function mount() {
       if (g.t < 0 && here >= dist.get(key([g.x, g.z]))! + 2) {
         g.t = 0; g.slab.visible = true; closed.add(`${g.x},${g.z}`);
         crumbs.length = 0; crumbs.push(pos.clone()); // what follows you is cut off, for now
+        if (combat.armed) spawnRowAhead(g.x, g.z + 1, 3 + 2 * waves++);
       }
       if (g.t >= 0 && g.t < 1) {
         g.t = Math.min(1, g.t + dt / 0.35);
@@ -681,6 +755,8 @@ function mount() {
       }
     }
     shake *= 0.88;
+    combat.update(dt, pos, moving, onPickup);
+    if (combat.armed) hud();
 
     // --- notes, exit
     for (const n of notes) if (!n.got && Math.hypot(pos.x - n.x * C, pos.z - n.z * C) < 1.2) collect(n);
@@ -777,7 +853,14 @@ function mount() {
       sfx.setListener(camera.position, fwd);
       sfx.setPos(sfx.ear, tmp.copy(camera.position).addScaledVector(fwd, -0.6)); // whispers come from right behind your head
     }
+    if (now < flashUntil) { lamp.intensity *= 3; hemi.intensity += 1.5; }
     renderer.render(scene, camera);
+    if (combat.armed) { // the gun: own scene, drawn over the world
+      renderer.autoClear = false;
+      renderer.clearDepth();
+      renderer.render(combat.viewScene, camera);
+      renderer.autoClear = true;
+    }
   }
 
   let last = performance.now(), drewPaused = false;

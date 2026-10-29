@@ -69,7 +69,7 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 #fps { top: calc(14px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); font-size: 11px; color: var(--ash); }
 #dot { left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: #ffffff55; }
 #card {
-  left: 50%; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; width: min(620px, calc(100% - 32px));
+  left: 50%; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; width: min(620px, calc(100% - 32px));
   background: var(--panel); border-top: 3px solid var(--sodium); padding: 16px 20px; font-size: 18px; line-height: 1.45; opacity: 0; transition: opacity .6s;
   box-shadow: 0 10px 40px #000c;
 }
@@ -87,3 +87,22 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 }
 #touch.on { display: block; }
 #err { position: fixed; z-index: 30; left: 16px; right: 16px; bottom: 16px; color: var(--blood); font-size: 12px; margin: 0; }
+
+/* Doom part: status bar, crosshair, touch fire button */
+#status {
+  left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: end;
+  padding: 0 max(20px, env(safe-area-inset-right, 0px)) calc(14px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--ash); text-shadow: 0 2px 10px #000;
+}
+#status p { margin: 0; display: grid; }
+#status b { font: 400 clamp(40px, 7vw, 64px)/1 var(--display); color: var(--blood); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+#status p:last-child { text-align: right; }
+#status p:last-child b { color: var(--sodium); }
+#dot.cross { width: 18px; height: 18px; margin: -9px; border-radius: 0; background:
+  linear-gradient(#ffffffaa, #ffffffaa) center / 2px 100% no-repeat,
+  linear-gradient(#ffffffaa, #ffffffaa) center / 100% 2px no-repeat; }
+#fire {
+  position: fixed; z-index: 11; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+  width: 84px; height: 84px; border-radius: 50%; border: 2px solid var(--blood); background: #d8291f33; color: var(--bone);
+  font: 700 13px var(--body); letter-spacing: .1em; text-transform: uppercase; touch-action: none;
+}
