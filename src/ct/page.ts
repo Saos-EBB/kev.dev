@@ -28,7 +28,11 @@ document.documentElement.lang = "de";
 document.title = "Kevin Schaberl — Kopf-CT";
 
 const PHONE = matchMedia("(max-width: 700px)").matches;
-const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Like the main page (FORCE_MOTION_EVERYWHERE in main.ts): every visitor
+// gets the motion, the OS "reduce motion" setting is ignored for now —
+// with it, the skull would just sit in its end state while you scroll.
+const FORCE_MOTION = true;
+const REDUCED = !FORCE_MOTION && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const HOT = "#ffe08a";
 
 // The main page's project texts (projects-data.ts), by id.
