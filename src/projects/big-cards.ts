@@ -242,7 +242,7 @@ function partsCard(card: ProjectCard, head: string): string {
   const pid = (i: number) => `parts-${esc(card.id)}-${i}`;
   const list = (items?: string[]) => (items?.length ? `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
   return `
-    <article class="pcard pcard--big pcard--parts" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
+    <article class="pcard pcard--big pcard--parts pcard--phone" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       ${head.replace("</header>", `<span class="parts-here" aria-hidden="true">${esc(UI.touchHere)}</span></header>`)}
       <div class="parts">
         ${textTabs(card)}
