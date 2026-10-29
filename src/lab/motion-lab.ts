@@ -4,8 +4,9 @@
 // tokens and code.
 //  1. CSS-3D objects: JS only writes --x/--y/--z/--rx/--ry per frame, the
 //     transform lives in CSS. Things (cans, balls, a saw
-//     blade, a skull, a knife, a teapot — src/lab/throwables.ts) fly in
-//     from deep z; grab one and it
+//     blade, a skull, a knife, a teapot — src/lab/throwables.ts) get
+//     thrown in every 5–15 s from a random side, each with its own
+//     synthesized sound (src/lab/sound.ts); grab one and it
 //     comes to the front and follows the pointer; let go and it vanishes.
 //  2. Vanish: a 30-frame dissolve sprite (painted here on a canvas, not
 //     copied) used as a mask and stepped through with steps(29).
@@ -15,12 +16,14 @@ import "./motion-lab.css";
 import "@fontsource-variable/jetbrains-mono";
 import { gsap } from "gsap";
 import { THROWABLES, renderThrowable } from "./throwables";
+import * as sound from "./sound";
 
 const MARKUP = `
   <div class="ml-scene js-scene"></div>
   <header class="ml-head">
     <h1 class="ml-title">Motion Lab</h1>
-    <p class="ml-hint">Grab something and let go — it dissolves. Click a card to vanish it.</p>
+    <p class="ml-hint">Something gets thrown at you every 5–15 s. Grab it and let go — it dissolves. Click a card to vanish it.</p>
+    <button class="ml-sound js-sound" type="button" aria-pressed="false">Sound: off</button>
   </header>
   <section class="ml-cards">
     <article class="ml-card js-vanish"><h2>Why?</h2><p>Hairline box, see-through, grid underneath.</p></article>
@@ -39,9 +42,10 @@ function mount() {
 
   const FRAMES = 30;
   const VANISH_MS = 750;
-  const COUNT = 9;
-  const FAR_Z = -20000;
-  const NEAR_Z = 900; // past the camera (perspective 1000px) -> respawn
+  const START_Z = -3000;
+  const END_Z = 700; // just past the camera (perspective 1000px)
+  const GAP_S: [number, number] = [5, 15]; // pause between throws
+  const FLIGHT_S: [number, number] = [4.5, 7]; // one throw, start to end
 
   // ---- Vanish sprite --------------------------------------------------
   // Each frame is a 16x16 cell grid; every cell gets a random threshold
@@ -70,15 +74,28 @@ function mount() {
   document.documentElement.style.setProperty("--vanish-sprite", paintVanishSprite());
 
   // ---- 3D objects -----------------------------------------------------
+  // One throw every 5–15 s, each from a random direction. The path is laid
+  // out on the SCREEN: from just outside that edge, in a slight arc, to
+  // near the middle (power1.out, so it is on screen almost the whole
+  // time), while z runs from far back to just past the camera (power2.in,
+  // so it speeds up as it gets close). World x/y are then un-projected
+  // from screen x/y for the current z. A straight 3D line would hug the
+  // edge for most of the flight and only cross the screen at the end.
 
   type Obj = {
     el: HTMLElement;
+    name: string;
+    from: [number, number]; // screen px from the centre
+    to: [number, number];
+    arc: number; // sideways bow at mid-flight, screen px
+    t: number; // seconds into the flight
+    dur: number;
+    passed: boolean;
     x: number;
     y: number;
     z: number;
     rx: number;
     ry: number;
-    vz: number;
     vrx: number;
     vry: number;
     state: "flying" | "dragging" | "vanishing";
@@ -86,32 +103,50 @@ function mount() {
 
   const scene = document.querySelector<HTMLElement>(".js-scene")!;
   const pointer = { x: 0, y: 0 };
+  const flying = new Set<Obj>();
+  const easeZ = gsap.parseEase("power2.in");
+  const easeXY = gsap.parseEase("power1.out");
   let dragged: Obj | null = null;
+  const rand = ([a, b]: [number, number]) => a + Math.random() * (b - a);
+  const panOf = (screenX: number) => Math.max(-1, Math.min(1, screenX / (window.innerWidth / 2)));
+  // Perspective 1000px, origin at the centre: screen = world * 1000 / (1000 - z).
+  const screenX = (x: number, z: number) => (x * 1000) / (1000 - z);
+  const worldX = (sx: number, z: number) => (sx * (1000 - z)) / 1000;
 
-  function spawn(o: Obj, randomDepth: boolean) {
-    o.x = (Math.random() - 0.5) * window.innerWidth * 1.2;
-    o.y = (Math.random() - 0.5) * window.innerHeight * 1.2;
-    o.z = randomDepth ? FAR_Z * Math.random() : FAR_Z;
-    o.rx = Math.random() * 360;
-    o.ry = Math.random() * 360;
-    o.vz = 4 + Math.random() * 6; // px per ms
-    o.vrx = 0.02 + Math.random() * 0.06; // deg per ms
-    o.vry = 0.02 + Math.random() * 0.06;
-    o.state = "flying";
-    o.el.classList.remove("is-vanishing", "is-dragging");
-    // A new random thing on every throw.
+  function launch() {
     const t = THROWABLES[Math.floor(Math.random() * THROWABLES.length)];
-    o.el.style.setProperty("--w", `${t.w}px`);
-    o.el.style.setProperty("--h", `${t.h}px`);
-    o.el.innerHTML = renderThrowable(t);
-  }
-
-  const objects: Obj[] = Array.from({ length: COUNT }, () => {
     const el = document.createElement("div");
     el.className = "ml-obj";
+    el.style.setProperty("--w", `${t.w}px`);
+    el.style.setProperty("--h", `${t.h}px`);
+    el.innerHTML = renderThrowable(t);
     scene.append(el);
-    const o: Obj = { el, x: 0, y: 0, z: 0, rx: 0, ry: 0, vz: 0, vrx: 0, vry: 0, state: "flying" };
-    spawn(o, true);
+
+    const angle = Math.random() * Math.PI * 2;
+    const dir = [Math.cos(angle), Math.sin(angle)];
+    const edge = Math.hypot(window.innerWidth, window.innerHeight) / 2 + Math.max(t.w, t.h);
+    const miss = 40 + Math.random() * 120; // how far it passes from the centre
+    const o: Obj = {
+      el,
+      name: t.name,
+      from: [dir[0] * edge, dir[1] * edge],
+      to: [-dir[0] * miss, -dir[1] * miss],
+      arc: (Math.random() - 0.5) * 0.6 * edge,
+      t: 0,
+      dur: rand(FLIGHT_S),
+      passed: false,
+      x: 0,
+      y: 0,
+      z: START_Z,
+      rx: Math.random() * 360,
+      ry: Math.random() * 360,
+      vrx: (Math.random() < 0.5 ? -1 : 1) * (0.01 + Math.random() * 0.03), // deg per ms
+      vry: (Math.random() < 0.5 ? -1 : 1) * (0.01 + Math.random() * 0.03),
+      state: "flying",
+    };
+    flying.add(o);
+    sound.whoosh(o.dur, panOf(o.from[0]), panOf(o.to[0]));
+
     el.addEventListener("pointerdown", (e) => {
       if (o.state !== "flying") return;
       e.preventDefault();
@@ -127,9 +162,27 @@ function mount() {
       dragged = null;
       o.state = "vanishing";
       el.classList.add("is-vanishing");
-      gsap.delayedCall((VANISH_MS + 1000) / 1000, () => spawn(o, false));
+      sound.dissolve(panOf(o.x));
+      gsap.delayedCall(VANISH_MS / 1000, () => remove(o));
     });
-    return o;
+  }
+
+  function remove(o: Obj) {
+    flying.delete(o);
+    o.el.remove();
+  }
+
+  function scheduleNext() {
+    gsap.delayedCall(rand(GAP_S), () => {
+      launch();
+      scheduleNext();
+    });
+  }
+
+  // First throw right away, then the 5–15 s gaps count from each throw.
+  gsap.delayedCall(1, () => {
+    launch();
+    scheduleNext();
   });
 
   window.addEventListener("pointermove", (e) => {
@@ -139,12 +192,30 @@ function mount() {
 
   // One loop on gsap.ticker, same as the main site's Lenis/GSAP setup.
   gsap.ticker.add((_time, dt) => {
-    for (const o of objects) {
+    for (const o of flying) {
       if (o.state === "flying") {
-        o.z += o.vz * dt;
+        o.t += dt / 1000;
+        const u = Math.min(o.t / o.dur, 1);
+        const q = easeXY(u);
+        const bow = Math.sin(Math.PI * u) * o.arc; // perpendicular to the path
+        const len = Math.hypot(o.to[0] - o.from[0], o.to[1] - o.from[1]) || 1;
+        const nx = -(o.to[1] - o.from[1]) / len;
+        const ny = (o.to[0] - o.from[0]) / len;
+        const sx = o.from[0] + (o.to[0] - o.from[0]) * q + nx * bow;
+        const sy = o.from[1] + (o.to[1] - o.from[1]) * q + ny * bow;
+        o.z = START_Z + (END_Z - START_Z) * easeZ(u);
+        o.x = worldX(sx, o.z);
+        o.y = worldX(sy, o.z);
         o.rx += o.vrx * dt;
         o.ry += o.vry * dt;
-        if (o.z > NEAR_Z) spawn(o, false);
+        if (!o.passed && o.z > 0) {
+          o.passed = true;
+          sound.pass(o.name, panOf(screenX(o.x, o.z)));
+        }
+        if (o.t >= o.dur) {
+          remove(o);
+          continue;
+        }
       } else if (o.state === "dragging" && o === dragged) {
         // Pull to z = 0, where screen position == x/y, and ease after the
         // pointer (the original eases its mouse by 0.1 per frame too).
@@ -159,6 +230,18 @@ function mount() {
       s.setProperty("--rx", o.rx.toFixed(1));
       s.setProperty("--ry", o.ry.toFixed(1));
     }
+  });
+
+  // ---- Sound toggle ---------------------------------------------------
+
+  const soundBtn = document.querySelector<HTMLButtonElement>(".js-sound")!;
+  let soundOn = false;
+  soundBtn.addEventListener("click", async () => {
+    soundOn = !soundOn;
+    if (soundOn) await sound.unlock();
+    sound.setMuted(!soundOn);
+    soundBtn.textContent = `Sound: ${soundOn ? "on" : "off"}`;
+    soundBtn.setAttribute("aria-pressed", String(soundOn));
   });
 
   // ---- Vanish on flat UI ---------------------------------------------

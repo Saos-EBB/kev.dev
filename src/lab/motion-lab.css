@@ -34,6 +34,32 @@
   color: var(--color-text-muted);
 }
 
+.ml-sound {
+  margin-top: 1rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: 0.75rem var(--font-read);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.ml-sound:hover,
+.ml-sound:focus-visible {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.ml-sound[aria-pressed="true"] {
+  background: var(--color-line);
+  color: var(--color-bg);
+}
+
 /* ---- 1. 3D objects ------------------------------------------------ */
 
 .ml-scene {
