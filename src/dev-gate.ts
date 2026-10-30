@@ -2,7 +2,7 @@
 // password ships (the repo is public); the page code loads after it matches.
 // Still a client-side gate: it keeps visitors out, not someone determined.
 // Once unlocked, this browser stays unlocked (localStorage).
-const HASH = "6d7ab3388945d6a00f15c719b885d6f9f09625e8c64c7d5f4dd25be9766bffb0";
+const HASH = "0b113d17e12fbfdf0e8f0c53705f4f931c5d4be06639c77d0ce6eaf419b850c6";
 const KEY = "saos-dev-unlocked";
 
 async function sha256(text: string) {
