@@ -328,7 +328,11 @@ import("./ct-scene").then(async ({ createCtScene }) => {
       tOp = ease((t - 0.05) / 0.25);
       tRot = ease((t - 0.35) / 0.35) * (Math.PI / 2);
       tLift = ease((t - 0.72) / 0.28);
-    } else if (st.front) { tRot = 0; tCut = -5; tOp = 0; tLift = 0; }
+    } else if (st.front) {
+      // Contact: facing you, closed, brain hidden; lift 0.6 sinks the skull
+      // a little so the blade and the fountain above it stay in the frame.
+      tRot = 0; tCut = -5; tOp = 0; tLift = 0.6;
+    }
     else { tRot = Math.PI / 2; tCut = 0.02; tOp = st.op ?? 1; tLift = 1; }
     const f = REDUCED ? 1 : 1 - Math.exp(-dt * 8);
     cur.rotY += (tRot - cur.rotY) * f;

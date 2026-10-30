@@ -1,26 +1,32 @@
-// The finale on the page's one skull (ct-scene.ts), as in the live
-// prototype ("#skull infos /ct-live.zip", saw(T)): three saw blades hit it
-// one after another, each hit throws shards that slow down and freeze in
-// the air. The <a>s handed in ride on the first shard of each hit and
-// become clickable once it stands. A closed-form function of the time
-// since start(), seeded, so it plays the same every time.
+// The finale on the page's one skull (ct-scene.ts): one saw blade flies in
+// and sinks a good third of its diameter into the crown; out of the cut a
+// fountain of bone particles sprays up and every particle freezes at the
+// top of its arc. Three of them are the links (the <a>s handed in ride on
+// them). Everything hangs on the skull, so the whole thing turns with it
+// when dragged. A closed-form function of the time since start(), seeded,
+// so it plays the same every time.
 import * as THREE from "three";
 import { BLADE_R, bladeGeometry } from "./parts";
 import { dotMaterial, surfaceDots } from "./dots";
 
-const FLIGHT = 0.45; // s from off-screen to stuck
-const DELAY = 0.6; // s after start() before the first blade leaves
-const SHARDS = 14;
-const END = 2.2 + 4;
+const DELAY = 0.6; // s after start() before the blade leaves
+const FLIGHT = 0.5; // s from off-screen to stuck
+const HIT_AT = 0.4; // s after the delay
+const SCALE = 0.85; // blade size
+const INSIDE = 0.38; // share of the blade's diameter inside the skull
+const WANT = new THREE.Vector3(-0.15, 0.85, 0.15); // the crown, a little left and forward
+const PARTICLES = 130;
+const G = 4; // "gravity" of the arcs
+const SLOW = 0.6; // the fountain runs at 60 % speed, so it reads
+const END = HIT_AT + 3;
 
-const HITS = [
-  { want: [-0.3, 0.72, 0.25], scale: 0.62, depth: 0.17, tilt: [0.25, -0.35], at: 0.4 },
-  { want: [0.72, 0.22, 0.2], scale: 0.52, depth: 0.12, tilt: [-0.15, 0.5], at: 1.3 },
-  { want: [-0.6, -0.15, 0.55], scale: 0.46, depth: 0.1, tilt: [0.4, 0.2], at: 2.2 },
+// The three link particles: launch velocities (x, y, z) chosen so they
+// stand left, top and right of the fountain.
+const LINK_VEL = [
+  [-1.5, 1.6, 0.6],
+  [0.1, 1.9, 0.7],
+  [1.55, 1.5, 0.6],
 ] as const;
-
-// Shards slow down and freeze at 0.55 / 2.6 of their velocity.
-const settle = (u: number) => (u <= 0 ? 0 : (0.55 * (1 - Math.exp(-2.6 * u))) / 2.6);
 
 export interface Saw {
   start(): void;
@@ -29,12 +35,12 @@ export interface Saw {
   readonly running: boolean;
   /** Advance by dt seconds and pose everything; true while it still moves. */
   tick(dt: number): boolean;
-  /** Each link's shard in world space (null while it isn't out yet). */
+  /** Each link's particle in world space (null while it isn't out yet). */
   linkPoints(): (THREE.Vector3 | null)[];
 }
 
 export function createSaw(opts: {
-  skull: THREE.Group; // the skull's group; blades and shards ride on it
+  skull: THREE.Group; // the skull's group; blade and particles ride on it
   geo: THREE.BufferGeometry; // its geometry, skull space
   onFirstHit(): void;
   onReset(): void;
@@ -48,46 +54,43 @@ export function createSaw(opts: {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 
+  // The hit: the skull vertex nearest the wanted spot (front half).
   const pos = geo.getAttribute("position") as THREE.BufferAttribute;
   const v = new THREE.Vector3();
-  const nearestTo = (p: THREE.Vector3) => {
-    let best = Infinity;
-    const out = new THREE.Vector3();
-    for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i);
-      if (v.z < 0) continue; // front half only, so the hit is visible
-      const d = v.distanceToSquared(p);
-      if (d < best) { best = d; out.copy(v); }
-    }
-    return out;
-  };
+  const hit = new THREE.Vector3();
+  let best = Infinity;
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    if (v.z < 0) continue;
+    const d = v.distanceToSquared(WANT);
+    if (d < best) { best = d; hit.copy(v); }
+  }
+  // The blade stands in the screen plane, its centre outside the skull
+  // along the way in, so INSIDE of its diameter is in the bone.
+  const inDir = new THREE.Vector3(hit.x, hit.y, 0).normalize();
+  const r = BLADE_R * SCALE;
+  const stuck = hit.clone().addScaledVector(inDir, r - INSIDE * 2 * r);
+  const from = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(-2.5, 0.5, 0.8));
 
-  const bladeCol = new THREE.Color("#fff1c9"), shardCol = new THREE.Color("#c9b8ff");
-  const bladeDots = surfaceDots(bladeGeometry(), 8000, (_, c) => { c.copy(bladeCol); });
-  const shardDots = surfaceDots(new THREE.IcosahedronGeometry(1, 0), 60, (_, c) => { c.copy(shardCol); });
   const mat = dotMaterial();
-
   const rig = new THREE.Group();
   skull.add(rig);
-  const hits = HITS.map((h) => {
-    const hit = nearestTo(new THREE.Vector3(...h.want));
-    const inDir = new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
-    const stuck = hit.clone().addScaledVector(inDir, BLADE_R * h.scale - h.depth);
-    const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
-    const outer = new THREE.Group(), inner = new THREE.Points(bladeDots, mat);
-    outer.add(inner);
-    outer.scale.setScalar(h.scale);
-    outer.rotation.set(h.tilt[0], h.tilt[1], 0); // the spin (inner.rotation.z) stays around the blade's own axis
-    rig.add(outer);
-    const shards = Array.from({ length: SHARDS }, () => {
-      const s = new THREE.Points(shardDots, mat);
-      const vel = new THREE.Vector3((rnd() - 0.5) * 3, (rnd() - 0.2) * 3, rnd() * 1.2).addScaledVector(inDir, 1.6);
-      const spin = [rnd() * 14, rnd() * 14, rnd() * 14];
-      s.scale.setScalar(0.03 + rnd() * 0.06);
-      rig.add(s);
-      return { s, vel, spin };
-    });
-    return { ...h, hit, stuck, start, outer, inner, shards };
+  const blade = new THREE.Group();
+  const spinner = new THREE.Points(surfaceDots(bladeGeometry(), 9000, (_, c) => { c.set("#fff1c9"); }), mat);
+  blade.add(spinner);
+  blade.scale.setScalar(SCALE);
+  blade.rotation.set(0.15, -0.2, 0); // a little out of the screen plane; it spins around its own axis
+  rig.add(blade);
+
+  const shardDots = surfaceDots(new THREE.IcosahedronGeometry(1, 0), 60, (_, c) => { c.set("#c9b8ff"); });
+  const particles = Array.from({ length: PARTICLES }, (_, i) => {
+    const vel = i < LINK_VEL.length
+      ? new THREE.Vector3(...LINK_VEL[i])
+      : new THREE.Vector3((rnd() - 0.5) * 2.8, 0.9 + rnd() * 1.0, (rnd() - 0.3) * 1.2);
+    const s = new THREE.Points(shardDots, mat);
+    s.scale.setScalar(i < LINK_VEL.length ? 0.07 : 0.035 + rnd() * 0.06);
+    rig.add(s);
+    return { s, vel, spin: [rnd() * 9, rnd() * 9, rnd() * 9] };
   });
 
   let running = false;
@@ -95,21 +98,21 @@ export function createSaw(opts: {
   let firstHitSent = false;
 
   function pose() {
-    const T = running ? t - DELAY : -1;
-    for (const h of hits) {
-      const u = T - h.at, fly = u + FLIGHT;
-      h.outer.visible = T >= 0 && fly > 0;
-      const k = Math.min(Math.max(fly, 0) / FLIGHT, 1);
-      h.outer.position.lerpVectors(h.start, h.stuck, k * k);
-      h.inner.rotation.z = -(Math.min(Math.max(fly, 0), FLIGHT) * 38 + (u > 0 ? ((1 - Math.exp(-4 * u)) * 38) / 4 : 0));
-      const d = settle(u);
-      for (const { s, vel, spin } of h.shards) {
-        s.visible = T >= 0 && u > 0;
-        s.position.copy(h.hit).addScaledVector(vel, d);
-        s.rotation.set(spin[0] * d, spin[1] * d, spin[2] * d);
-      }
+    const T = running ? t - DELAY : -1; // time since the blade left
+    const fly = T >= 0 ? Math.min(T / FLIGHT, 1) : 0;
+    blade.visible = T >= 0;
+    blade.position.lerpVectors(from, stuck, fly * fly);
+    const u = T - HIT_AT; // time since the hit
+    spinner.rotation.z = -(Math.min(Math.max(T, 0), HIT_AT) * 40 + (u > 0 ? ((1 - Math.exp(-5 * u)) * 40) / 5 : 0));
+
+    // Each particle on its arc, frozen at the top of it.
+    for (const { s, vel, spin } of particles) {
+      s.visible = u > 0;
+      const tau = Math.min(Math.max(u, 0) * SLOW, vel.y / G);
+      s.position.set(hit.x + vel.x * tau, hit.y + vel.y * tau - (G / 2) * tau * tau, hit.z + vel.z * tau);
+      s.rotation.set(spin[0] * tau, spin[1] * tau, spin[2] * tau);
     }
-    if (running && !firstHitSent && T > HITS[0].at) {
+    if (running && !firstHitSent && u > 0) {
       firstHitSent = true;
       opts.onFirstHit();
     }
@@ -128,21 +131,18 @@ export function createSaw(opts: {
       if (was) opts.onReset();
     },
     finish() {
-      running = true; t = END + DELAY; firstHitSent = true;
+      running = true; t = DELAY + END; firstHitSent = true;
       pose();
     },
     tick(dt) {
       if (!running) return false;
-      const moving = t < END + DELAY;
-      if (moving) t = Math.min(t + dt, END + DELAY);
+      const moving = t < DELAY + END;
+      if (moving) t = Math.min(t + dt, DELAY + END);
       pose();
       return moving;
     },
     linkPoints() {
-      return hits.map((h) => {
-        const s = h.shards[0].s;
-        return s.visible ? s.getWorldPosition(new THREE.Vector3()) : null;
-      });
+      return particles.slice(0, LINK_VEL.length).map(({ s }) => (s.visible ? s.getWorldPosition(new THREE.Vector3()) : null));
     },
   };
   saw.reset();
