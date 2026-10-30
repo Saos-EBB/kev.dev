@@ -126,7 +126,13 @@ html::-webkit-scrollbar,
   width: 52vw;
   height: 100vh;
   display: block;
-  pointer-events: none;
+  /* drag turns skull + brain (page.ts); a vertical swipe still scrolls */
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.ct-skull.is-turning {
+  cursor: grabbing;
 }
 
 .ct-pointers {

@@ -217,6 +217,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // mostly fine spray, every few a fat gob
     size[i] = Math.random() < 0.12 ? 90 + Math.random() * 80 : 18 + Math.random() * 45;
     d3.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.9).add(jetAxis).normalize();
+    // Not much towards the camera: drops flying at it landed in front of
+    // the skull, low on the screen and big, and the pool covered the footer.
+    d3.z = Math.min(d3.z, 0.2);
     dirs.set([d3.x, d3.y, d3.z], i * 3);
   }
   bloodGeo.setAttribute("position", new THREE.BufferAttribute(bloodPos, 3));
