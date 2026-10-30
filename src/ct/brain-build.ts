@@ -40,19 +40,23 @@ const sm = (e0: number, e1: number, t: number) => {
   const u = Math.min(Math.max((t - e0) / (e1 - e0), 0), 1);
   return u * u * (3 - 2 * u);
 };
-const ys = (z: number) => -0.2 + (0.35 - z) * 0.45; // Sylvian fissure: y on the unit sphere, by z
+// Region borders tuned against Gray's lateral view (Gray728, public domain):
+// the Sylvian fissure rises only gently from the temporal pole to its end,
+// behind it the temporal/parietal border runs almost level to the
+// occipital lobe, which takes the last ~15 % of the length.
+const ys = (z: number) => -0.06 - 0.16 * sm(-0.05, 0.45, z); // Sylvian fissure: y on the unit sphere, by z
 const zc = (y: number) => -0.06 + (1 - y) * 0.16; // central sulcus: z, by y
 
 function region(noise: ImprovedNoise, n: { x: number; y: number; z: number }, side: number): Region {
   const j = 0.05 * noise.noise(n.x * 3.1 + 11, n.y * 3.1, n.z * 3.1);
   const x = n.x, y = n.y + j, z = n.z + j * 0.7;
   const s = ys(z), c = zc(y);
-  if (y < s && z < 0.5 && z > -0.62 && x > -0.2) {
+  if (y < s && z < 0.5 && z > -0.6 && x > -0.2) {
     if (y < s - 0.55 || (x < 0.35 && y < -0.55)) return "fusiform";
     if (side < 0 && ((z + 0.33) / 0.2) ** 2 + ((y - (s - 0.13)) / 0.13) ** 2 < 1) return "wernicke";
     return "temporal";
   }
-  if (z < -0.6 + 0.12 * y) return "occipital";
+  if (z < -0.56 + 0.1 * y) return "occipital";
   if (z < c) return "parietal";
   if (z < c + 0.16) return "motor";
   if (side < 0 && x > 0.2 && ((z - (c + 0.32)) / 0.15) ** 2 + ((y - (s + 0.13)) / 0.12) ** 2 < 1) return "broca";
@@ -81,8 +85,10 @@ function hemisphere(noise: ImprovedNoise, side: number) {
     py += 0.06 * sm(0.25, 0.5, v.z) * sm(0.1, -0.25, v.y) * (1 - tw); // orbitofrontal underside higher
     py += 0.12 * sm(-0.4, -0.75, v.z) * sm(0.0, -0.4, v.y); // tentorium: room for the cerebellum
     // Gyri: soft ridged noise, low frequency.
-    const nz = 1 - Math.abs(noise.noise(pz * 6.5, py * 6.5, px * 6.5 + side * 7));
-    const d = 0.022 * nz * nz * (n.x > -0.08 ? 1 : 0.35);
+    // Gyri: ridged noise — denser and deeper than first built, closer to a
+    // real cortex (reference photo: Wikimedia "Brain - Lobes", CC BY 2.5).
+    const nz = 1 - Math.abs(noise.noise(pz * 10, py * 10, px * 10 + side * 7));
+    const d = 0.032 * nz * nz * (n.x > -0.08 ? 1 : 0.35);
     const len = Math.hypot(px, py, pz);
     pos.setXYZ(i, (px + (px / len) * d) * side, py + (py / len) * d + 0.12, pz + (pz / len) * d - 0.02);
   }
@@ -157,7 +163,7 @@ function cerebellum() {
     const lobe = 1 - 0.18 * Math.exp(-(v.x * v.x) / 0.02); // midline notch (vermis)
     const fol = 0.03 * Math.pow(Math.abs(Math.sin(v.y * 26 + v.z * 9)), 0.6); // folia: fine parallel ridges
     const r = lobe + fol;
-    pos.setXYZ(i, v.x * 0.46 * r, v.y * 0.21 * r - 0.38, v.z * 0.3 * r - 0.6);
+    pos.setXYZ(i, v.x * 0.42 * r, v.y * 0.19 * r - 0.37, v.z * 0.26 * r - 0.56); // tucked under the occipital lobe
   }
   g.setAttribute("region", new THREE.BufferAttribute(new Float32Array(pos.count).fill(REG.indexOf("cerebellum")), 1));
   g.computeVertexNormals();
