@@ -112,6 +112,42 @@ html::-webkit-scrollbar,
   top: 12px;
 }
 
+/* ── loader ───────────────────────────────────────────────────────── */
+
+/* Blank screen, bold LOADING and a line of dots (page.ts fills it as the
+   skull and brain load); full line = ready, then it slides down away. */
+.ct-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  background: var(--bg);
+  transition: transform 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+.ct-loader.is-gone {
+  transform: translateY(100%);
+}
+
+.ct-loader p {
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 800;
+  font-size: clamp(32px, 6vw, 88px);
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+@media (max-width: 700px) {
+  .ct-loader {
+    padding: 0 16px;
+  }
+}
+
 /* ── fixed layers ─────────────────────────────────────────────────── */
 
 /* The skull: the right half, full height, behind the text column. */

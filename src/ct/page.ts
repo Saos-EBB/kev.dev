@@ -135,6 +135,7 @@ const finding = (f: Finding) => `
 
 document.body.className = "ct-body";
 document.body.innerHTML = `
+  <div class="ct-loader" role="status" aria-label="Lädt"><p aria-hidden="true"><b>LOADING</b><span></span></p></div>
   <a class="ct-skip" href="#yourbrand">Zu den Befunden</a>
   <canvas class="ct-skull" aria-label="Schädel-CT aus Punkten, dreht sich und öffnet sich beim Scrollen"></canvas>
   <svg class="ct-pointers" aria-hidden="true"></svg>
@@ -199,6 +200,7 @@ document.body.innerHTML = `
 
 // ── scroll ──────────────────────────────────────────────────────────────
 const lenis = new Lenis({ smoothWheel: !REDUCED });
+lenis.stop(); // until the loader has gone
 gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
 initScrollProgress(lenis); // the main page's scrollbar (src/scroll/progress.ts)
@@ -254,6 +256,51 @@ atlasRows.forEach((li) => {
   li.addEventListener("pointerleave", off); li.addEventListener("blur", off);
 });
 
+// ── loader: LOADING and dots across the screen; full = ready ────────────
+// The dots run at a steady pace to ~85 % of the width and wait there for
+// the skull and brain; then they fill the line and the screen slides away.
+let sceneReady = false;
+{
+  const loader = document.querySelector<HTMLElement>(".ct-loader")!;
+  const line = loader.querySelector("p")!;
+  const word = loader.querySelector("b")!;
+  const dots = loader.querySelector("span")!;
+  let max = 0;
+  const measure = () => {
+    const probe = document.createElement("span");
+    probe.textContent = ".".repeat(20);
+    dots.after(probe);
+    const dot = probe.getBoundingClientRect().width / 20;
+    probe.remove();
+    max = Math.max(1, Math.floor((line.clientWidth - word.getBoundingClientRect().width) / dot));
+  };
+  measure();
+  void document.fonts.ready.then(measure);
+  window.addEventListener("resize", measure);
+  const t0 = performance.now();
+  let shown = 0;
+  let filledAt = 0;
+  const step = (now: number) => {
+    const waitAt = Math.floor(max * 0.85);
+    // (A frame's timestamp can lie a little before t0: never below 0.)
+    const paced = Math.min(waitAt, Math.max(0, Math.floor(((now - t0) / 2400) * waitAt)));
+    // Once ready: race to the end of the line (at least 0.25 s).
+    const target = sceneReady ? Math.min(max, Math.max(paced, shown + Math.ceil(max / 15))) : paced;
+    if (target !== shown) { shown = target; dots.textContent = ".".repeat(shown); }
+    if (shown >= max && sceneReady) {
+      filledAt ||= now;
+      if (now - filledAt > 250) {
+        loader.classList.add("is-gone");
+        lenis.start();
+        loader.addEventListener("transitionend", () => loader.remove(), { once: true });
+        return;
+      }
+    }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 import("./ct-scene").then(async ({ createCtScene }) => {
   const ct = await createCtScene(canvas, {
     phone: PHONE,
@@ -262,6 +309,7 @@ import("./ct-scene").then(async ({ createCtScene }) => {
   });
   status.remove();
   document.documentElement.classList.add("ct-ready");
+  sceneReady = true;
 
   let active = "";
   let lastHi = "";
@@ -358,7 +406,7 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     drawPointers(ct, active, st, hi);
     placeShards(ct);
   });
-}).catch(() => { canvas.remove(); status.remove(); document.documentElement.classList.add("no-skull"); });
+}).catch(() => { canvas.remove(); status.remove(); document.documentElement.classList.add("no-skull"); sceneReady = true; });
 
 const cr = () => canvas.getBoundingClientRect();
 
