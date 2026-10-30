@@ -9,7 +9,8 @@
 //    up, a pointer runs to the heading
 //  - atlas: the eight small projects' parts out and in colour, one line
 //    per row
-//  - anamnesis: side view, the brain back together, nothing lit
+//  - anamnesis: the intro backwards with the scroll — the brain sinks back
+//    into the skull, it turns to face you, the cut closes
 //  - contact: back to the front, three saw blades hit it (saw.ts); the
 //    links ride on the shards that freeze in the air.
 // Copy from the mockup, the project texts from the main page's
@@ -257,6 +258,11 @@ const atlasRows = Array.from(document.querySelectorAll<HTMLElement>(".ct-atlas-l
 
 const sm = (e0: number, e1: number, t: number) => { const u = Math.min(Math.max((t - e0) / (e1 - e0), 0), 1); return u * u * (3 - 2 * u); };
 const ease = (t: number) => sm(0, 1, t);
+// How far the anamnesis has been scrolled past the reading line (0 → 1).
+const outroProgress = () => {
+  const r = sections.find((s) => s.dataset.state === "about")!.getBoundingClientRect();
+  return Math.min(Math.max((innerHeight * 0.55 - r.top) / r.height, 0), 1);
+};
 const introProgress = () => {
   const r = intro.getBoundingClientRect();
   return Math.min(Math.max(-r.top / (r.height - innerHeight * 0.4), 0), 1);
@@ -390,9 +396,12 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     // skull glides towards it. Intro, from the first scrolled pixel: the
     // cut runs through while it faces you and the brain shows, then it
     // turns to the side, then the brain rises out of the skull.
+    // The anamnesis runs the intro backwards with the scroll: the brain
+    // sinks back into the skull, the skull turns to face you, the cut
+    // closes over the brain — ready for the contact.
     let tRot: number, tCut: number, tOp: number, tLift: number;
-    if (active === "intro") {
-      const t = REDUCED ? 1 : introProgress();
+    if (active === "intro" || active === "about") {
+      const t = REDUCED ? 1 : active === "intro" ? introProgress() : 1 - outroProgress();
       tCut = -0.95 + ease(t / 0.35) * 0.97;
       tOp = ease((t - 0.05) / 0.25);
       tRot = ease((t - 0.35) / 0.35) * (Math.PI / 2);
