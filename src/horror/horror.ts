@@ -22,7 +22,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as sfx from "./horror-audio";
 import { createLife } from "./horror-life";
 import { createFigures } from "./horror-figures";
-import { createCombat, WEAPONS, WEAPON_NAMES, type Weapon } from "./horror-combat";
+import { createCombat, WEAPONS, WEAPON_NAMES, type Weapon, type ZombieKind } from "./horror-combat";
+import { MONSTER_IDS } from "./horror-bestiary";
 import { carveUpper } from "./horror-maze";
 
 
@@ -689,7 +690,7 @@ function mount() {
   // spawned counts the ones still loading too
   const W = { n: 0, spawned: 0, killed: 0, total: 0, bigLeft: 0, nextSpawn: 0, nextWave: 0, pending: 0, drop: 0, heads: savedHeads() };
   // zombies come in from the far side of the hall, away from you
-  function spawnIn(cells: Cell[], kind: "normal" | "big" | "boss", n: number) {
+  function spawnIn(cells: Cell[], kind: ZombieKind, n: number) {
     const far = cells.filter(([x, z]) => Math.hypot(x * C - pos.x, z * C - pos.z) > 9);
     for (let i = 0; i < n; i++) {
       const [x, z] = (far.length ? far : cells)[Math.floor(Math.random() * (far.length || cells.length))];
@@ -785,7 +786,9 @@ function mount() {
     const every = Math.max(0.12, 1.2 * Math.pow(0.987, arenaT)), cap = Math.min(60, 10 + Math.floor(arenaT / 3));
     if (now >= W.nextSpawn && W.spawned - W.killed < cap) {
       W.nextSpawn = now + every;
-      spawnIn(halls.A, Math.random() < 0.2 ? "big" : "normal", 1);
+      // test bench: anything from the whole bestiary, at random
+      const pool: ZombieKind[] = ["normal", "big", ...MONSTER_IDS];
+      spawnIn(halls.A, pool[Math.floor(Math.random() * pool.length)], 1);
     }
     arenaInfo -= dt;
     if (arenaInfo <= 0) {
@@ -1008,6 +1011,14 @@ function mount() {
       pos.set(26 * C, 0, 20 * C);
       ($("got").parentElement as HTMLElement).hidden = true;
       W.nextSpawn = now + 1;
+      // #zoo: the whole bestiary in a ring in front of you, nothing else spawns
+      if (hashFlags.includes("zoo")) {
+        W.nextSpawn = Infinity;
+        MONSTER_IDS.forEach((id, i) => {
+          const a = -Math.PI / 2 + (i / (MONSTER_IDS.length - 1) - 0.5) * Math.PI * 0.85;
+          combat.spawn(id, new THREE.Vector3(pos.x - Math.sin(a) * 9, 0, pos.z - Math.cos(a) * 9));
+        });
+      }
     } else {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight

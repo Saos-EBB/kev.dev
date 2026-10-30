@@ -53,6 +53,19 @@ Full license texts ship with each package in `node_modules/<package>/`.
   download page. Exported to GLB, texture scaled to 512 px; the arms' texture
   wasn't included, they're coloured in code. Source URL: TODO.
 
+- Arena test bench (same page): `public/horror/weapons/w_*.glb` and
+  `public/horror/monsters/m_*.glb`, with loose `*__*.jpg` textures beside them.
+  All downloaded as CC0 1.0; exported from .blend/.fbx/.obj/.glb to GLB,
+  heavy ones decimated, textures scaled to 512 px, colours adjusted in code.
+  Authors where the download named them:
+  "Forest Monster" by Čestmír Dammer (CDmir, kelgar.org); "PSX Body Horror
+  Props" (BaldZombieHead, RootedHorrorHead, FleshSofa) by PSXgraphics /
+  Flipperside; "The Mobile Cactus" by Mophs (OpenGameArt, after Winternaut);
+  penguin by Phelippeau Rudy (STKudy85); "Fatty" by Drummyfish
+  (https://opengameart.org/content/fatty). Source URLs for the rest
+  (weapons, hazmat, golem, cat-human, cat, chain-finger monster, raptor,
+  grapple girl, piranha): TODO.
+
 ## Fonts
 
 | File | Font | License |
