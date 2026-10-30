@@ -345,8 +345,17 @@ export function buildBrain(pointsScale = 1): BrainData {
   const parts = geos.map((g): BrainPart => {
     const pos = g.getAttribute("position");
     const dots = sampleDots(g, Math.round((45000 * pointsScale * pos.count) / 30000));
-    const index = g.index ? Uint32Array.from(g.index.array) : Uint32Array.from({ length: pos.count }, (_, i) => i);
     const region = Float32Array.from(g.getAttribute("region").array as ArrayLike<number>);
+    // Only triangles that lie wholly in one part: the body is coloured and
+    // moves with its part, and a triangle across a seam would stretch over
+    // the gap when one side comes out.
+    const all = g.index ? g.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i);
+    const kept: number[] = [];
+    for (let t = 0; t < all.length; t += 3) {
+      const a = all[t], b = all[t + 1], c = all[t + 2];
+      if (region[a] === region[b] && region[a] === region[c]) kept.push(a, b, c);
+    }
+    const index = Uint32Array.from(kept);
     return { dots, occluder: { position: Float32Array.from(pos.array as ArrayLike<number>), region, index } };
   });
 

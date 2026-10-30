@@ -52,15 +52,30 @@ void main() {
   gl_FragColor = vec4(vColor.rgb, vColor.a * uOpacity);
   #include <colorspace_fragment>
 }`;
-// The occluder moves with its parts too, so a part that comes out still
-// hides what's behind it — and leaves no invisible wall where it was.
+// The body under the dots: each part's surface filled in its own colour,
+// darker and shaded, from both sides — so a part that comes out reads as
+// a solid piece, not a hollow shell. It also hides the dots behind it, and
+// moves with its part.
 const OCC_VERT = /* glsl */ `
 attribute float region;
 uniform vec3 uOff[${N}];
+uniform vec4 uColor[${N}];
+varying vec3 vColor;
+varying vec3 vNormal;
 void main() {
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position + uOff[int(region + 0.5)], 1.0);
+  int r = int(region + 0.5);
+  vColor = uColor[r].rgb;
+  vNormal = normalize(normalMatrix * normal);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position + uOff[r], 1.0);
 }`;
-const OCC_FRAG = /* glsl */ `void main() { gl_FragColor = vec4(0.0); }`;
+const OCC_FRAG = /* glsl */ `
+varying vec3 vColor;
+varying vec3 vNormal;
+void main() {
+  float light = 0.25 + 0.35 * abs(dot(normalize(vNormal), normalize(vec3(-0.3, 0.6, 0.75))));
+  gl_FragColor = vec4(vColor * light, 1.0);
+  #include <colorspace_fragment>
+}`;
 
 export interface Brain {
   group: THREE.Group;
@@ -126,8 +141,8 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     transparent: true, depthTest: false, depthWrite: false,
   });
   const occluderMat = new THREE.ShaderMaterial({
-    uniforms: { uOff: offUniform }, vertexShader: OCC_VERT, fragmentShader: OCC_FRAG,
-    colorWrite: false, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4,
+    uniforms: { uOff: offUniform, uColor: uniforms.uColor }, vertexShader: OCC_VERT, fragmentShader: OCC_FRAG,
+    side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4,
   });
   const occluders: THREE.Mesh[] = [];
 
@@ -136,6 +151,7 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     og.setAttribute("position", new THREE.BufferAttribute(part.occluder.position, 3));
     og.setAttribute("region", new THREE.BufferAttribute(part.occluder.region, 1));
     og.setIndex(new THREE.BufferAttribute(part.occluder.index, 1));
+    og.computeVertexNormals();
     const occ = new THREE.Mesh(og, occluderMat);
     occ.renderOrder = -1; // depth first, so dots behind it never draw
     occluders.push(occ);
