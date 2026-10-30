@@ -10,7 +10,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import * as sfx from "./horror-audio";
-import { loadSkullGeometry } from "../skull-site/parts";
+import { loadSkullGeometry } from "../ct/parts";
 
 export type ZombieKind = "normal" | "big" | "boss";
 export type Weapon = "shotgun" | "bat" | "sword" | "rail" | "ice";
