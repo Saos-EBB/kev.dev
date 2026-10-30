@@ -15,12 +15,9 @@
 // Copy from the mockup, the project texts from the main page's
 // projects-data.ts. German, like the mockup.
 import "@fontsource-variable/jetbrains-mono";
-import "../lab/throws.css";
 import "./page.css";
 import gsap from "gsap";
 import Lenis from "lenis";
-import { startThrowLayer } from "../lab/throw-layer";
-import { pauseThrows } from "../lab/throws";
 import { projectCards } from "../projects/projects-data";
 import { esc } from "../projects/project-cards";
 import { initScrollProgress } from "../scroll/progress";
@@ -262,8 +259,6 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     phone: PHONE,
     distance: 6.4,
     saw: true,
-    onFirstHit: () => pauseThrows(true),
-    onReset: () => pauseThrows(false),
   });
   status.remove();
   document.documentElement.classList.add("ct-ready");
@@ -367,4 +362,3 @@ function placeShards(ct: CtScene) {
   });
 }
 
-startThrowLayer();

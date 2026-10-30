@@ -742,8 +742,3 @@ main {
     padding: 32px 16px;
   }
 }
-
-/* Thrown objects (src/lab/throws.ts): green outlines. */
-.ct-body .ml-slice {
-  stroke: var(--color-throw);
-}
