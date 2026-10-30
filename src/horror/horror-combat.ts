@@ -44,7 +44,10 @@ const MAG = { shotgun: 7, rail: 21, ice: 7 }, RELOAD = { shotgun: 1.6, rail: 1.8
 type Gun = keyof typeof MAG;
 const isGun = (x: Weapon | null): x is Gun => !!x && x in MAG;
 // abilities: chain lightning (E, held) costs energy; frost nova (Q) has a cooldown
-const CHAIN = { range: 14, aim: 0.9, tick: 0.1, dmg: 30, drain: 30, regen: 8, headBonus: 5 }; // drain/regen/bonus in % (per second / per headshot)
+// a beam from you to what you aim at, then on from each zombie to the nearest next one, endlessly.
+// Damage about like the ice launcher (60 per burst / 0.9 s); every zombie in the chain is stunned
+// for 1.4 s, at most every 1.5 s. Mana: 210, costs 7 per second held, refills 5 per second.
+const CHAIN = { range: 14, aim: 0.9, tick: 0.1, dps: 65, reach: 5, stunFor: 1.4, stunEvery: 1.5, max: 210, cost: 7, regen: 5, headBonus: 0.05 };
 const NOVA = { radius: 6, dmg: 80, slowFor: 5, every: 10 };
 const PINK = 0xff4fd8;
 // elements your skulls carry (random per throw)
@@ -132,7 +135,7 @@ export function createCombat(w: CombatWorld) {
   let skullsUnlocked = false, skullCD = 0, clock = 0;
   const mag: Record<Gun, number> = { shotgun: 0, rail: MAG.rail, ice: MAG.ice };
   let reloadT = 0; // counts down while the gun in hand reloads
-  let chainUnlocked = false, chainWant = false, chainTick = 0, energy = 100;
+  let chainUnlocked = false, chainWant = false, chainTick = 0, energy = CHAIN.max, chainEmpty = false;
   let novaUnlocked = false, novaCD = 0;
 
   type Pickup = { kind: PickupKind; obj: THREE.Object3D; at: THREE.Vector3; amount: number };
@@ -258,6 +261,7 @@ export function createCombat(w: CombatWorld) {
     attackCD: number; struck: boolean; dying: number; growlCD: number; throwCD: number;
     charge: "none" | "windup" | "dash"; chargeT: number; chargeCD: number; chargeTo: THREE.Vector3; chargeHit: boolean;
     slowUntil: number; burnUntil: number; poisonUntil: number; fxT: number; // status effects (combat clock)
+    stunUntil: number; stunNext: number;
   };
   const zombies: Zombie[] = [];
 
@@ -286,7 +290,7 @@ export function createCombat(w: CombatWorld) {
         kind, spec, root, height: proto.height * spec.scale, mixer, actions, current: "", busy: 0,
         hp: spec.hp, hits: 0, speed, move, attackCD: 0, struck: false, dying: -1, growlCD: 1 + Math.random() * 3, throwCD: 3,
         charge: "none", chargeT: 0, chargeCD: 0, chargeTo: new THREE.Vector3(), chargeHit: false,
-        slowUntil: 0, burnUntil: 0, poisonUntil: 0, fxT: 0,
+        slowUntil: 0, burnUntil: 0, poisonUntil: 0, fxT: 0, stunUntil: 0, stunNext: 0,
       };
       // the boss is the yellow one, and it stays bright yellow (the others are dimmed for the dark)
       if (kind === "boss") root.traverse((o) => { if (o instanceof THREE.SkinnedMesh) { const m = (o.material as THREE.MeshStandardMaterial).clone(); m.color.multiplyScalar(1 / 0.55); m.emissive.set(0x2a2000); o.material = m; } });
@@ -449,7 +453,7 @@ export function createCombat(w: CombatWorld) {
 
   function damage(z: Zombie, head: boolean, amount: number, quiet = false) {
     z.hp -= amount; z.hits++;
-    if (head) energy = Math.min(100, energy + CHAIN.headBonus); // headshots feed the lightning
+    if (head) energy = Math.min(CHAIN.max, energy + CHAIN.max * CHAIN.headBonus); // headshots feed the lightning: 5 %
     flat.subVectors(z.root.position, origin).setY(0).normalize();
     if (z.kind !== "boss" && !quiet) tryMove(z, flat.x * 0.3, flat.z * 0.3); // knockback
     if (z.hp <= 0) {
@@ -723,27 +727,53 @@ export function createCombat(w: CombatWorld) {
     else ammo += 30;
   }
 
-  /* ---------- chain lightning (E, held): zaps what you aim at and jumps on ---------- */
+  /* ---------- chain lightning (E, held): a beam to what you aim at, then zombie to zombie ---------- */
+  const chainMat = new THREE.MeshBasicMaterial({ color: 0xc8b8ff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  function beam(a: THREE.Vector3, b: THREE.Vector3) {
+    const mat = chainMat.clone();
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, a.distanceTo(b), 5, 1, true), mat);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(up1, ray.subVectors(b, a).normalize());
+    addFx(m, mat, CHAIN.tick * 1.3);
+    bolt(a, b); // plus a jagged crackle around it
+  }
+  const chest = (z: Zombie) => z.root.position.clone().setY(z.root.position.y + z.height * 0.6);
+  function shock(z: Zombie) {
+    if (clock >= z.stunNext) { z.stunUntil = clock + CHAIN.stunFor; z.stunNext = clock + CHAIN.stunEvery; }
+    damage(z, false, CHAIN.dps * CHAIN.tick, true);
+  }
   function zap() {
     aim();
     const hand = tmp.copy(origin).addScaledVector(fwd, 0.45).addScaledVector(right, 0.12).addScaledVector(up, -0.12).clone();
-    let best: Zombie | null = null, bestDot = CHAIN.aim;
+    let first: Zombie | null = null, bestDot = CHAIN.aim;
     for (const z of zombies) {
       if (z.dying >= 0) continue;
       const c = center.set(z.root.position.x, z.root.position.y + z.height * 0.6, z.root.position.z);
-      const d = c.distanceTo(origin);
-      if (d > CHAIN.range) continue;
+      if (c.distanceTo(origin) > CHAIN.range) continue;
       const dot = ray.subVectors(c, origin).normalize().dot(fwd);
-      if (dot > bestDot && w.clearLine(origin, c)) { best = z; bestDot = dot; }
+      if (dot > bestDot && w.clearLine(origin, c)) { first = z; bestDot = dot; }
     }
-    if (!best) { bolt(hand, origin.clone().addScaledVector(fwd, 3)); return; } // nothing in reach: it crackles into the air
-    const at = best.root.position.clone().setY(best.root.position.y + best.height * 0.6);
-    bolt(hand, at); bolt(hand, at);
-    burst(at, 4, 0.85, 0.8, 1, 2);
-    origin.copy(hand);
-    damage(best, false, CHAIN.dmg, true);
-    chainShock(best, CHAIN.dmg * 0.7, true);
+    if (!first) { bolt(hand, origin.clone().addScaledVector(fwd, 3)); return; } // nothing in reach: it crackles into the air
     sfx.zap();
+    beam(hand, chest(first));
+    origin.copy(hand);
+    shock(first);
+    // on from each one to its nearest neighbour not yet hit, as long as there is one in reach
+    const done = new Set([first]);
+    let cur = first;
+    for (;;) {
+      let next: Zombie | null = null, nd = CHAIN.reach;
+      for (const z of zombies) {
+        if (z.dying >= 0 || done.has(z)) continue;
+        const d = z.root.position.distanceTo(cur.root.position);
+        if (d < nd) { next = z; nd = d; }
+      }
+      if (!next) break;
+      beam(chest(cur), chest(next));
+      origin.copy(cur.root.position);
+      shock(next);
+      done.add(next); cur = next;
+    }
   }
 
   /* ---------- frost nova (Q): everything around you freezes up ---------- */
@@ -846,13 +876,16 @@ export function createCombat(w: CombatWorld) {
     if (reloadT > 0) { reloadT -= dt; if (reloadT <= 0) { reloadT = 0; reloadDone(); } }
     else if (isGun(weapon) && mag[weapon] === 0 && cooldown <= 0) reload(); // empty: reloads by itself
     // the lightning: drains while held, refills by itself when you let go
-    if (chainUnlocked && chainWant && energy > 0) {
-      energy = Math.max(0, energy - CHAIN.drain * dt);
+    // out of mana: it stops, and only starts again once you let go of E
+    if (!chainWant) chainEmpty = false;
+    if (chainUnlocked && chainWant && !chainEmpty) {
+      energy = Math.max(0, energy - CHAIN.cost * dt);
+      if (energy <= 0) chainEmpty = true;
       chainTick -= dt;
       if (chainTick <= 0) { chainTick = CHAIN.tick; zap(); }
     } else {
       chainTick = 0;
-      energy = Math.min(100, energy + CHAIN.regen * dt);
+      energy = Math.min(CHAIN.max, energy + CHAIN.regen * dt);
     }
 
     // weapons in hand: Doom-style figure-eight bob, recoil, pump dip, bat swing
@@ -931,6 +964,12 @@ export function createCombat(w: CombatWorld) {
         if (slow < 1) burst(tmp, 1, ...ELEMENT_COLOR.ice, 0.4);
       }
       if (dot) { origin.copy(p); damage(z, false, dot * dt, true); if (z.dying >= 0) continue; }
+      // stunned by the lightning: frozen mid-move, no steps, no blows
+      if (clock < z.stunUntil) {
+        z.mixer.timeScale = 0;
+        if (Math.random() < dt * 12) burst(tmp.set(p.x, p.y + z.height * (0.4 + Math.random() * 0.5), p.z), 1, 0.8, 0.75, 1, 1.5); // sparks
+        continue;
+      }
       z.growlCD -= dt;
       if (z.growlCD <= 0 && d < 14) { z.growlCD = 3 + Math.random() * 4; if (z.kind === "boss") sfx.roar(p); else sfx.growl(p); }
       if (z.kind === "boss" && bossBrain(z, dt, player, d)) continue; // charging: nothing else this frame
@@ -1076,7 +1115,7 @@ export function createCombat(w: CombatWorld) {
     chain: (on: boolean) => { chainWant = on; },
     unlockChain: () => { chainUnlocked = true; },
     unlockNova: () => { novaUnlocked = true; },
-    get abilities() { return { chain: chainUnlocked, nova: novaUnlocked, energy, novaCD }; },
+    get abilities() { return { chain: chainUnlocked, nova: novaUnlocked, energy: (energy / CHAIN.max) * 100, mana: energy, novaCD }; },
     alive: (kind?: ZombieKind) => zombies.filter((z) => z.dying < 0 && (!kind || z.kind === kind)).length,
     bossHealth: () => { const b = boss(); return b && b.dying < 0 ? Math.max(0, b.hp / b.spec.hp) : -1; },
   };
