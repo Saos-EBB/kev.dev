@@ -181,7 +181,7 @@ document.body.innerHTML = `
     </section>
 
     <section class="ct-contact" id="kontakt" data-state="contact" aria-labelledby="h-kontakt">
-      <p class="ct-kick">Der Schädel dreht sich zurück · drei Sägeblätter · die Splitter sind die Links</p>
+      <p class="ct-kick">Der Schädel dreht sich zurück · ${PHONE ? "ein Sägeblatt" : "drei Sägeblätter"} · die Splitter sind die Links</p>
       <h2 class="ct-h ct-h2" id="h-kontakt">Zweit&shy;meinung?</h2>
       <p class="ct-claim">Wenn du hier ankommst, fliegen die Blätter.</p>
       <p><a class="ct-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></p>
@@ -259,6 +259,7 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     phone: PHONE,
     distance: 6.4,
     saw: true,
+    sawSingle: PHONE, // phones: one blade + blood, like the main page's contact
   });
   status.remove();
   document.documentElement.classList.add("ct-ready");
@@ -266,6 +267,30 @@ import("./ct-scene").then(async ({ createCtScene }) => {
   let active = "";
   let lastHi = "";
   const cur = { rotY: 0, cut: -0.95, op: 0, lift: 0 };
+
+  // Drag turns skull + brain on top of the scroll pose: sideways on touch
+  // (touch-action pan-y in page.css keeps vertical swipes scrolling),
+  // sideways + up/down with a mouse. Eased; a new section turns it back.
+  const turn = { x: 0, y: 0, tx: 0, ty: 0 };
+  let drag: { id: number; x: number; y: number } | null = null;
+  canvas.addEventListener("pointerdown", (e) => {
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    canvas.setPointerCapture(e.pointerId);
+    canvas.classList.add("is-turning");
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    turn.ty += (e.clientX - drag.x) * 0.01;
+    if (e.pointerType === "mouse") turn.tx = Math.max(-0.8, Math.min(0.8, turn.tx + (e.clientY - drag.y) * 0.008));
+    drag.x = e.clientX; drag.y = e.clientY;
+  });
+  const endDrag = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    canvas.classList.remove("is-turning");
+  };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
   let lastEx = "";
   let last = performance.now();
 
@@ -277,6 +302,10 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const a = pickActive();
     if (a !== active) {
       active = a;
+      // phones: the finale gets the whole width (page.css), so the blood
+      // and the shards aren't cut off by the small skull window
+      document.documentElement.classList.toggle("ct-finale", active === "contact");
+      turn.tx = 0; turn.ty = 0;
       if (active === "contact") ct.saw?.start();
       else if (ct.saw?.running) ct.saw.reset();
       if (REDUCED && active === "contact") ct.saw?.finish();
@@ -312,8 +341,15 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     cur.cut += (tCut - cur.cut) * f;
     cur.op += (tOp - cur.op) * f;
     cur.lift += (tLift - cur.lift) * f;
-    const settled = Math.abs(tRot - cur.rotY) + Math.abs(tCut - cur.cut) + Math.abs(tOp - cur.op) + Math.abs(tLift - cur.lift) < 1e-4;
-    if (!settled) ct.setPose({ rotY: cur.rotY, cut: cur.cut, brain: cur.op < 0.02 ? 0 : cur.op > 0.98 ? 1 : cur.op, lift: cur.lift });
+    const ft = 1 - Math.exp(-dt * 12);
+    turn.x += (turn.tx - turn.x) * ft;
+    turn.y += (turn.ty - turn.y) * ft;
+    const settled = Math.abs(tRot - cur.rotY) + Math.abs(tCut - cur.cut) + Math.abs(tOp - cur.op) + Math.abs(tLift - cur.lift)
+      + Math.abs(turn.tx - turn.x) + Math.abs(turn.ty - turn.y) < 1e-4;
+    if (!settled) {
+      ct.rig.rotation.x = turn.x;
+      ct.setPose({ rotY: cur.rotY + turn.y, cut: cur.cut, brain: cur.op < 0.02 ? 0 : cur.op > 0.98 ? 1 : cur.op, lift: cur.lift });
+    }
 
     drawPointers(ct, active, st, hi);
     placeShards(ct);

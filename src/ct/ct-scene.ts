@@ -47,6 +47,7 @@ type Options = {
   distance?: number; // camera distance (6.2 as in the mockup renders; closer = bigger)
   // The finale (saw.ts) and its hooks (throws pause on the first hit).
   saw?: boolean;
+  sawSingle?: boolean; // one blade + blood instead of three (saw.ts)
   onFirstHit?(): void;
   onReset?(): void;
 };
@@ -84,6 +85,8 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
   const saw = opts.saw
     ? createSaw({
         skull, geo: skullGeo,
+        single: opts.sawSingle,
+        px: renderer.getPixelRatio(),
         onFirstHit: () => opts.onFirstHit?.(),
         onReset: () => opts.onReset?.(),
       })
