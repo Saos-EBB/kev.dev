@@ -181,7 +181,7 @@ document.body.innerHTML = `
     </section>
 
     <section class="ct-contact" id="kontakt" data-state="contact" aria-labelledby="h-kontakt">
-      <p class="ct-kick">Der Schädel dreht sich zurück · drei Sägeblätter · die Splitter sind die Links</p>
+      <p class="ct-kick">Der Schädel dreht sich zurück · ${PHONE ? "ein Sägeblatt" : "drei Sägeblätter"} · die Splitter sind die Links</p>
       <h2 class="ct-h ct-h2" id="h-kontakt">Zweit&shy;meinung?</h2>
       <p class="ct-claim">Wenn du hier ankommst, fliegen die Blätter.</p>
       <p><a class="ct-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></p>
@@ -259,6 +259,7 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     phone: PHONE,
     distance: 6.4,
     saw: true,
+    sawSingle: PHONE, // phones: one blade + blood, like the main page's contact
   });
   status.remove();
   document.documentElement.classList.add("ct-ready");
@@ -301,6 +302,9 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const a = pickActive();
     if (a !== active) {
       active = a;
+      // phones: the finale gets the whole width (page.css), so the blood
+      // and the shards aren't cut off by the small skull window
+      document.documentElement.classList.toggle("ct-finale", active === "contact");
       turn.tx = 0; turn.ty = 0;
       if (active === "contact") ct.saw?.start();
       else if (ct.saw?.running) ct.saw.reset();
