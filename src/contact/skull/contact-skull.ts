@@ -7,7 +7,7 @@
 // it jumped and stuttered there. Sticky moves with the scroll itself.
 // From 70 % of the way up, the page scrolls the rest by itself at the speed
 // you were scrolling. Once the skull is up, one saw blade cuts deep into it,
-// fire jets out of the wound like a rocket's exhaust, and three shards that
+// green blood spurts out of the wound like a splatter movie, and three shards that
 // fly out with it are the GitHub / mail / phone links (skull-scene.ts). The
 // whole scene turns with the mouse (or a sideways swipe). Scrolling back out
 // resets it all.
