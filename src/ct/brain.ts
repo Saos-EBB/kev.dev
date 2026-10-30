@@ -151,8 +151,13 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
   const deepPts: { pts: THREE.Points; base: THREE.Vector3; i: number }[] = [];
   for (const name of DEEP) {
     const [x, y, z, r] = data.deep[name];
-    const sg = new THREE.SphereGeometry(r, 24, 18);
-    const count = sg.getAttribute("position").count;
+    // evenly over the whole sphere; half the cortex density (~26k dots per unit²),
+    // since they draw through everything and front and back both show
+    const count = Math.max(150, Math.round(4 * Math.PI * r * r * 13000 * (opts.pointsScale ?? 1)));
+    const sp = new Float32Array(count * 3), d = new THREE.Vector3();
+    for (let i = 0; i < count; i++) d.randomDirection().multiplyScalar(r).toArray(sp, i * 3);
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
     sg.setAttribute("shade", new THREE.BufferAttribute(new Float32Array(count).fill(1), 1));
     sg.setAttribute("region", new THREE.BufferAttribute(new Float32Array(count).fill(PARTS.indexOf(name)), 1));
     const pts = new THREE.Points(sg, deepMat);

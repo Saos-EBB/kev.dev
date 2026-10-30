@@ -26,6 +26,12 @@ const STATES: Record<string, State> = {
   horror: { label: "Hinter dir · Amygdala", parts: ["amygdala"], brain: 0.4 },
   renderer: { label: "3D-Renderer · occipital", parts: ["occipital"] },
   atlas: { label: "Atlas", parts: Object.keys(ATLAS) as Part[], colors: ATLAS },
+  // The lobes in Gray's colours (Gray728), to compare the shape with it.
+  lobes: {
+    label: "Lappen (Gray)",
+    parts: ["frontal", "motor", "broca", "parietal", "temporal", "wernicke", "fusiform", "occipital", "cerebellum", "stem"],
+    colors: { frontal: "#a9d4ec", motor: "#a9d4ec", broca: "#a9d4ec", parietal: "#f8f29a", temporal: "#b3cf9b", wernicke: "#b3cf9b", fusiform: "#b3cf9b", occipital: "#f4a6b5", cerebellum: "#eeeeee", stem: "#bbbbbb" },
+  },
 };
 
 const flags = new Map(location.hash.split("#").filter((f) => f.includes("=")).map((f) => f.split("=") as [string, string]));
@@ -59,6 +65,8 @@ createCtScene(canvas, { phone: matchMedia("(max-width: 900px)").matches }).then(
     const ex = Number(flags.get("ex") ?? 0);
     ct.setExplode(state.parts, ex, ex * 0.15);
   };
+  // #noskull: the brain alone.
+  if (location.hash.includes("#noskull")) ct.skull.visible = false;
   // #endo: the cranial cavity (endocast.json) as white dots, to check it.
   if (location.hash.includes("#endo")) {
     const { center: c, nTheta: NT, nPhi: NP, r } = endo;

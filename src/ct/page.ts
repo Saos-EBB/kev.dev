@@ -9,7 +9,8 @@
 //    up, a pointer runs to the heading
 //  - atlas: the eight small projects' parts out and in colour, one line
 //    per row
-//  - anamnesis: side view, the brain back together, nothing lit
+//  - anamnesis: the intro backwards with the scroll — the brain sinks back
+//    into the skull, it turns to face you, the cut closes
 //  - contact: back to the front, three saw blades hit it (saw.ts); the
 //    links ride on the shards that freeze in the air.
 // Copy from the mockup, the project texts from the main page's
@@ -100,6 +101,14 @@ const ICON = {
 };
 const icon = (d: string) => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 
+const atlasList = (rows: typeof ATLAS) => `<ul class="ct-atlas-list">${rows.map((a) => `
+        <li tabindex="0" data-region="${a.part}" style="--c: ${a.color}">
+          <small>${a.label}</small>
+          <b>${a.name}</b>
+          <span>${a.sub}${CARD.get(a.id)?.claim ? `<em>${esc(CARD.get(a.id)!.claim)}</em>` : ""}</span>
+        </li>`).join("")}
+      </ul>`;
+
 // The project's own text from the main page: what it is, stack, effort.
 function report(id: string) {
   const c = CARD.get(id);
@@ -120,10 +129,13 @@ function repo(id: string) {
 
 const finding = (f: Finding) => `
   <section class="ct-sec${f.id === "horror" ? " ct-sec--horror" : ""}" id="${f.id}" data-state="${f.id}" aria-labelledby="h-${f.id}">
+   <div class="ct-l">
     <p class="ct-kick"><span>${f.no}</span>${f.region}</p>
     <p class="ct-func">${f.sub}</p>
     <h2 class="ct-h" id="h-${f.id}" data-pointer>${f.title}</h2>
     <p class="ct-claim">${f.lead}</p>
+   </div>
+   <div class="ct-r">
     <dl class="ct-stats">${f.stats.map(([v, l]) => `<div><dd>${v}</dd><dt>${l}</dt></div>`).join("")}</dl>
     <ul class="ct-points">${f.points.map((p) => `<li>${p}</li>`).join("")}</ul>
     ${report(f.id)}
@@ -131,10 +143,12 @@ const finding = (f: Finding) => `
       <a class="ct-button ct-button--hot" href="${f.href}">Befund öffnen →</a>
       ${repo(f.id)}
     </p>
+   </div>
   </section>`;
 
 document.body.className = "ct-body";
 document.body.innerHTML = `
+  <div class="ct-loader" role="status" aria-label="Lädt"><p aria-hidden="true"><b>LOADING</b><span></span></p></div>
   <a class="ct-skip" href="#yourbrand">Zu den Befunden</a>
   <canvas class="ct-skull" aria-label="Schädel-CT aus Punkten, dreht sich und öffnet sich beim Scrollen"></canvas>
   <svg class="ct-pointers" aria-hidden="true"></svg>
@@ -150,41 +164,50 @@ document.body.innerHTML = `
 
   <main>
     <section class="ct-intro" data-state="intro" aria-label="Intro"><div class="ct-pin">
+     <div class="ct-l">
       <p class="ct-kick">Kopf-CT · Junior Fullstack-Developer</p>
       <h1 class="ct-h ct-h1">Kevin<br>Schaberl</h1>
-      <p class="ct-lead">Scroll, und der Schädel rechts dreht sich, wird aufgeschnitten und zeigt, was drin ist. Jedes Projekt hat seine Region.</p>
+     </div>
+     <div class="ct-r">
+      <p class="ct-lead">Scroll, und der Schädel wird aufgeschnitten, dreht sich und zeigt, was drin ist. Jedes Projekt hat seine Region.</p>
       <p><a class="ct-button ct-button--red" href="#yourbrand">Befunde ansehen ↓</a></p>
-      <p class="ct-hint">↓ Scrollen — der Schädel dreht sich zur Seite, die Schnittebene fährt durch</p>
+      <p class="ct-hint">↓ Scrollen — die Schnittebene fährt durch, der Schädel dreht sich, das Gehirn hebt sich heraus</p>
       <p class="ct-note">Schädel: craniumCut01, CT-Datensatz aus meinem 3D-Renderer. Gehirn: für diese Seite in three.js modelliert — jede Region ein eigenes Teil, zusammengesteckt.</p>
+     </div>
     </div></section>
 
     ${FINDINGS.map(finding).join("")}
 
     <section class="ct-atlas" id="atlas" data-state="atlas" aria-labelledby="h-atlas">
+     <div class="ct-l">
       <h2 class="ct-h ct-h2" id="h-atlas">Atlas</h2>
       <p class="ct-func">Acht kleinere Projekte, acht Regionen.</p>
-      <ul class="ct-atlas-list">${ATLAS.map((a) => `
-        <li tabindex="0" data-region="${a.part}" style="--c: ${a.color}">
-          <small>${a.label}</small>
-          <b>${a.name}</b>
-          <span>${a.sub}${CARD.get(a.id)?.claim ? `<em>${esc(CARD.get(a.id)!.claim)}</em>` : ""}</span>
-        </li>`).join("")}
-      </ul>
+      ${atlasList(ATLAS.slice(0, 4))}
+     </div>
+     <div class="ct-r">${atlasList(ATLAS.slice(4))}</div>
     </section>
 
     <section class="ct-about" data-state="about" aria-labelledby="h-about">
+     <div class="ct-l">
       <h2 class="ct-h ct-h2" id="h-about">Anamnese</h2>
+      <blockquote>„Geht nicht“ heißt meistens: noch nicht verstanden.</blockquote>
+     </div>
+     <div class="ct-r">
       <div class="ct-cv"><small>01</small><div><b>Bodenleger</b><span>Handwerk. Der Anfang.</span></div></div>
       <div class="ct-cv"><small>02</small><div><b>Administrator</b><span>BBU: in einem Jahr 88-mal am Flughafen Wien-Schwechat.</span></div></div>
       <div class="ct-cv"><small>03</small><div><b>Developer</b><span>Junior Fullstack. 11 Projekte auf kev.dev.</span></div></div>
-      <blockquote>„Geht nicht“ heißt meistens: noch nicht verstanden.</blockquote>
+     </div>
     </section>
 
     <section class="ct-contact" id="kontakt" data-state="contact" aria-labelledby="h-kontakt">
+     <div class="ct-l">
       <p class="ct-kick">Der Schädel dreht sich zurück · ${PHONE ? "ein Sägeblatt" : "drei Sägeblätter"} · die Splitter sind die Links</p>
       <h2 class="ct-h ct-h2" id="h-kontakt">Zweit&shy;meinung?</h2>
-      <p class="ct-claim">Wenn du hier ankommst, fliegen die Blätter.</p>
+     </div>
+     <div class="ct-r">
+      <p class="ct-claim">Wenn du hier ankommst, fliegt das Blatt.</p>
       <p><a class="ct-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></p>
+     </div>
     </section>
   </main>
 
@@ -199,6 +222,7 @@ document.body.innerHTML = `
 
 // ── scroll ──────────────────────────────────────────────────────────────
 const lenis = new Lenis({ smoothWheel: !REDUCED });
+lenis.stop(); // until the loader has gone
 gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
 initScrollProgress(lenis); // the main page's scrollbar (src/scroll/progress.ts)
@@ -234,6 +258,11 @@ const atlasRows = Array.from(document.querySelectorAll<HTMLElement>(".ct-atlas-l
 
 const sm = (e0: number, e1: number, t: number) => { const u = Math.min(Math.max((t - e0) / (e1 - e0), 0), 1); return u * u * (3 - 2 * u); };
 const ease = (t: number) => sm(0, 1, t);
+// How far the anamnesis has been scrolled past the reading line (0 → 1).
+const outroProgress = () => {
+  const r = sections.find((s) => s.dataset.state === "about")!.getBoundingClientRect();
+  return Math.min(Math.max((innerHeight * 0.55 - r.top) / r.height, 0), 1);
+};
 const introProgress = () => {
   const r = intro.getBoundingClientRect();
   return Math.min(Math.max(-r.top / (r.height - innerHeight * 0.4), 0), 1);
@@ -254,15 +283,61 @@ atlasRows.forEach((li) => {
   li.addEventListener("pointerleave", off); li.addEventListener("blur", off);
 });
 
+// ── loader: LOADING and dots across the screen; full = ready ────────────
+// The dots run at a steady pace to ~85 % of the width and wait there for
+// the skull and brain; then they fill the line and the screen slides away.
+let sceneReady = false;
+{
+  const loader = document.querySelector<HTMLElement>(".ct-loader")!;
+  const line = loader.querySelector("p")!;
+  const word = loader.querySelector("b")!;
+  const dots = loader.querySelector("span")!;
+  let max = 0;
+  const measure = () => {
+    const probe = document.createElement("span");
+    probe.textContent = ".".repeat(20);
+    dots.after(probe);
+    const dot = probe.getBoundingClientRect().width / 20;
+    probe.remove();
+    max = Math.max(1, Math.floor((line.clientWidth - word.getBoundingClientRect().width) / dot));
+  };
+  measure();
+  void document.fonts.ready.then(measure);
+  window.addEventListener("resize", measure);
+  const t0 = performance.now();
+  let shown = 0;
+  let filledAt = 0;
+  const step = (now: number) => {
+    const waitAt = Math.floor(max * 0.85);
+    // (A frame's timestamp can lie a little before t0: never below 0.)
+    const paced = Math.min(waitAt, Math.max(0, Math.floor(((now - t0) / 2400) * waitAt)));
+    // Once ready: race to the end of the line (at least 0.25 s).
+    const target = sceneReady ? Math.min(max, Math.max(paced, shown + Math.ceil(max / 15))) : paced;
+    if (target !== shown) { shown = target; dots.textContent = ".".repeat(shown); }
+    if (shown >= max && sceneReady) {
+      filledAt ||= now;
+      if (now - filledAt > 250) {
+        loader.classList.add("is-gone");
+        lenis.start();
+        loader.addEventListener("transitionend", () => loader.remove(), { once: true });
+        return;
+      }
+    }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 import("./ct-scene").then(async ({ createCtScene }) => {
   const ct = await createCtScene(canvas, {
     phone: PHONE,
-    distance: 6.4,
+    distance: PHONE ? 6.4 : 8.4, // desktop: small enough for the middle column
     saw: true,
     sawSingle: PHONE, // phones: one blade + blood, like the main page's contact
   });
   status.remove();
   document.documentElement.classList.add("ct-ready");
+  sceneReady = true;
 
   let active = "";
   let lastHi = "";
@@ -327,14 +402,21 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     // skull glides towards it. Intro, from the first scrolled pixel: the
     // cut runs through while it faces you and the brain shows, then it
     // turns to the side, then the brain rises out of the skull.
+    // The anamnesis runs the intro backwards with the scroll: the brain
+    // sinks back into the skull, the skull turns to face you, the cut
+    // closes over the brain — ready for the contact.
     let tRot: number, tCut: number, tOp: number, tLift: number;
-    if (active === "intro") {
-      const t = REDUCED ? 1 : introProgress();
+    if (active === "intro" || active === "about") {
+      const t = REDUCED ? 1 : active === "intro" ? introProgress() : 1 - outroProgress();
       tCut = -0.95 + ease(t / 0.35) * 0.97;
       tOp = ease((t - 0.05) / 0.25);
       tRot = ease((t - 0.35) / 0.35) * (Math.PI / 2);
       tLift = ease((t - 0.72) / 0.28);
-    } else if (st.front) { tRot = 0; tCut = -5; tOp = 0; tLift = 0; }
+    } else if (st.front) {
+      // Contact: facing you, closed, brain hidden; lift 0.6 sinks the skull
+      // a little so the blade and the fountain above it stay in the frame.
+      tRot = 0; tCut = -5; tOp = 0; tLift = 0.6;
+    }
     else { tRot = Math.PI / 2; tCut = 0.02; tOp = st.op ?? 1; tLift = 1; }
     const f = REDUCED ? 1 : 1 - Math.exp(-dt * 8);
     cur.rotY += (tRot - cur.rotY) * f;
@@ -354,7 +436,7 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     drawPointers(ct, active, st, hi);
     placeShards(ct);
   });
-}).catch(() => { canvas.remove(); status.remove(); document.documentElement.classList.add("no-skull"); });
+}).catch(() => { canvas.remove(); status.remove(); document.documentElement.classList.add("no-skull"); sceneReady = true; });
 
 const cr = () => canvas.getBoundingClientRect();
 
@@ -372,17 +454,21 @@ function drawPointers(ct: CtScene, active: string, st: State, hi: Part[]) {
       const [x, y] = ct.anchor(part);
       const ax = r.left + x, ay = r.top + y;
       const b = el.getBoundingClientRect();
-      const tx = b.right + 16, ty = b.top + b.height / 2;
+      // From whichever side of the text faces the skull.
+      const left = b.left + b.width / 2 < ax;
+      const tx = left ? b.right + 16 : b.left - 16, ty = b.top + b.height / 2;
       if (ty < -50 || ty > innerHeight + 50) continue;
       const col = st.colors?.[part] ?? HOT;
-      out += `<path d="M${ax} ${ay} C${ax - 140} ${ay} ${tx + 140} ${ty} ${tx} ${ty}" fill="none" stroke="${col}" stroke-width="1.6" opacity="0.9"/>`
+      const bend = left ? 140 : -140;
+      out += `<path d="M${ax} ${ay} C${ax - bend} ${ay} ${tx + bend} ${ty} ${tx} ${ty}" fill="none" stroke="${col}" stroke-width="1.6" opacity="0.9"/>`
         + `<circle cx="${ax}" cy="${ay}" r="6" fill="#05060a" stroke="${col}" stroke-width="3"/>`
         + `<circle cx="${ax}" cy="${ay}" r="18" fill="none" stroke="${col}" stroke-opacity="0.35" stroke-width="2"/>`;
     }
   }
   if (svg.innerHTML !== out) svg.innerHTML = out;
 }
-const currentRot = (ct: CtScene) => ct.rig.rotation.y;
+// Lines only while the model sits in its side pose (not while dragged off).
+const currentRot = (ct: CtScene) => (Math.abs(ct.rig.rotation.x) > 0.2 ? 0 : ct.rig.rotation.y);
 
 // The contact links ride on the first shard of each hit.
 function placeShards(ct: CtScene) {
