@@ -22,7 +22,8 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as sfx from "./horror-audio";
 import { createLife } from "./horror-life";
 import { createFigures } from "./horror-figures";
-import { createCombat } from "./horror-combat";
+import { createCombat, WEAPONS, WEAPON_NAMES, type Weapon, type ZombieKind } from "./horror-combat";
+import { MONSTER_IDS } from "./horror-bestiary";
 import { carveUpper } from "./horror-maze";
 
 
@@ -43,7 +44,7 @@ const MARKUP = `
   <div id="touch" aria-hidden="true"></div>
   <div class="hud" id="energy" hidden><i><b id="energy-b"></b></i><small id="energy-t">E Kettenblitz</small></div>
   <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p><span id="wname">Schrot</span> <b id="ammo">0</b></p></div>
-  <div id="wheel" hidden>${["shotgun", "bat", "sword", "rail", "ice"].map((w, i) => `<button type="button" data-w="${w}" hidden><small>${i + 1}</small></button>`).join("")}</div>
+  <div id="wheel" hidden>${WEAPONS.map((w, i) => `<button type="button" data-w="${w}" hidden><small>${i + 1}</small></button>`).join("")}</div>
   <button id="fire" type="button" hidden>Feuer</button>
   <div id="rotate"><p>Handy quer drehen</p></div>
   <p id="err"></p>
@@ -691,7 +692,7 @@ function mount() {
   // spawned counts the ones still loading too
   const W = { n: 0, spawned: 0, killed: 0, total: 0, bigLeft: 0, nextSpawn: 0, nextWave: 0, pending: 0, drop: 0, heads: savedHeads() };
   // zombies come in from the far side of the hall, away from you
-  function spawnIn(cells: Cell[], kind: "normal" | "big" | "boss", n: number) {
+  function spawnIn(cells: Cell[], kind: ZombieKind, n: number) {
     const far = cells.filter(([x, z]) => Math.hypot(x * C - pos.x, z * C - pos.z) > 9);
     for (let i = 0; i < n; i++) {
       const [x, z] = (far.length ? far : cells)[Math.floor(Math.random() * (far.length || cells.length))];
@@ -787,7 +788,9 @@ function mount() {
     const every = Math.max(0.12, 1.2 * Math.pow(0.987, arenaT)), cap = Math.min(60, 10 + Math.floor(arenaT / 3));
     if (now >= W.nextSpawn && W.spawned - W.killed < cap) {
       W.nextSpawn = now + every;
-      spawnIn(halls.A, Math.random() < 0.2 ? "big" : "normal", 1);
+      // test bench: anything from the whole bestiary, at random
+      const pool: ZombieKind[] = ["normal", "big", ...MONSTER_IDS];
+      spawnIn(halls.A, pool[Math.floor(Math.random() * pool.length)], 1);
     }
     arenaInfo -= dt;
     if (arenaInfo <= 0) {
@@ -901,15 +904,18 @@ function mount() {
   /* ============================ INPUT ============================ */
   window.addEventListener("keydown", (e) => {
     keys[e.code] = true;
-    const slots = { Digit1: "shotgun", Digit2: "bat", Digit3: "sword", Digit4: "rail", Digit5: "ice" } as const;
-    if (e.code in slots) combat.select(slots[e.code as keyof typeof slots]);
+    const slots: Record<string, Weapon> = {
+      Digit1: "shotgun", Digit2: "bat", Digit3: "sword", Digit4: "rail", Digit5: "ice",
+      Digit6: "saber", Digit7: "pistol", Digit8: "revolver", Digit9: "p90", Digit0: "rifle", Minus: "pump", Equal: "sniper",
+    };
+    if (e.code in slots) combat.select(slots[e.code]);
     if (e.code === "KeyF" && running && !paused) combat.throwOwnSkull();
     if (e.code === "KeyR" && running && !paused) combat.reload();
     if (e.code === "KeyQ" && running && !paused) combat.nova(pos);
   });
   // mouse wheel: next weapon you have
   window.addEventListener("wheel", (e) => {
-    const order = (["shotgun", "bat", "sword", "rail", "ice"] as const).filter((w) => combat.has[w]);
+    const order = WEAPONS.filter((w) => combat.has[w]);
     if (order.length < 2 || !combat.weapon) return;
     const i = order.indexOf(combat.weapon);
     combat.select(order[(i + (e.deltaY > 0 ? 1 : order.length - 1)) % order.length]);
@@ -926,11 +932,11 @@ function mount() {
   document.addEventListener("mousemove", (e) => { if (locked) look(e.movementX, e.movementY); else if (dragging) look(e.movementX, e.movementY, 0.004); });
   canvas.addEventListener("mousedown", (e) => {
     if (running && !locked) { lock(); dragging = true; return; }
-    if (running && !paused && e.button === 0) pull();
+    if (running && !paused && e.button === 0) { combat.trigger(true); pull(); }
     if (running && !paused && e.button === 2) combat.throwOwnSkull();
   });
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-  window.addEventListener("mouseup", () => { dragging = false; });
+  window.addEventListener("mouseup", () => { dragging = false; combat.trigger(false); });
   // hidden tab: pause (no catch-up jump, no CPU burn)
   document.addEventListener("visibilitychange", () => { if (document.hidden && running && !ended && !paused) pause(); });
 
@@ -964,7 +970,8 @@ function mount() {
     b.addEventListener("touchstart", pick);
     b.addEventListener("mousedown", pick);
   }
-  $("fire").addEventListener("touchstart", (e) => { e.stopPropagation(); pull(); }, { passive: true });
+  $("fire").addEventListener("touchstart", (e) => { e.stopPropagation(); combat.trigger(true); pull(); }, { passive: true });
+  $("fire").addEventListener("touchend", () => combat.trigger(false));
   // shoot / swing; at the mirror, aimed at the glass, that's the end
   function pull() {
     if (cineT >= 0) return;
@@ -990,7 +997,8 @@ function mount() {
 
   // dev shortcut: skip ahead. Doors you'd have opened stand open, items you'd have found are found.
   function grantAll() {
-    combat.grant("ice"); combat.grant("rail"); combat.grant("sword"); combat.grant("bat"); combat.grant("shotgun");
+    for (const k of WEAPONS) if (k !== "shotgun") combat.grant(k);
+    combat.grant("shotgun");
     combat.unlockSkulls(); combat.unlockChain(); combat.unlockNova(); fast = 1.25;
   }
   function jumpTo(where: "stairs" | "hall1" | "hall2" | "boss" | "arena") {
@@ -1016,6 +1024,14 @@ function mount() {
       pos.set(26 * C, 0, 20 * C);
       ($("got").parentElement as HTMLElement).hidden = true;
       W.nextSpawn = now + 1;
+      // #zoo: the whole bestiary in a ring in front of you, nothing else spawns
+      if (hashFlags.includes("zoo")) {
+        W.nextSpawn = Infinity;
+        MONSTER_IDS.forEach((id, i) => {
+          const a = -Math.PI / 2 + (i / (MONSTER_IDS.length - 1) - 0.5) * Math.PI * 0.85;
+          combat.spawn(id, new THREE.Vector3(pos.x - Math.sin(a) * 9, 0, pos.z - Math.cos(a) * 9));
+        });
+      }
     } else {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
@@ -1129,15 +1145,14 @@ function mount() {
   const put = (id: string, v: string) => { if (shown[id] !== v) { shown[id] = v; $(id).textContent = v; } };
   const hud = () => {
     put("hp", String(health));
-    const names = { shotgun: "Schrot", bat: "Säge", sword: "Katana", rail: "Railgun", ice: "Eiswerfer" };
-    put("wname", combat.weapon ? names[combat.weapon] : "");
-    const bar = (Object.keys(names) as (keyof typeof names)[]).map((w) => (combat.has[w] ? (w === combat.weapon ? "2" : "1") : "0")).join("");
+    put("wname", combat.weapon ? WEAPON_NAMES[combat.weapon] : "");
+    const bar = WEAPONS.map((w) => (combat.has[w] ? (w === combat.weapon ? "2" : "1") : "0")).join("");
     if (shown.bar !== bar) {
       shown.bar = bar;
       $("wheel").hidden = !bar.includes("1") && !bar.includes("2");
       $("wheel").querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => {
         b.hidden = bar[i] === "0"; b.classList.toggle("on", bar[i] === "2");
-        if (!b.lastChild || b.lastChild.nodeType !== 3) b.append(names[b.dataset.w as keyof typeof names]);
+        if (!b.lastChild || b.lastChild.nodeType !== 3) b.append(WEAPON_NAMES[b.dataset.w as Weapon]);
       });
     }
     put("ammo", combat.mag < 0 ? "∞" : combat.reloading ? "…" : `${combat.mag}/${combat.reserve}`);
