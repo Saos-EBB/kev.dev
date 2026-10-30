@@ -100,6 +100,14 @@ const ICON = {
 };
 const icon = (d: string) => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 
+const atlasList = (rows: typeof ATLAS) => `<ul class="ct-atlas-list">${rows.map((a) => `
+        <li tabindex="0" data-region="${a.part}" style="--c: ${a.color}">
+          <small>${a.label}</small>
+          <b>${a.name}</b>
+          <span>${a.sub}${CARD.get(a.id)?.claim ? `<em>${esc(CARD.get(a.id)!.claim)}</em>` : ""}</span>
+        </li>`).join("")}
+      </ul>`;
+
 // The project's own text from the main page: what it is, stack, effort.
 function report(id: string) {
   const c = CARD.get(id);
@@ -120,10 +128,13 @@ function repo(id: string) {
 
 const finding = (f: Finding) => `
   <section class="ct-sec${f.id === "horror" ? " ct-sec--horror" : ""}" id="${f.id}" data-state="${f.id}" aria-labelledby="h-${f.id}">
+   <div class="ct-l">
     <p class="ct-kick"><span>${f.no}</span>${f.region}</p>
     <p class="ct-func">${f.sub}</p>
     <h2 class="ct-h" id="h-${f.id}" data-pointer>${f.title}</h2>
     <p class="ct-claim">${f.lead}</p>
+   </div>
+   <div class="ct-r">
     <dl class="ct-stats">${f.stats.map(([v, l]) => `<div><dd>${v}</dd><dt>${l}</dt></div>`).join("")}</dl>
     <ul class="ct-points">${f.points.map((p) => `<li>${p}</li>`).join("")}</ul>
     ${report(f.id)}
@@ -131,6 +142,7 @@ const finding = (f: Finding) => `
       <a class="ct-button ct-button--hot" href="${f.href}">Befund öffnen →</a>
       ${repo(f.id)}
     </p>
+   </div>
   </section>`;
 
 document.body.className = "ct-body";
@@ -151,41 +163,50 @@ document.body.innerHTML = `
 
   <main>
     <section class="ct-intro" data-state="intro" aria-label="Intro"><div class="ct-pin">
+     <div class="ct-l">
       <p class="ct-kick">Kopf-CT · Junior Fullstack-Developer</p>
       <h1 class="ct-h ct-h1">Kevin<br>Schaberl</h1>
-      <p class="ct-lead">Scroll, und der Schädel rechts dreht sich, wird aufgeschnitten und zeigt, was drin ist. Jedes Projekt hat seine Region.</p>
+     </div>
+     <div class="ct-r">
+      <p class="ct-lead">Scroll, und der Schädel wird aufgeschnitten, dreht sich und zeigt, was drin ist. Jedes Projekt hat seine Region.</p>
       <p><a class="ct-button ct-button--red" href="#yourbrand">Befunde ansehen ↓</a></p>
-      <p class="ct-hint">↓ Scrollen — der Schädel dreht sich zur Seite, die Schnittebene fährt durch</p>
+      <p class="ct-hint">↓ Scrollen — die Schnittebene fährt durch, der Schädel dreht sich, das Gehirn hebt sich heraus</p>
       <p class="ct-note">Schädel: craniumCut01, CT-Datensatz aus meinem 3D-Renderer. Gehirn: für diese Seite in three.js modelliert — jede Region ein eigenes Teil, zusammengesteckt.</p>
+     </div>
     </div></section>
 
     ${FINDINGS.map(finding).join("")}
 
     <section class="ct-atlas" id="atlas" data-state="atlas" aria-labelledby="h-atlas">
+     <div class="ct-l">
       <h2 class="ct-h ct-h2" id="h-atlas">Atlas</h2>
       <p class="ct-func">Acht kleinere Projekte, acht Regionen.</p>
-      <ul class="ct-atlas-list">${ATLAS.map((a) => `
-        <li tabindex="0" data-region="${a.part}" style="--c: ${a.color}">
-          <small>${a.label}</small>
-          <b>${a.name}</b>
-          <span>${a.sub}${CARD.get(a.id)?.claim ? `<em>${esc(CARD.get(a.id)!.claim)}</em>` : ""}</span>
-        </li>`).join("")}
-      </ul>
+      ${atlasList(ATLAS.slice(0, 4))}
+     </div>
+     <div class="ct-r">${atlasList(ATLAS.slice(4))}</div>
     </section>
 
     <section class="ct-about" data-state="about" aria-labelledby="h-about">
+     <div class="ct-l">
       <h2 class="ct-h ct-h2" id="h-about">Anamnese</h2>
+      <blockquote>„Geht nicht“ heißt meistens: noch nicht verstanden.</blockquote>
+     </div>
+     <div class="ct-r">
       <div class="ct-cv"><small>01</small><div><b>Bodenleger</b><span>Handwerk. Der Anfang.</span></div></div>
       <div class="ct-cv"><small>02</small><div><b>Administrator</b><span>BBU: in einem Jahr 88-mal am Flughafen Wien-Schwechat.</span></div></div>
       <div class="ct-cv"><small>03</small><div><b>Developer</b><span>Junior Fullstack. 11 Projekte auf kev.dev.</span></div></div>
-      <blockquote>„Geht nicht“ heißt meistens: noch nicht verstanden.</blockquote>
+     </div>
     </section>
 
     <section class="ct-contact" id="kontakt" data-state="contact" aria-labelledby="h-kontakt">
-      <p class="ct-kick">Der Schädel dreht sich zurück · drei Sägeblätter · die Splitter sind die Links</p>
+     <div class="ct-l">
+      <p class="ct-kick">Der Schädel dreht sich zurück · ein Sägeblatt · die Splitter sind die Links</p>
       <h2 class="ct-h ct-h2" id="h-kontakt">Zweit&shy;meinung?</h2>
-      <p class="ct-claim">Wenn du hier ankommst, fliegen die Blätter.</p>
+     </div>
+     <div class="ct-r">
+      <p class="ct-claim">Wenn du hier ankommst, fliegt das Blatt.</p>
       <p><a class="ct-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></p>
+     </div>
     </section>
   </main>
 
@@ -304,7 +325,7 @@ let sceneReady = false;
 import("./ct-scene").then(async ({ createCtScene }) => {
   const ct = await createCtScene(canvas, {
     phone: PHONE,
-    distance: 6.4,
+    distance: PHONE ? 6.4 : 8.4, // desktop: small enough for the middle column
     saw: true,
   });
   status.remove();
@@ -424,10 +445,13 @@ function drawPointers(ct: CtScene, active: string, st: State, hi: Part[]) {
       const [x, y] = ct.anchor(part);
       const ax = r.left + x, ay = r.top + y;
       const b = el.getBoundingClientRect();
-      const tx = b.right + 16, ty = b.top + b.height / 2;
+      // From whichever side of the text faces the skull.
+      const left = b.left + b.width / 2 < ax;
+      const tx = left ? b.right + 16 : b.left - 16, ty = b.top + b.height / 2;
       if (ty < -50 || ty > innerHeight + 50) continue;
       const col = st.colors?.[part] ?? HOT;
-      out += `<path d="M${ax} ${ay} C${ax - 140} ${ay} ${tx + 140} ${ty} ${tx} ${ty}" fill="none" stroke="${col}" stroke-width="1.6" opacity="0.9"/>`
+      const bend = left ? 140 : -140;
+      out += `<path d="M${ax} ${ay} C${ax - bend} ${ay} ${tx + bend} ${ty} ${tx} ${ty}" fill="none" stroke="${col}" stroke-width="1.6" opacity="0.9"/>`
         + `<circle cx="${ax}" cy="${ay}" r="6" fill="#05060a" stroke="${col}" stroke-width="3"/>`
         + `<circle cx="${ax}" cy="${ay}" r="18" fill="none" stroke="${col}" stroke-opacity="0.35" stroke-width="2"/>`;
     }

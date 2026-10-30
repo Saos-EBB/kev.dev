@@ -150,13 +150,15 @@ html::-webkit-scrollbar,
 
 /* ── fixed layers ─────────────────────────────────────────────────── */
 
-/* The skull: the right half, full height, behind the text column. */
+/* The skull: the main attraction, in the middle of the whole screen;
+   the text runs in two columns either side of it. */
 .ct-skull {
   position: fixed;
+  left: 0;
   right: 0;
   top: 0;
   z-index: 1;
-  width: 52vw;
+  width: 100vw;
   height: 100vh;
   display: block;
   cursor: grab; /* drag to turn the model (page.ts) */
@@ -277,11 +279,37 @@ html::-webkit-scrollbar,
 
 /* ── column ───────────────────────────────────────────────────────── */
 
+/* Every section: text left, the skull's space in the middle, text right.
+   main lets clicks in the middle through to the canvas (dragging). */
 main {
+  --side: min(28vw, 400px);
   position: relative;
   z-index: 3;
-  width: min(640px, 46vw);
-  margin-left: 48px;
+  padding: 0 48px;
+  pointer-events: none;
+}
+
+main .ct-l,
+main .ct-r {
+  pointer-events: auto;
+}
+
+.ct-pin,
+.ct-sec,
+.ct-atlas,
+.ct-about,
+.ct-contact {
+  display: grid;
+  grid-template-columns: var(--side) 1fr var(--side);
+  align-items: start;
+}
+
+.ct-l {
+  grid-column: 1;
+}
+
+.ct-r {
+  grid-column: 3;
 }
 
 .ct-h {
@@ -297,12 +325,12 @@ main {
 }
 
 .ct-h1 {
-  font-size: clamp(64px, 9vw, 150px);
+  font-size: clamp(56px, 6.5vw, 120px);
   line-height: 0.84;
 }
 
 .ct-h2 {
-  font-size: clamp(60px, 7vw, 110px);
+  font-size: clamp(48px, 5vw, 96px);
 }
 
 .ct-kick {
@@ -404,9 +432,13 @@ main {
   position: sticky;
   top: 0;
   height: 100vh;
+  align-items: center;
+}
+
+.ct-pin .ct-l,
+.ct-pin .ct-r {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 22px;
 }
 
@@ -424,7 +456,11 @@ main {
 .ct-sec .ct-h {
   display: inline-block;
   margin-top: 16px;
-  font-size: clamp(60px, 7vw, 120px);
+  font-size: clamp(48px, 5vw, 96px);
+}
+
+.ct-r .ct-stats {
+  margin-top: 0;
 }
 
 .ct-sec .ct-claim {
@@ -618,7 +654,7 @@ main {
 }
 
 .ct-about blockquote {
-  margin: 24px 0 0;
+  margin: 32px 0 0;
   padding: 16px 20px;
   border-left: 3px solid var(--red);
   font-size: 18px;
@@ -634,7 +670,7 @@ main {
 
 .ct-contact .ct-h2 {
   margin-top: 16px;
-  font-size: clamp(60px, 8vw, 130px);
+  font-size: clamp(48px, 5.5vw, 104px);
 }
 
 .ct-contact .ct-claim {
@@ -675,6 +711,7 @@ main {
 @media (max-width: 700px) {
   .ct-skull {
     top: 56px;
+    left: auto;
     z-index: 5;
     width: 56vw;
     height: 56vw;
@@ -706,8 +743,19 @@ main {
 
   main {
     z-index: 0;
-    width: auto;
-    margin: 0 16px;
+    padding: 0 16px;
+  }
+
+  /* One column again: left text, then right text. */
+  .ct-sec,
+  .ct-atlas,
+  .ct-about,
+  .ct-contact {
+    display: block;
+  }
+
+  .ct-r .ct-stats {
+    margin-top: 24px;
   }
 
   .ct-sec,
@@ -718,7 +766,10 @@ main {
   }
 
   .ct-pin {
+    display: flex;
+    flex-direction: column;
     justify-content: flex-end;
+    gap: 22px;
     padding-bottom: 60px;
   }
 
