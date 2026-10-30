@@ -44,6 +44,14 @@ Full license texts ship with each package in `node_modules/<package>/`.
   (https://creativecommons.org/publicdomain/zero/1.0/). Converted from glTF to
   GLB, otherwise unchanged; colors darkened or tinted in code.
 
+- `public/fatty/fatty.glb`, `fatty.jpg`, `fatty_bump.jpg` (hidden page
+  `/saos#dev#fatty`): "Fatty" by Drummyfish
+  (https://opengameart.org/content/fatty), CC0 1.0
+  (https://creativecommons.org/publicdomain/zero/1.0/). Exported from the
+  .blend to GLB (subdivided once, two poses from its pose library as
+  animations); ambient occlusion multiplied into the diffuse, the
+  displacement map used as a bump map, both scaled to 1024 px.
+
 ## Fonts
 
 | File | Font | License |

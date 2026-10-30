@@ -1,0 +1,168 @@
+/* Fatty — one full-screen canvas over a dark stage light, a counter in the
+   corner. Nothing scrolls, touch goes straight to the canvas. */
+
+@font-face {
+  font-family: "Urban Sign";
+  src: url("/fonts/urban-sign.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --stage: #120d10;
+  --glow: #3a2430;
+  --flesh: #f3d6c8;
+  --muted: #a8918a;
+  --slap: #ff5a6e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: radial-gradient(ellipse 60% 70% at 50% 42%, var(--glow), var(--stage) 75%) fixed, var(--stage);
+  color: var(--flesh);
+  font: 16px/1.4 system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#gl {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.hud { position: fixed; margin: 0; pointer-events: none; }
+#count {
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  font: 22px/1 "Urban Sign", Impact, sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+#count b { color: var(--flesh); font-weight: inherit; font-size: 1.6em; margin-left: 0.15em; }
+#say {
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%) rotate(-4deg);
+  font: clamp(32px, 7vw, 64px)/1 "Urban Sign", Impact, sans-serif;
+  color: var(--slap);
+  text-shadow: 0 2px 0 #000;
+}
+#hint {
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: 16px;
+  right: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+  transition: opacity 0.6s;
+}
+#hint.gone { opacity: 0; }
+
+/* the hand: follows the mouse (replaces the cursor), swings on every click;
+   on touch it only shows up for the slap. The point is the palm's middle. */
+body.own-cursor, body.own-cursor #gl { cursor: none; }
+#hand {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 96px;
+  height: 112px;
+  margin: -66px 0 0 -50px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.15s;
+  will-change: transform;
+}
+#hand.on { opacity: 1; }
+#palm {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 95%;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* impact star where a slap lands */
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
+.burst {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  margin: -45px 0 0 -45px;
+  animation: burst 0.36s ease-out forwards;
+}
+.burst svg { width: 100%; height: 100%; }
+.burst polygon { fill: #ffe066; stroke: var(--slap); stroke-width: 5; stroke-linejoin: round; }
+@keyframes burst {
+  from { transform: scale(0.3) rotate(-10deg); opacity: 1; }
+  to { transform: scale(1.35) rotate(8deg); opacity: 0; }
+}
+
+/* level 2+: a counter over every head, a banner when a level starts */
+#tags { inset: 0; overflow: hidden; }
+.tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  translate: -50% -100%;
+  font: 18px/1 "Urban Sign", Impact, sans-serif;
+  color: var(--flesh);
+  text-shadow: 0 2px 0 #000;
+  white-space: nowrap;
+}
+.tag.done { color: #8fe08a; }
+#banner {
+  top: 30%;
+  left: 16px;
+  right: 16px;
+  text-align: center;
+  opacity: 0;
+}
+#banner b { display: block; font: clamp(48px, 11vw, 110px)/1 "Urban Sign", Impact, sans-serif; color: var(--slap); text-shadow: 0 3px 0 #000; }
+#banner small { display: block; margin-top: 8px; font-size: 18px; color: var(--flesh); }
+#banner.show { animation: banner 2.6s ease-out forwards; }
+@keyframes banner {
+  0% { opacity: 0; transform: scale(1.6); }
+  12% { opacity: 1; transform: scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* the end */
+#end {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  padding: 16px;
+  text-align: center;
+  background: rgba(10, 6, 8, 0.92);
+  cursor: auto;
+  animation: fade-in 1.2s ease-out;
+}
+#end h1 { margin: 0; font: clamp(44px, 12vw, 120px)/1 "Urban Sign", Impact, sans-serif; color: var(--flesh); }
+#end p { margin: 0; color: var(--muted); font-size: 18px; }
+#end p b { color: var(--flesh); }
+#end button {
+  justify-self: center;
+  margin-top: 12px;
+  padding: 12px 28px;
+  border: 2px solid var(--flesh);
+  border-radius: 999px;
+  background: none;
+  color: var(--flesh);
+  font: 18px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+#end button:hover { background: var(--flesh); color: var(--stage); }
+@keyframes fade-in { from { opacity: 0; } }

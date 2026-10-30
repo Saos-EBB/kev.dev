@@ -2,6 +2,7 @@
 // hash names a variant — obscurity, not protection, the hashes ship here.
 // The variant is decided once, on load:
 //   #dev#horror     the horror maze (src/horror/horror.ts)
+//   #dev#fatty      slap Fatty (src/fatty/fatty.ts)
 //   #dev#skull      the CT-Schädel page (src/ct/page.ts)
 //   #dev#skull#ct   test bench for its skull (src/ct/ct-test.ts)
 //   #dev#skull#saw  the standalone skull + saw blade scene (src/skull/skull-saw.ts)
@@ -22,6 +23,7 @@ function route() {
   } else {
     window.addEventListener("hashchange", () => location.reload());
     if (hash.startsWith("#dev#horror")) void import("./horror/horror");
+    else if (hash.startsWith("#dev#fatty")) void import("./fatty/fatty");
     else if (isSub("saw")) void import("./skull/skull-saw");
     else if (isSub("ct")) void import("./ct/ct-test");
   }
