@@ -1,6 +1,6 @@
 // The finale on the page's one skull (ct-scene.ts): one saw blade flies in
 // and sinks a good third of its diameter into the crown; out of the cut a
-// fountain of bone particles sprays up and every particle freezes at the
+// fountain of green particles splatters up and every particle freezes at the
 // top of its arc. Three of them are the links (the <a>s handed in ride on
 // them). Everything hangs on the skull, so the whole thing turns with it
 // when dragged. A closed-form function of the time since start(), seeded,
@@ -82,13 +82,14 @@ export function createSaw(opts: {
   blade.rotation.set(0.15, -0.2, 0); // a little out of the screen plane; it spins around its own axis
   rig.add(blade);
 
-  const shardDots = surfaceDots(new THREE.IcosahedronGeometry(1, 0), 60, (_, c) => { c.set("#c9b8ff"); });
+  // Green, so they stand out against the violet skull and the pale blade.
+  const shardDots = surfaceDots(new THREE.IcosahedronGeometry(1, 0), 60, (_, c) => { c.set("#89ff57"); });
   const particles = Array.from({ length: PARTICLES }, (_, i) => {
     const vel = i < LINK_VEL.length
       ? new THREE.Vector3(...LINK_VEL[i])
-      : new THREE.Vector3((rnd() - 0.5) * 2.8, 0.9 + rnd() * 1.0, (rnd() - 0.3) * 1.2);
+      : new THREE.Vector3((rnd() - 0.5) * 4.6, 0.9 + rnd() * 1.0, (rnd() - 0.3) * 2.2);
     const s = new THREE.Points(shardDots, mat);
-    s.scale.setScalar(i < LINK_VEL.length ? 0.07 : 0.035 + rnd() * 0.06);
+    s.scale.setScalar(i < LINK_VEL.length ? 0.07 : 0.045 + rnd() * 0.07);
     rig.add(s);
     return { s, vel, spin: [rnd() * 9, rnd() * 9, rnd() * 9] };
   });
