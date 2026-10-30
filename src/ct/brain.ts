@@ -29,12 +29,19 @@ uniform vec4 uColor[${N}];
 uniform float uBig[${N}];
 uniform float uSize;
 uniform float uScale;
+#ifdef OFFSET
+uniform vec3 uOff[${N}];
+#endif
 varying vec4 vColor;
 void main() {
   int r = int(region + 0.5);
   vec4 c = uColor[r];
   vColor = vec4(c.rgb * shade, c.a);
-  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vec3 p = position;
+#ifdef OFFSET
+  p += uOff[r]; // the part's way out when the brain comes apart
+#endif
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_PointSize = uSize * uBig[r] * (uScale / -mv.z);
   gl_Position = c.a > 0.0 ? projectionMatrix * mv : vec4(2.0, 2.0, 2.0, 1.0);
 }`;
@@ -45,16 +52,28 @@ void main() {
   gl_FragColor = vec4(vColor.rgb, vColor.a * uOpacity);
   #include <colorspace_fragment>
 }`;
+// The occluder moves with its parts too, so a part that comes out still
+// hides what's behind it — and leaves no invisible wall where it was.
+const OCC_VERT = /* glsl */ `
+attribute float region;
+uniform vec3 uOff[${N}];
+void main() {
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position + uOff[int(region + 0.5)], 1.0);
+}`;
+const OCC_FRAG = /* glsl */ `void main() { gl_FragColor = vec4(0.0); }`;
 
 export interface Brain {
   group: THREE.Group;
   /** Lit parts (yellow unless `colors` says otherwise), 1.7x bigger dots. Fades over ~300 ms. */
   setHighlight(parts: Part[], colors?: Partial<Record<Part, string>>): void;
+  /** Take the brain apart: `parts` move `out` along their out-direction
+   *  (towards the viewer in side view), the rest `spread`. Glides there. */
+  setExplode(parts: Part[], out: number, spread: number): void;
   /** 0 = hidden, 0.4 = see-through (deep structures still glow), 1 = solid. */
   setOpacity(a: number): void;
   /** Screen px of a part's most camera-facing point. */
   anchor(p: Part, cam: THREE.Camera, w: number, h: number): [number, number];
-  /** Advance the colour fade; true while still changing. */
+  /** Advance the colour fade and the parts' glide; true while still changing. */
   tick(dt: number): boolean;
   /** Point size scale: renderer drawing-buffer height / 2. */
   setScale(s: number): void;
@@ -94,18 +113,28 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     uOpacity: { value: 1 },
   };
   const deepUniforms = { ...uniforms, uSize: { value: DOT * 1.1 }, uOpacity: { value: 1 } };
+  // Current and target offset per part (brain space).
+  const off = PARTS.map(() => new THREE.Vector3());
+  const offTarget = PARTS.map(() => new THREE.Vector3());
+  const offUniform = { value: off };
 
-  const surfaceMat = new THREE.ShaderMaterial({ uniforms, vertexShader: VERT, fragmentShader: FRAG });
+  const surfaceMat = new THREE.ShaderMaterial({
+    uniforms: { ...uniforms, uOff: offUniform }, vertexShader: VERT, fragmentShader: FRAG, defines: { OFFSET: "" },
+  });
   const deepMat = new THREE.ShaderMaterial({
     uniforms: deepUniforms, vertexShader: VERT, fragmentShader: FRAG,
     transparent: true, depthTest: false, depthWrite: false,
   });
-  const occluderMat = new THREE.MeshBasicMaterial({ colorWrite: false, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 });
+  const occluderMat = new THREE.ShaderMaterial({
+    uniforms: { uOff: offUniform }, vertexShader: OCC_VERT, fragmentShader: OCC_FRAG,
+    colorWrite: false, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4,
+  });
   const occluders: THREE.Mesh[] = [];
 
   for (const part of data.parts) {
     const og = new THREE.BufferGeometry();
     og.setAttribute("position", new THREE.BufferAttribute(part.occluder.position, 3));
+    og.setAttribute("region", new THREE.BufferAttribute(part.occluder.region, 1));
     og.setIndex(new THREE.BufferAttribute(part.occluder.index, 1));
     const occ = new THREE.Mesh(og, occluderMat);
     occ.renderOrder = -1; // depth first, so dots behind it never draw
@@ -117,7 +146,9 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     group.add(occ, new THREE.Points(dg, surfaceMat));
   }
 
-  // Deep structures: dots on small spheres, drawn through everything.
+  // Deep structures: dots on small spheres, drawn through everything;
+  // moved as objects when they come out (their geometry is local).
+  const deepPts: { pts: THREE.Points; base: THREE.Vector3; i: number }[] = [];
   for (const name of DEEP) {
     const [x, y, z, r] = data.deep[name];
     const sg = new THREE.SphereGeometry(r, 24, 18);
@@ -130,7 +161,12 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     if (name === "hippocampus") pts.scale.set(2.2, 1, 0.6);
     pts.renderOrder = 5;
     group.add(pts);
+    deepPts.push({ pts, base: pts.position.clone(), i: PARTS.indexOf(name) });
   }
+
+  // Out-directions, with a pull towards the viewer: in side view the
+  // camera looks at the left hemisphere, i.e. along +x towards -x.
+  const outward = PARTS.map((_, i) => new THREE.Vector3().fromArray(data.outward, i * 3).add(new THREE.Vector3(-0.7, 0, 0)).normalize());
 
   const tmp = new THREE.Vector3();
   const best = new THREE.Vector3();
@@ -146,6 +182,9 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
         big[i] = lit ? 1.7 : 1;
       });
     },
+    setExplode(parts, out, spread) {
+      PARTS.forEach((p, i) => offTarget[i].copy(outward[i]).multiplyScalar(parts.includes(p) ? out : spread));
+    },
     setOpacity(a) {
       group.visible = a > 0;
       const solid = a >= 1;
@@ -156,11 +195,13 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     },
     anchor(p, cam, w, h) {
       group.updateWorldMatrix(true, false);
-      const pts = data.anchors[PARTS.indexOf(p)];
+      const idx = PARTS.indexOf(p);
+      const pts = data.anchors[idx];
+      const o = off[idx];
       // Most camera-facing candidate = the nearest to the camera.
       let bestD = Infinity;
       for (let i = 0; i < pts.length; i += 3) {
-        tmp.set(pts[i], pts[i + 1], pts[i + 2]).applyMatrix4(group.matrixWorld);
+        tmp.set(pts[i] + o.x, pts[i + 1] + o.y, pts[i + 2] + o.z).applyMatrix4(group.matrixWorld);
         const d = tmp.distanceToSquared(cam.position);
         if (d < bestD) { bestD = d; best.copy(tmp); }
       }
@@ -176,6 +217,13 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
         c.lerp(t, k);
         moving = true;
       });
+      const g = 1 - Math.exp(-dt / 0.18); // the parts glide a little slower
+      off.forEach((o, i) => {
+        if (o.distanceToSquared(offTarget[i]) < 1e-7) { o.copy(offTarget[i]); return; }
+        o.lerp(offTarget[i], g);
+        moving = true;
+      });
+      for (const d of deepPts) d.pts.position.copy(d.base).add(off[d.i]);
       return moving;
     },
     setScale(s) {

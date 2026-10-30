@@ -55,6 +55,9 @@ createCtScene(canvas, { phone: matchMedia("(max-width: 900px)").matches }).then(
     if (state.brain !== undefined && pose.brain > 0) pose.brain = Math.min(pose.brain, state.brain);
     ct.setPose(pose);
     ct.setHighlight(state.parts, state.colors);
+    // #ex=0.3: the lit parts come out of the brain by that much.
+    const ex = Number(flags.get("ex") ?? 0);
+    ct.setExplode(state.parts, ex, ex * 0.15);
   };
   // #endo: the cranial cavity (endocast.json) as white dots, to check it.
   if (location.hash.includes("#endo")) {

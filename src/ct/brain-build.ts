@@ -306,8 +306,9 @@ function makeFit(geos: THREE.BufferGeometry[]) {
 
 export type BrainPart = {
   dots: { position: Float32Array; shade: Float32Array; region: Float32Array };
-  // Depth-only occluder so dots on the back don't shine through the gaps.
-  occluder: { position: Float32Array; index: Uint32Array };
+  // Depth-only occluder so dots on the back don't shine through the gaps
+  // (with its region per vertex, so it moves along when a part comes out).
+  occluder: { position: Float32Array; region: Float32Array; index: Uint32Array };
 };
 export type BrainData = {
   parts: BrainPart[];
@@ -316,6 +317,9 @@ export type BrainData = {
   // Per part index (PARTS): points near the region's centre, local to the
   // brain group; the anchor is the one facing the camera most.
   anchors: Float32Array[];
+  // Per part index: unit direction it moves in when the brain comes apart
+  // (from the brain's centre out through the part's centre).
+  outward: Float32Array;
 };
 
 // pointsScale: 1 on desktop (~45k dots per 30k vertices), ~1/3 on phones.
@@ -342,7 +346,8 @@ export function buildBrain(pointsScale = 1): BrainData {
     const pos = g.getAttribute("position");
     const dots = sampleDots(g, Math.round((45000 * pointsScale * pos.count) / 30000));
     const index = g.index ? Uint32Array.from(g.index.array) : Uint32Array.from({ length: pos.count }, (_, i) => i);
-    return { dots, occluder: { position: Float32Array.from(pos.array as ArrayLike<number>), index } };
+    const region = Float32Array.from(g.getAttribute("region").array as ArrayLike<number>);
+    return { dots, occluder: { position: Float32Array.from(pos.array as ArrayLike<number>), region, index } };
   });
 
   // Region anchors: every 7th vertex per region, centroid, then the
@@ -352,9 +357,11 @@ export function buildBrain(pointsScale = 1): BrainData {
     const pos = g.getAttribute("position"), reg = g.getAttribute("region");
     for (let i = 0; i < pos.count; i += 7) acc[reg.getX(i)].push(pos.getX(i), pos.getY(i), pos.getZ(i));
   }
+  const centres: THREE.Vector3[] = [];
   const anchors = PARTS.map((name, r) => {
     if (r >= REG.length) {
       const [x, y, z] = deep[name as Deep];
+      centres[r] = new THREE.Vector3(x, y, z);
       return Float32Array.of(x, y, z);
     }
     const a = acc[r];
@@ -362,6 +369,7 @@ export function buildBrain(pointsScale = 1): BrainData {
     let cx = 0, cy = 0, cz = 0;
     for (let i = 0; i < a.length; i += 3) { cx += a[i]; cy += a[i + 1]; cz += a[i + 2]; }
     cx /= n; cy /= n; cz /= n;
+    centres[r] = new THREE.Vector3(cx, cy, cz);
     const near: number[] = [];
     for (let i = 0; i < a.length; i += 3) {
       if ((a[i] - cx) ** 2 + (a[i + 1] - cy) ** 2 + (a[i + 2] - cz) ** 2 < 0.35 * 0.35) near.push(a[i], a[i + 1], a[i + 2]);
@@ -371,5 +379,16 @@ export function buildBrain(pointsScale = 1): BrainData {
     for (let i = 0; i < near.length; i += 3 * step) out.push(near[i], near[i + 1], near[i + 2]);
     return Float32Array.from(out.length ? out : [cx, cy, cz]);
   });
-  return { parts, deep, anchors };
+
+  // Out-directions: from the centre of the cerebrum through the part.
+  const box = new THREE.Box3();
+  for (const g of geos.slice(0, 2)) { g.computeBoundingBox(); box.union(g.boundingBox!); }
+  const mid = box.getCenter(new THREE.Vector3());
+  const outward = new Float32Array(PARTS.length * 3);
+  centres.forEach((c, i) => {
+    const d = c.clone().sub(mid);
+    if (d.lengthSq() < 1e-4) d.set(0, 1, 0);
+    d.normalize().toArray(outward, i * 3);
+  });
+  return { parts, deep, anchors, outward };
 }

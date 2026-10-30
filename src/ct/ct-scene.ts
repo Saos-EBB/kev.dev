@@ -19,6 +19,8 @@ export type Pose = {
 export interface CtScene {
   setPose(p: Pose): void;
   setHighlight(parts: Part[], colors?: Partial<Record<Part, string>>): void;
+  /** Take the brain apart (brain.ts setExplode). */
+  setExplode(parts: Part[], out: number, spread: number): void;
   /** Canvas CSS px of a brain part's visible point. */
   anchor(p: Part): [number, number];
   resize(): void;
@@ -118,6 +120,10 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
     project(p) {
       const q = p.clone().project(camera);
       return [((q.x + 1) / 2) * canvas.clientWidth, ((1 - q.y) / 2) * canvas.clientHeight];
+    },
+    setExplode(parts, out, spread) {
+      brain.setExplode(parts, out, spread);
+      api.requestRender();
     },
     anchor(p) {
       rig.updateMatrixWorld(true);
