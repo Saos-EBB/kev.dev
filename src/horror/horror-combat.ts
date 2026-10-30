@@ -6,17 +6,25 @@
 //
 // Damage is per hit, not per pellet: a shotgun blast is one hit — head if
 // any pellet found the head (100), else body (50). The saw bat: 500 / 150.
+// The second armory (FPS Pack guns, the sabre with arms) is data in
+// horror-arsenal.ts; those guns count damage per pellet.
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import * as sfx from "./horror-audio";
 import { loadSkullGeometry } from "../ct/parts";
+import { GUNS, GUN_IDS, SABER, gunView, saberView, type ArsenalId, type GunId, type ViewModel } from "./horror-arsenal";
 
 export type ZombieKind = "normal" | "big" | "boss";
-export type Weapon = "shotgun" | "bat" | "sword" | "rail" | "ice";
+export type Weapon = "shotgun" | "bat" | "sword" | "rail" | "ice" | ArsenalId;
 export type PickupKind = Weapon | "shells" | "health";
-const WEAPONS: Weapon[] = ["shotgun", "bat", "sword", "rail", "ice"];
-const MELEE = (w: Weapon | null) => w === "bat" || w === "sword";
+export const WEAPON_NAMES: Record<Weapon, string> = {
+  shotgun: "Schrot", bat: "Säge", sword: "Katana", rail: "Railgun", ice: "Eiswerfer", saber: SABER.name,
+  ...(Object.fromEntries(GUN_IDS.map((id) => [id, GUNS[id].name])) as Record<GunId, string>),
+};
+export const WEAPONS: Weapon[] = ["shotgun", "bat", "sword", "rail", "ice", "saber", ...GUN_IDS];
+const MELEE = (w: Weapon | null) => w === "bat" || w === "sword" || w === "saber";
+const isArsenalGun = (w: Weapon | null): w is GunId => !!w && w in GUNS;
 export type Kill = { kind: ZombieKind; hits: number; head: boolean; at: THREE.Vector3 };
 
 export type CombatWorld = {
@@ -40,8 +48,10 @@ const DMG = { shotgun: { head: 100, body: 50 }, bat: { head: 500, body: 150 }, s
 const ICE = { speed: 13, every: 0.9, radius: 3.5, dmg: 60, slow: 0.45, slowFor: 4 };
 const RAIL_EVERY = 0.5; // the beam goes through everything in a line
 // magazines: empty one and you reload (R, or by itself). Shells come from what you find; rail and ice reload forever
-const MAG = { shotgun: 7, rail: 21, ice: 7 }, RELOAD = { shotgun: 1.6, rail: 1.8, ice: 1.5 }; // seconds
-type Gun = keyof typeof MAG;
+type Gun = "shotgun" | "rail" | "ice" | GunId;
+const fromGuns = (k: "mag" | "reload") => Object.fromEntries(GUN_IDS.map((id) => [id, GUNS[id][k]])) as Record<GunId, number>;
+const MAG: Record<Gun, number> = { shotgun: 7, rail: 21, ice: 7, ...fromGuns("mag") };
+const RELOAD: Record<Gun, number> = { shotgun: 1.6, rail: 1.8, ice: 1.5, ...fromGuns("reload") }; // seconds
 const isGun = (x: Weapon | null): x is Gun => !!x && x in MAG;
 // abilities: chain lightning (E, held) costs energy; frost nova (Q) has a cooldown
 // a beam from you to what you aim at, then on from each zombie to the nearest next one, endlessly.
@@ -129,11 +139,12 @@ function makeSword() {
 
 export function createCombat(w: CombatWorld) {
   const { scene, camera } = w;
-  const have: Record<Weapon, boolean> = { shotgun: false, bat: false, sword: false, rail: false, ice: false };
+  const have = Object.fromEntries(WEAPONS.map((k) => [k, false])) as Record<Weapon, boolean>;
   let weapon: Weapon | null = null;
   let ammo = 0, cooldown = 0, recoil = 0, flashT = 0, bobPhase = 0, swingT = -1, swung = false;
   let skullsUnlocked = false, skullCD = 0, clock = 0;
-  const mag: Record<Gun, number> = { shotgun: 0, rail: MAG.rail, ice: MAG.ice };
+  const mag: Record<Gun, number> = { ...MAG, shotgun: 0 };
+  let trigger = false; // held: the automatic guns keep firing
   let reloadT = 0; // counts down while the gun in hand reloads
   let chainUnlocked = false, chainWant = false, chainTick = 0, energy = CHAIN.max, chainEmpty = false;
   let novaUnlocked = false, novaCD = 0;
@@ -144,7 +155,8 @@ export function createCombat(w: CombatWorld) {
   /* ---------- assets: load once, in the background ---------- */
   const loader = new GLTFLoader();
   const protos = new Map<string, { scene: THREE.Object3D; clips: THREE.AnimationClip[]; height: number }>();
-  const props: Record<Weapon, THREE.Object3D | null> = { shotgun: null, bat: null, sword: makeSword(), rail: null, ice: null };
+  const props = { ...Object.fromEntries(WEAPONS.map((k) => [k, null])), sword: makeSword() } as unknown as Record<Weapon, THREE.Object3D | null>;
+  const arsenal = new Map<ArsenalId, ViewModel>(); // the second armory's view models, once loaded
   let skullGeo: THREE.BufferGeometry | null = null;
   const ready = (async () => {
     const files = ["zombie_basic", "zombie_chubby"];
@@ -184,6 +196,27 @@ export function createCombat(w: CombatWorld) {
     buildViewModels();
     for (const p of pickups) if (WEAPONS.includes(p.kind as Weapon)) dressPickup(p);
   })();
+  // the second armory loads on its own: a slow file doesn't hold up the zombies
+  void (async () => {
+    const [saber, map, ...guns] = await Promise.all([
+      loader.loadAsync("/horror/weapons/saber_arms.glb"), new THREE.TextureLoader().loadAsync("/horror/weapons/saber.jpg"),
+      ...GUN_IDS.map((id) => loader.loadAsync(`/horror/weapons/${GUNS[id].file}.glb`)),
+    ]);
+    const add = (id: ArsenalId, v: ViewModel) => {
+      arsenal.set(id, v);
+      v.root.visible = false;
+      viewRoot.add(v.root);
+      // the same model, posed still, for pickups and the mirror
+      const still = SkeletonUtils.clone(v.root); still.visible = true;
+      props[id] = still;
+      if (id !== "saber") { const f = makeFlash(); f.position.copy(v.muzzle); v.root.add(f); flashes.set(id, f); }
+    };
+    add("saber", saberView(saber, map));
+    GUN_IDS.forEach((id, i) => add(id, gunView(guns[i], GUNS[id])));
+    arsenal.get("saber")!.loop("Idle");
+    for (const p of pickups) if (p.kind in GUNS || p.kind === "saber") dressPickup(p);
+  })();
+  const flashes = new Map<ArsenalId, THREE.Sprite>();
 
   /* ---------- weapons in your hands: own scene, drawn after the world with a
      cleared depth buffer, so they never poke into walls and have their own light ---------- */
@@ -312,8 +345,8 @@ export function createCombat(w: CombatWorld) {
     const root = SkeletonUtils.clone(proto.scene);
     // the weapon mesh node itself (not its scene wrapper), placed with the grip the pack
     // uses for its armed characters (Characters_*_SingleWeapon: child of Middle1.L)
-    const node = { shotgun: "Shotgun", bat: "WoodenBat_Saw", sword: "", rail: "Rifle", ice: "SMG" };
-    const held = weapon && (weapon === "sword" ? props.sword!.clone() : props[weapon]?.getObjectByName(node[weapon])?.clone());
+    const node: Partial<Record<Weapon, string>> = { shotgun: "Shotgun", bat: "WoodenBat_Saw", rail: "Rifle", ice: "SMG" };
+    const held = weapon && (weapon === "sword" ? props.sword!.clone() : node[weapon] ? props[weapon]?.getObjectByName(node[weapon]!)?.clone() : undefined);
     const hand = root.getObjectByName("Middle1L"); // GLTFLoader drops the dot from "Middle1.L"
     if (held && hand) {
       held.position.set(0.0116, 0.1046, -0.0458);
@@ -366,8 +399,8 @@ export function createCombat(w: CombatWorld) {
     if (isWeapon && props[kind as Weapon]) dressPickup(p);
   }
   function dressPickup(p: Pickup) {
-    const m = props[p.kind as Weapon]!.clone();
-    if (p.kind === "shotgun" || p.kind === "rail" || p.kind === "ice") { m.scale.setScalar(0.9); m.rotation.set(0, 0, Math.PI / 2); m.position.z = -0.4; }
+    const m = SkeletonUtils.clone(props[p.kind as Weapon]!);
+    if (p.kind === "shotgun" || p.kind === "rail" || p.kind === "ice" || p.kind in GUNS) { m.scale.setScalar(0.9); m.rotation.set(0, 0, Math.PI / 2); m.position.z = -0.4; }
     else { m.scale.setScalar(0.8); m.rotation.set(0, 0, Math.PI / 2); m.position.x = 0.35; }
     p.obj.add(m);
   }
@@ -477,12 +510,19 @@ export function createCombat(w: CombatWorld) {
 
   function fire() {
     if (!weapon || cooldown > 0) return;
+    if (weapon === "saber") {
+      cooldown = SABER.every; swingT = 0; swung = false; slashes++;
+      arsenal.get("saber")?.play(slashes % 3 === 0 ? "Pierce" : "Slash", SABER.every);
+      setTimeout(sfx.swing, 120);
+      return;
+    }
     if (MELEE(weapon)) { cooldown = weapon === "sword" ? 0.7 : 0.6; swingT = 0; swung = false; setTimeout(sfx.swing, 90); return; }
     if (!isGun(weapon) || reloadT > 0) return;
     if (mag[weapon] <= 0) { if (!reload()) { sfx.click(); cooldown = 0.3; } return; }
     mag[weapon]--;
     if (weapon === "rail") return fireRail();
     if (weapon === "ice") return fireIce();
+    if (isArsenalGun(weapon)) return fireGun(weapon);
     cooldown = 0.85; recoil = 1; flashT = 0.06;
     sfx.shotgun(); setTimeout(sfx.pump, 280);
     w.onShot();
@@ -513,6 +553,47 @@ export function createCombat(w: CombatWorld) {
     burst(tmp.copy(origin).addScaledVector(right, 0.25).addScaledVector(up, -0.15).addScaledVector(fwd, 0.4), 1, 0.7, 0.08, 0.05, 1.5);
     for (const [z, head] of hits) damage(z, head, head ? DMG.shotgun.head : DMG.shotgun.body);
     if (hits.size) w.onHitmarker([...hits.values()].some((h) => h));
+  }
+
+  /* ---------- the second armory's guns: pellets, spread, pierce from GUNS ---------- */
+  let slashes = 0; // every third sabre attack is a thrust
+  function fireGun(id: GunId) {
+    const g = GUNS[id];
+    cooldown = g.every; recoil = Math.min(1.4, g.kick); flashT = 0.05;
+    sfx.gunshot(g.sound);
+    arsenal.get(id)?.play(g.fire, Math.min(g.every, 0.4));
+    w.onShot();
+    aim();
+    const dmg = new Map<Zombie, { d: number; head: boolean }>();
+    for (let k = 0; k < g.pellets; k++) {
+      ray.copy(fwd).addScaledVector(right, (Math.random() - 0.5) * 2 * g.spread).addScaledVector(up, (Math.random() - 0.5) * 2 * g.spread).normalize();
+      const wall = wallDistance(origin, ray);
+      // everything in line up to the wall, nearest first; the bullet stops after `pierce`
+      const inLine: [number, Zombie, boolean][] = [];
+      for (const z of zombies) {
+        if (z.dying >= 0) continue;
+        const tb = bodyHit(z, origin, ray), th = headHit(z, origin, ray);
+        const t = Math.min(tb, th);
+        if (t < wall) inLine.push([t, z, th <= tb]);
+      }
+      inLine.sort((a, b) => a[0] - b[0]);
+      for (const [t, z, head] of inLine.slice(0, g.pierce)) {
+        const cur = dmg.get(z) ?? { d: 0, head: false };
+        cur.d += head ? g.dmg.head : g.dmg.body; cur.head ||= head;
+        dmg.set(z, cur);
+        hitAt.copy(origin).addScaledVector(ray, t);
+        burst(hitAt, 4, 0.45, 0.02, 0.02, 2.6);
+        if (k % 3 === 0) bloodBehind(hitAt, ray, 2.4, 0.4);
+      }
+      if (inLine.length < g.pierce && wall < RANGE) {
+        hitAt.copy(origin).addScaledVector(ray, wall);
+        burst(hitAt, 2, 0.5, 0.48, 0.44, 1.3);
+        hole(hitAt, normal, 0.05 + Math.random() * 0.03);
+        if (k === 0) sfx.impact(hitAt);
+      }
+    }
+    for (const [z, { d, head }] of dmg) damage(z, head, d);
+    if (dmg.size) w.onHitmarker([...dmg.values()].some((v) => v.head));
   }
 
   /* ---------- railgun: one beam, through everything in line ---------- */
@@ -620,19 +701,20 @@ export function createCombat(w: CombatWorld) {
   // melee connects mid-swing. Bat: the closest zombie in front of you. Sword: every one in reach.
   function meleeHit() {
     if (weapon === "sword") return swordHit();
+    if (weapon === "saber") return swordHit(SABER.dmg, SABER.range);
     batHit();
   }
-  function swordHit() {
+  function swordHit(dmgOf = DMG.sword, range = SWORD_RANGE) {
     aim();
     flat.set(fwd.x, 0, fwd.z).normalize();
     let any = false, anyHead = false, anyKill = false;
     for (const z of zombies) {
       if (z.dying >= 0) continue;
       tmp.subVectors(z.root.position, origin).setY(0);
-      const d = tmp.length(), reach = SWORD_RANGE + 0.3 * (z.height / ZOMBIE_HEIGHT);
+      const d = tmp.length(), reach = range + 0.3 * (z.height / ZOMBIE_HEIGHT);
       if (d > reach || tmp.normalize().dot(flat) < 0.3) continue; // a wide arc in front of you
       const head = headHit(z, origin, fwd, 1.8) < Infinity;
-      const dmg = head ? DMG.sword.head : DMG.sword.body;
+      const dmg = head ? dmgOf.head : dmgOf.body;
       hitAt.copy(z.root.position).setY(z.root.position.y + z.height * (head ? 0.88 : 0.55));
       spray(hitAt, -right.x, -right.z, 24);
       burst(hitAt, 10, 0.5, 0.02, 0.02, 3.5);
@@ -706,13 +788,18 @@ export function createCombat(w: CombatWorld) {
     weapon = kind;
   }
 
-  function select(next: Weapon) { if (have[next] && weapon !== next) { weapon = next; cooldown = 0.25; swingT = -1; reloadT = 0; } }
+  function select(next: Weapon) {
+    if (!have[next] || weapon === next) return;
+    weapon = next; cooldown = 0.25; swingT = -1; reloadT = 0;
+    if (next === "saber") arsenal.get("saber")?.play("Draw", 0.4);
+  }
 
   // reload the gun in hand; false if there's nothing to load
   function reload() {
     if (!isGun(weapon) || reloadT > 0 || mag[weapon] >= MAG[weapon]) return false;
     if (weapon === "shotgun" && ammo <= 0) return false;
     reloadT = RELOAD[weapon];
+    if (isArsenalGun(weapon)) arsenal.get(weapon)?.play(GUNS[weapon].reloadClip, reloadT);
     sfx.click();
     return true;
   }
@@ -891,6 +978,9 @@ export function createCombat(w: CombatWorld) {
     // weapons in hand: Doom-style figure-eight bob, recoil, pump dip, bat swing
     clock += dt;
     gun.visible = weapon === "shotgun"; batView.visible = weapon === "bat"; swordView.visible = weapon === "sword"; railView.visible = weapon === "rail"; iceView.visible = weapon === "ice";
+    for (const [id, v] of arsenal) { v.root.visible = weapon === id; if (v.root.visible) v.update(dt); }
+    // automatic guns fire as long as the trigger is held
+    if (trigger && isArsenalGun(weapon) && GUNS[weapon].auto && cooldown <= 0) fire();
     skullCD = Math.max(0, skullCD - dt);
     if (weapon) {
       camera.updateMatrixWorld();
@@ -901,7 +991,7 @@ export function createCombat(w: CombatWorld) {
       recoil = Math.max(0, recoil - dt * 5);
       const pump = cooldown > 0.15 && cooldown < 0.55 ? Math.sin(((0.55 - cooldown) / 0.4) * Math.PI) : 0;
       // reloading: the gun dips down and tilts, then comes back up
-      const dip = reloadT > 0 && isGun(weapon) ? Math.sin((1 - reloadT / RELOAD[weapon]) * Math.PI) : 0;
+      const dip = reloadT > 0 && isGun(weapon) && !isArsenalGun(weapon) ? Math.sin((1 - reloadT / RELOAD[weapon]) * Math.PI) : 0; // the new guns have their own reload
       viewRoot.translateY(-dip * 0.12); viewRoot.rotateX(-dip * 0.5); viewRoot.rotateZ(dip * 0.3);
       gun.position.set(0.14 + bx, -0.16 + by + recoil * 0.02 - pump * 0.03, -0.3 + recoil * 0.09);
       gun.rotation.set(recoil * 0.25 - pump * 0.12, 0, pump * 0.2);
@@ -912,11 +1002,20 @@ export function createCombat(w: CombatWorld) {
       flashT -= dt;
       flash.visible = weapon === "shotgun" && flashT > 0; railFlash.visible = weapon === "rail" && flashT > 0;
       flash.material.rotation = railFlash.material.rotation = Math.random() * 6;
+      if (isArsenalGun(weapon)) {
+        const v = arsenal.get(weapon), at = GUNS[weapon].at;
+        v?.root.position.set(at[0] + bx, at[1] + by + recoil * 0.015, at[2] + recoil * 0.06);
+        v?.root.rotation.set(recoil * 0.2, 0, 0);
+        const f = flashes.get(weapon);
+        if (f) { f.visible = flashT > 0; f.material.rotation = Math.random() * 6; }
+      }
+      if (weapon === "saber") arsenal.get("saber")?.root.position.set(bx * 0.6, by * 0.6, 0);
       // swing: wind up over the right shoulder, whip down-left across the view, come back slowly
       if (swingT >= 0) {
         swingT += dt;
-        if (!swung && swingT > SWING.hit) { swung = true; meleeHit(); }
-        if (swingT > SWING.end) swingT = -1;
+        const timing = weapon === "saber" ? { hit: SABER.hit, end: SABER.every } : SWING;
+        if (!swung && swingT > timing.hit) { swung = true; meleeHit(); }
+        if (swingT > timing.end) swingT = -1;
       }
       swingPose(swingT, pose);
       const melee = weapon === "sword" ? swordView : batView;
@@ -931,7 +1030,7 @@ export function createCombat(w: CombatWorld) {
       p.obj.position.y = p.at.y + Math.sin(performance.now() / 300 + i) * 0.04;
       if (Math.hypot(player.x - p.at.x, player.z - p.at.z) < 0.9) {
         if (p.kind === "shotgun") { giveShotgun(); weapon = "shotgun"; }
-        if (p.kind === "bat" || p.kind === "sword" || p.kind === "rail" || p.kind === "ice") { have[p.kind] = true; weapon = p.kind; }
+        if (p.kind === "bat" || p.kind === "sword" || p.kind === "rail" || p.kind === "ice" || p.kind === "saber" || p.kind in GUNS) { have[p.kind as Weapon] = true; select(p.kind as Weapon); }
         if (p.kind === "shells") ammo += p.amount;
         scene.remove(p.obj); pickups.splice(i, 1);
         sfx.pickup(); onPickup(p.kind);
@@ -1111,6 +1210,8 @@ export function createCombat(w: CombatWorld) {
     get reserve() { return weapon === "shotgun" ? String(ammo) : "∞"; },
     get reloading() { return reloadT > 0; },
     reload,
+    /** held trigger (mouse button / fire button): the automatic guns keep firing */
+    trigger: (on: boolean) => { trigger = on; },
     nova,
     chain: (on: boolean) => { chainWant = on; },
     unlockChain: () => { chainUnlocked = true; },

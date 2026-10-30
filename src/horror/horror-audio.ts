@@ -190,6 +190,12 @@ export function shotgun() {
   noiseHit(out, { f: 140, vol: 1, len: 0.6, att: 0.001 });
   tone(out, { f: 90, f2: 30, vol: 0.9, len: 0.35, att: 0.001 });
 }
+// the other guns: one crack, scaled by calibre (0.3 = pistol … 1.4 = sniper)
+export function gunshot(size: number) {
+  noiseHit(out, { f: 3200 - size * 900, type: "lowpass", vol: 0.5 + size * 0.35, len: 0.12 + size * 0.22, att: 0.001 });
+  noiseHit(out, { f: 220 - size * 60, vol: 0.4 + size * 0.4, len: 0.15 + size * 0.3, att: 0.001 });
+  tone(out, { f: 140 - size * 40, f2: 35, vol: 0.3 + size * 0.45, len: 0.1 + size * 0.2, att: 0.001 });
+}
 export function pump() {
   noiseHit(out, { f: 1800, type: "bandpass", q: 3, vol: 0.35, len: 0.06, att: 0.001 });
   noiseHit(out, { t: 0.16, f: 1400, type: "bandpass", q: 3, vol: 0.4, len: 0.07, att: 0.001 });

@@ -44,6 +44,15 @@ Full license texts ship with each package in `node_modules/<package>/`.
   (https://creativecommons.org/publicdomain/zero/1.0/). Converted from glTF to
   GLB, otherwise unchanged; colors darkened or tinted in code.
 
+- `public/horror/weapons/fps_*.glb` (same page): the "FPS Pack" (pistol, P90,
+  revolver, rifle, shotgun, sniper rifle, with fire/reload animations), CC0 1.0
+  per its download page. Exported from the .blend files to GLB; recoloured in
+  code. Source URL: TODO.
+- `public/horror/weapons/saber_arms.glb`, `saber.jpg` (same page): "Animated
+  Pirate Sword" (arms + sabre with draw/idle/slash/pierce), CC0 1.0 per its
+  download page. Exported to GLB, texture scaled to 512 px; the arms' texture
+  wasn't included, they're coloured in code. Source URL: TODO.
+
 ## Fonts
 
 | File | Font | License |
