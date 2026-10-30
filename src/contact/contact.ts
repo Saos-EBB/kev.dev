@@ -25,6 +25,7 @@ import { LITE } from "../viewport";
 import { BENTO_MIN_WIDTH_PX } from "../projects/carousel";
 import { applyMouseForce, makeBody, stepPhysics, type PhysicsBody } from "./contact-physics";
 import { mountRaygunButton } from "../raygun/raygun";
+import { mountGithubGraph } from "./github-graph";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -107,6 +108,11 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     section.querySelectorAll<HTMLElement>(".contact-icons li"),
   );
   if (!headline || !mail || icons.length === 0) return;
+
+  // Loads on its own (async) and hides itself if GitHub can't be read;
+  // the timeline below only fades the (possibly still empty) link in.
+  const graph = section.querySelector<HTMLAnchorElement>(".contact-graph");
+  if (graph) void mountGithubGraph(graph);
 
   // Raygun button — hidden until the headline has shattered (startBreak),
   // hidden again once it's tweened back to rest (returnHome). Mounted lazily
@@ -236,6 +242,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
     rotate: () => gsap.utils.random(-12, 12),
   });
   gsap.set(icons, { opacity: 0, y: -28, x: 0, rotate: 0 });
+  if (graph) gsap.set(graph, { opacity: 0, y: -16 });
 
   const mid = (icons.length - 1) / 2;
 
@@ -311,6 +318,13 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
       },
       `-=${TIMING.icons.startOffset}`,
     );
+  if (graph) {
+    tl.to(
+      graph,
+      { opacity: 1, y: 0, duration: TIMING.graph.duration, ease: TIMING.graph.ease },
+      `-=${TIMING.graph.startOffset}`,
+    );
+  }
 
   // Ambient float once landed — independent per-letter GSAP loops on the
   // *inner* spans (see splitLetters' comment for why not the outer ones).
@@ -461,7 +475,7 @@ export function initContact(section: HTMLElement, lenis: Lenis) {
   // isSocialTarget() exclusion for the same reason.
   function isBreakTarget(target: EventTarget | null): boolean {
     if (!(target instanceof Element)) return true;
-    return !target.closest(".contact-mail, .contact-icons a");
+    return !target.closest(".contact-mail, .contact-icons a, .contact-graph");
   }
 
   function handleContactClick(e: MouseEvent) {

@@ -251,6 +251,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </a>
         </li>
       </ul>
+      <a class="contact-graph" href="https://github.com/Saos-EBB" target="_blank" rel="noopener noreferrer"></a>
     </div>
   </section>
 
