@@ -14,6 +14,7 @@
 import * as THREE from "three";
 import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
 import { MeshSurfaceSampler } from "three/addons/math/MeshSurfaceSampler.js";
+import endo from "./endocast.json";
 
 export const REG = ["frontal", "motor", "parietal", "occipital", "temporal", "broca", "wernicke", "fusiform", "cerebellum", "stem"] as const;
 export const DEEP = ["amygdala", "hippocampus", "thalamus", "accumbens"] as const;
@@ -23,8 +24,9 @@ export type Part = Region | Deep;
 // One index space for both: regions 0–9, deep structures 10–13.
 export const PARTS: readonly Part[] = [...REG, ...DEEP];
 
-// Deep structures: centre (x, y, z) and radius, shown only when lit.
-export const DEEP_AT: Record<Deep, [number, number, number, number]> = {
+// Deep structures: centre (x, y, z) and radius, shown only when lit —
+// in the kit's own space; buildBrain() returns them fitted (BrainData.deep).
+const DEEP_AT: Record<Deep, [number, number, number, number]> = {
   amygdala: [-0.27, -0.22, 0.2, 0.07],
   hippocampus: [-0.27, -0.2, -0.08, 0.06],
   thalamus: [-0.08, 0.02, -0.12, 0.09],
@@ -217,6 +219,91 @@ function sampleDots(g: THREE.BufferGeometry, n: number) {
   return { position: P, shade: S, region: R };
 }
 
+// ── fitting the kit into the skull ──────────────────────────────────────
+// The skull's cavity (endocast.json, from scripts/ct-endocast.ts) is a
+// radial map around its centre. The brain gets the same kind of map around
+// its own centre and is scaled along each direction towards the cavity
+// wall: a common (median) scale, plus half of what's left per direction —
+// a full warp inflates the kit's gaps (under the temporal lobes) into
+// lumps. Never past the wall (a little inside it).
+const MARGIN = 0.96;
+const WARP = 0.5;
+const { nTheta: NT, nPhi: NP } = endo;
+const ENDO_C = new THREE.Vector3(...(endo.center as [number, number, number]));
+
+const cellOf = (d: THREE.Vector3) => {
+  const t = (Math.acos(Math.min(Math.max(d.y, -1), 1)) / Math.PI) * NT - 0.5;
+  const p = (((Math.atan2(d.x, d.z) / (Math.PI * 2)) % 1) + 1) % 1 * NP;
+  return [t, p] as const;
+};
+
+// Bilinear lookup in a radial grid (azimuth wraps around).
+function radius(grid: ArrayLike<number>, d: THREE.Vector3) {
+  const [t, p] = cellOf(d);
+  const t0 = Math.min(Math.max(Math.floor(t), 0), NT - 1), t1 = Math.min(t0 + 1, NT - 1);
+  const ft = Math.min(Math.max(t - t0, 0), 1);
+  const p0 = Math.floor(p) % NP, p1 = (p0 + 1) % NP, fp = p - Math.floor(p);
+  const at = (a: number, b: number) => grid[a * NP + b];
+  return (at(t0, p0) * (1 - fp) + at(t0, p1) * fp) * (1 - ft) + (at(t1, p0) * (1 - fp) + at(t1, p1) * fp) * ft;
+}
+
+// The kit's own radial map: farthest point per direction cell, empty
+// cells filled from their neighbours, then smoothed like the endocast.
+function kitRadius(geos: THREE.BufferGeometry[], c: THREE.Vector3) {
+  const r = new Float32Array(NT * NP).fill(NaN);
+  const v = new THREE.Vector3();
+  for (const g of geos) {
+    const pos = g.getAttribute("position");
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).sub(c);
+      const len = v.length();
+      const [t, p] = cellOf(v.normalize());
+      const k = Math.min(Math.max(Math.round(t), 0), NT - 1) * NP + (Math.round(p) % NP);
+      if (!(r[k] >= len)) r[k] = len;
+    }
+  }
+  const at = (t: number, p: number) => r[Math.min(Math.max(t, 0), NT - 1) * NP + ((p + NP) % NP)];
+  for (let pass = 0; pass < 200; pass++) {
+    let holes = 0;
+    const next = r.slice();
+    for (let t = 0; t < NT; t++) for (let p = 0; p < NP; p++) {
+      if (!Number.isNaN(r[t * NP + p])) continue;
+      holes++;
+      const n = [at(t - 1, p), at(t + 1, p), at(t, p - 1), at(t, p + 1)].filter((x) => !Number.isNaN(x));
+      if (n.length) next[t * NP + p] = n.reduce((a, b) => a + b) / n.length;
+    }
+    r.set(next);
+    if (!holes) break;
+  }
+  for (let pass = 0; pass < 3; pass++) {
+    const next = r.slice();
+    for (let t = 0; t < NT; t++) for (let p = 0; p < NP; p++) {
+      next[t * NP + p] = (at(t, p) * 4 + at(t - 1, p) + at(t + 1, p) + at(t, p - 1) + at(t, p + 1)) / 8;
+    }
+    r.set(next);
+  }
+  return r;
+}
+
+// Kit point → skull point; also returns the local scale (for radii).
+function makeFit(geos: THREE.BufferGeometry[]) {
+  const box = new THREE.Box3();
+  for (const g of geos.slice(0, 3)) { g.computeBoundingBox(); box.union(g.boundingBox!); } // hemispheres + cerebellum, not the stem
+  const c = box.getCenter(new THREE.Vector3());
+  const kit = kitRadius(geos, c);
+  const ratios = Array.from(kit, (k, i) => (endo.r[i] * MARGIN) / k).sort((a, b) => a - b);
+  const median = ratios[ratios.length >> 1];
+  const d = new THREE.Vector3();
+  return (x: number, y: number, z: number) => {
+    d.set(x, y, z).sub(c);
+    const len = d.length() || 1e-6;
+    d.divideScalar(len);
+    const full = (radius(endo.r, d) * MARGIN) / radius(kit, d);
+    const s = Math.min(full, median * Math.pow(full / median, WARP));
+    return { p: d.clone().multiplyScalar(len * s).add(ENDO_C), s };
+  };
+}
+
 export type BrainPart = {
   dots: { position: Float32Array; shade: Float32Array; region: Float32Array };
   // Depth-only occluder so dots on the back don't shine through the gaps.
@@ -224,6 +311,8 @@ export type BrainPart = {
 };
 export type BrainData = {
   parts: BrainPart[];
+  // Deep structures, fitted: centre (x, y, z) and radius.
+  deep: Record<Deep, [number, number, number, number]>;
   // Per part index (PARTS): points near the region's centre, local to the
   // brain group; the anchor is the one facing the camera most.
   anchors: Float32Array[];
@@ -233,6 +322,20 @@ export type BrainData = {
 export function buildBrain(pointsScale = 1): BrainData {
   const noise = new ImprovedNoise();
   const geos = [hemisphere(noise, -1), hemisphere(noise, 1), cerebellum(), stem()];
+  const fit = makeFit(geos);
+  for (const g of geos) {
+    const pos = g.getAttribute("position");
+    for (let i = 0; i < pos.count; i++) {
+      const { p } = fit(pos.getX(i), pos.getY(i), pos.getZ(i));
+      pos.setXYZ(i, p.x, p.y, p.z);
+    }
+    g.computeVertexNormals();
+  }
+  const deep = Object.fromEntries(DEEP.map((name) => {
+    const [x, y, z, r] = DEEP_AT[name];
+    const { p, s } = fit(x, y, z);
+    return [name, [p.x, p.y, p.z, r * s]];
+  })) as BrainData["deep"];
   for (const g of geos) if (g.getAttribute("position").count > 30000) seams(g, 0.045, 4);
 
   const parts = geos.map((g): BrainPart => {
@@ -251,7 +354,7 @@ export function buildBrain(pointsScale = 1): BrainData {
   }
   const anchors = PARTS.map((name, r) => {
     if (r >= REG.length) {
-      const [x, y, z] = DEEP_AT[name as Deep];
+      const [x, y, z] = deep[name as Deep];
       return Float32Array.of(x, y, z);
     }
     const a = acc[r];
@@ -268,5 +371,5 @@ export function buildBrain(pointsScale = 1): BrainData {
     for (let i = 0; i < near.length; i += 3 * step) out.push(near[i], near[i + 1], near[i + 2]);
     return Float32Array.from(out.length ? out : [cx, cy, cz]);
   });
-  return { parts, anchors };
+  return { parts, deep, anchors };
 }

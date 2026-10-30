@@ -3,7 +3,7 @@
 // uniform update. The geometry comes from brain-build.ts, built once in a
 // worker. Hang `group` into the skull rig.
 import * as THREE from "three";
-import { buildBrain, DEEP, DEEP_AT, PARTS, REG, type BrainData, type Part } from "./brain-build";
+import { buildBrain, DEEP, PARTS, REG, type BrainData, type Part } from "./brain-build";
 
 export type { Part } from "./brain-build";
 
@@ -76,12 +76,8 @@ async function loadData(pointsScale: number): Promise<BrainData> {
 export async function createBrain(opts: { pointsScale?: number } = {}): Promise<Brain> {
   const data = await loadData(opts.pointsScale ?? 1);
   const group = new THREE.Group();
-  // Fitted into craniumCut01's vault (side view against the skull dots):
-  // back to the occiput, a little taller, frontal lobe behind the forehead,
-  // tilted front-up a little so it follows the skull's sloping base.
-  group.scale.set(0.92, 1.012, 0.92);
-  group.position.set(0, -0.02, -0.2);
-  group.rotation.x = -0.1;
+  // No transform: brain-build already fitted the kit into the skull's
+  // cavity (endocast.json).
 
   // Current and target colours per part, linear RGB + alpha (alpha 0 = hidden).
   const cur = PARTS.map((p, i) => {
@@ -123,7 +119,7 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
 
   // Deep structures: dots on small spheres, drawn through everything.
   for (const name of DEEP) {
-    const [x, y, z, r] = DEEP_AT[name];
+    const [x, y, z, r] = data.deep[name];
     const sg = new THREE.SphereGeometry(r, 24, 18);
     const count = sg.getAttribute("position").count;
     sg.setAttribute("shade", new THREE.BufferAttribute(new Float32Array(count).fill(1), 1));
