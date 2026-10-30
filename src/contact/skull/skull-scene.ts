@@ -1,14 +1,14 @@
 // Contact 3D scene (loaded lazily by contact-skull.ts): the craniumCut01
 // skull rises from the bottom as you scroll in (setRise); once it's up, one
-// saw blade flies in and cuts deep into it, and fire jets out of the wound
-// like a rocket's exhaust — deliberately overdone. Bone shards burst out
+// saw blade flies in and cuts deep into it, and green blood spurts out of
+// the wound in pulses, like a cheap splatter movie — deliberately overdone. Bone shards burst out
 // with it and hang in the air, and three of them are real links (GitHub,
 // mail, phone: the section's .contact-icons <a>s, positioned here over the
 // 3D scene every frame). Dragging (mouse, or a sideways swipe) turns the
-// whole scene — skull, blade, fire, shards.
+// whole scene — skull, blade, blood, shards.
 //
 // Everything after the rise is a closed-form function of the time since the
-// sequence started (no stepping; the fire's particles are computed on the
+// sequence started (no stepping; the blood's particles are computed on the
 // GPU from that same time), so reduced motion just jumps to the end.
 import * as THREE from "three";
 import { LITE } from "../../viewport";
@@ -32,12 +32,18 @@ const LINK_REST = {
 } as const;
 const LINK_STAGGER = 0.12; // s between the three link shards leaving
 
-// Fire: a jet out of the wound for JET s, every particle with its own birth
-// time, life, direction and speed; the vertex shader moves and colours it.
+// Blood: spurts out of the wound for JET s, in PULSES like a heartbeat
+// (each weaker than the last); every drop has its own birth time, life,
+// direction and speed, and the vertex shader throws it on a ballistic arc
+// until it hits the floor under the skull, where it stays: the drops
+// collect into a growing pool (it turns with the scene).
 const JET = 3.6;
-const FIRE_COUNT = LITE ? 1100 : 3000;
-const FIRE_LIFE: [number, number] = [0.45, 1.25];
-const FIRE_SPEED: [number, number] = [2.2, 5.2];
+const PULSES = 7;
+const BLOOD_COUNT = LITE ? 1100 : 3000;
+const BLOOD_LIFE: [number, number] = [0.8, 1.7];
+const BLOOD_SPEED: [number, number] = [1.8, 4.8];
+const GRAVITY = 5.2; // scene units / s², pulls the drops down
+const FLOOR_Y = -0.85; // the floor the drops land on, just under the jaw (skull space)
 
 export type SkullScene = { setRise(r: number): void; finish(): void };
 
@@ -46,43 +52,57 @@ const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
 const settle = (u: number) => (u <= 0 ? 0 : (1 - Math.exp(-FREEZE * u)) / FREEZE); // distance factor, freezes at 1/FREEZE
 const rand = ([a, b]: readonly [number, number]) => a + Math.random() * (b - a);
 
-const FIRE_VERT = /* glsl */ `
+const BLOOD_VERT = /* glsl */ `
   uniform float uTime;
   uniform float uPx;
+  uniform float uGravity;
+  uniform float uFloor;
   attribute float aBirth;
   attribute float aLife;
   attribute float aSpeed;
   attribute vec3 aDir;
   attribute float aSize;
   varying float vF;
+  varying float vSeed;
+  varying float vLanded;
   void main() {
     float age = uTime - aBirth;
-    vF = age / aLife;
-    if (age < 0.0 || vF > 1.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; return; }
-    // out along its direction, losing speed, rising a little like hot gas,
-    // the plume widening with age
-    vec3 p = aDir * aSpeed * age * (1.0 - 0.35 * vF);
-    p.y += 0.9 * age * age;
-    p += normalize(cross(aDir, vec3(0.0, 0.0, 1.0)) + 0.001) * sin(aBirth * 91.0) * 0.5 * age;
+    vF = clamp(age / aLife, 0.0, 1.0);
+    vSeed = fract(aBirth * 37.0);
+    if (age < 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; return; }
+    // thrown out along its direction, falling on a ballistic arc until it
+    // reaches the floor (solve y(t) = uFloor), then it stays put
+    vec3 v0 = aDir * aSpeed;
+    float tLand = (v0.y + sqrt(max(v0.y * v0.y + 2.0 * uGravity * (position.y - uFloor), 0.0))) / uGravity;
+    float t = min(age, tLand);
+    vLanded = step(tLand, age);
+    vec3 p = v0 * t;
+    p.y -= 0.5 * uGravity * t * t;
     vec4 mv = modelViewMatrix * vec4(position + p, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = aSize * (0.6 + 3.4 * vF) * uPx / -mv.z;
+    // in flight it shrinks a little; landed it splats wider
+    gl_PointSize = aSize * mix(1.0 - 0.25 * vF, 1.3, vLanded) * uPx / -mv.z;
   }
 `;
 
-const FIRE_FRAG = /* glsl */ `
+const BLOOD_FRAG = /* glsl */ `
+  uniform vec3 uInk;
+  uniform vec3 uDark;
   varying float vF;
+  varying float vSeed;
+  varying float vLanded;
   void main() {
     vec2 c = gl_PointCoord - 0.5;
     float d = dot(c, c) * 4.0;
     if (d > 1.0) discard;
-    // white-hot core -> yellow -> orange -> red -> dim smoke
-    vec3 col = mix(vec3(1.0, 0.97, 0.88), vec3(1.0, 0.82, 0.22), smoothstep(0.0, 0.18, vF));
-    col = mix(col, vec3(1.0, 0.42, 0.05), smoothstep(0.18, 0.45, vF));
-    col = mix(col, vec3(0.75, 0.1, 0.04), smoothstep(0.45, 0.72, vF));
-    col = mix(col, vec3(0.22, 0.12, 0.12), smoothstep(0.72, 1.0, vF));
-    float a = (1.0 - d) * (1.0 - smoothstep(0.6, 1.0, vF));
-    gl_FragColor = vec4(col * a, a);
+    // a glossy drop: dark rim, the ink in the middle, a wet highlight;
+    // each drop a slightly different green, darkening as it flies and
+    // once it lies in the pool
+    vec3 col = mix(uInk, uDark, 0.25 * vSeed + 0.35 * vF + 0.2 * vLanded);
+    col = mix(col, uDark, smoothstep(0.55, 1.0, d));
+    col += smoothstep(0.06, 0.0, dot(c + vec2(0.14, 0.14), c + vec2(0.14, 0.14))) * 0.6;
+    float a = smoothstep(1.0, 0.8, d);
+    gl_FragColor = vec4(col, a);
   }
 `;
 
@@ -156,7 +176,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     return pts;
   };
 
-  // ── the hit: blade, cracks, fire, shards ──
+  // ── the hit: blade, cracks, blood, shards ──
   const hit = nearestTo(new THREE.Vector3(...HIT.want));
   const inDir = new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
   const stuck = hit.clone().addScaledVector(inDir, BLADE_R * HIT.scale - HIT.depth);
@@ -175,49 +195,61 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   skull.add(new THREE.LineSegments(crackGeo, crackMat));
   const crackCount = crackPts.length / 3;
 
-  // Fire out of the wound: mostly along the outward normal (away from the
-  // skull's centre, tipped towards the camera so the jet reads), in a cone.
-  const jetAxis = hit.clone().normalize().add(new THREE.Vector3(0, 0, 0.5)).normalize();
-  const fireGeo = new THREE.BufferGeometry();
-  const firePos = new Float32Array(FIRE_COUNT * 3);
-  const birth = new Float32Array(FIRE_COUNT), life = new Float32Array(FIRE_COUNT);
-  const speed = new Float32Array(FIRE_COUNT), size = new Float32Array(FIRE_COUNT);
-  const dirs = new Float32Array(FIRE_COUNT * 3);
+  // Blood out of the wound: mostly along the outward normal (away from
+  // the skull's centre, tipped towards the camera so the spurts read and
+  // a little up so they arc), in a wide cone.
+  const jetAxis = hit.clone().normalize().add(new THREE.Vector3(0, 0.35, 0.5)).normalize();
+  const bloodGeo = new THREE.BufferGeometry();
+  const bloodPos = new Float32Array(BLOOD_COUNT * 3);
+  const birth = new Float32Array(BLOOD_COUNT), life = new Float32Array(BLOOD_COUNT);
+  const speed = new Float32Array(BLOOD_COUNT), size = new Float32Array(BLOOD_COUNT);
+  const dirs = new Float32Array(BLOOD_COUNT * 3);
   const d3 = new THREE.Vector3();
-  for (let i = 0; i < FIRE_COUNT; i++) {
-    firePos.set([hit.x, hit.y, hit.z], i * 3);
-    // denser at the start (the blast), thinning out over the jet
-    birth[i] = JET * Math.pow(Math.random(), 1.6);
-    life[i] = rand(FIRE_LIFE);
-    speed[i] = rand(FIRE_SPEED) * (birth[i] < 0.25 ? 1.4 : 1);
-    size[i] = 30 + Math.random() * 60;
-    d3.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.7).add(jetAxis).normalize();
+  for (let i = 0; i < BLOOD_COUNT; i++) {
+    bloodPos.set([hit.x, hit.y, hit.z], i * 3);
+    // which spurt: earlier ones get more drops (weight 1/(n+1))
+    let n = 0;
+    for (let r = Math.random() * 2.6; n < PULSES - 1 && r > 1 / (n + 1); n++) r -= 1 / (n + 1);
+    const strength = 1 - n / PULSES;
+    birth[i] = (n * JET) / PULSES + Math.random() * 0.12;
+    life[i] = rand(BLOOD_LIFE);
+    speed[i] = rand(BLOOD_SPEED) * (0.55 + 0.6 * strength);
+    // mostly fine spray, every few a fat gob
+    size[i] = Math.random() < 0.12 ? 90 + Math.random() * 80 : 18 + Math.random() * 45;
+    d3.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.9).add(jetAxis).normalize();
     dirs.set([d3.x, d3.y, d3.z], i * 3);
   }
-  fireGeo.setAttribute("position", new THREE.BufferAttribute(firePos, 3));
-  fireGeo.setAttribute("aBirth", new THREE.BufferAttribute(birth, 1));
-  fireGeo.setAttribute("aLife", new THREE.BufferAttribute(life, 1));
-  fireGeo.setAttribute("aSpeed", new THREE.BufferAttribute(speed, 1));
-  fireGeo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
-  fireGeo.setAttribute("aDir", new THREE.BufferAttribute(dirs, 3));
-  const fireMat = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: -1 }, uPx: { value: px } },
-    vertexShader: FIRE_VERT,
-    fragmentShader: FIRE_FRAG,
+  bloodGeo.setAttribute("position", new THREE.BufferAttribute(bloodPos, 3));
+  bloodGeo.setAttribute("aBirth", new THREE.BufferAttribute(birth, 1));
+  bloodGeo.setAttribute("aLife", new THREE.BufferAttribute(life, 1));
+  bloodGeo.setAttribute("aSpeed", new THREE.BufferAttribute(speed, 1));
+  bloodGeo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
+  bloodGeo.setAttribute("aDir", new THREE.BufferAttribute(dirs, 3));
+  const inkDark = new THREE.Color();
+  const bloodMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: -1 },
+      uPx: { value: px },
+      uGravity: { value: GRAVITY },
+      uFloor: { value: FLOOR_Y },
+      uInk: { value: throwColor },
+      uDark: { value: inkDark.copy(throwColor).multiplyScalar(0.3) },
+    },
+    vertexShader: BLOOD_VERT,
+    fragmentShader: BLOOD_FRAG,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
   });
-  const fire = new THREE.Points(fireGeo, fireMat);
-  fire.frustumCulled = false; // the plume leaves the geometry's bounds
-  skull.add(fire);
+  const blood = new THREE.Points(bloodGeo, bloodMat);
+  blood.frustumCulled = false; // the spray leaves the geometry's bounds
+  skull.add(blood);
 
   const shardGeos = [new THREE.TetrahedronGeometry(1), new THREE.OctahedronGeometry(1), new THREE.IcosahedronGeometry(1)].map((g) => new THREE.WireframeGeometry(g));
-  const shardMats: { m: THREE.LineBasicMaterial; throwInk: boolean }[] = [];
+  // The shards are in the blood's green too, all of them.
+  const shardMats: THREE.LineBasicMaterial[] = [];
   const shards = Array.from({ length: SHARDS }, (_, k) => {
-    const throwInk = k % 3 === 0;
-    const mat = new THREE.LineBasicMaterial({ color: throwInk ? throwColor : lineColor, transparent: true, opacity: 0.95 });
-    shardMats.push({ m: mat, throwInk });
+    const mat = new THREE.LineBasicMaterial({ color: throwColor, transparent: true, opacity: 0.95 });
+    shardMats.push(mat);
     const m = new THREE.LineSegments(shardGeos[k % 3], mat);
     m.scale.setScalar(0.025 + Math.random() * 0.07);
     m.visible = false;
@@ -235,7 +267,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     blade.fillMat.color.copy(bgColor);
     blade.lineMat.color.copy(throwColor);
     crackMat.color.copy(textColor);
-    for (const s of shardMats) s.m.color.copy(s.throwInk ? throwColor : lineColor);
+    for (const m of shardMats) m.color.copy(throwColor);
+    inkDark.copy(throwColor).multiplyScalar(0.3); // uInk shares throwColor itself
     dirty = true;
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
@@ -245,7 +278,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     w = section.clientWidth; h = section.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    // narrow screens: step back so skull + fire fit the width
+    // narrow screens: step back so skull + blood fit the width
     const tall = w / h < 0.8;
     camera.position.set(0, 0.2, tall ? 8.5 : 5.8);
     camera.lookAt(0, tall ? 0.1 : 0.08, 0);
@@ -310,7 +343,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // rise: from below the screen up to the centre
     skull.position.y = -3.4 * (1 - easeOut(rise));
 
-    // knock-back: one heavy damped wobble, then the jet's shaking
+    // knock-back: one heavy damped wobble, then the shaking while it bleeds
     const u = started ? seqT - HIT_AT : -1;
     const kick = u > 0 ? Math.exp(-4 * u) * Math.sin(10 * u) * 1.5 : 0;
     const shake = u > 0 && u < JET ? Math.sin(u * 63) * 0.012 * (1 - u / JET) : 0;
@@ -330,7 +363,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     }
     // cracks spread over 0.5 s
     crackGeo.setDrawRange(0, u > 0 ? Math.floor(Math.min(1, u / 0.5) * crackCount) : 0);
-    fireMat.uniforms.uTime.value = u;
+    bloodMat.uniforms.uTime.value = u;
 
     // shards: burst from the hit point, slow down, hang there
     const originWorld = skull.localToWorld(hit.clone());
@@ -367,7 +400,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     if (visible) { last = performance.now(); requestAnimationFrame(frame); }
   }).observe(section);
 
-  const END = HIT_AT + JET + FIRE_LIFE[1] + 0.5;
+  // until the last drop has landed: the latest spurt + the longest fall
+  const END = HIT_AT + JET + (BLOOD_SPEED[1] + Math.sqrt(BLOOD_SPEED[1] ** 2 + 2 * GRAVITY * 4)) / GRAVITY + 0.5;
   function frame(now: number) {
     if (!visible) return;
     const dt = Math.min((now - last) / 1000, 1 / 20);
