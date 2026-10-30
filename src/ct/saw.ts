@@ -15,9 +15,9 @@ const HIT_AT = 0.4; // s after the delay
 const SCALE = 0.85; // blade size
 const INSIDE = 0.38; // share of the blade's diameter inside the skull
 const WANT = new THREE.Vector3(-0.15, 0.85, 0.15); // the crown, a little left and forward
-const PARTICLES = 130;
+const PARTICLES = 260;
 const G = 4; // "gravity" of the arcs
-const SLOW = 0.6; // the fountain runs at 60 % speed, so it reads
+const SLOW = 0.9; // a hard burst, just slow enough to read
 const END = HIT_AT + 3;
 
 // The three link particles: launch velocities (x, y, z) chosen so they
@@ -85,9 +85,11 @@ export function createSaw(opts: {
   const particles = Array.from({ length: PARTICLES }, (_, i) => {
     const vel = i < LINK_VEL.length
       ? new THREE.Vector3(...LINK_VEL[i])
-      : new THREE.Vector3((rnd() - 0.5) * 4.6, 0.9 + rnd() * 1.0, (rnd() - 0.3) * 2.2);
+      : rnd() < 0.6
+        ? new THREE.Vector3((rnd() - 0.5) * 4.6, 0.9 + rnd() * 1.0, (rnd() - 0.3) * 2.2) // the fountain
+        : new THREE.Vector3((rnd() - 0.5) * 7.5, 0.45 + rnd() * 0.7, (rnd() - 0.4) * 3.4); // low, wide splatter
     const s = new THREE.Points(shardDots, mat);
-    s.scale.setScalar(i < LINK_VEL.length ? 0.07 : 0.045 + rnd() * 0.07);
+    s.scale.setScalar(i < LINK_VEL.length ? 0.07 : 0.03 + rnd() * rnd() * 0.12);
     rig.add(s);
     return { s, vel, spin: [rnd() * 9, rnd() * 9, rnd() * 9] };
   });
