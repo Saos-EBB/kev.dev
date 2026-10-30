@@ -47,10 +47,7 @@ export interface CtScene {
 type Options = {
   phone?: boolean;
   distance?: number; // camera distance (6.2 as in the mockup renders; closer = bigger)
-  // The finale (saw.ts) and its hooks (throws pause on the first hit).
-  saw?: boolean;
-  onFirstHit?(): void;
-  onReset?(): void;
+  saw?: boolean; // add the finale (saw.ts)
 };
 
 export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {}): Promise<CtScene> {
@@ -84,11 +81,7 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
   scene.add(rig);
 
   const saw = opts.saw
-    ? createSaw({
-        skull, geo: skullGeo,
-        onFirstHit: () => opts.onFirstHit?.(),
-        onReset: () => opts.onReset?.(),
-      })
+    ? createSaw({ skull, geo: skullGeo })
     : null;
 
   let cut: number | null = null;

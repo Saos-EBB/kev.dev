@@ -42,8 +42,6 @@ export interface Saw {
 export function createSaw(opts: {
   skull: THREE.Group; // the skull's group; blade and particles ride on it
   geo: THREE.BufferGeometry; // its geometry, skull space
-  onFirstHit(): void;
-  onReset(): void;
 }): Saw {
   const { skull, geo } = opts;
   let seed = 7;
@@ -96,7 +94,6 @@ export function createSaw(opts: {
 
   let running = false;
   let t = 0;
-  let firstHitSent = false;
 
   function pose() {
     const T = running ? t - DELAY : -1; // time since the blade left
@@ -113,26 +110,20 @@ export function createSaw(opts: {
       s.position.set(hit.x + vel.x * tau, hit.y + vel.y * tau - (G / 2) * tau * tau, hit.z + vel.z * tau);
       s.rotation.set(spin[0] * tau, spin[1] * tau, spin[2] * tau);
     }
-    if (running && !firstHitSent && u > 0) {
-      firstHitSent = true;
-      opts.onFirstHit();
-    }
   }
 
   const saw: Saw = {
     get running() { return running; },
     start() {
       if (running) return;
-      running = true; t = 0; firstHitSent = false;
+      running = true; t = 0;
     },
     reset() {
-      const was = firstHitSent;
-      running = false; t = 0; firstHitSent = false;
+      running = false; t = 0;
       pose();
-      if (was) opts.onReset();
     },
     finish() {
-      running = true; t = DELAY + END; firstHitSent = true;
+      running = true; t = DELAY + END;
       pose();
     },
     tick(dt) {
