@@ -748,7 +748,7 @@ function mount() {
     [50, (now) => { if (now) return combat.grant("sword"); combat.addPickup("sword", ahead()); card("50 Kopfschüsse", "Katana. Trifft alles vor dir. Taste 3.", 6000); }],
     [100, (now) => { if (now) return combat.grant("rail"); combat.addPickup("rail", ahead()); card("100 Kopfschüsse", "Railgun. Geht durch alles in einer Linie. Stell sie dir in eine Reihe. Taste 4.", 7000); }],
     [200, (now) => { fast = 1.25; if (now) return combat.grant("ice"); combat.addPickup("ice", ahead()); card("200 Kopfschüsse", "Du bist schneller. Und: Eiswerfer. Wenig Schaden, aber alles um den Einschlag wird langsam. Taste 5.", 7000); }],
-    [250, (now) => { combat.unlockChain(); if (!now) card("250 Kopfschüsse", "E halten: Kettenblitz. Frisst Energie, lädt sich wieder auf. Jeder Kopfschuss gibt 5 % zurück.", 7000); }],
+    [250, (now) => { combat.unlockChain(); if (!now) card("250 Kopfschüsse", "E halten: Kettenblitz. Springt von Zombie zu Zombie und lähmt sie kurz. 210 Mana, 7 pro Sekunde, lädt 5 pro Sekunde nach. Kopfschüsse geben 5 % zurück.", 7000); }],
     [300, (now) => { combat.unlockNova(); if (!now) card("300 Kopfschüsse", "Q: Frostnova. Alles um dich wird langsam. Alle 10 Sekunden.", 6000); }],
     [350, (now) => { combat.unlockSkulls(); if (!now) card("350 Kopfschüsse", "F oder Rechtsklick wirft Schädel. Jeder brennt, vergiftet, friert oder blitzt, zufällig.", 7000); }],
   ];
@@ -1124,7 +1124,7 @@ function mount() {
       if (shown.energyOn !== "1") { shown.energyOn = "1"; $("energy").hidden = false; }
       const width = `${Math.round(ab.energy)}%`;
       if (shown.energyW !== width) { shown.energyW = width; $("energy-b").style.width = width; }
-      put("energy-t", [ab.chain ? "E Blitz" : "", ab.nova ? (ab.novaCD > 0 ? `Q ${Math.ceil(ab.novaCD)} s` : "Q bereit") : ""].filter(Boolean).join(" · "));
+      put("energy-t", [ab.chain ? `E Blitz ${Math.floor(ab.mana)}` : "", ab.nova ? (ab.novaCD > 0 ? `Q ${Math.ceil(ab.novaCD)} s` : "Q bereit") : ""].filter(Boolean).join(" · "));
     }
   };
   function onPickup(kind: string) {
