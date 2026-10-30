@@ -123,7 +123,12 @@ html::-webkit-scrollbar,
   width: 52vw;
   height: 100vh;
   display: block;
-  pointer-events: none;
+  cursor: grab; /* drag to turn the model (page.ts) */
+  touch-action: none;
+}
+
+.ct-skull.is-dragging {
+  cursor: grabbing;
 }
 
 .ct-pointers {

@@ -266,6 +266,29 @@ import("./ct-scene").then(async ({ createCtScene }) => {
   let active = "";
   let lastHi = "";
   const cur = { rotY: 0, cut: -0.95, op: 0, lift: 0 };
+
+  // Drag to turn the model; scrolling turns it back to where the section
+  // wants it. Held as long as nobody scrolls.
+  const turn = { yaw: 0, pitch: 0 };
+  let drag: { x: number; y: number } | null = null;
+  let lastScroll = window.scrollY;
+  let returning = false;
+  canvas.addEventListener("pointerdown", (e) => {
+    drag = { x: e.clientX, y: e.clientY };
+    returning = false;
+    canvas.setPointerCapture(e.pointerId);
+    canvas.classList.add("is-dragging");
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    turn.yaw += (e.clientX - drag.x) * 0.008;
+    turn.pitch = Math.min(Math.max(turn.pitch + (e.clientY - drag.y) * 0.006, -0.9), 0.9);
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  const endDrag = () => { drag = null; canvas.classList.remove("is-dragging"); };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  let lastTurn = "";
   let lastEx = "";
   let last = performance.now();
 
@@ -315,6 +338,19 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const settled = Math.abs(tRot - cur.rotY) + Math.abs(tCut - cur.cut) + Math.abs(tOp - cur.op) + Math.abs(tLift - cur.lift) < 1e-4;
     if (!settled) ct.setPose({ rotY: cur.rotY, cut: cur.cut, brain: cur.op < 0.02 ? 0 : cur.op > 0.98 ? 1 : cur.op, lift: cur.lift });
 
+    // Any scroll (not while dragging) brings the model back to the pose,
+    // all the way, even if the scroll stops.
+    if (Math.abs(window.scrollY - lastScroll) > 0.5 && !drag) returning = true;
+    lastScroll = window.scrollY;
+    if (returning) {
+      const k = Math.exp(-dt * 6);
+      turn.yaw *= k;
+      turn.pitch *= k;
+      if (Math.abs(turn.yaw) + Math.abs(turn.pitch) < 1e-3) { turn.yaw = turn.pitch = 0; returning = false; }
+    }
+    const tKey = `${turn.yaw.toFixed(4)} ${turn.pitch.toFixed(4)}`;
+    if (tKey !== lastTurn) { lastTurn = tKey; ct.setUserTurn(turn.yaw, turn.pitch); }
+
     drawPointers(ct, active, st, hi);
     placeShards(ct);
   });
@@ -346,7 +382,8 @@ function drawPointers(ct: CtScene, active: string, st: State, hi: Part[]) {
   }
   if (svg.innerHTML !== out) svg.innerHTML = out;
 }
-const currentRot = (ct: CtScene) => ct.rig.rotation.y;
+// Lines only while the model sits in its side pose (not while dragged off).
+const currentRot = (ct: CtScene) => (Math.abs(ct.rig.rotation.x) > 0.2 ? 0 : ct.rig.rotation.y);
 
 // The contact links ride on the first shard of each hit.
 function placeShards(ct: CtScene) {

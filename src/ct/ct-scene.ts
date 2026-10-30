@@ -24,6 +24,8 @@ const LIFT_SKULL = 0.5;
 
 export interface CtScene {
   setPose(p: Pose): void;
+  /** Extra turn on top of the pose, from dragging (radians). */
+  setUserTurn(yaw: number, pitch: number): void;
   setHighlight(parts: Part[], colors?: Partial<Record<Part, string>>): void;
   /** Take the brain apart (brain.ts setExplode). */
   setExplode(parts: Part[], out: number, spread: number): void;
@@ -90,6 +92,7 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
     : null;
 
   let cut: number | null = null;
+  let baseRotY = 0, userYaw = 0, userPitch = 0;
   let dirty = true;
   let raf = 0;
   let last = performance.now();
@@ -113,11 +116,19 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
   const api: CtScene = {
     skull, rig, camera, saw,
     setPose(p) {
-      rig.rotation.y = p.rotY;
+      baseRotY = p.rotY;
+      rig.rotation.set(userPitch, baseRotY + userYaw, 0);
       brain.group.position.y = (p.lift ?? 0) * LIFT_BRAIN;
       skull.position.y = -(p.lift ?? 0) * LIFT_SKULL;
       cut = p.cut;
       brain.setOpacity(p.brain);
+      applyCut();
+      api.requestRender();
+    },
+    setUserTurn(yaw, pitch) {
+      userYaw = yaw;
+      userPitch = pitch;
+      rig.rotation.set(userPitch, baseRotY + userYaw, 0);
       applyCut();
       api.requestRender();
     },
