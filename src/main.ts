@@ -1,8 +1,6 @@
 // First: sets <html lang/dir> from the stored language before anything renders.
 import { LANG_AI } from "./i18n";
 import { UI } from "./i18n/ui";
-import { startThrows } from "./lab/throws";
-import { setMuted, unlock } from "./lab/sound";
 import { renderLangSwitch, initLangSwitch } from "./i18n/switcher";
 import roomSvg from "./assets/room.svg?raw";
 import "@fontsource-variable/jetbrains-mono";
@@ -27,7 +25,6 @@ import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
 import { initContact, getContactRevealScrollY } from "./contact/contact";
-import { initSkullContact, getSkullContactRevealScrollY } from "./skull-site/contact-skull";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
@@ -64,13 +61,6 @@ if (
 }
 
 if (LITE) document.documentElement.classList.add("lite");
-
-// Skull variant of this page (/saos#dev#skull): src/saos-entry.ts sets
-// html.skull-site before importing this file. Its contact section is the
-// skull (src/skull-site/), and only it throws things (src/lab/throws.ts);
-// everything else is this page as is.
-const SKULL_SITE = document.documentElement.classList.contains("skull-site");
-
 // The scroll scenes are built for one mode at load (see LITE in
 // viewport.ts) — crossing the breakpoint (rotating a tablet, dragging a
 // desktop window narrow) rebuilds the page in the other one.
@@ -234,11 +224,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
-    ${SKULL_SITE ? `<canvas class="contact-skull" aria-hidden="true"></canvas>` : ""}
     <div class="contact-inner">
       <h2 class="contact-headline">${UI.contactHeadline}</h2>
-      ${SKULL_SITE ? "" : `<div class="contact-raygun" hidden></div>
-      <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>`}
+      <div class="contact-raygun" hidden></div>
+      <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
       <ul class="contact-icons">
         <li>
           <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
@@ -649,7 +638,7 @@ else {
   mountFaceVisuals(catalogSection);
 }
 
-(SKULL_SITE ? initSkullContact : initContact)(document.querySelector<HTMLElement>("#contact")!, lenis);
+initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 
 // A plain "#contact" anchor jump lands at the top of the pin, where the
 // grid has just started dissolving — not what "go to Contact" means.
@@ -660,7 +649,7 @@ else {
 // feel just for this one link.
 document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link) => {
   link.addEventListener("click", (e) => {
-    const target = SKULL_SITE ? getSkullContactRevealScrollY() : getContactRevealScrollY();
+    const target = getContactRevealScrollY();
     if (target === null) return; // reduced motion — no pin, let the native jump happen
     e.preventDefault();
     lenis.scrollTo(target, { immediate: true });
@@ -708,69 +697,6 @@ function maybeStart() {
   // Give ScrollTrigger one frame to complete layout measurements before
   // Lenis starts processing scroll events (prevents stutter from stale pins).
   requestAnimationFrame(() => lenis.start());
-  if (SKULL_SITE) startThrowLayer();
-}
-
-// Thrown objects (src/lab/throws.ts, skull variant only): a fixed layer
-// over the whole viewport, so a throw is always in view wherever the page
-// is scrolled. Above the header (150), below sheets/overlays (180+).
-// Imported statically on purpose: loading it with import() made the
-// bundler pull a namespace helper out of the yourbrand entry chunk, which
-// booted that React app on this page (React error #299) and the import
-// failed. Sound unlocks on the visitor's first click/tap/key — browsers
-// allow audio only after a gesture — and the fixed mute button (bottom
-// right, always reachable, unlike the header which hides mid-page) turns
-// it off; the choice is remembered.
-const THROWS_MUTED_KEY = "saos-throws-muted";
-
-function startThrowLayer() {
-  let muted = false;
-  try {
-    muted = localStorage.getItem(THROWS_MUTED_KEY) === "1";
-  } catch {
-    // storage blocked: just start unmuted
-  }
-
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = "throws-mute";
-  btn.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M11 5 6 9H2v6h4l5 4V5z" />
-      <path class="throws-mute-on" d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
-      <path class="throws-mute-off" d="m23 9-6 6M17 9l6 6" />
-    </svg>`;
-  const render = () => {
-    btn.setAttribute("aria-pressed", String(muted));
-    btn.setAttribute("aria-label", muted ? UI.throwsUnmute : UI.throwsMute);
-    btn.title = btn.getAttribute("aria-label")!;
-    setMuted(muted);
-  };
-  btn.addEventListener("click", () => {
-    muted = !muted;
-    try {
-      localStorage.setItem(THROWS_MUTED_KEY, muted ? "1" : "0");
-    } catch {
-      // not remembered, still applied for this visit
-    }
-    render();
-  });
-  render();
-
-  const layer = document.createElement("div");
-  layer.className = "ml-scene";
-  layer.setAttribute("aria-hidden", "true");
-  layer.style.setProperty("--throws-z", "160");
-  document.body.append(layer, btn);
-  startThrows(layer, 3);
-
-  const onFirstGesture = () => {
-    unlock().then(render);
-    window.removeEventListener("pointerdown", onFirstGesture);
-    window.removeEventListener("keydown", onFirstGesture);
-  };
-  window.addEventListener("pointerdown", onFirstGesture);
-  window.addEventListener("keydown", onFirstGesture);
 }
 
 // Gate A — window.load

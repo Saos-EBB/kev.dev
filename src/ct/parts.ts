@@ -1,4 +1,4 @@
-// 3D parts for the skull variant's contact scene (skull-scene.ts): the
+// 3D parts for the CT skull (ct-scene.ts, saw.ts): the
 // craniumCut01 skull from the 2D renderer's models, turned to face the
 // camera, and an extruded saw blade.
 import * as THREE from "three";
@@ -47,16 +47,4 @@ export function bladeGeometry() {
   const g = new THREE.ExtrudeGeometry(s, { depth: 0.035, bevelEnabled: false, curveSegments: 6 });
   g.translate(0, 0, -0.0175);
   return g;
-}
-
-// Pink/violet "mesh look": a fill in the background color hides the back
-// faces' lines, the wireframe sits on top of it.
-// `outline`: only the real edges (EdgesGeometry) instead of every triangle —
-// for flat shapes like the saw blade, whose triangulation would cross its face.
-export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, fill: THREE.Color | number, opacity: number, outline = false) {
-  const fillMat = new THREE.MeshBasicMaterial({ color: fill, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-  const lineMat = new THREE.LineBasicMaterial({ color: line, transparent: true, opacity });
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(geo, fillMat), new THREE.LineSegments(outline ? new THREE.EdgesGeometry(geo, 30) : new THREE.WireframeGeometry(geo), lineMat));
-  return { group: g, fillMat, lineMat };
 }

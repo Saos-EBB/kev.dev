@@ -1,0 +1,749 @@
+/* CT-Schädel page (page.ts), after the live prototype (ct-live.zip) and
+   the CT-Desktop / CT-Mobile mockup. */
+
+@font-face {
+  font-family: "Urban Sign";
+  src: url("/fonts/urban-sign.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --bg: #05060a;
+  --text: #e9edf2;
+  --muted: #7d8794;
+  --hot: #ffe08a;
+  --red: #e0202e;
+  --violet: #b48cff;
+  --blue: #5fa8ff;
+  --rule: #ffffff1f;
+  --color-text: var(--text);
+  --color-bg: var(--bg); /* thrown objects' fill */
+  --color-line: var(--violet); /* the mute button */
+  --color-throw: #89ff57; /* thrown objects' outline */
+  --transition-hover: 0.2s ease;
+  --font-display: "Urban Sign", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+
+html {
+  background: var(--bg);
+}
+
+/* Native scrollbar hidden in favour of .scrollbar, as on the main page
+   (style.css) — purely visual, scrolling itself is untouched. */
+html,
+.ct-body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+.ct-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* The main page's scroll bar (src/scroll/progress.ts writes the thumb's
+   translateY from lenis.progress; dragging it scrolls). */
+.scrollbar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  width: 18px;
+  display: flex;
+  justify-content: center;
+  padding: 3px 0;
+}
+
+.scrollbar-thumb {
+  width: 3px;
+  height: 64px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--violet) 55%, transparent);
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+  transition: background-color var(--transition-hover);
+}
+
+.scrollbar-thumb:hover,
+.scrollbar-thumb:active {
+  background: var(--hot);
+  cursor: grabbing;
+}
+
+@media (max-width: 640px) {
+  .scrollbar {
+    display: none;
+  }
+}
+
+.ct-body {
+  margin: 0;
+  background: var(--bg) radial-gradient(60vw 60vh at 80% 20%, #1a1440 0%, transparent 70%) fixed no-repeat;
+  color: var(--text);
+  font: 16px/1.5 var(--font-mono);
+  overflow-x: hidden;
+}
+
+.ct-body *,
+.ct-body *::before {
+  box-sizing: border-box;
+}
+
+.ct-body a {
+  color: inherit;
+}
+
+.ct-body :focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 3px;
+}
+
+.ct-skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 10;
+  padding: 10px 14px;
+  background: var(--hot);
+  color: var(--bg) !important;
+}
+
+.ct-skip:focus {
+  top: 12px;
+}
+
+/* ── fixed layers ─────────────────────────────────────────────────── */
+
+/* The skull: the right half, full height, behind the text column. */
+.ct-skull {
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  width: 52vw;
+  height: 100vh;
+  display: block;
+  pointer-events: none;
+}
+
+.ct-pointers {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+.ct-status {
+  position: fixed;
+  right: 24vw;
+  top: 48vh;
+  z-index: 3;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+/* The contact links, riding on the shards (page.ts placeShards). */
+.ct-shard {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  border: 2px solid #ff2a3d;
+  box-shadow: 0 0 26px #ff2a3d88;
+  color: #ff2a3d !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s, color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.ct-shard.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ct-shard:hover,
+.ct-shard:focus-visible {
+  color: var(--hot) !important;
+  border-color: var(--hot);
+}
+
+.ct-shard svg {
+  width: 30px;
+  height: 30px;
+}
+
+/* No WebGL: the links as a plain row under the contact. */
+.no-skull .ct-shard {
+  position: static;
+  display: inline-grid;
+  margin: 0 0 40px 48px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── header ───────────────────────────────────────────────────────── */
+
+.ct-header {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 48px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  background: linear-gradient(#07070c 60%, transparent);
+}
+
+.ct-brand {
+  color: var(--muted);
+}
+
+.ct-brand span {
+  color: var(--violet);
+}
+
+.ct-nav {
+  display: flex;
+  gap: 28px;
+  text-transform: uppercase;
+}
+
+.ct-nav a {
+  text-decoration: none;
+}
+
+.ct-nav a:hover {
+  color: var(--violet);
+}
+
+.ct-nav .is-hot {
+  color: var(--hot);
+}
+
+/* ── column ───────────────────────────────────────────────────────── */
+
+main {
+  position: relative;
+  z-index: 3;
+  width: min(640px, 46vw);
+  margin-left: 48px;
+}
+
+.ct-h {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 0.85;
+  background: linear-gradient(100deg, var(--violet), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 20px #8a7dff55);
+}
+
+.ct-h1 {
+  font-size: clamp(64px, 9vw, 150px);
+  line-height: 0.84;
+}
+
+.ct-h2 {
+  font-size: clamp(60px, 7vw, 110px);
+}
+
+.ct-kick {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--hot);
+}
+
+.ct-kick span {
+  margin-right: 10px;
+}
+
+.ct-func {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ct-lead,
+.ct-claim {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.ct-lead {
+  max-width: 34ch;
+  font-size: 19px;
+}
+
+.ct-hint,
+.ct-note {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--muted);
+}
+
+.ct-hint {
+  text-transform: uppercase;
+}
+
+.ct-note {
+  max-width: 60ch;
+  letter-spacing: 0;
+  line-height: 1.6;
+}
+
+.ct-button {
+  display: inline-block;
+  padding: 15px 22px;
+  font-weight: 800;
+  font-size: 15px;
+  text-decoration: none;
+  transition: background var(--transition-hover), color var(--transition-hover);
+}
+
+.ct-button--red {
+  background: var(--red);
+  color: #fff !important;
+}
+
+.ct-button--red:hover {
+  background: #ff3a44;
+}
+
+.ct-button--hot {
+  padding: 12px 18px;
+  border: 1px solid var(--hot);
+  color: var(--hot) !important;
+}
+
+.ct-button--hot:hover {
+  background: var(--hot);
+  color: var(--bg) !important;
+}
+
+.ct-button--ghost {
+  padding: 12px 18px;
+  border: 1px solid var(--violet);
+  color: var(--violet) !important;
+}
+
+.ct-button--ghost:hover {
+  background: var(--violet);
+  color: var(--bg) !important;
+}
+
+/* ── intro: pinned while the skull turns and opens ────────────────── */
+
+.ct-intro {
+  height: 260vh;
+}
+
+.ct-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+}
+
+.ct-pin p {
+  margin: 0;
+}
+
+/* ── findings ─────────────────────────────────────────────────────── */
+
+.ct-sec {
+  min-height: 120vh;
+  padding-top: 30vh;
+}
+
+.ct-sec .ct-h {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: clamp(60px, 7vw, 120px);
+}
+
+.ct-sec .ct-claim {
+  margin-top: 16px;
+}
+
+.ct-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 24px 0 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.ct-stats > div {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 16px 0;
+}
+
+.ct-stats > div + div {
+  padding-left: 18px;
+  border-left: 1px solid var(--rule);
+}
+
+.ct-stats dd {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.ct-stats > div:first-child dd {
+  color: var(--red);
+}
+
+.ct-stats dt {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ct-points {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-points li {
+  padding: 10px 0;
+  border-bottom: 1px solid #ffffff12;
+  font-size: 15px;
+}
+
+.ct-points li::before {
+  content: "→ ";
+  color: var(--blue);
+}
+
+/* The project's own text from the main page. */
+.ct-report {
+  margin-top: 26px;
+}
+
+.ct-report-h {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--hot);
+}
+
+.ct-report p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #c9d0d8;
+}
+
+.ct-report .ct-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.ct-tags span {
+  padding: 3px 9px;
+  border: 1px solid #ffffff26;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.ct-report .ct-meta {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.ct-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 22px 0 0;
+}
+
+/* ── atlas ────────────────────────────────────────────────────────── */
+
+.ct-atlas {
+  min-height: 160vh;
+  padding-top: 24vh;
+}
+
+.ct-atlas-list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-atlas-list li {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 4px 16px;
+  margin-bottom: 6px;
+  padding: 10px 0 10px 14px;
+  border-left: 4px solid var(--c);
+  border-bottom: 1px solid #ffffff12;
+  cursor: default;
+}
+
+.ct-atlas-list small {
+  grid-row: span 2;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--c);
+}
+
+.ct-atlas-list b {
+  font-size: 22px;
+  transition: color var(--transition-hover);
+}
+
+.ct-atlas-list li:hover b,
+.ct-atlas-list li:focus-visible b {
+  color: var(--c);
+}
+
+.ct-atlas-list span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.ct-atlas-list em {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #b4bcc6;
+}
+
+/* ── anamnesis ────────────────────────────────────────────────────── */
+
+.ct-about {
+  min-height: 100vh;
+  padding-top: 24vh;
+}
+
+.ct-cv {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  padding: 18px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.ct-cv small {
+  color: var(--blue);
+}
+
+.ct-cv b {
+  display: block;
+  font-size: 26px;
+}
+
+.ct-cv span {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ct-about blockquote {
+  margin: 24px 0 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--red);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+/* ── contact ──────────────────────────────────────────────────────── */
+
+.ct-contact {
+  min-height: 130vh;
+  padding-top: 30vh;
+}
+
+.ct-contact .ct-h2 {
+  margin-top: 16px;
+  font-size: clamp(60px, 8vw, 130px);
+}
+
+.ct-contact .ct-claim {
+  margin-top: 16px;
+}
+
+.ct-mail {
+  font-size: 22px;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.ct-mail:hover {
+  color: var(--hot);
+}
+
+/* ── footer ───────────────────────────────────────────────────────── */
+
+.ct-footer {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 40px 48px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.ct-footer span:last-child {
+  display: flex;
+  gap: 24px;
+}
+
+/* ── phones: the skull small at the top right, the text under a band ─ */
+
+@media (max-width: 700px) {
+  .ct-skull {
+    top: 56px;
+    z-index: 5;
+    width: 56vw;
+    height: 56vw;
+  }
+
+  /* A dark band behind the skull, so the text scrolls away under it. */
+  .ct-body::before {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 4;
+    height: calc(56vw + 70px);
+    background: linear-gradient(#07070c 75%, transparent);
+    pointer-events: none;
+  }
+
+  .ct-header {
+    z-index: 6;
+    padding: 14px 16px;
+    background: none;
+  }
+
+  .ct-nav,
+  .ct-pointers {
+    display: none;
+  }
+
+  main {
+    z-index: 0;
+    width: auto;
+    margin: 0 16px;
+  }
+
+  .ct-sec,
+  .ct-atlas,
+  .ct-about,
+  .ct-contact {
+    padding-top: 60vw;
+  }
+
+  .ct-pin {
+    justify-content: flex-end;
+    padding-bottom: 60px;
+  }
+
+  .ct-h1 {
+    font-size: 64px;
+  }
+
+  .ct-sec .ct-h,
+  .ct-h2,
+  .ct-contact .ct-h2 {
+    font-size: 48px;
+  }
+
+  .ct-lead,
+  .ct-claim {
+    font-size: 15px;
+  }
+
+  .ct-stats dd {
+    font-size: 24px;
+  }
+
+  .ct-stats dt {
+    font-size: 9px;
+  }
+
+  .ct-points li {
+    font-size: 13px;
+  }
+
+  .ct-atlas-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-atlas-list small {
+    grid-row: auto;
+  }
+
+  .ct-cv b {
+    font-size: 21px;
+  }
+
+  .ct-mail {
+    font-size: 16px;
+  }
+
+  .ct-shard {
+    z-index: 7;
+    width: 58px;
+    height: 58px;
+  }
+
+  .ct-status {
+    right: 16px;
+    top: 40vw;
+  }
+
+  .ct-footer {
+    padding: 32px 16px;
+  }
+}
+
+/* Thrown objects (src/lab/throws.ts): green outlines. */
+.ct-body .ml-slice {
+  stroke: var(--color-throw);
+}
