@@ -3,10 +3,13 @@
 // CT-Desktop / CT-Mobile mockup. One point skull (ct-scene.ts) in a fixed
 // canvas over the right half; the section on screen sets its state and the
 // skull follows smoothly:
-//  - intro (pinned): it turns to the side, a cut opens it, the brain appears
-//  - each finding: its brain region lights up, a pointer runs to the heading
-//  - atlas: the eight small projects' regions in colour, one line per row
-//  - anamnesis: side view, nothing lit
+//  - intro (pinned): facing you, a cut opens it and the brain shows; then
+//    it turns to the side and the brain rises out of the skull
+//  - each finding: the brain comes apart, its part moves out and lights
+//    up, a pointer runs to the heading
+//  - atlas: the eight small projects' parts out and in colour, one line
+//    per row
+//  - anamnesis: side view, the brain back together, nothing lit
 //  - contact: back to the front, three saw blades hit it (saw.ts); the
 //    links ride on the shards that freeze in the air.
 // Copy from the mockup, the project texts from the main page's
@@ -267,7 +270,8 @@ import("./ct-scene").then(async ({ createCtScene }) => {
 
   let active = "";
   let lastHi = "";
-  const cur = { rotY: 0, cut: -0.95, op: 0 };
+  const cur = { rotY: 0, cut: -0.95, op: 0, lift: 0 };
+  let lastEx = "";
   let last = performance.now();
 
   gsap.ticker.add(() => {
@@ -290,24 +294,31 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const key = hi.join() + (st.colors ? "c" : "");
     if (key !== lastHi) { lastHi = key; ct.setHighlight(hi, st.colors); }
 
+    // The brain comes apart: the lit parts move out, the rest a little.
+    const ex = active === "atlas" ? [0.24, 0.03] : FINDINGS.some((x) => x.id === active) ? [0.36, 0.06] : [0, 0];
+    const exKey = key + ex.join();
+    if (exKey !== lastEx) { lastEx = exKey; ct.setExplode(hi, ex[0], ex[1]); }
+
     // Pose: the intro follows the scroll, everything else is a state; the
-    // skull glides towards it.
-    let tRot: number, tCut: number, tOp: number;
+    // skull glides towards it. Intro, from the first scrolled pixel: the
+    // cut runs through while it faces you and the brain shows, then it
+    // turns to the side, then the brain rises out of the skull.
+    let tRot: number, tCut: number, tOp: number, tLift: number;
     if (active === "intro") {
       const t = REDUCED ? 1 : introProgress();
-      // Turns from the first scrolled pixel (the prototype waited 12 % —
-      // with the text pinned that read as "nothing happens").
-      tRot = ease(t / 0.6) * (Math.PI / 2);
-      tCut = -0.95 + ease((t - 0.45) / 0.4) * 0.97;
-      tOp = ease((t - 0.46) / 0.22);
-    } else if (st.front) { tRot = 0; tCut = -5; tOp = 0; }
-    else { tRot = Math.PI / 2; tCut = 0.02; tOp = st.op ?? 1; }
+      tCut = -0.95 + ease(t / 0.35) * 0.97;
+      tOp = ease((t - 0.05) / 0.25);
+      tRot = ease((t - 0.35) / 0.35) * (Math.PI / 2);
+      tLift = ease((t - 0.72) / 0.28);
+    } else if (st.front) { tRot = 0; tCut = -5; tOp = 0; tLift = 0; }
+    else { tRot = Math.PI / 2; tCut = 0.02; tOp = st.op ?? 1; tLift = 1; }
     const f = REDUCED ? 1 : 1 - Math.exp(-dt * 8);
     cur.rotY += (tRot - cur.rotY) * f;
     cur.cut += (tCut - cur.cut) * f;
     cur.op += (tOp - cur.op) * f;
-    const settled = Math.abs(tRot - cur.rotY) + Math.abs(tCut - cur.cut) + Math.abs(tOp - cur.op) < 1e-4;
-    if (!settled) ct.setPose({ rotY: cur.rotY, cut: cur.cut, brain: cur.op < 0.02 ? 0 : cur.op > 0.98 ? 1 : cur.op });
+    cur.lift += (tLift - cur.lift) * f;
+    const settled = Math.abs(tRot - cur.rotY) + Math.abs(tCut - cur.cut) + Math.abs(tOp - cur.op) + Math.abs(tLift - cur.lift) < 1e-4;
+    if (!settled) ct.setPose({ rotY: cur.rotY, cut: cur.cut, brain: cur.op < 0.02 ? 0 : cur.op > 0.98 ? 1 : cur.op, lift: cur.lift });
 
     drawPointers(ct, active, st, hi);
     placeShards(ct);

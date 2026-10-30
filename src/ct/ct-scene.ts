@@ -14,7 +14,13 @@ export type Pose = {
   rotY: number; // 0 = from the front, π/2 = side view (left hemisphere to the camera)
   cut: number | null; // keeps local x > cut; null = whole skull
   brain: number; // brain opacity, see Brain.setOpacity
+  lift?: number; // 0 = brain inside the skull, 1 = lifted out above it
 };
+
+// How far the brain rises out of the skull at lift 1, and how far the
+// skull sinks so both stay in the frame.
+const LIFT_BRAIN = 0.4;
+const LIFT_SKULL = 0.5;
 
 export interface CtScene {
   setPose(p: Pose): void;
@@ -108,6 +114,8 @@ export async function createCtScene(canvas: HTMLCanvasElement, opts: Options = {
     skull, rig, camera, saw,
     setPose(p) {
       rig.rotation.y = p.rotY;
+      brain.group.position.y = (p.lift ?? 0) * LIFT_BRAIN;
+      skull.position.y = -(p.lift ?? 0) * LIFT_SKULL;
       cut = p.cut;
       brain.setOpacity(p.brain);
       applyCut();
