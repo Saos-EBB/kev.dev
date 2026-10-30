@@ -17,9 +17,6 @@
   --blue: #5fa8ff;
   --rule: #ffffff1f;
   --color-text: var(--text);
-  --color-bg: var(--bg); /* thrown objects' fill */
-  --color-line: var(--violet); /* the mute button */
-  --color-throw: #89ff57; /* thrown objects' outline */
   --transition-hover: 0.2s ease;
   --font-display: "Urban Sign", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
@@ -743,7 +740,4 @@ main {
   }
 }
 
-/* Thrown objects (src/lab/throws.ts): green outlines. */
-.ct-body .ml-slice {
-  stroke: var(--color-throw);
-}
+
