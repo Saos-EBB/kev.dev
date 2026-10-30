@@ -4,6 +4,8 @@
 import "./ct-test.css";
 import { createCtScene, type Pose } from "./ct-scene";
 import { ATLAS, type Part } from "./brain";
+import * as THREE from "three";
+import endo from "./endocast.json";
 
 const ease = (x: number) => { const u = Math.min(Math.max(x, 0), 1); return u * u * (3 - 2 * u); };
 
@@ -59,6 +61,18 @@ createCtScene(canvas, { phone: matchMedia("(max-width: 900px)").matches }).then(
   if (flags.has("bs")) brainGroup.scale.set(Number(flags.get("bs")), Number(flags.get("bs")) * Number(flags.get("bsy") ?? 1), Number(flags.get("bs")));
   if (flags.has("brx")) brainGroup.rotation.x = Number(flags.get("brx"));
   if (flags.has("by") || flags.has("bz")) brainGroup.position.set(0, Number(flags.get("by") ?? -0.02), Number(flags.get("bz") ?? 0));
+  // #endo: the cranial cavity (endocast.json) as white dots, to check it.
+  if (location.hash.includes("#endo")) {
+    const { center: c, nTheta: NT, nPhi: NP, r } = endo;
+    const pts: number[] = [];
+    for (let t = 0; t < NT; t++) for (let p = 0; p < NP; p++) {
+      const th = ((t + 0.5) / NT) * Math.PI, ph = (p / NP) * Math.PI * 2, d = r[t * NP + p];
+      pts.push(c[0] + d * Math.sin(th) * Math.sin(ph), c[1] + d * Math.cos(th), c[2] + d * Math.sin(th) * Math.cos(ph));
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    ct.rig.add(new THREE.Points(g, new THREE.PointsMaterial({ color: "#ffffff", size: 0.02 })));
+  }
   slider.addEventListener("input", apply);
   document.querySelectorAll<HTMLButtonElement>("[data-k]").forEach((b) =>
     b.addEventListener("click", () => { state = STATES[b.dataset.k!]; apply(); }),
