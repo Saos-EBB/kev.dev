@@ -219,6 +219,98 @@ function sampleDots(g: THREE.BufferGeometry, n: number) {
   return { position: P, shade: S, region: R };
 }
 
+// The inside of every piece. A region is only a patch of the surface; on
+// its own it would come out as a hollow shell. Closing it: side walls from
+// the patch's border down to a small copy of the patch near the centre `c`
+// (the inner cap), so each piece is a solid wedge. Returned as triangles
+// with their region, wound like the surface (closed: every edge has its
+// reverse).
+// `keep` is the triangle index list of the surface (seam triangles removed).
+const INNER = 0.12; // inner cap at 12 % of the way out from the centre
+function interior(g: THREE.BufferGeometry, keep: ArrayLike<number>, c: THREE.Vector3) {
+  const pos = g.getAttribute("position"), reg = g.getAttribute("region");
+  // Weld duplicate vertices (UV seam, poles) so only real borders count.
+  const id = new Int32Array(pos.count), map = new Map<string, number>();
+  for (let i = 0; i < pos.count; i++) {
+    const key = `${pos.getX(i).toFixed(5)},${pos.getY(i).toFixed(5)},${pos.getZ(i).toFixed(5)}`;
+    let n = map.get(key);
+    if (n === undefined) map.set(key, (n = map.size));
+    id[i] = n;
+  }
+  const edges = new Map<string, number>(); // directed welded edge -> how often
+  const ek = (a: number, b: number) => `${id[a]}>${id[b]}`;
+  const degenerate = (t: number) => id[keep[t]] === id[keep[t + 1]] || id[keep[t + 1]] === id[keep[t + 2]] || id[keep[t]] === id[keep[t + 2]]; // at a pole
+  for (let t = 0; t < keep.length; t += 3) {
+    if (degenerate(t)) continue;
+    for (let e = 0; e < 3; e++) {
+      const k = ek(keep[t + e], keep[t + ((e + 1) % 3)]);
+      edges.set(k, (edges.get(k) ?? 0) + 1);
+    }
+  }
+  const P: number[] = [], R: number[] = [];
+  const at = (i: number) => new THREE.Vector3().fromBufferAttribute(pos, i);
+  const inner = (i: number) => at(i).sub(c).multiplyScalar(INNER).add(c);
+  const tri = (p: THREE.Vector3, q: THREE.Vector3, r: THREE.Vector3, region: number) => { P.push(p.x, p.y, p.z, q.x, q.y, q.z, r.x, r.y, r.z); R.push(region, region, region); };
+  const open = new Set<number>(); // regions that have a border at all (cerebellum, stem are closed already)
+  for (let t = 0; t < keep.length; t += 3) {
+    if (degenerate(t)) continue;
+    const region = reg.getX(keep[t]);
+    for (let e = 0; e < 3; e++) {
+      const i = keep[t + e], j = keep[t + ((e + 1) % 3)];
+      if (edges.has(ek(j, i))) continue; // shared with a neighbour in the same piece
+      open.add(region);
+      // Wall: runs the border edge the other way (j -> i), so it joins the
+      // patch, its neighbouring walls and the cap without a crack.
+      tri(at(j), at(i), inner(i), region);
+      tri(at(j), inner(i), inner(j), region);
+    }
+  }
+  // inner caps, reversed (they face the centre), only for pieces with a border
+  for (let t = 0; t < keep.length; t += 3) {
+    const region = reg.getX(keep[t]);
+    if (open.has(region) && !degenerate(t)) tri(inner(keep[t]), inner(keep[t + 2]), inner(keep[t + 1]), region);
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+  out.setAttribute("region", new THREE.Float32BufferAttribute(R, 1));
+  return out;
+}
+
+// Dots on the inside surfaces: region straight from the triangle, no seam gap.
+function sampleInterior(g: THREE.BufferGeometry, n: number) {
+  const reg = g.getAttribute("region");
+  const sampler = new MeshSurfaceSampler(new THREE.Mesh(g)).build();
+  const P = new Float32Array(n * 3), S = new Float32Array(n), R = new Float32Array(n);
+  const p = new THREE.Vector3(), nn = new THREE.Vector3(), ab = new THREE.Vector3(), ac = new THREE.Vector3();
+  // sample() doesn't say which triangle it picked, and the region is per
+  // triangle: pick the face with the sampler's own area-weighted draw
+  const face = (sampler as unknown as { sampleFaceIndex(): number }).sampleFaceIndex.bind(sampler);
+  const tri = new THREE.Triangle(), pa = g.getAttribute("position");
+  for (let i = 0; i < n; i++) {
+    const f = face();
+    tri.setFromAttributeAndIndices(pa, f * 3, f * 3 + 1, f * 3 + 2);
+    let u = Math.random(), v = Math.random();
+    if (u + v > 1) { u = 1 - u; v = 1 - v; }
+    p.copy(tri.a).addScaledVector(ab.subVectors(tri.b, tri.a), u).addScaledVector(ac.subVectors(tri.c, tri.a), v);
+    tri.getNormal(nn);
+    P.set([p.x, p.y, p.z], i * 3);
+    S[i] = 0.3 + 0.7 * Math.pow(Math.max(0, nn.dot(LDIR)), 1.2);
+    R[i] = reg.getX(f * 3);
+  }
+  return { position: P, shade: S, region: R };
+}
+
+function area(g: THREE.BufferGeometry, index?: ArrayLike<number>) {
+  const pos = g.getAttribute("position"), tri = new THREE.Triangle();
+  const n = index ? index.length : pos.count;
+  let sum = 0;
+  for (let t = 0; t < n; t += 3) {
+    const [i, j, k] = index ? [index[t], index[t + 1], index[t + 2]] : [t, t + 1, t + 2];
+    sum += tri.setFromAttributeAndIndices(pos, i, j, k).getArea();
+  }
+  return sum;
+}
+
 // ── fitting the kit into the skull ──────────────────────────────────────
 // The skull's cavity (endocast.json, from scripts/ct-endocast.ts) is a
 // radial map around its centre. The brain gets the same kind of map around
@@ -344,19 +436,33 @@ export function buildBrain(pointsScale = 1): BrainData {
 
   const parts = geos.map((g): BrainPart => {
     const pos = g.getAttribute("position");
-    const dots = sampleDots(g, Math.round((45000 * pointsScale * pos.count) / 30000));
+    const n = Math.round((45000 * pointsScale * pos.count) / 30000);
+    const surface = sampleDots(g, n);
     const region = Float32Array.from(g.getAttribute("region").array as ArrayLike<number>);
-    // Only triangles that lie wholly in one part: the body is coloured and
-    // moves with its part, and a triangle across a seam would stretch over
-    // the gap when one side comes out.
+    // Only triangles that lie wholly in one part: the occluder moves with
+    // its part, and a triangle across a seam would stretch over the gap
+    // when one side comes out.
     const all = g.index ? g.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i);
     const kept: number[] = [];
     for (let t = 0; t < all.length; t += 3) {
       const a = all[t], b = all[t + 1], c = all[t + 2];
       if (region[a] === region[b] && region[a] === region[c]) kept.push(a, b, c);
     }
-    const index = Uint32Array.from(kept);
-    return { dots, occluder: { position: Float32Array.from(pos.array as ArrayLike<number>), region, index } };
+    // Close every piece (walls + inner cap), dotted as densely as the outside.
+    g.computeBoundingBox();
+    const inside = interior(g, kept, g.boundingBox!.getCenter(new THREE.Vector3()));
+    const ni = Math.round((n * area(inside)) / area(g, all));
+    const inDots = ni ? sampleInterior(inside, ni) : { position: new Float32Array(), shade: new Float32Array(), region: new Float32Array() };
+    const cat = (x: Float32Array, y: Float32Array) => { const o = new Float32Array(x.length + y.length); o.set(x); o.set(y, x.length); return o; };
+    const dots = { position: cat(surface.position, inDots.position), shade: cat(surface.shade, inDots.shade), region: cat(surface.region, inDots.region) };
+    // Occluder: the surface plus the inside, so a piece that comes out
+    // hides what's behind it from every side.
+    const inPos = inside.getAttribute("position").array as Float32Array;
+    const index = Uint32Array.from([...kept, ...Array.from({ length: inPos.length / 3 }, (_, i) => pos.count + i)]);
+    return {
+      dots,
+      occluder: { position: cat(Float32Array.from(pos.array as ArrayLike<number>), inPos), region: cat(region, inside.getAttribute("region").array as Float32Array), index },
+    };
   });
 
   // Region anchors: every 7th vertex per region, centroid, then the
