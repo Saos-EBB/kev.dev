@@ -43,7 +43,9 @@ const MARKUP = `
   <div id="touch" aria-hidden="true"></div>
   <div class="hud" id="energy" hidden><i><b id="energy-b"></b></i><small id="energy-t">E Kettenblitz</small></div>
   <div class="hud" id="status" hidden><p>Leben <b id="hp">100</b></p><p><span id="wname">Schrot</span> <b id="ammo">0</b></p></div>
+  <div id="wheel" hidden>${["shotgun", "bat", "sword", "rail", "ice"].map((w, i) => `<button type="button" data-w="${w}" hidden><small>${i + 1}</small></button>`).join("")}</div>
   <button id="fire" type="button" hidden>Feuer</button>
+  <div id="rotate"><p>Handy quer drehen</p></div>
   <p id="err"></p>
 
   <div class="overlay" id="start">
@@ -71,7 +73,7 @@ const MARKUP = `
         <label><input type="radio" name="from" value="boss"> Endkampf</label>
         <label><input type="radio" name="from" value="arena"> Arena (endlos)</label>
       </p>
-      <p class="muted">Am Handy: rechts wischen zum Umsehen, Kreis links unten zum Gehen.</p>
+      <p class="muted">Am Handy: quer halten. Rechts wischen zum Umsehen, Kreis links unten zum Gehen, Waffen unten antippen.</p>
     </div>
   </div>
 
@@ -956,6 +958,12 @@ function mount() {
     }
   });
 
+  // weapon bar at the bottom: tap / click a slot to switch
+  for (const b of $("wheel").querySelectorAll<HTMLButtonElement>("button")) {
+    const pick = (e: Event) => { e.stopPropagation(); e.preventDefault(); if (running && !paused) combat.select(b.dataset.w as "shotgun"); };
+    b.addEventListener("touchstart", pick);
+    b.addEventListener("mousedown", pick);
+  }
   $("fire").addEventListener("touchstart", (e) => { e.stopPropagation(); pull(); }, { passive: true });
   // shoot / swing; at the mirror, aimed at the glass, that's the end
   function pull() {
@@ -969,7 +977,12 @@ function mount() {
   $("go").addEventListener("click", () => {
     sfx.init();
     $("start").hidden = true; running = true;
-    if (isTouch) pad.classList.add("on"); else lock();
+    document.body.classList.add("run");
+    if (isTouch) {
+      pad.classList.add("on");
+      // landscape: only lockable in fullscreen (Android); iOS just gets the rotate hint
+      document.documentElement.requestFullscreen?.().then(() => (screen.orientation as unknown as { lock(o: string): Promise<void> }).lock("landscape")).catch(() => {});
+    } else lock();
     const from = (document.querySelector<HTMLInputElement>('input[name="from"]:checked')?.value ?? "start");
     if (from === "start") setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
     else jumpTo(from as "stairs" | "hall1" | "hall2" | "boss" | "arena");
@@ -1118,6 +1131,15 @@ function mount() {
     put("hp", String(health));
     const names = { shotgun: "Schrot", bat: "Säge", sword: "Katana", rail: "Railgun", ice: "Eiswerfer" };
     put("wname", combat.weapon ? names[combat.weapon] : "");
+    const bar = (Object.keys(names) as (keyof typeof names)[]).map((w) => (combat.has[w] ? (w === combat.weapon ? "2" : "1") : "0")).join("");
+    if (shown.bar !== bar) {
+      shown.bar = bar;
+      $("wheel").hidden = !bar.includes("1") && !bar.includes("2");
+      $("wheel").querySelectorAll<HTMLButtonElement>("button").forEach((b, i) => {
+        b.hidden = bar[i] === "0"; b.classList.toggle("on", bar[i] === "2");
+        if (!b.lastChild || b.lastChild.nodeType !== 3) b.append(names[b.dataset.w as keyof typeof names]);
+      });
+    }
     put("ammo", combat.mag < 0 ? "∞" : combat.reloading ? "…" : `${combat.mag}/${combat.reserve}`);
     const ab = combat.abilities;
     if (ab.chain || ab.nova) {

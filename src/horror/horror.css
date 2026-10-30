@@ -140,3 +140,25 @@ body { margin: 0; overflow: hidden; background: var(--void); color: var(--bone);
 #energy i { display: block; height: 8px; background: #00000099; border: 1px solid #b9a8ff; }
 #energy b { display: block; height: 100%; width: 100%; background: #b9a8ff; }
 #energy small { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--bone); text-shadow: 0 1px 6px #000; }
+
+/* weapon bar, bottom centre: owned weapons, the one in hand lit; tap or click to switch */
+#wheel {
+  position: fixed; z-index: 11; left: 50%; translate: -50% 0; bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 6px; max-width: calc(100% - 2 * 150px); overflow-x: auto; touch-action: none;
+}
+#wheel button {
+  display: grid; justify-items: center; gap: 2px; min-width: 56px; padding: 6px 8px; cursor: pointer;
+  font: 700 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ash);
+  background: #000000aa; border: 1px solid #ffffff22; border-bottom: 2px solid transparent;
+}
+#wheel button small { font: 400 16px/1 var(--display); color: var(--ash); }
+#wheel button.on { color: var(--bone); border-bottom-color: var(--sodium); background: #1a120acc; }
+#wheel button.on small { color: var(--sodium); }
+
+/* phones: the game wants landscape; upright, a hint covers it until you turn */
+#rotate { display: none; }
+@media (pointer: coarse) and (orientation: portrait) {
+  body.run #rotate { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: var(--void);
+    font: 400 clamp(32px, 10vw, 56px)/1 var(--display); color: var(--sodium); text-align: center; padding: 16px; }
+  #rotate p { margin: 0; }
+}
