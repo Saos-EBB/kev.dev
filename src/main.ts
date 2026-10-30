@@ -24,7 +24,7 @@ import { bigPhone, hasBigCard, initBigCards } from "./projects/big-cards";
 import { projectCards } from "./projects/projects-data";
 import { groupTagsHtml, renderProjectCard, renderProjectTeaser } from "./projects/project-cards";
 import { initFacetOverlay } from "./projects/facet-overlay";
-import { initContact, getContactRevealScrollY } from "./contact/contact";
+import { initSkullContact, getSkullContactRevealScrollY } from "./contact/skull/contact-skull";
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
@@ -224,10 +224,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 
   <section class="contact" id="contact">
     <div class="contact-bg-grid" aria-hidden="true"></div>
+    <canvas class="contact-skull" aria-hidden="true"></canvas>
     <div class="contact-inner">
       <h2 class="contact-headline">${UI.contactHeadline}</h2>
-      <div class="contact-raygun" hidden></div>
-      <a class="contact-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a>
       <ul class="contact-icons">
         <li>
           <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
@@ -638,19 +637,19 @@ else {
   mountFaceVisuals(catalogSection);
 }
 
-initContact(document.querySelector<HTMLElement>("#contact")!, lenis);
+initSkullContact(document.querySelector<HTMLElement>("#contact")!, lenis);
 
-// A plain "#contact" anchor jump lands at the top of the pin, where the
-// grid has just started dissolving — not what "go to Contact" means.
-// Every link that points there jumps straight to the section already
-// landed on "Let's talk now" instead. Native anchor jumps on this page
+// A plain "#contact" anchor jump lands at the top of the scroll track, where
+// the grid has just started dissolving — not what "go to Contact" means.
+// Every link that points there jumps straight to the skull already up
+// instead. Native anchor jumps on this page
 // are instant (no CSS scroll-behavior:smooth set), so this matches that
 // with `immediate: true` rather than introducing a different, smoother
 // feel just for this one link.
 document.querySelectorAll<HTMLAnchorElement>('a[href="#contact"]').forEach((link) => {
   link.addEventListener("click", (e) => {
-    const target = getContactRevealScrollY();
-    if (target === null) return; // reduced motion — no pin, let the native jump happen
+    const target = getSkullContactRevealScrollY();
+    if (target === null) return; // reduced motion — no scroll track, let the native jump happen
     e.preventDefault();
     lenis.scrollTo(target, { immediate: true });
   });

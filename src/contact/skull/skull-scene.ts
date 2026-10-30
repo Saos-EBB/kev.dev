@@ -1,0 +1,396 @@
+// Contact 3D scene (loaded lazily by contact-skull.ts): the craniumCut01
+// skull rises from the bottom as you scroll in (setRise); once it's up, one
+// saw blade flies in and cuts deep into it, and fire jets out of the wound
+// like a rocket's exhaust — deliberately overdone. Bone shards burst out
+// with it and hang in the air, and three of them are real links (GitHub,
+// mail, phone: the section's .contact-icons <a>s, positioned here over the
+// 3D scene every frame). Dragging (mouse, or a sideways swipe) turns the
+// whole scene — skull, blade, fire, shards.
+//
+// Everything after the rise is a closed-form function of the time since the
+// sequence started (no stepping; the fire's particles are computed on the
+// GPU from that same time), so reduced motion just jumps to the end.
+import * as THREE from "three";
+import { LITE } from "../../viewport";
+import { BLADE_R, bladeGeometry, loadSkullGeometry, wireMesh } from "./parts";
+
+const BLADE_FLIGHT = 0.55; // s from off-screen to stuck
+const HIT_AT = 0.5; // s after the skull is up
+const FREEZE = 2.6; // how fast shards slow down (1/s) — higher stops sooner
+const SHARDS = 22;
+
+// The one hit: upper left of the forehead (a point in skull space: face +z,
+// vault +y; the nearest front vertex is the hit point), a big blade sunk
+// deep (depth = how far its rim goes past the hit point).
+const HIT = { want: [-0.32, 0.6, 0.35], scale: 0.78, depth: 0.42, tilt: [0.25, -0.3] } as const;
+
+// Where the three link shards come to rest, in normalized screen coords
+// (-1..1, y up) — portrait screens above/below the skull, landscape beside it.
+const LINK_REST = {
+  wide: [[-0.62, 0.55], [0.64, 0.25], [-0.62, -0.5]],
+  tall: [[-0.55, 0.72], [0.55, 0.72], [0, -0.72]],
+} as const;
+const LINK_STAGGER = 0.12; // s between the three link shards leaving
+
+// Fire: a jet out of the wound for JET s, every particle with its own birth
+// time, life, direction and speed; the vertex shader moves and colours it.
+const JET = 3.6;
+const FIRE_COUNT = LITE ? 1100 : 3000;
+const FIRE_LIFE: [number, number] = [0.45, 1.25];
+const FIRE_SPEED: [number, number] = [2.2, 5.2];
+
+export type SkullScene = { setRise(r: number): void; finish(): void };
+
+const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
+const settle = (u: number) => (u <= 0 ? 0 : (1 - Math.exp(-FREEZE * u)) / FREEZE); // distance factor, freezes at 1/FREEZE
+const rand = ([a, b]: readonly [number, number]) => a + Math.random() * (b - a);
+
+const FIRE_VERT = /* glsl */ `
+  uniform float uTime;
+  uniform float uPx;
+  attribute float aBirth;
+  attribute float aLife;
+  attribute float aSpeed;
+  attribute vec3 aDir;
+  attribute float aSize;
+  varying float vF;
+  void main() {
+    float age = uTime - aBirth;
+    vF = age / aLife;
+    if (age < 0.0 || vF > 1.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; return; }
+    // out along its direction, losing speed, rising a little like hot gas,
+    // the plume widening with age
+    vec3 p = aDir * aSpeed * age * (1.0 - 0.35 * vF);
+    p.y += 0.9 * age * age;
+    p += normalize(cross(aDir, vec3(0.0, 0.0, 1.0)) + 0.001) * sin(aBirth * 91.0) * 0.5 * age;
+    vec4 mv = modelViewMatrix * vec4(position + p, 1.0);
+    gl_Position = projectionMatrix * mv;
+    gl_PointSize = aSize * (0.6 + 3.4 * vF) * uPx / -mv.z;
+  }
+`;
+
+const FIRE_FRAG = /* glsl */ `
+  varying float vF;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float d = dot(c, c) * 4.0;
+    if (d > 1.0) discard;
+    // white-hot core -> yellow -> orange -> red -> dim smoke
+    vec3 col = mix(vec3(1.0, 0.97, 0.88), vec3(1.0, 0.82, 0.22), smoothstep(0.0, 0.18, vF));
+    col = mix(col, vec3(1.0, 0.42, 0.05), smoothstep(0.18, 0.45, vF));
+    col = mix(col, vec3(0.75, 0.1, 0.04), smoothstep(0.45, 0.72, vF));
+    col = mix(col, vec3(0.22, 0.12, 0.12), smoothstep(0.72, 1.0, vF));
+    float a = (1.0 - d) * (1.0 - smoothstep(0.6, 1.0, vF));
+    gl_FragColor = vec4(col * a, a);
+  }
+`;
+
+// `section` is the screen-high sticky stage (contact-skull.ts), not the tall
+// scroll track around it: sizes, visibility and dragging are taken from it.
+export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[]): Promise<SkullScene> {
+  // Phones (LITE): no MSAA and at most 1.5x pixels — at 2-3x with
+  // antialiasing the dense wire skull lagged there.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
+  const px = Math.min(devicePixelRatio, LITE ? 1.5 : 2);
+  renderer.setPixelRatio(px);
+  renderer.setClearColor(0x000000, 0);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
+  // Everything sits in `world`, which the drag turns.
+  const world = new THREE.Group();
+  scene.add(world);
+
+  const lineColor = new THREE.Color(), throwColor = new THREE.Color(), bgColor = new THREE.Color(), textColor = new THREE.Color();
+  const readColors = () => {
+    lineColor.set(css("--color-line") || "#cd57ff");
+    throwColor.set(css("--color-throw") || "#89ff57");
+    bgColor.set(css("--contact-bg") || "#08070a");
+    textColor.set(css("--color-text") || "#f5f5f6");
+  };
+  readColors();
+
+  // ── skull ──
+  const geo = await loadSkullGeometry();
+  const skullParts = wireMesh(geo, lineColor, bgColor, 0.32);
+  const skull = new THREE.Group();
+  skull.add(skullParts.group);
+  world.add(skull);
+  const pos = geo.getAttribute("position") as THREE.BufferAttribute;
+
+  const v = new THREE.Vector3();
+  const nearestTo = (p: THREE.Vector3) => {
+    let best = Infinity;
+    const out = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      if (v.z < 0) continue; // front half only, so the hit is visible
+      const d = v.distanceToSquared(p);
+      if (d < best) { best = d; out.copy(v); }
+    }
+    return out;
+  };
+
+  // Cracks: short random walks over vertices near the hit — more and
+  // longer than a light hit, the blade goes deep.
+  const crackLines = (hit: THREE.Vector3) => {
+    const near: THREE.Vector3[] = [];
+    for (let i = 0; i < pos.count; i += 3) {
+      v.fromBufferAttribute(pos, i);
+      if (v.distanceTo(hit) < 0.9 && v.z > hit.z - 0.45) near.push(v.clone());
+    }
+    const pts: number[] = [];
+    for (let c = 0; c < 10; c++) {
+      let p = hit.clone();
+      const dir = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.6, Math.random() * 0.3).normalize();
+      for (let s = 0; s < 8; s++) {
+        const target = p.clone().addScaledVector(dir, 0.09);
+        let q: THREE.Vector3 | null = null, qd = Infinity;
+        for (const n of near) { const d = n.distanceTo(target); if (d < qd && n.distanceTo(p) > 0.03) { qd = d; q = n; } }
+        if (!q) break;
+        pts.push(p.x, p.y, p.z, q.x, q.y, q.z);
+        p = q;
+        dir.x += (Math.random() - 0.5) * 0.6; dir.y += (Math.random() - 0.5) * 0.6; dir.normalize();
+      }
+    }
+    return pts;
+  };
+
+  // ── the hit: blade, cracks, fire, shards ──
+  const hit = nearestTo(new THREE.Vector3(...HIT.want));
+  const inDir = new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
+  const stuck = hit.clone().addScaledVector(inDir, BLADE_R * HIT.scale - HIT.depth);
+  const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
+
+  const blade = wireMesh(bladeGeometry(), throwColor, bgColor, 0.95, true);
+  blade.group.visible = false;
+  blade.group.scale.setScalar(HIT.scale);
+  blade.group.rotation.set(HIT.tilt[0], HIT.tilt[1], 0); // spin (rotation.z) stays around the blade's own axis
+  skull.add(blade.group); // rides along with the skull's knock-back
+
+  const crackPts = crackLines(hit);
+  const crackGeo = new THREE.BufferGeometry();
+  crackGeo.setAttribute("position", new THREE.Float32BufferAttribute(crackPts, 3));
+  const crackMat = new THREE.LineBasicMaterial({ color: textColor, transparent: true, opacity: 0.85, depthTest: false });
+  skull.add(new THREE.LineSegments(crackGeo, crackMat));
+  const crackCount = crackPts.length / 3;
+
+  // Fire out of the wound: mostly along the outward normal (away from the
+  // skull's centre, tipped towards the camera so the jet reads), in a cone.
+  const jetAxis = hit.clone().normalize().add(new THREE.Vector3(0, 0, 0.5)).normalize();
+  const fireGeo = new THREE.BufferGeometry();
+  const firePos = new Float32Array(FIRE_COUNT * 3);
+  const birth = new Float32Array(FIRE_COUNT), life = new Float32Array(FIRE_COUNT);
+  const speed = new Float32Array(FIRE_COUNT), size = new Float32Array(FIRE_COUNT);
+  const dirs = new Float32Array(FIRE_COUNT * 3);
+  const d3 = new THREE.Vector3();
+  for (let i = 0; i < FIRE_COUNT; i++) {
+    firePos.set([hit.x, hit.y, hit.z], i * 3);
+    // denser at the start (the blast), thinning out over the jet
+    birth[i] = JET * Math.pow(Math.random(), 1.6);
+    life[i] = rand(FIRE_LIFE);
+    speed[i] = rand(FIRE_SPEED) * (birth[i] < 0.25 ? 1.4 : 1);
+    size[i] = 30 + Math.random() * 60;
+    d3.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.7).add(jetAxis).normalize();
+    dirs.set([d3.x, d3.y, d3.z], i * 3);
+  }
+  fireGeo.setAttribute("position", new THREE.BufferAttribute(firePos, 3));
+  fireGeo.setAttribute("aBirth", new THREE.BufferAttribute(birth, 1));
+  fireGeo.setAttribute("aLife", new THREE.BufferAttribute(life, 1));
+  fireGeo.setAttribute("aSpeed", new THREE.BufferAttribute(speed, 1));
+  fireGeo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
+  fireGeo.setAttribute("aDir", new THREE.BufferAttribute(dirs, 3));
+  const fireMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: -1 }, uPx: { value: px } },
+    vertexShader: FIRE_VERT,
+    fragmentShader: FIRE_FRAG,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const fire = new THREE.Points(fireGeo, fireMat);
+  fire.frustumCulled = false; // the plume leaves the geometry's bounds
+  skull.add(fire);
+
+  const shardGeos = [new THREE.TetrahedronGeometry(1), new THREE.OctahedronGeometry(1), new THREE.IcosahedronGeometry(1)].map((g) => new THREE.WireframeGeometry(g));
+  const shardMats: { m: THREE.LineBasicMaterial; throwInk: boolean }[] = [];
+  const shards = Array.from({ length: SHARDS }, (_, k) => {
+    const throwInk = k % 3 === 0;
+    const mat = new THREE.LineBasicMaterial({ color: throwInk ? throwColor : lineColor, transparent: true, opacity: 0.95 });
+    shardMats.push({ m: mat, throwInk });
+    const m = new THREE.LineSegments(shardGeos[k % 3], mat);
+    m.scale.setScalar(0.025 + Math.random() * 0.07);
+    m.visible = false;
+    world.add(m);
+    const vel = new THREE.Vector3((Math.random() - 0.5) * 3.4, (Math.random() - 0.2) * 3.4, Math.random() * 1.4).addScaledVector(jetAxis, 1.8);
+    const spin = new THREE.Vector3(Math.random() * 14, Math.random() * 14, Math.random() * 14);
+    return { m, vel, spin };
+  });
+
+  // Theme toggle (data-theme on <html>): recolor everything in place.
+  new MutationObserver(() => {
+    readColors();
+    skullParts.lineMat.color.copy(lineColor);
+    skullParts.fillMat.color.copy(bgColor);
+    blade.fillMat.color.copy(bgColor);
+    blade.lineMat.color.copy(throwColor);
+    crackMat.color.copy(textColor);
+    for (const s of shardMats) s.m.color.copy(s.throwInk ? throwColor : lineColor);
+    dirty = true;
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  // ── layout ──
+  let w = 1, h = 1;
+  const resize = () => {
+    w = section.clientWidth; h = section.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    // narrow screens: step back so skull + fire fit the width
+    const tall = w / h < 0.8;
+    camera.position.set(0, 0.2, tall ? 8.5 : 5.8);
+    camera.lookAt(0, tall ? 0.1 : 0.08, 0);
+    camera.updateProjectionMatrix();
+    dirty = true;
+  };
+  new ResizeObserver(resize).observe(section);
+
+  // ── drag to turn the whole scene ──
+  // Sideways and up/down for a mouse; on touch only sideways (touch-action
+  // pan-y in skull.css), so a vertical swipe still scrolls the page.
+  const turn = { x: 0, y: 0, tx: 0, ty: 0 };
+  let drag: { id: number; x: number; y: number } | null = null;
+  section.addEventListener("pointerdown", (e) => {
+    if ((e.target as HTMLElement).closest("a")) return; // the link shards stay clickable
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    section.setPointerCapture(e.pointerId);
+    section.classList.add("is-turning");
+  });
+  section.addEventListener("pointermove", (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    turn.ty += (e.clientX - drag.x) * 0.008;
+    if (e.pointerType === "mouse") turn.tx = Math.max(-0.9, Math.min(0.9, turn.tx + (e.clientY - drag.y) * 0.006));
+    drag.x = e.clientX; drag.y = e.clientY;
+    dirty = true;
+  });
+  const endDrag = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    section.classList.remove("is-turning");
+  };
+  section.addEventListener("pointerup", endDrag);
+  section.addEventListener("pointercancel", endDrag);
+
+  // ── state ──
+  let rise = 0;
+  let started = false;
+  let seqT = 0; // seconds since the skull was up
+  let dirty = true;
+  let last = performance.now();
+
+  const toScreen = (p: THREE.Vector3) => {
+    const q = p.clone().project(camera);
+    return [q.x, q.y] as const;
+  };
+
+  function reset() {
+    started = false; seqT = 0;
+    for (const link of links) {
+      link.style.visibility = "hidden";
+      link.style.pointerEvents = "none";
+    }
+  }
+
+  function pose() {
+    // the drag, eased
+    turn.x += (turn.tx - turn.x) * 0.15;
+    turn.y += (turn.ty - turn.y) * 0.15;
+    world.rotation.set(turn.x, turn.y, 0);
+    if (Math.abs(turn.tx - turn.x) + Math.abs(turn.ty - turn.y) > 1e-3) dirty = true;
+
+    // rise: from below the screen up to the centre
+    skull.position.y = -3.4 * (1 - easeOut(rise));
+
+    // knock-back: one heavy damped wobble, then the jet's shaking
+    const u = started ? seqT - HIT_AT : -1;
+    const kick = u > 0 ? Math.exp(-4 * u) * Math.sin(10 * u) * 1.5 : 0;
+    const shake = u > 0 && u < JET ? Math.sin(u * 63) * 0.012 * (1 - u / JET) : 0;
+    skull.position.z = -kick * 0.22;
+    skull.position.x = shake;
+    skull.rotation.x = -kick * 0.12;
+    skull.rotation.z = kick * 0.07 * Math.sign(hit.x || 1);
+    world.updateMatrixWorld();
+
+    // blade: flies in, sinks, spins down
+    const fly = u + BLADE_FLIGHT;
+    blade.group.visible = started && fly > 0;
+    if (blade.group.visible) {
+      const k = Math.min(fly / BLADE_FLIGHT, 1);
+      blade.group.position.lerpVectors(start, stuck, k * k);
+      blade.group.rotation.z = -(Math.min(fly, BLADE_FLIGHT) * 42 + (u > 0 ? (1 - Math.exp(-3 * u)) * 42 / 3 : 0));
+    }
+    // cracks spread over 0.5 s
+    crackGeo.setDrawRange(0, u > 0 ? Math.floor(Math.min(1, u / 0.5) * crackCount) : 0);
+    fireMat.uniforms.uTime.value = u;
+
+    // shards: burst from the hit point, slow down, hang there
+    const originWorld = skull.localToWorld(hit.clone());
+    const origin = world.worldToLocal(originWorld.clone());
+    const d = settle(u);
+    for (const s of shards) {
+      s.m.visible = u > 0;
+      if (!s.m.visible) continue;
+      s.m.position.copy(origin).addScaledVector(s.vel, d);
+      s.m.rotation.set(s.spin.x * d, s.spin.y * d, s.spin.z * d);
+    }
+
+    // the three link shards: the same freeze, from the hit to their spots
+    const tall = w / h < 0.8;
+    const [hx, hy] = toScreen(originWorld);
+    links.forEach((link, i) => {
+      const ui = u - i * LINK_STAGGER;
+      if (ui <= 0) return;
+      const [tx, ty] = (tall ? LINK_REST.tall : LINK_REST.wide)[i];
+      const k = settle(ui) * FREEZE; // 0 → 1
+      const x = hx + (tx - hx) * k, y = hy + (ty - hy) * k;
+      link.style.visibility = "visible";
+      link.style.pointerEvents = k > 0.6 ? "auto" : "none";
+      link.style.left = `${((x + 1) / 2) * w}px`;
+      link.style.top = `${((1 - y) / 2) * h}px`;
+      link.style.transform = `translate(-50%, -50%) rotate(${((1 - k) * 540 * Math.sign(tx || 1)).toFixed(1)}deg) scale(${(0.4 + 0.6 * k).toFixed(3)})`;
+    });
+  }
+
+  // Render only while the section is on screen.
+  let visible = false;
+  new IntersectionObserver(([e]) => {
+    visible = e.isIntersecting;
+    if (visible) { last = performance.now(); requestAnimationFrame(frame); }
+  }).observe(section);
+
+  const END = HIT_AT + JET + FIRE_LIFE[1] + 0.5;
+  function frame(now: number) {
+    if (!visible) return;
+    const dt = Math.min((now - last) / 1000, 1 / 20);
+    last = now;
+    if (!started && rise >= 0.995) started = true;
+    if (started && seqT < END) { seqT += dt; dirty = true; }
+    if (dirty) { dirty = false; pose(); renderer.render(scene, camera); }
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  reset();
+  return {
+    setRise(r: number) {
+      if (r === rise) return;
+      rise = r;
+      if (started && r < 0.5) reset(); // scrolled back out: replay next time
+      dirty = true;
+    },
+    finish() {
+      rise = 1; started = true; seqT = END;
+      dirty = true;
+      pose(); renderer.render(scene, camera);
+    },
+  };
+}

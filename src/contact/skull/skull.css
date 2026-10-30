@@ -1,0 +1,110 @@
+/* The contact section's skull scene (contact-skull.ts, skull-scene.ts). */
+
+:root {
+  --color-contact-icon: #ff2a3d; /* contact link shards (GitHub/mail/phone) */
+  --color-throw: #89ff57; /* the saw blade: --color-line's complementary hue (279° -> 99°) */
+}
+
+:root[data-theme="light"] {
+  --color-throw: #32a800; /* darker complement, readable on white */
+  --color-contact-icon: #d10f24;
+}
+
+/* contact-skull.ts: the section becomes a scroll track (.contact--track,
+   only with motion) 120vh taller than the screen-high sticky stage that
+   holds the grid, the canvas and the links — sticky instead of a
+   ScrollTrigger pin, which lagged behind touch scrolling on phones. vh, not
+   svh, so the track doesn't change length as a phone's address bar hides. */
+.contact {
+  display: block;
+  min-height: 0;
+  padding: 0;
+}
+
+.contact--track {
+  height: 220vh;
+}
+
+.contact .contact-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem var(--hero-pad-inline);
+  /* drag turns the scene (skull-scene.ts); a vertical swipe still scrolls */
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.contact .contact-stage.is-turning {
+  cursor: grabbing;
+}
+
+/* skull-scene.ts draws the skull + saw blades here (transparent, so
+   --contact-bg shows through and the theme toggle just works). */
+.contact .contact-skull {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.contact .contact-inner {
+  z-index: 2;
+}
+
+.contact .contact-icons a {
+  align-items: center;
+  justify-content: center;
+  width: 5rem;
+  height: 5rem;
+  border: 2px solid var(--color-contact-icon);
+  border-radius: 50%;
+  background: var(--contact-bg);
+  color: var(--color-contact-icon);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-contact-icon) 45%, transparent);
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.contact .contact-icons a:hover,
+.contact .contact-icons a:focus-visible {
+  color: var(--color-line);
+  border-color: var(--color-line);
+}
+
+.contact .contact-icons svg {
+  width: 36px;
+  height: 36px;
+}
+
+/* The links are shards of the skull — skull-scene.ts sets each one's
+   left/top/transform and shows it once its saw blade has hit. Until the
+   scene is up they're hidden; only if it fails (.no-skull, no WebGL) do
+   they show as a plain row. The heading is for screen readers only. */
+.contact:not(.no-skull) .contact-inner {
+  position: absolute;
+  inset: 0;
+}
+
+.contact .contact-headline {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.contact:not(.no-skull) .contact-icons a {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  visibility: hidden;
+  will-change: transform;
+}
