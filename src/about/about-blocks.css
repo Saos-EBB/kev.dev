@@ -53,6 +53,12 @@
   color: var(--color-line);
 }
 
+/* White on burgundy, the phrases don't stand out from the text around them. */
+:root[data-theme="light"] .about-highlight,
+:root[data-theme="light"] .about-inline-link {
+  color: var(--note-3);
+}
+
 /* Inline text link inside prose (the "Projekte" mention in the story) —
    .about-overlay disables pointer-events by default, so links opt back in
    individually, same as .about-button. */
