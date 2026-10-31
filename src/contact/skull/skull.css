@@ -7,7 +7,7 @@
 
 :root[data-theme="light"] {
   --color-throw: #ffffff;
-  --color-contact-icon: #ffffff;
+  --color-contact-icon: var(--note-3);
 }
 
 /* contact-skull.ts: the section becomes a scroll track (.contact--track,
@@ -37,6 +37,9 @@
   /* drag turns the scene (skull-scene.ts); a vertical swipe still scrolls */
   cursor: grab;
   touch-action: pan-y;
+  /* A drag selected the hidden heading, and the next one picked that selection
+     up as a browser drag, which cancels the pointer and stops the turning. */
+  user-select: none;
 }
 
 .contact .contact-stage.is-turning {
