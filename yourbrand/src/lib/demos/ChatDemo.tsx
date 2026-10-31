@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, EyeOff } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
+import { useDemoText } from './demo-text'
 import { containsProfanity } from '@/lib/profanity'
 
 interface Msg { id: number; sender: 'A' | 'B'; text: string; time: string }
@@ -56,6 +57,7 @@ function ChatPane({
   customWords: string[]
 }) {
   const { t } = useTranslation()
+  const tr = useDemoText()
   const [input, setInput] = useState('')
 
   function send() {
@@ -97,7 +99,7 @@ function ChatPane({
         {messages.map(msg => {
           const isOwn = msg.sender === me.sender
           const user = msg.sender === 'A' ? USER_A : USER_B
-          const flagged = containsProfanity(msg.text, customWords)
+          const flagged = containsProfanity(tr(msg.text), customWords)
           return (
             <div key={msg.id} className={`flex items-end gap-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
               {!isOwn && (
@@ -107,10 +109,10 @@ function ChatPane({
               )}
               <div className={`flex flex-col gap-0.5 max-w-[78%] ${isOwn ? 'items-end' : 'items-start'}`}>
                 {flagged ? (
-                  <BlurMessage text={msg.text} isOwn={isOwn} blurHint={t.chat.profanityBlurHint} />
+                  <BlurMessage text={tr(msg.text)} isOwn={isOwn} blurHint={t.chat.profanityBlurHint} />
                 ) : (
                   <div className={`rounded-2xl px-3 py-1.5 text-xs leading-relaxed ${isOwn ? 'rounded-br-sm bg-surface-container text-on-surface' : 'rounded-bl-sm bg-primary-fixed-dim text-background'}`}>
-                    {msg.text}
+                    {tr(msg.text)}
                   </div>
                 )}
                 <span className="text-[9px] text-on-surface-variant px-1">{msg.time}</span>

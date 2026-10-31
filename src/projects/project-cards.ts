@@ -69,11 +69,7 @@ export type CardLayout = "blueprint" | "inbox" | "viewport" | "editor" | "termin
 // ordered by group (projects-data.ts); the group's word shows up around
 // the "Projekte" heading while its cards are on screen (project-groups.ts).
 export type ProjectGroup = "big" | "tools" | "along";
-export const GROUP_LABELS: Record<ProjectGroup, string> = {
-  big: "TheBigOnes",
-  tools: "Tools",
-  along: "Along the way",
-};
+export const GROUP_LABELS: Record<ProjectGroup, string> = UI.groupLabels;
 
 // The group words, one span each; CSS places them (fixed spots around the
 // desktop headline, all on one spot in the phone title).

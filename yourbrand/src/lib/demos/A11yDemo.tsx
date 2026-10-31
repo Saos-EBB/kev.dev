@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDemoText } from './demo-text'
 
 type FontSize = 'normal' | 'large' | 'xl'
 
@@ -27,6 +28,7 @@ const CONTENT = {
 }
 
 export function A11yDemo() {
+  const tr = useDemoText()
   const [fontSize, setFontSize]     = useState<FontSize>('normal')
   const [highContrast, setHighContrast] = useState(false)
   const [simple, setSimple]         = useState(false)
@@ -64,24 +66,24 @@ export function A11yDemo() {
       <div className="flex gap-2 p-3 bg-surface-container-low border-b border-outline-variant flex-wrap">
         <div className="flex gap-1">
           {FONT_SIZES.map(({ key, label }) => (
-            <Btn key={key} active={fontSize === key} onClick={() => setFontSize(key)} label={label} />
+            <Btn key={key} active={fontSize === key} onClick={() => setFontSize(key)} label={tr(label)} />
           ))}
         </div>
-        <Btn active={highContrast} onClick={() => setHighContrast(v => !v)} label="Hoher Kontrast" />
-        <Btn active={simple} onClick={() => setSimple(v => !v)} label="Einfache Sprache" />
+        <Btn active={highContrast} onClick={() => setHighContrast(v => !v)} label={tr('Hoher Kontrast')} />
+        <Btn active={simple} onClick={() => setSimple(v => !v)} label={tr('Einfache Sprache')} />
       </div>
 
       {/* Preview */}
       <div className={`p-4 transition-colors ${bg}`}>
         <div className={`rounded-xl border p-4 transition-colors ${cardBg}`}>
           <p className={`font-semibold mb-2 transition-all ${textSm} ${textColor}`}>
-            {c.heading}
+            {tr(c.heading)}
           </p>
           <p className={`leading-relaxed mb-3 transition-all ${textSm} ${subColor}`}>
-            {c.body}
+            {tr(c.body)}
           </p>
           <p className={`transition-all ${textXs} ${hintColor}`}>
-            {c.hint}
+            {tr(c.hint)}
           </p>
         </div>
       </div>

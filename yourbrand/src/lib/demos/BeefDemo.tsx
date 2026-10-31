@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Swords, Trophy, RotateCcw, ChevronRight, Flame } from 'lucide-react'
+import { useDemoText } from './demo-text'
 
 type Screen   = 'pick' | 'challenge' | 'voting' | 'battle' | 'result'
 type GameType = 'rpsls' | 'tictactoe' | 'deathroll'
@@ -59,6 +60,7 @@ function rpslsOutcome(a: string, b: string): 'win' | 'lose' | 'draw' {
 }
 
 function RPSLSGame({ onEnd }: { onEnd: (w: 'me' | 'bot') => void }) {
+  const tr = useDemoText()
   const [rounds, setRounds] = useState<{ my: string; bot: string; result: 'win' | 'lose' | 'draw' }[]>([])
   const [pending, setPending] = useState(false)
   const ended = useRef(false)
@@ -91,18 +93,18 @@ function RPSLSGame({ onEnd }: { onEnd: (w: 'me' | 'bot') => void }) {
       <div className="flex justify-center gap-6 mb-3">
         <div className="text-center">
           <p className="text-lg font-black text-primary-fixed-dim">{score.me}</p>
-          <p className="text-[10px] text-on-surface-variant">Du</p>
+          <p className="text-[10px] text-on-surface-variant">{tr('Du')}</p>
         </div>
         <span className="text-on-surface-variant self-center">–</span>
         <div className="text-center">
           <p className="text-lg font-black text-on-surface-variant">{score.bot}</p>
-          <p className="text-[10px] text-on-surface-variant">Gegner</p>
+          <p className="text-[10px] text-on-surface-variant">{tr('Gegner')}</p>
         </div>
       </div>
       {last && (
         <div className="text-center mb-3">
           <p className={`text-xs font-bold mb-1 ${last.result === 'win' ? 'text-green-400' : last.result === 'lose' ? 'text-red-400' : 'text-on-surface-variant'}`}>
-            {last.result === 'win' ? 'Gewonnen! 🎉' : last.result === 'lose' ? 'Verloren 💀' : 'Unentschieden'}
+            {tr(last.result === 'win' ? 'Gewonnen! 🎉' : last.result === 'lose' ? 'Verloren 💀' : 'Unentschieden')}
           </p>
           <div className="flex justify-center items-center gap-4">
             <span className="text-2xl">{RPSLS_OPTIONS.find(o => o.id === last.my)?.emoji}</span>
@@ -111,7 +113,7 @@ function RPSLSGame({ onEnd }: { onEnd: (w: 'me' | 'bot') => void }) {
           </div>
         </div>
       )}
-      {!last && <p className="text-[11px] text-on-surface-variant text-center mb-3">Wähle deinen Zug — best of 3:</p>}
+      {!last && <p className="text-[11px] text-on-surface-variant text-center mb-3">{tr('Wähle deinen Zug — best of 3:')}</p>}
       <div className="flex justify-center gap-2 flex-wrap">
         {RPSLS_OPTIONS.map(opt => (
           <button
@@ -121,7 +123,7 @@ function RPSLSGame({ onEnd }: { onEnd: (w: 'me' | 'bot') => void }) {
             className="flex flex-col items-center gap-1 p-2.5 rounded-xl border border-outline-variant bg-surface-container hover:bg-surface-container-high active:scale-95 disabled:opacity-40 transition-all"
           >
             <span className="text-xl">{opt.emoji}</span>
-            <span className="text-[9px] text-on-surface-variant">{opt.label}</span>
+            <span className="text-[9px] text-on-surface-variant">{tr(opt.label)}</span>
           </button>
         ))}
       </div>
@@ -140,6 +142,7 @@ function tttWinner(board: (string | null)[]): string | null {
 }
 
 function TicTacToeGame({ onEnd }: { onEnd: (w: 'me' | 'bot') => void }) {
+  const tr = useDemoText()
   const [board, setBoard]     = useState<(string | null)[]>(Array(9).fill(null))
   const [myTurn, setMyTurn]   = useState(true)
   const [status, setStatus]   = useState<string | null>(null)
@@ -186,7 +189,7 @@ function TicTacToeGame({ onEnd }: { onEnd: (w: 'me' | 'bot') => void }) {
   return (
     <div>
       <p className="text-[11px] text-center text-on-surface-variant mb-3">
-        {status ?? (myTurn ? 'Du bist dran (X)' : 'Gegner denkt…')}
+        {tr(status ?? (myTurn ? 'Du bist dran (X)' : 'Gegner denkt…'))}
       </p>
       <div className="grid grid-cols-3 gap-1.5 max-w-[180px] mx-auto">
         {board.map((cell, i) => (
@@ -215,6 +218,7 @@ function DeathRollGame({
   opponentName, opponentColor,
   onEnd,
 }: { opponentName: string; opponentColor: string; onEnd: (w: 'me' | 'bot') => void }) {
+  const tr = useDemoText()
   const [max, setMax]         = useState(1000)
   const [rolls, setRolls]     = useState<Roll[]>([])
   const [myTurn, setMyTurn]   = useState(true)
@@ -264,7 +268,7 @@ function DeathRollGame({
   return (
     <div>
       <div className="text-center mb-3">
-        <p className="text-[10px] text-on-surface-variant uppercase tracking-wide">Bereich</p>
+        <p className="text-[10px] text-on-surface-variant uppercase tracking-wide">{tr('Bereich')}</p>
         <p className="text-xl font-black text-on-surface">1 – {max}</p>
         {display !== null && (
           <p className={`text-4xl font-black mt-1 transition-colors ${lastRoll?.roll === 1 ? 'text-red-400' : 'text-primary-fixed-dim'}`}>
@@ -276,11 +280,11 @@ function DeathRollGame({
       <div className="space-y-1 mb-3 max-h-[88px] overflow-y-auto">
         {[...rolls].reverse().map((r, i) => (
           <div key={i} className="flex items-center justify-between text-[10px] px-2 py-1 rounded-lg bg-surface-container">
-            <span className="text-on-surface-variant">{r.player}</span>
+            <span className="text-on-surface-variant">{tr(r.player)}</span>
             <span className={`font-bold ${r.roll === 1 ? 'text-red-400' : 'text-on-surface'}`}>
               {r.roll === 1 ? '💀 1' : r.roll}
             </span>
-            <span className="text-on-surface-variant">von 1–{r.prevMax}</span>
+            <span className="text-on-surface-variant">{tr('von 1–{max}', { max: r.prevMax })}</span>
           </div>
         ))}
       </div>
@@ -290,12 +294,12 @@ function DeathRollGame({
           disabled={rolling}
           className="w-full py-3 rounded-xl bg-primary-fixed-dim text-on-primary-container text-xs font-bold hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all"
         >
-          {rolling ? 'Würfelt…' : `🎲 Würfeln (1–${max})`}
+          {rolling ? tr('Würfelt…') : tr('🎲 Würfeln (1–{max})', { max })}
         </button>
       )}
       {!myTurn && !done && (
         <p className="text-center text-[11px] text-on-surface-variant animate-pulse">
-          {opponentName} würfelt…
+          {tr('{name} würfelt…', { name: opponentName })}
         </p>
       )}
     </div>
@@ -305,6 +309,7 @@ function DeathRollGame({
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function BeefDemo() {
+  const tr = useDemoText()
   const [screen, setScreen]     = useState<Screen>('pick')
   const [opponent, setOpponent] = useState<(typeof OPPONENTS)[0] | null>(null)
   const [reason, setReason]     = useState<string | null>(null)
@@ -364,10 +369,10 @@ export function BeefDemo() {
     <div className="rounded-xl border border-outline-variant bg-surface-container-low overflow-hidden max-w-sm mx-auto">
       <div className="px-4 py-3 border-b border-outline-variant bg-surface-container flex items-center gap-2">
         <Swords size={14} className="text-primary-fixed-dim" />
-        <span className="text-xs font-semibold text-on-surface">Beef starten</span>
+        <span className="text-xs font-semibold text-on-surface">{tr('Beef starten')}</span>
       </div>
       <div className="p-4">
-        <p className="text-[11px] text-on-surface-variant mb-3">Wähle deinen Gegner aus deinen Chats:</p>
+        <p className="text-[11px] text-on-surface-variant mb-3">{tr('Wähle deinen Gegner aus deinen Chats:')}</p>
         <div className="space-y-2">
           {OPPONENTS.map(opp => (
             <button
@@ -380,7 +385,7 @@ export function BeefDemo() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-on-surface">{opp.name}</p>
-                <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{opp.msg}</p>
+                <p className="text-[10px] text-on-surface-variant truncate mt-0.5">{tr(opp.msg)}</p>
               </div>
               <ChevronRight size={14} className="text-on-surface-variant flex-shrink-0" />
             </button>
@@ -395,7 +400,7 @@ export function BeefDemo() {
     <div className="rounded-xl border border-outline-variant bg-surface-container-low overflow-hidden max-w-sm mx-auto">
       <div className="px-4 py-3 border-b border-outline-variant bg-surface-container flex items-center gap-2">
         <Swords size={14} className="text-primary-fixed-dim" />
-        <span className="text-xs font-semibold text-on-surface">Beef eröffnen</span>
+        <span className="text-xs font-semibold text-on-surface">{tr('Beef eröffnen')}</span>
       </div>
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-container">
@@ -404,11 +409,11 @@ export function BeefDemo() {
           </div>
           <div>
             <p className="text-xs font-semibold text-on-surface">vs. {opponent.name}</p>
-            <p className="text-[10px] text-on-surface-variant">Community entscheidet</p>
+            <p className="text-[10px] text-on-surface-variant">{tr('Community entscheidet')}</p>
           </div>
         </div>
         <div>
-          <p className="text-[11px] text-on-surface-variant mb-2">Worum geht&apos;s?</p>
+          <p className="text-[11px] text-on-surface-variant mb-2">{tr("Worum geht's?")}</p>
           <div className="space-y-1.5">
             {REASONS.map(r => (
               <button
@@ -420,13 +425,13 @@ export function BeefDemo() {
                     : 'border-outline-variant bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
                 }`}
               >
-                {r}
+                {tr(r)}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <p className="text-[11px] text-on-surface-variant mb-2">Wähle das Spiel:</p>
+          <p className="text-[11px] text-on-surface-variant mb-2">{tr('Wähle das Spiel:')}</p>
           <div className="space-y-1.5">
             {GAMES.map(g => (
               <button
@@ -439,8 +444,8 @@ export function BeefDemo() {
                 }`}
               >
                 <span className="text-base flex-shrink-0">{g.emoji}</span>
-                <span className="flex-1">{g.label}</span>
-                <span className="text-[9px] text-on-surface-variant flex-shrink-0">{g.desc}</span>
+                <span className="flex-1">{tr(g.label)}</span>
+                <span className="text-[9px] text-on-surface-variant flex-shrink-0">{tr(g.desc)}</span>
               </button>
             ))}
           </div>
@@ -451,7 +456,7 @@ export function BeefDemo() {
           className="w-full py-2.5 rounded-xl bg-primary-fixed-dim text-on-primary-container text-xs font-semibold hover:opacity-90 active:scale-[0.99] disabled:opacity-40 transition-all flex items-center justify-center gap-2"
         >
           <Swords size={13} />
-          Beef starten →
+          {tr('Beef starten →')}
         </button>
       </div>
     </div>
@@ -463,7 +468,7 @@ export function BeefDemo() {
       <div className="px-4 py-3 border-b border-outline-variant bg-surface-container flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Flame size={14} className="text-orange-400" />
-          <span className="text-xs font-semibold text-on-surface">Live Voting</span>
+          <span className="text-xs font-semibold text-on-surface">{tr('Live Voting')}</span>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-orange-400/40 bg-orange-400/10">
           <span className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" />
@@ -473,7 +478,7 @@ export function BeefDemo() {
       <div className="p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="flex-1 text-center">
-            <div className="h-10 w-10 rounded-full mx-auto mb-1 flex items-center justify-center text-[10px] font-bold text-on-primary-container bg-primary-fixed-dim">Du</div>
+            <div className="h-10 w-10 rounded-full mx-auto mb-1 flex items-center justify-center text-[10px] font-bold text-on-primary-container bg-primary-fixed-dim">{tr('Du')}</div>
             <p className="text-sm font-bold text-primary-fixed-dim">{voteMe_}%</p>
           </div>
           <span className="text-xs font-black text-on-surface-variant">VS</span>
@@ -488,13 +493,13 @@ export function BeefDemo() {
           <div className="h-full bg-primary-fixed-dim transition-all duration-700" style={{ width: `${voteMe_}%` }} />
         </div>
         <p className="text-[10px] text-center text-on-surface-variant mb-3">
-          {GAMES.find(g => g.id === game)?.emoji} {GAMES.find(g => g.id === game)?.label}
+          {GAMES.find(g => g.id === game)?.emoji} {tr(GAMES.find(g => g.id === game)?.label ?? '')}
         </p>
         <div className="h-28 overflow-hidden flex flex-col justify-end space-y-1.5">
           {comments.slice(-4).map((c, i) => (
             <div key={i} className="flex items-start gap-1.5">
               <span className="text-[10px] font-bold text-primary-fixed-dim flex-shrink-0">{c.user}</span>
-              <span className="text-[10px] text-on-surface-variant">{c.text}</span>
+              <span className="text-[10px] text-on-surface-variant">{tr(c.text)}</span>
             </div>
           ))}
         </div>
@@ -509,7 +514,7 @@ export function BeefDemo() {
       <div className="rounded-xl border border-outline-variant bg-surface-container-low overflow-hidden max-w-sm mx-auto">
         <div className="px-4 py-3 border-b border-outline-variant bg-surface-container flex items-center gap-2">
           <span>{gameInfo.emoji}</span>
-          <span className="text-xs font-semibold text-on-surface">{gameInfo.label}</span>
+          <span className="text-xs font-semibold text-on-surface">{tr(gameInfo.label)}</span>
         </div>
         <div className="p-4">
           {game === 'rpsls'     && <RPSLSGame onEnd={handleGameEnd} />}
@@ -533,17 +538,17 @@ export function BeefDemo() {
       <div className="rounded-xl border border-outline-variant bg-surface-container-low overflow-hidden max-w-sm mx-auto">
         <div className="px-4 py-3 border-b border-outline-variant bg-surface-container flex items-center gap-2">
           <Trophy size={14} className="text-yellow-400" />
-          <span className="text-xs font-semibold text-on-surface">Ergebnis</span>
+          <span className="text-xs font-semibold text-on-surface">{tr('Ergebnis')}</span>
         </div>
         <div className="p-6 text-center">
           <div className="text-5xl mb-3">{iWon ? '🏆' : '💀'}</div>
           <h3 className="text-sm font-bold text-on-surface mb-4">
-            {iWon ? 'Du hast gewonnen!' : `${opponent.name} hat gewonnen`}
+            {iWon ? tr('Du hast gewonnen!') : tr('{name} hat gewonnen', { name: opponent.name })}
           </h3>
           <div className="rounded-xl bg-surface-container p-3 mb-4 text-left space-y-2">
-            <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wide mb-2">Coin-Verteilung</p>
+            <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wide mb-2">{tr('Coin-Verteilung')}</p>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-on-surface">Du</span>
+              <span className="text-[11px] text-on-surface">{tr('Du')}</span>
               <span className={`text-xs font-bold ${iWon ? 'text-green-400' : 'text-on-surface-variant'}`}>{iWon ? '+150 🪙' : '+10 🪙'}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -552,7 +557,7 @@ export function BeefDemo() {
             </div>
             {voters.length > 0 && (
               <div className="border-t border-outline-variant pt-2 mt-1 space-y-1.5">
-                <p className="text-[10px] text-on-surface-variant">Gewinner-Tipper</p>
+                <p className="text-[10px] text-on-surface-variant">{tr('Gewinner-Tipper')}</p>
                 {voters.map(v => (
                   <div key={v} className="flex items-center justify-between">
                     <span className="text-[11px] text-on-surface">{v}</span>
@@ -567,7 +572,7 @@ export function BeefDemo() {
             className="w-full py-2.5 rounded-xl border border-outline-variant bg-surface-container text-xs font-semibold text-on-surface hover:bg-surface-container-high active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <RotateCcw size={12} />
-            Neuen Beef starten
+            {tr('Neuen Beef starten')}
           </button>
         </div>
       </div>

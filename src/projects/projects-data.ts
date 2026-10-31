@@ -322,7 +322,7 @@ const cards: ProjectCard[] = [
     tags: ["TypeScript", "Node.js", "Playwright", "llama.cpp", "Regex"],
     meta: "Solo · aus Eigeninteresse gebaut · Sessions von 20 Min bis 4 h",
     links: [
-      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/JoBBoT" },
+      { label: "GitHub (öffentlich)", href: "https://github.com/Saos-EBB/JoBBoT" },
       { label: "läuft lokal — Screenshots in den Details" },
     ],
     decisions: [
@@ -498,7 +498,7 @@ const cards: ProjectCard[] = [
         ],
       },
     ],
-    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/kev.dev" }],
+    links: [{ label: "GitHub (öffentlich)", href: "https://github.com/Saos-EBB/kev.dev" }],
     decisions: [
       "Vanilla TypeScript + Vite, kein Framework — die Seite ist Animation, nicht State",
       "Tuch als eigene Verlet-Physik auf Canvas, der Name wird als Textur mitverzerrt",
@@ -532,7 +532,7 @@ const cards: ProjectCard[] = [
     tags: ["JavaScript", "Tampermonkey/Userscript", "DOM"],
     features: ["Autoplay", "Intro-Skip", "Auto-nächste-Folge", "Skip-Hotkeys X/C/V/B", "Fortschritt pro Folge", "Theater-Modus"],
     meta: "Solo · für den eigenen Gebrauch · laufend gepflegt",
-    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/AniScript" }, { label: "kein Live-Widget (Userscript)" }],
+    links: [{ label: "GitHub (öffentlich)", href: "https://github.com/Saos-EBB/AniScript" }, { label: "kein Live-Widget (Userscript)" }],
     decisions: [
       "Neu geschrieben, als Brave von Manifest V2 auf V3 umstieg — statt 5000 fremde Zeilen weiter zu flicken, die ich nicht mehr sauber verstehen und warten konnte",
       "Kommentare als Gedächtnis: jede Debug-Erkenntnis steht im Code, damit sie keiner zweimal lösen muss",
@@ -565,7 +565,7 @@ const cards: ProjectCard[] = [
       ["TVDB", "braucht einen Login-Token"],
     ],
     meta: "Solo · April 2026 als Scraper, September 2026 neu gebaut · für den eigenen Gebrauch",
-    links: [{ label: "GitHub (public)", href: "https://github.com/Saos-EBB/ReleaseWatcher" }, { label: "kein Live-Widget (braucht API-Keys)" }],
+    links: [{ label: "GitHub (öffentlich)", href: "https://github.com/Saos-EBB/ReleaseWatcher" }, { label: "kein Live-Widget (braucht API-Keys)" }],
     decisions: [
       "APIs statt Scraping: offizielle Schnittstellen statt Seiten auslesen, die sich jederzeit ändern können",
       "Eine Quellen-Schnittstelle, vier Adapter — „check-new“ fragt jede Quelle gleich ab, eine neue Quelle ist ein neuer Adapter",
@@ -764,7 +764,7 @@ const cards: ProjectCard[] = [
     tags: ["TypeScript", "Canvas 2D", "MediaPipe", "WebAssembly", "Partikel-Physik"],
     meta: "Solo · eigenes Modul (packages/face-dots), als eigenes Repo auslagerbar",
     links: [
-      { label: "GitHub (public)", href: "https://github.com/Saos-EBB/faceDots" },
+      { label: "GitHub (öffentlich)", href: "https://github.com/Saos-EBB/faceDots" },
       { label: "Live direkt im Tool" },
     ],
     decisions: [

@@ -238,6 +238,7 @@ const texts: Record<string, CardText> = {
     mascot: "Tschobbo, the purple slime blob with sunglasses",
   },
   renderer: {
+    tags: ["JavaScript", "Canvas 2D", "3D math", "OBJ/STL/DICOM"],
     steps: ["The formula from the short", "Wireframe", "Rotation", "Depth shading", "Reading OBJ", "Reading STL", "DICOM → skull CT"],
     title: "3D Wireframe Renderer",
     kind: "3D without a library",
@@ -377,6 +378,7 @@ const texts: Record<string, CardText> = {
     widget: "Bootcamp projects, runnable right in the browser",
   },
   facedots: {
+    tags: ["TypeScript", "Canvas 2D", "MediaPipe", "WebAssembly", "Particle physics"],
     kind: "Tool · photo to dots",
     learnGoal: "I wanted to know how to run image recognition right in the browser — no server, no photo going anywhere.",
     claim: "A small tool: photo in, head cut out, back out as dots, ASCII or on the cloth — all in the browser.",

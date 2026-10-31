@@ -37,6 +37,8 @@ const GROUPS: Group[] = [
     title: "Unterseiten",
     items: [
       { name: "kev.dev: YourBrand-Seite", url: `${KEV}/yourbrand/` },
+      { name: "kev.dev: More stuff", url: `${KEV}/links` },
+      { name: "kev.dev: Kopf-CT", url: `${KEV}/ct-look` },
       { name: "kev.dev: Impressum", url: `${KEV}/impressum.html` },
       { name: "kev.dev: Datenschutz", url: `${KEV}/datenschutz.html` },
       { name: "Casual-Demo: Halde", url: `${CASUAL}/demos/#halde` },

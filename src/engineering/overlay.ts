@@ -40,7 +40,6 @@ const UI = pick({
     fit: "Alles zeigen",
     minimap: "Übersicht",
     noHit: "Kein Ablauf passt.",
-    deOnly: "Die Abläufe gibt es bisher nur auf Deutsch.",
     repo: "Code auf GitHub",
   },
   en: {
@@ -64,7 +63,6 @@ const UI = pick({
     fit: "Show all",
     minimap: "Overview",
     noHit: "No flow matches.",
-    deOnly: "The flows are only available in German so far.",
     repo: "Code on GitHub",
   },
   ru: {
@@ -88,7 +86,6 @@ const UI = pick({
     fit: "Показать всё",
     minimap: "Обзор",
     noHit: "Ни один сценарий не подходит.",
-    deOnly: "Сценарии пока есть только на немецком.",
     repo: "Код на GitHub",
   },
   ja: {
@@ -112,12 +109,11 @@ const UI = pick({
     fit: "全体を表示",
     minimap: "全体図",
     noHit: "該当するフローはありません。",
-    deOnly: "フローは今のところドイツ語のみです。",
     repo: "GitHubのコード",
   },
 });
 
-const t = (text: Text) => text[LANG] ?? text.de;
+const t = (text: Text) => text[LANG];
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -428,7 +424,6 @@ function desktop(): string {
     <button type="button" class="eng-back" data-close><span>← ${esc(UI.back)} · Esc</span></button>
     <section class="eng-panel" role="dialog" aria-modal="true" aria-label="${esc(UI.label)}" tabindex="-1">
       ${topBar()}
-      ${LANG !== "de" ? `<p class="eng-lang">${esc(UI.deOnly)}</p>` : ""}
       <div class="eng-body">
         <aside class="eng-side" data-side>${flowList()}</aside>
         <div class="eng-canvas" data-canvas>
@@ -450,7 +445,6 @@ function report(): string {
   return `
     <section class="eng-panel eng-report" role="dialog" aria-modal="true" aria-label="${esc(UI.label)}" tabindex="-1">
       ${topBar()}
-      ${LANG !== "de" ? `<p class="eng-lang">${esc(UI.deOnly)}</p>` : ""}
       <div class="eng-scroll" data-scroll>
         <p class="eng-lead">${esc(t(project.lead))}</p>
         <nav class="eng-toc"><ol>${project.flows

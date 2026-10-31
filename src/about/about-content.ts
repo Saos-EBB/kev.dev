@@ -67,7 +67,7 @@ const de: AboutContent = {
       items: [`${hl("Pflichtschule, Gymnasium")}`, `${hl("Full-Stack-Bootcamp")} — Zertifikat Junior Developer (2026)`],
     },
     {
-      heading: "Skills",
+      heading: "Kenntnisse",
       items: [
         `${hl("Backend und Daten")} — TypeScript, NestJS, PostgreSQL, PostGIS, WebSockets, Stripe, Docker`,
         `${hl("Frontend")} — React, Next.js, Tailwind, Zustand, Canvas 2D`,
