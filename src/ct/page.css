@@ -307,10 +307,12 @@ main .ct-r {
 
 .ct-l {
   grid-column: 1;
+  min-width: 0;
 }
 
 .ct-r {
   grid-column: 3;
+  min-width: 0;
 }
 
 .ct-h {
@@ -468,9 +470,12 @@ main .ct-r {
   margin-top: 16px;
 }
 
+/* Columns as wide as their values and the numbers sized to the column, so
+   "bis 92 %" stays on one line in every column width. */
 .ct-stats {
+  container-type: inline-size;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, auto);
   margin: 24px 0 0;
   border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
@@ -479,6 +484,7 @@ main .ct-r {
 .ct-stats > div {
   display: flex;
   flex-direction: column-reverse;
+  justify-content: flex-end;
   padding: 16px 0;
 }
 
@@ -489,8 +495,9 @@ main .ct-r {
 
 .ct-stats dd {
   margin: 0;
-  font-size: 40px;
+  font-size: min(40px, 9cqw);
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .ct-stats > div:first-child dd {
@@ -498,9 +505,10 @@ main .ct-r {
 }
 
 .ct-stats dt {
-  font-size: 11px;
-  letter-spacing: 2px;
+  font-size: min(11px, 2.9cqw);
+  letter-spacing: 0.15em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: var(--muted);
 }
 
@@ -617,6 +625,17 @@ main .ct-r {
   color: var(--muted);
 }
 
+/* Label over name once the column can't hold both side by side. */
+@media (max-width: 1360px) {
+  .ct-atlas-list li {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-atlas-list small {
+    grid-row: auto;
+  }
+}
+
 .ct-atlas-list em {
   display: block;
   margin-top: 4px;
@@ -635,7 +654,7 @@ main .ct-r {
 
 .ct-cv {
   display: grid;
-  grid-template-columns: 80px 1fr;
+  grid-template-columns: 48px minmax(0, 1fr);
   padding: 18px 0;
   border-top: 1px solid var(--rule);
 }
@@ -646,7 +665,7 @@ main .ct-r {
 
 .ct-cv b {
   display: block;
-  font-size: 26px;
+  font-size: clamp(20px, 1.8vw, 26px);
 }
 
 .ct-cv span {
@@ -664,8 +683,10 @@ main .ct-r {
 
 /* ── contact ──────────────────────────────────────────────────────── */
 
+/* Exactly the last screen above the footer: at the end of the page the
+   heading and the mail are still in view, next to the blades. */
 .ct-contact {
-  min-height: 130vh;
+  min-height: calc(100vh - 110px);
   padding-top: 30vh;
 }
 
@@ -679,9 +700,9 @@ main .ct-r {
 }
 
 .ct-mail {
-  font-size: 22px;
+  font-size: clamp(13px, 1.4vw, 20px);
   font-weight: 800;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .ct-mail:hover {
@@ -707,9 +728,111 @@ main .ct-r {
   gap: 24px;
 }
 
-/* ── phones: the skull small at the top right, the text under a band ─ */
+/* Short windows: the pinned intro has to fit on one screen. */
+@media (max-height: 640px) {
+  .ct-note {
+    display: none;
+  }
+}
 
-@media (max-width: 700px) {
+/* ── landscape phones and small tablets: text left, skull right ───── */
+
+/* (page.ts PHONE has the same two queries as this and the next block.) */
+@media (orientation: landscape) and (max-width: 1000px), (orientation: landscape) and (max-height: 520px) {
+  .ct-skull {
+    left: 50vw;
+    top: 48px;
+    width: 50vw;
+    height: calc(100vh - 48px);
+  }
+
+  main {
+    padding: 0 24px;
+  }
+
+  .ct-header {
+    padding: 14px 24px;
+  }
+
+  .ct-pointers {
+    display: none;
+  }
+
+  .ct-sec,
+  .ct-atlas,
+  .ct-about,
+  .ct-contact {
+    display: block;
+    width: calc(50vw - 40px);
+    padding-top: 20vh;
+  }
+
+  .ct-sec {
+    min-height: 100vh;
+    padding-bottom: 20vh;
+  }
+
+  .ct-contact {
+    min-height: calc(100vh - 110px);
+  }
+
+  .ct-pin {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 12px;
+    width: calc(50vw - 40px);
+    padding-top: 48px;
+  }
+
+  .ct-pin .ct-l,
+  .ct-pin .ct-r {
+    gap: 12px;
+  }
+
+  .ct-hint,
+  .ct-note {
+    display: none;
+  }
+
+  .ct-h1 {
+    font-size: clamp(40px, 12vh, 72px);
+  }
+
+  .ct-lead,
+  .ct-claim {
+    font-size: 15px;
+  }
+
+  .ct-button--red {
+    padding: 10px 16px;
+  }
+
+  .ct-r .ct-stats {
+    margin-top: 20px;
+  }
+
+  .ct-mail {
+    font-size: clamp(13px, 2.4vw, 20px);
+  }
+
+  .ct-shard {
+    z-index: 7;
+    width: 58px;
+    height: 58px;
+  }
+
+  .ct-footer {
+    width: calc(50vw - 16px);
+    padding: 24px;
+  }
+}
+
+/* ── phones and portrait tablets: the skull small at the top right, the
+   text under a band ─────────────────────────────────────────────────── */
+
+@media (max-width: 900px) and (orientation: portrait) {
   .ct-skull {
     top: 56px;
     left: auto;
@@ -763,19 +886,20 @@ main .ct-r {
   .ct-atlas,
   .ct-about,
   .ct-contact {
-    padding-top: 60vw;
+    padding-top: calc(56vw + 70px);
   }
 
   .ct-pin {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     justify-content: flex-end;
     gap: 22px;
     padding-bottom: 60px;
   }
 
   .ct-h1 {
-    font-size: 64px;
+    font-size: clamp(48px, 16vw, 64px);
   }
 
   .ct-sec .ct-h,
@@ -789,32 +913,12 @@ main .ct-r {
     font-size: 15px;
   }
 
-  .ct-stats dd {
-    font-size: 24px;
-  }
-
-  .ct-stats dt {
-    font-size: 9px;
-  }
-
   .ct-points li {
     font-size: 13px;
   }
 
-  .ct-atlas-list li {
-    grid-template-columns: 1fr;
-  }
-
-  .ct-atlas-list small {
-    grid-row: auto;
-  }
-
-  .ct-cv b {
-    font-size: 21px;
-  }
-
   .ct-mail {
-    font-size: 16px;
+    font-size: min(16px, 4.6vw);
   }
 
   .ct-shard {
@@ -837,14 +941,44 @@ main .ct-r {
      behind it grows along, and the contact text sits under it. */
   .ct-finale .ct-skull {
     width: 100vw;
-    height: calc(70vh - 56px);
+    height: calc(58vh - 56px);
   }
 
   .ct-finale .ct-body::before {
-    height: 70vh;
+    height: 58vh;
   }
 
   .ct-contact {
-    padding-top: 72vh;
+    min-height: calc(100vh - 120px);
+    padding-top: 60vh;
+  }
+
+  /* Short phones: what the intro and the contact can do without, so the
+     headings stay below the band. */
+  @media (max-height: 740px) {
+    .ct-pin,
+    .ct-pin .ct-l,
+    .ct-pin .ct-r {
+      gap: 12px;
+    }
+
+    .ct-pin {
+      padding-bottom: 24px;
+    }
+
+    .ct-hint,
+    .ct-note,
+    .ct-contact .ct-kick,
+    .ct-contact .ct-claim {
+      display: none;
+    }
+
+    .ct-lead {
+      font-size: 14px;
+    }
+
+    .ct-button--red {
+      padding: 10px 16px;
+    }
   }
 }

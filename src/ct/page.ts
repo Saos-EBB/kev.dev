@@ -1,4 +1,5 @@
-// The CT-Schädel page (/saos#dev#skull, loaded by src/saos-entry.ts),
+// The CT-Schädel page (public at /ct-look, also /saos#dev#skull via
+// src/saos-entry.ts),
 // rebuilt after the live prototype ("#skull infos /ct-live.zip") and the
 // CT-Desktop / CT-Mobile mockup. One point skull (ct-scene.ts) in a fixed
 // canvas over the right half; the section on screen sets its state and the
@@ -28,7 +29,13 @@ import type { CtScene } from "./ct-scene";
 document.documentElement.lang = "de";
 document.title = "Kevin Schaberl — Kopf-CT";
 
-const PHONE = matchMedia("(max-width: 700px)").matches;
+// Same queries as the two small layouts in page.css. Decided once at load
+// like the main page's LITE: crossing them (rotating) reloads.
+const PHONE_QUERY = matchMedia(
+  "(max-width: 900px) and (orientation: portrait), (orientation: landscape) and (max-width: 1000px), (orientation: landscape) and (max-height: 520px)",
+);
+const PHONE = PHONE_QUERY.matches;
+PHONE_QUERY.addEventListener("change", () => location.reload());
 // Like the main page (FORCE_MOTION_EVERYWHERE in main.ts): every visitor
 // gets the motion, the OS "reduce motion" setting is ignored for now —
 // with it, the skull would just sit in its end state while you scroll.
@@ -211,9 +218,9 @@ document.body.innerHTML = `
     </section>
   </main>
 
-  <a class="ct-shard" href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub">${icon(ICON.github)}</a>
+  <a class="ct-shard" href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer" aria-label="GitHub">${icon(ICON.github)}</a>
   <a class="ct-shard" href="mailto:kevin.schaberl.work@gmail.com" aria-label="E-Mail">${icon(ICON.mail)}</a>
-  <a class="ct-shard" href="#kontakt" aria-label="Telefon">${icon(ICON.phone)}</a>
+  <a class="ct-shard" href="tel:+436764718807" aria-label="Telefon">${icon(ICON.phone)}</a>
 
   <footer class="ct-footer">
     <span>© 2026 Kevin Schaberl / SAOS</span>
@@ -331,10 +338,21 @@ let sceneReady = false;
 import("./ct-scene").then(async ({ createCtScene }) => {
   const ct = await createCtScene(canvas, {
     phone: PHONE,
-    distance: PHONE ? 6.4 : 8.4, // desktop: small enough for the middle column
     saw: true,
     sawSingle: PHONE, // phones: one blade + blood, like the main page's contact
   });
+  // The camera backs off until the skull fits: the middle column on desktop
+  // (about 0.6 × the screen height wide at distance 8.4), the canvas on
+  // phones, where it can be taller than wide.
+  const fit = () => {
+    const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1;
+    const middle = innerWidth - 96 - 2 * Math.min(innerWidth * 0.28, 400);
+    ct.camera.position.z = PHONE ? 6.4 * Math.max(1, h / w) : 8.4 * Math.max(1, (0.6 * h) / middle);
+    ct.camera.updateMatrixWorld();
+    ct.requestRender();
+  };
+  fit();
+  new ResizeObserver(fit).observe(canvas);
   status.remove();
   document.documentElement.classList.add("ct-ready");
   sceneReady = true;
@@ -478,7 +496,13 @@ function placeShards(ct: CtScene) {
     const p = pts[i];
     if (p) {
       const [x, y] = ct.project(p);
-      a.style.transform = `translate(${(r.left + x).toFixed(1)}px, ${(r.top + y).toFixed(1)}px) translate(-50%, -50%)`;
+      // Shards fly wherever they fly; the link stays on the skull's side of
+      // the text (desktop: the middle column) and fully on screen.
+      const m = a.offsetWidth / 2 + 8;
+      const inset = PHONE ? 0 : 48 + Math.min(innerWidth * 0.28, 400);
+      const px = Math.min(Math.max(r.left + x, r.left + inset + m), r.right - inset - m);
+      const py = Math.min(Math.max(r.top + y, m), innerHeight - m);
+      a.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) translate(-50%, -50%)`;
     }
     a.classList.toggle("is-on", !!p);
   });

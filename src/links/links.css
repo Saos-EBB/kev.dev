@@ -1,0 +1,139 @@
+/* /links: the other sites, each with what it is, why it is that way and a few screens. */
+@font-face {
+  font-family: "Urban Sign";
+  src: url("/fonts/urban-sign.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  --cherry: #5c0f1f;
+  --teal: #0f4c4c;
+  --muted: #f2d5dc;
+  --line: color-mix(in srgb, #ffffff 25%, transparent);
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  background: var(--cherry);
+  color: #ffffff;
+  font-family: var(--mono);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+}
+
+a:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.links {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 16px 3rem;
+}
+
+.links-back {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.links-title {
+  margin: 2.5rem 0 0.5rem;
+  font-family: "Urban Sign", sans-serif;
+  font-size: clamp(3.5rem, 12vw, 8rem);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.links-lead {
+  max-width: 60ch;
+  color: var(--muted);
+}
+
+.site {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.site h2 {
+  font-family: "Urban Sign", sans-serif;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.site-text {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 2.5rem;
+  margin: 1.25rem 0;
+}
+
+.site-text h3 {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.site-open {
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ffffff;
+  border-radius: 0.3rem;
+  background: var(--teal);
+  text-decoration: none;
+}
+
+.site-open:hover {
+  background: #146262;
+}
+
+.site-screens {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.site-screens a {
+  display: block;
+}
+
+.site-screens img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+}
+
+.links-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .site-text,
+  .site-screens {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
