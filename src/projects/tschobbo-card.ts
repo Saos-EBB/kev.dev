@@ -9,7 +9,7 @@
 
 import type { EngFlow, EngProject, EngStep } from "../engineering/types";
 import { esc, type ProjectCard } from "./project-cards";
-import { fitText } from "./big-cards";
+import { fitText, whenProjectsNear } from "./big-cards";
 import { LANG, pick, type Lang } from "../i18n";
 import { paintStates, phoneApp, reduced, type Phone } from "./scroll-phone";
 import { rideTo } from "./carousel";
@@ -65,7 +65,7 @@ const job = (attrs: string, w: number, extra = "") =>
 // local AI (k = its step).
 const screens = (mascot: string) => {
   const head = (name: string, right = `<span class="tb-live"></span>`) =>
-    `<div class="tb-head">${mascot ? `<img src="${esc(mascot)}" alt="" />` : ""}<b>${esc(name)}</b>${right}</div>`;
+    `<div class="tb-head">${mascot ? `<img src="${esc(mascot)}" alt="" loading="lazy" decoding="async" />` : ""}<b>${esc(name)}</b>${right}</div>`;
   return `
   <div class="sp-page" data-page="scrape">
     ${head(tx("scrape"))}
@@ -166,7 +166,9 @@ export function initTschobbo(el: HTMLElement, phone: Phone) {
     at = (e as CustomEvent<number>).detail;
     onRide(at);
   });
-  import("../engineering/data/tschobbo").then((m) => (onRide = ride(el, m.tschobbo, phone, at)));
+  whenProjectsNear(el, () => {
+    import("../engineering/data/tschobbo").then((m) => (onRide = ride(el, m.tschobbo, phone, at)));
+  });
 }
 
 type Step = { flow: EngFlow; page: string; k: number; ai?: EngStep };

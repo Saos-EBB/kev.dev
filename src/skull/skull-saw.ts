@@ -5,17 +5,12 @@
 // the forehead, bone shards burst toward the viewer. Pink wireframe on black.
 import "./skull-saw.css";
 import * as THREE from "three";
+import { loadCranium, type Model } from "../projects/widgets/renderer-models/cranium";
 
-interface Model { vs: { x: number; y: number; z: number }[]; fs: number[][] }
 
 const PINK = 0xff4fb8, SOFT = 0xff9ad6, DIM = 0x7a2459;
 const T_FLY = 0.9, T_HIT = 1.38, T_FADE = 5.2, T_END = 6.0;
 const R = 0.62, R_IN = 0.53, DEPTH_IN = 0.24;
-
-const loaders = import.meta.glob("../projects/widgets/renderer-models/craniumCut01.js") as Record<
-  string,
-  () => Promise<{ default: Model }>
->;
 
 const wire = (geo: THREE.BufferGeometry, color: number, opacity: number) =>
   new THREE.LineSegments(
@@ -94,7 +89,7 @@ async function mount() {
   (grid.material as THREE.Material).opacity = 0.5;
   scene.add(grid);
 
-  const model = (await Object.values(loaders)[0]()).default;
+  const model = await loadCranium();
   load.remove();
 
   // ── skull ──

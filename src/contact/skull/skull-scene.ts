@@ -1,10 +1,11 @@
 // Contact 3D scene (loaded lazily by contact-skull.ts): the craniumCut01
 // skull rises from the bottom as you scroll in (setRise); once it's up, one
 // saw blade flies in and cuts deep into it, and green blood spurts out of
-// the wound in pulses, like a cheap splatter movie — deliberately overdone. Bone shards burst out
-// with it and hang in the air, and three of them are real links (GitHub,
-// mail, phone: the section's .contact-icons <a>s, positioned here over the
-// 3D scene every frame). Dragging (mouse, or a sideways swipe) turns the
+// the wound in one hard burst towards the viewer, like a cheap splatter movie
+// — deliberately overdone. Pieces of the skull burst out with it, and the
+// whole scene freezes while everything is still in the air. Three shards are
+// real links (GitHub, mail, phone: the section's .contact-icons <a>s,
+// positioned here over the 3D scene every frame). Dragging (mouse, or a sideways swipe) turns the
 // whole scene — skull, blade, blood, shards.
 //
 // Everything after the rise is a closed-form function of the time since the
@@ -12,13 +13,16 @@
 // GPU from that same time), so reduced motion just jumps to the end.
 import * as THREE from "three";
 import { LITE } from "../../viewport";
-import { BLADE_R, bladeGeometry, loadSkullGeometry, wireMesh } from "./parts";
-import { createBlood, JET } from "./blood";
+import { BLADE_R, bladeGeometry, depthSteps, loadSkullGeometry, wireMesh } from "./parts";
+import { createBlood } from "./blood";
 
 const BLADE_FLIGHT = 0.55; // s from off-screen to stuck
 const HIT_AT = 0.5; // s after the skull is up
 const FREEZE = 2.6; // how fast shards slow down (1/s) — higher stops sooner
-const SHARDS = 22;
+const FREEZE_AT = 0.7; // s after the hit: the frame stops, the blood still in the air
+const SHARDS = 18;
+const YAW = Math.PI / 4; // the skull is turned to the viewer's right, the wound faces the camera
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
 
 // The one hit: upper left of the forehead (a point in skull space: face +z,
 // vault +y; the nearest front vertex is the hit point), a big blade sunk
@@ -33,16 +37,23 @@ const LINK_REST = {
 } as const;
 const LINK_STAGGER = 0.12; // s between the three link shards leaving
 
-// Blood (blood.ts): green splatter-movie spurts that collect on this floor
-// into a pool, just under the jaw (skull space).
-const BLOOD_COUNT = LITE ? 1100 : 3000;
-const FLOOR_Y = -0.85;
+// Blood (blood.ts): a few spurts close together, under pressure.
+const BLOOD_COUNT = LITE ? 1300 : 3600;
+const BLOOD_JET = 0.3, BLOOD_PULSES = 3, BLOOD_PRESSURE = 1.4, BLOOD_DROP = 0.45;
 
 export type SkullScene = { setRise(r: number): void; finish(): void };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
 const settle = (u: number) => (u <= 0 ? 0 : (1 - Math.exp(-FREEZE * u)) / FREEZE); // distance factor, freezes at 1/FREEZE
+
+// A pause between the expensive parts of the setup, so scrolling stays smooth
+// while the scene is built.
+const breathe = () =>
+  new Promise<void>((resolve) => {
+    if ("requestIdleCallback" in window) requestIdleCallback(() => resolve(), { timeout: 200 });
+    else setTimeout(resolve, 16);
+  });
 
 // `section` is the screen-high sticky stage (contact-skull.ts), not the tall
 // scroll track around it: sizes, visibility and dragging are taken from it.
@@ -59,22 +70,26 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const world = new THREE.Group();
   scene.add(world);
 
-  const lineColor = new THREE.Color(), throwColor = new THREE.Color(), bgColor = new THREE.Color(), textColor = new THREE.Color();
+  const lineColor = new THREE.Color(), throwColor = new THREE.Color(), bgColor = new THREE.Color();
   const readColors = () => {
     lineColor.set(css("--color-line") || "#cd57ff");
     throwColor.set(css("--color-throw") || "#89ff57");
     bgColor.set(css("--contact-bg") || "#08070a");
-    textColor.set(css("--color-text") || "#f5f5f6");
   };
   readColors();
 
   // ── skull ──
   const geo = await loadSkullGeometry();
+  await breathe();
   const skullParts = wireMesh(geo, lineColor, bgColor, 0.32);
+  geo.computeBoundingSphere();
+  depthSteps(skullParts.lineMat, geo.boundingSphere!.radius + geo.boundingSphere!.center.length());
   const skull = new THREE.Group();
   skull.add(skullParts.group);
+  skull.rotation.y = YAW;
   world.add(skull);
   const pos = geo.getAttribute("position") as THREE.BufferAttribute;
+  await breathe();
 
   const v = new THREE.Vector3();
   const nearestTo = (p: THREE.Vector3) => {
@@ -90,29 +105,66 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   };
 
   // Cracks: short random walks over vertices near the hit — more and
-  // longer than a light hit, the blade goes deep.
-  const crackLines = (hit: THREE.Vector3) => {
+  // longer than a light hit, the blade goes deep. Ribbons on the surface,
+  // wide at the hit and thinning out: the bone is gone there, so they're in
+  // the background color.
+  const crackTris = (hit: THREE.Vector3) => {
     const near: THREE.Vector3[] = [];
     for (let i = 0; i < pos.count; i += 3) {
       v.fromBufferAttribute(pos, i);
       if (v.distanceTo(hit) < 0.9 && v.z > hit.z - 0.45) near.push(v.clone());
     }
     const pts: number[] = [];
+    const STEPS = 8;
+    const side = new THREE.Vector3();
+    const edge = (p: THREE.Vector3, to: THREE.Vector3, width: number) => {
+      side.subVectors(to, p).cross(p).normalize().multiplyScalar(width);
+      const lifted = p.clone().multiplyScalar(1.008); // just above the fill
+      return [lifted.clone().add(side), lifted.clone().sub(side)];
+    };
     for (let c = 0; c < 10; c++) {
       let p = hit.clone();
       const dir = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.6, Math.random() * 0.3).normalize();
-      for (let s = 0; s < 8; s++) {
+      for (let s = 0; s < STEPS; s++) {
         const target = p.clone().addScaledVector(dir, 0.09);
         let q: THREE.Vector3 | null = null, qd = Infinity;
         for (const n of near) { const d = n.distanceTo(target); if (d < qd && n.distanceTo(p) > 0.03) { qd = d; q = n; } }
         if (!q) break;
-        pts.push(p.x, p.y, p.z, q.x, q.y, q.z);
+        const [a, b] = edge(p, q, 0.03 * (1 - s / STEPS));
+        const [d, e] = edge(q, q.clone().add(q.clone().sub(p)), 0.03 * (1 - (s + 1) / STEPS));
+        for (const t of [a, b, d, d, b, e]) pts.push(t.x, t.y, t.z);
         p = q;
         dir.x += (Math.random() - 0.5) * 0.6; dir.y += (Math.random() - 0.5) * 0.6; dir.normalize();
       }
     }
     return pts;
   };
+
+  // A real piece of the skull: the triangles around a point near the hit,
+  // recentred on their middle so it can tumble.
+  const index = geo.getIndex()!;
+  const tri = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  const triCentre = (t: number) => {
+    tri.forEach((c, k) => c.fromBufferAttribute(pos, index.getX(t * 3 + k)));
+    return tri[0].clone().add(tri[1]).add(tri[2]).divideScalar(3);
+  };
+  const centres = Array.from({ length: index.count / 3 }, (_, t) => triCentre(t));
+  const skullPiece = (hit: THREE.Vector3) => {
+    const around = centres.filter((c) => c.distanceTo(hit) < 0.8);
+    const seed = around[Math.floor(Math.random() * around.length)];
+    const radius = 0.04 + Math.random() * 0.07;
+    const out: number[] = [];
+    centres.forEach((c, t) => {
+      if (c.distanceTo(seed) > radius) return;
+      triCentre(t);
+      for (const p of tri) out.push(p.x - seed.x, p.y - seed.y, p.z - seed.z);
+    });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(out, 3));
+    return g;
+  };
+
+  await breathe();
 
   // ── the hit: blade, cracks, blood, shards ──
   const hit = nearestTo(new THREE.Vector3(...HIT.want));
@@ -126,33 +178,36 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   blade.group.rotation.set(HIT.tilt[0], HIT.tilt[1], 0); // spin (rotation.z) stays around the blade's own axis
   skull.add(blade.group); // rides along with the skull's knock-back
 
-  const crackPts = crackLines(hit);
+  const crackPts = crackTris(hit);
   const crackGeo = new THREE.BufferGeometry();
   crackGeo.setAttribute("position", new THREE.Float32BufferAttribute(crackPts, 3));
-  const crackMat = new THREE.LineBasicMaterial({ color: textColor, transparent: true, opacity: 0.85, depthTest: false });
-  skull.add(new THREE.LineSegments(crackGeo, crackMat));
+  // in the transparent pass so it's drawn after the skull's lines, and over them
+  const crackMat = new THREE.MeshBasicMaterial({ color: bgColor, side: THREE.DoubleSide, transparent: true });
+  const cracks = new THREE.Mesh(crackGeo, crackMat);
+  cracks.renderOrder = 1;
+  skull.add(cracks);
   const crackCount = crackPts.length / 3;
 
-  // Blood out of the wound: mostly along the outward normal (away from
-  // the skull's centre, tipped towards the camera so the spurts read and
-  // a little up so they arc), in a wide cone.
-  const jetAxis = hit.clone().normalize().add(new THREE.Vector3(0, 0.35, 0.5)).normalize();
-  // Not much towards the camera (maxZ): drops flying at it landed in front
-  // of the skull, low on the screen and big, and the pool covered the footer.
-  const blood = createBlood({ hit, axis: jetAxis, count: BLOOD_COUNT, ink: throwColor, px, floorY: FLOOR_Y, maxZ: 0.2 });
+  // Blood out of the wound: straight at the camera (in skull space, so
+  // against the yaw), a little outward and up so the spurts arc, in a wide cone.
+  const toCamera = new THREE.Vector3(0, 0, 1).applyAxisAngle(Y_AXIS, -YAW);
+  const jetAxis = toCamera.clone().add(hit.clone().normalize().multiplyScalar(0.5)).add(new THREE.Vector3(0, 0.2, 0)).normalize();
+  const blood = createBlood({ hit, axis: jetAxis, count: BLOOD_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: BLOOD_PRESSURE, dropSize: BLOOD_DROP });
   skull.add(blood.points);
 
-  const shardGeos = [new THREE.TetrahedronGeometry(1), new THREE.OctahedronGeometry(1), new THREE.IcosahedronGeometry(1)].map((g) => new THREE.WireframeGeometry(g));
-  // The shards are in the blood's green too, all of them.
-  const shardMats: THREE.LineBasicMaterial[] = [];
-  const shards = Array.from({ length: SHARDS }, (_, k) => {
-    const mat = new THREE.LineBasicMaterial({ color: throwColor, transparent: true, opacity: 0.95 });
-    shardMats.push(mat);
-    const m = new THREE.LineSegments(shardGeos[k % 3], mat);
-    m.scale.setScalar(0.025 + Math.random() * 0.07);
+  await breathe();
+
+  // The shards are pieces of the skull: same fill, same lines, a bit brighter.
+  const shardAxis = jetAxis.clone().applyAxisAngle(Y_AXIS, YAW); // shards live in world space
+  const shardMats: ReturnType<typeof wireMesh>[] = [];
+  const shards = Array.from({ length: SHARDS }, () => {
+    const part = wireMesh(skullPiece(hit), lineColor, bgColor, 0.95);
+    part.fillMat.side = THREE.DoubleSide;
+    shardMats.push(part);
+    const m = part.group;
     m.visible = false;
     world.add(m);
-    const vel = new THREE.Vector3((Math.random() - 0.5) * 3.4, (Math.random() - 0.2) * 3.4, Math.random() * 1.4).addScaledVector(jetAxis, 1.8);
+    const vel = new THREE.Vector3((Math.random() - 0.5) * 3.4, (Math.random() - 0.2) * 3.4, Math.random() * 1.4).addScaledVector(shardAxis, 1.8);
     const spin = new THREE.Vector3(Math.random() * 14, Math.random() * 14, Math.random() * 14);
     return { m, vel, spin };
   });
@@ -164,8 +219,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     skullParts.fillMat.color.copy(bgColor);
     blade.fillMat.color.copy(bgColor);
     blade.lineMat.color.copy(throwColor);
-    crackMat.color.copy(textColor);
-    for (const m of shardMats) m.color.copy(throwColor);
+    crackMat.color.copy(bgColor);
+    for (const m of shardMats) { m.lineMat.color.copy(lineColor); m.fillMat.color.copy(bgColor); }
     blood.recolor(); // its ink is throwColor itself
     dirty = true;
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
@@ -241,10 +296,10 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // rise: from below the screen up to the centre
     skull.position.y = -3.4 * (1 - easeOut(rise));
 
-    // knock-back: one heavy damped wobble, then the shaking while it bleeds
+    // knock-back: one heavy damped wobble, then the shaking until the freeze
     const u = started ? seqT - HIT_AT : -1;
     const kick = u > 0 ? Math.exp(-4 * u) * Math.sin(10 * u) * 1.5 : 0;
-    const shake = u > 0 && u < JET ? Math.sin(u * 63) * 0.012 * (1 - u / JET) : 0;
+    const shake = u > 0 && u < FREEZE_AT ? Math.sin(u * 63) * 0.012 * (1 - u / FREEZE_AT) : 0;
     skull.position.z = -kick * 0.22;
     skull.position.x = shake;
     skull.rotation.x = -kick * 0.12;
@@ -259,8 +314,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       blade.group.position.lerpVectors(start, stuck, k * k);
       blade.group.rotation.z = -(Math.min(fly, BLADE_FLIGHT) * 42 + (u > 0 ? (1 - Math.exp(-3 * u)) * 42 / 3 : 0));
     }
-    // cracks spread over 0.5 s
-    crackGeo.setDrawRange(0, u > 0 ? Math.floor(Math.min(1, u / 0.5) * crackCount) : 0);
+    // cracks spread over 0.5 s (6 vertices per ribbon segment)
+    crackGeo.setDrawRange(0, u > 0 ? Math.floor(Math.min(1, u / 0.5) * crackCount / 6) * 6 : 0);
     blood.setTime(u);
 
     // shards: burst from the hit point, slow down, hang there
@@ -274,14 +329,15 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       s.m.rotation.set(s.spin.x * d, s.spin.y * d, s.spin.z * d);
     }
 
-    // the three link shards: the same freeze, from the hit to their spots
+    // the three link shards: the same slowing down, from the hit to their
+    // spots, which they reach as the frame stops
     const tall = w / h < 0.8;
     const [hx, hy] = toScreen(originWorld);
     links.forEach((link, i) => {
       const ui = u - i * LINK_STAGGER;
       if (ui <= 0) return;
       const [tx, ty] = (tall ? LINK_REST.tall : LINK_REST.wide)[i];
-      const k = settle(ui) * FREEZE; // 0 → 1
+      const k = settle(ui) / settle(FREEZE_AT - i * LINK_STAGGER); // 0 → 1
       const x = hx + (tx - hx) * k, y = hy + (ty - hy) * k;
       link.style.visibility = "visible";
       link.style.pointerEvents = k > 0.6 ? "auto" : "none";
@@ -298,20 +354,20 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     if (visible) { last = performance.now(); requestAnimationFrame(frame); }
   }).observe(section);
 
-  // until the last drop has landed: the latest spurt + the longest fall
-  const END = HIT_AT + blood.duration + 0.5;
+  const END = HIT_AT + FREEZE_AT;
   function frame(now: number) {
     if (!visible) return;
     const dt = Math.min((now - last) / 1000, 1 / 20);
     last = now;
     if (!started && rise >= 0.995) started = true;
-    if (started && seqT < END) { seqT += dt; dirty = true; }
+    if (started && seqT < END) { seqT = Math.min(seqT + dt, END); dirty = true; }
     if (dirty) { dirty = false; pose(); renderer.render(scene, camera); }
     requestAnimationFrame(frame);
   }
 
   resize();
   reset();
+
   return {
     setRise(r: number) {
       if (r === rise) return;
