@@ -322,7 +322,7 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject, phone: Phone, a
   const wear = (c: string) => [el, app].forEach((x) => x.style.setProperty("--brand", c));
 
   phone.add(card.id, {
-    palette: [brand, ...tenants.map((t) => t.color)],
+    palette: () => [brand, ...tenants.map((t) => t.color)],
     bar: "▮▮▮",
     shift: () => cur * 0.07,
     shown: () => phone.rail(cur / (steps.length - 1), steps.length),

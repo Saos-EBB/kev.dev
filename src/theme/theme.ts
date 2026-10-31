@@ -29,6 +29,10 @@ const writeStored = (theme: Theme) => {
   }
 };
 
+// Set on import, not in initThemeToggle: main.ts builds the cloth and the
+// intro from the color tokens before it gets there.
+document.documentElement.setAttribute("data-theme", readStored() ?? "dark");
+
 export function initThemeToggle() {
   const button = document.querySelector<HTMLButtonElement>(".theme-toggle");
   if (!button) return;

@@ -67,9 +67,11 @@ export function initKevApp(card: HTMLElement, phone: Phone) {
   const poke = () => (lastPoke = performance.now());
 
   // The note colors, the same loop as the project notes.
-  const css = getComputedStyle(document.documentElement);
   const app = phone.add(id, {
-    palette: [1, 2, 3, 4, 5, 9, 6].map((n) => css.getPropertyValue(`--note-${n}`).trim()),
+    palette: () => {
+      const css = getComputedStyle(document.documentElement);
+      return [1, 2, 3, 4, 5, 9, 6].map((n) => css.getPropertyValue(`--note-${n}`).trim());
+    },
     bar: "kev.dev",
     shift: () => scroller.scrollTop * 0.00045,
     shown: poke,

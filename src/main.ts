@@ -569,6 +569,11 @@ if (!heroNameReducedMotion) {
     parseFloat(period) * (period.endsWith("ms") ? 1 : 1000) || 6000;
   const easeInOut = (t: number) => t * t * (3 - 2 * t);
   let shining = false;
+  // The name's gradient comes from the color tokens: repaint after a theme toggle.
+  new MutationObserver(() => (nameTextureDirty = true)).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
   const shineLoop = (now: number) => {
     requestAnimationFrame(shineLoop);
     if (!cloth.isRunning) return;

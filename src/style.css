@@ -159,19 +159,28 @@
 
 /* Light mode — toggled via .theme-toggle (src/theme/theme.ts), which sets
    data-theme on <html> and remembers the choice in localStorage. First
-   pass: swap the base page chrome (backgrounds/text) to black-on-white and
-   keep the room screen/LED readable; the brand accent (--color-line /
-   --color-accent) and the self-contained dark widgets (3D renderer canvas,
-   Java terminal) are left as they are. */
+   pass: swap the base page chrome (backgrounds/text) and
+   keep the room screen/LED readable. This theme is white on burgundy; the self-contained dark widgets (3D renderer canvas, Java
+   terminal) are left as they are. */
 :root[data-theme="light"] {
-  --color-bg: #ffffff;
-  --color-text: #0d0d0f;
-  --color-text-muted: #55555c;
-  --hero-bg: #ffffff;
-  --about-bg: #ffffff;
-  --projects-bg: #ffffff;
-  --contact-bg: #ffffff;
-  --color-room-accent: #2a2a30;
+  --color-bg: #800020;
+  --color-text: #ffffff;
+  --color-text-muted: #f2d5dc;
+  --hero-bg: #800020;
+  --about-bg: #800020;
+  --projects-bg: #800020;
+  --contact-bg: #800020;
+  --color-room-accent: #ffffff;
+  --color-line: #ffffff;
+  --grid-color: #ffffff;
+  --color-accent: #ffffff;
+  --color-room-line: #ffffff;
+  --title-grad-from: #ffffff;
+  --title-grad-mid: #ffffff;
+  --title-grad-to: #f2d5dc;
+  --note-5: #f2d5dc;
+  --note-6: #ffffff;
+  --note-9: #ffffff;
 }
 
 * {

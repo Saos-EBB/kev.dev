@@ -221,7 +221,10 @@ function ride(el: HTMLElement, P: EngProject, phone: Phone, at: number): (p: num
   };
 
   phone.add(id, {
-    palette: ["#9d57ff", ...FIT, "#cd57ff"],
+    palette: () => {
+      const css = getComputedStyle(document.documentElement);
+      return [css.getPropertyValue("--note-5").trim(), ...FIT, css.getPropertyValue("--note-9").trim()];
+    },
     bar: "▮▮▮",
     note: tx("note"),
     shift: () => cur * 0.07,

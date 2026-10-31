@@ -219,11 +219,11 @@ export class Cloth {
     if (!ctx) throw new Error("2D canvas context not available");
     this.ctx = ctx;
 
-    const lineColorToken = getComputedStyle(document.documentElement)
-      .getPropertyValue("--grid-color")
-      .trim();
-    if (lineColorToken) this.lineColor = lineColorToken;
-    this.buildLightSteps();
+    this.readLineColor();
+    new MutationObserver(() => this.readLineColor()).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
 
     // .force-motion (set in dev, or via ?motion in prod — see main.ts)
     // overrides prefers-reduced-motion for local testing. Same check as
@@ -839,6 +839,14 @@ export class Cloth {
     { length: this.LIGHT_STEPS },
     () => [],
   );
+
+  private readLineColor() {
+    const token = getComputedStyle(document.documentElement)
+      .getPropertyValue("--grid-color")
+      .trim();
+    if (token) this.lineColor = token;
+    this.buildLightSteps();
+  }
 
   // Precomputes one rgba string per light step by mixing this.lineColor
   // toward white — called once lineColor is known (constructor) rather

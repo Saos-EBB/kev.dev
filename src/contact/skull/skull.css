@@ -6,8 +6,8 @@
 }
 
 :root[data-theme="light"] {
-  --color-throw: #32a800; /* darker complement, readable on white */
-  --color-contact-icon: #d10f24;
+  --color-throw: #ffffff;
+  --color-contact-icon: #ffffff;
 }
 
 /* contact-skull.ts: the section becomes a scroll track (.contact--track,

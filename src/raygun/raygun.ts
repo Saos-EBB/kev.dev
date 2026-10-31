@@ -22,6 +22,7 @@ import {
   socialCirclePositions,
 } from "./raygun-geometry";
 import { UI } from "../i18n/ui";
+import { COLORS, hexToRgb } from "../colors";
 
 export interface RaygunItem {
   href: string;
@@ -69,12 +70,13 @@ const SHOT_DELAY = 500;
 const NOZZLE_DIST_RATIO = Math.hypot(191.5, -58.5) / 512;
 const NOZZLE_ANGLE_DEG = Math.atan2(-58.5, 191.5) * (180 / Math.PI);
 
-// Beam colours match --color-line (#cd57ff) so the effect stays on-brand
-// in both themes without reading CSS at runtime (that value never
-// changes between light/dark — see style.css's :root[data-theme="light"]
-// override, which leaves it alone).
-const BEAM_OUTER = "205,87,255";
-const BEAM_INNER = "235,200,255";
+// Beam colours follow --color-line, read per shot: the light theme has its own.
+function beamColors() {
+  const hex = getComputedStyle(document.documentElement).getPropertyValue("--color-line").trim();
+  const [r, g, b] = hexToRgb(hex || COLORS.line);
+  const toWhite = (v: number) => Math.round(v + (255 - v) * 0.67);
+  return { outer: `${r},${g},${b}`, inner: `${toWhite(r)},${toWhite(g)},${toWhite(b)}` };
+}
 
 let styleInjected = false;
 function injectChargeStyle() {
@@ -89,9 +91,9 @@ function injectChargeStyle() {
   style.textContent =
     "@keyframes raygun-pulse{" +
     "0%,100%{filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px rgba(255,255,255,.6)) " +
-    `drop-shadow(0 0 4px rgba(${BEAM_OUTER},.85));}` +
+    "drop-shadow(0 0 4px color-mix(in srgb,var(--color-line) 85%,transparent));}" +
     "50%{filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 4px rgba(255,255,255,.9)) " +
-    `drop-shadow(0 0 7px rgba(${BEAM_OUTER},1));}` +
+    "drop-shadow(0 0 7px var(--color-line));}" +
     "}" +
     ".raygun-charging{animation:raygun-pulse 0.38s ease-in-out infinite;}";
   document.head.appendChild(style);
@@ -223,6 +225,7 @@ export function mountRaygunButton(
     const { x: beamX, y: beamY } = nozzlePoint(bc, tx, ty, nozzleDist);
     const t0 = performance.now();
     const FADE = 120;
+    const beam = beamColors();
     function frame(now: number) {
       if (token !== fireToken) return;
       const t = Math.min((now - t0) / FADE, 1);
@@ -233,14 +236,14 @@ export function mountRaygunButton(
       ctx.beginPath();
       ctx.moveTo(beamX, beamY);
       ctx.lineTo(tx, ty);
-      ctx.strokeStyle = `rgba(${BEAM_OUTER},${alpha * 0.65})`;
+      ctx.strokeStyle = `rgba(${beam.outer},${alpha * 0.65})`;
       ctx.lineWidth = 8;
       ctx.lineCap = "round";
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(beamX, beamY);
       ctx.lineTo(tx, ty);
-      ctx.strokeStyle = `rgba(${BEAM_INNER},${alpha})`;
+      ctx.strokeStyle = `rgba(${beam.inner},${alpha})`;
       ctx.lineWidth = 2.5;
       ctx.lineCap = "round";
       ctx.stroke();

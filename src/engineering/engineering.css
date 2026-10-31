@@ -575,7 +575,7 @@
   tab-size: 4;
 }
 .eng-k {
-  color: #cd57ff;
+  color: var(--note-9);
 }
 .eng-s {
   color: #57fff1;

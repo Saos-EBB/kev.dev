@@ -44,7 +44,7 @@ const RIPPLE_MS = 650; // the ring's way from the top of the screen to the botto
 
 export interface App {
   // The wave's colors, as #rrggbb.
-  palette: string[];
+  palette: () => string[];
   // Right side of the status bar, and a line under the phone.
   bar: string;
   note?: string;
@@ -136,8 +136,15 @@ export function runPhone(stage: HTMLElement): Phone {
     add(id, app) {
       const el = stage.querySelector<HTMLElement>(`.sp-app[data-app="${id}"]`)!;
       // The palette as one loop, so the wave never jumps.
-      const pal = [...app.palette, app.palette[0]].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+      // A function because the light theme has its own colors; read again after a toggle.
+      let pal: number[][] = [], palTheme: string | null = "";
       const color = (t: number) => {
+        const theme = document.documentElement.getAttribute("data-theme");
+        if (theme !== palTheme) {
+          palTheme = theme;
+          const list = app.palette();
+          pal = [...list, list[0]].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+        }
         t = (((t % 1) + 1) % 1) * (pal.length - 1);
         const i = Math.floor(t), f = t - i, a = pal[i], b = pal[i + 1];
         return a.map((v, k) => Math.round(v + (b[k] - v) * f));

@@ -129,7 +129,9 @@ export function createBlood(o: {
   geo.setAttribute("aSpeed", new THREE.BufferAttribute(speed, 1));
   geo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
   geo.setAttribute("aDir", new THREE.BufferAttribute(dirs, 3));
-  const dark = new THREE.Color().copy(o.ink).multiplyScalar(0.3);
+  // White ink in the light theme: barely shaded, or it reads as gray.
+  const shade = () => (document.documentElement.getAttribute("data-theme") === "light" ? 0.88 : 0.3);
+  const dark = new THREE.Color().copy(o.ink).multiplyScalar(shade());
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: -1 },
@@ -150,7 +152,7 @@ export function createBlood(o: {
   return {
     points,
     setTime(u) { mat.uniforms.uTime.value = u; },
-    recolor() { dark.copy(o.ink).multiplyScalar(0.3); },
+    recolor() { dark.copy(o.ink).multiplyScalar(shade()); },
     // pool: until the last drop can have landed (the latest spurt + the
     // longest fall); no pool: until the last drop's life is over
     duration: jet + (pool ? (SPEED[1] * pressure + Math.sqrt((SPEED[1] * pressure) ** 2 + 2 * GRAVITY * 4)) / GRAVITY : LIFE[1]),

@@ -935,13 +935,13 @@
   }
 }
 
-/* The layer colors are neon; on the light page they need more ink. */
+/* The layer colors are neon; on the burgundy page they need to be paler. */
 :root[data-theme="light"] .yb-col {
-  fill: color-mix(in srgb, var(--lc) 55%, #000);
+  fill: color-mix(in srgb, var(--lc) 35%, #fff);
 }
 
 :root[data-theme="light"] .yb-chip {
-  --lc-ink: color-mix(in srgb, var(--lc, var(--pc)) 55%, #000);
+  --lc-ink: color-mix(in srgb, var(--lc, var(--pc)) 35%, #fff);
   border-color: var(--lc-ink);
   color: var(--lc-ink);
 }

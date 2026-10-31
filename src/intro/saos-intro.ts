@@ -350,7 +350,7 @@ export function mountSaosLoader(
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.shadowColor = "rgba(205, 87, 255, 0.45)";
+    ctx.shadowColor = `color-mix(in srgb, ${line} 45%, transparent)`;
     ctx.shadowBlur = 18 * dpr;
     ctx.drawImage(liquid, 0, 0);
     ctx.restore();
