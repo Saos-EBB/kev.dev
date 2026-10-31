@@ -124,6 +124,16 @@
   font-size: 0.8rem;
 }
 
+/* Long lines fade out at the right edge instead of being cut mid-word. */
+.ctile-viz::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 2.5rem;
+  background: linear-gradient(90deg, transparent, var(--projects-bg));
+  pointer-events: none;
+}
+
 /* The preview doesn't run here: don't promise it. */
 .ctile-viz .viz-hud--br {
   display: none;
