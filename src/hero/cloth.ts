@@ -98,21 +98,6 @@ const TOUCH_SLOP = 8; // px a finger may wobble before it counts as a move
 // and it keeps the per-frame triangle-draw count cheap.
 const WARP_STEP = 4;
 
-interface Node {
-  x: number;
-  y: number;
-  px: number;
-  py: number;
-  ox: number;
-  oy: number;
-}
-
-interface Constraint {
-  a: number;
-  b: number;
-  restLength: number;
-}
-
 interface Rect {
   x: number;
   y: number;
@@ -136,9 +121,16 @@ interface WarpCell {
 export class Cloth {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private nodes: Node[] = [];
-  private constraints: Constraint[] = [];
-  // The same pairs as flat index arrays for the solver's hot loop.
+  // One flat array per node field: these loops run over every node and edge
+  // several times per step, and objects were most of what that cost.
+  private nodeCount = 0;
+  private nx = new Float64Array(0);
+  private ny = new Float64Array(0);
+  private npx = new Float64Array(0);
+  private npy = new Float64Array(0);
+  private nox = new Float64Array(0);
+  private noy = new Float64Array(0);
+  // Every grid edge as a pair of node indices; all rest at SPACING.
   private conA = new Int32Array(0);
   private conB = new Int32Array(0);
   private cols = 0;
@@ -179,6 +171,8 @@ export class Cloth {
   // cost every frame of the rest of the page.
   private onScreen = true;
   private running = false;
+  private held = false;
+  private raf = 0;
 
   // Whichever node update() is currently pinning/pulling this frame —
   // either the click-drag grab or the nearest node under a plain hover.
@@ -276,10 +270,19 @@ export class Cloth {
   }
 
   private syncRunning() {
-    const shouldRun = this.onScreen && !document.hidden;
+    const shouldRun = this.onScreen && !document.hidden && !this.held;
     if (shouldRun === this.running) return;
     this.running = shouldRun;
-    if (shouldRun) requestAnimationFrame(this.loop);
+    cancelAnimationFrame(this.raf);
+    this.lastFrame = 0;
+    if (shouldRun) this.raf = requestAnimationFrame(this.loop);
+  }
+
+  // Public: stops the simulation while something covers the hero completely.
+  hold(on: boolean) {
+    if (this.reducedMotion) return;
+    this.held = on;
+    this.syncRunning();
   }
 
   // Public: whether the hero is currently animating — main.ts's name
@@ -320,10 +323,9 @@ export class Cloth {
   private nearestRestNodeIndex(x: number, y: number): number {
     let nearest = -1;
     let nearestDistSq = Infinity;
-    for (let i = 0; i < this.nodes.length; i++) {
-      const n = this.nodes[i];
-      const dx = n.ox - x;
-      const dy = n.oy - y;
+    for (let i = 0; i < this.nodeCount; i++) {
+      const dx = this.nox[i] - x;
+      const dy = this.noy[i] - y;
       const distSq = dx * dx + dy * dy;
       if (distSq < nearestDistSq) {
         nearestDistSq = distSq;
@@ -338,17 +340,16 @@ export class Cloth {
   // of textRect, the shared box the two lines share) and hauls it up to
   // the hero's opposite top-right corner. cloth-pulls
   private startIntroPull() {
-    if (this.nodes.length === 0 || this.textRect.width <= 0) return;
+    if (this.nodeCount === 0 || this.textRect.width <= 0) return;
     const grabX = this.textRect.x + 8;
     const grabY = this.textRect.y + this.textRect.height * 0.5;
     const nodeIndex = this.nearestRestNodeIndex(grabX, grabY);
     if (nodeIndex === -1) return;
-    const node = this.nodes[nodeIndex];
 
     this.autoPull = {
       nodeIndex,
-      fromX: node.x,
-      fromY: node.y,
+      fromX: this.nx[nodeIndex],
+      fromY: this.ny[nodeIndex],
       toX: this.width * 0.88,
       toY: this.height * 0.12,
       startTime: performance.now(),
@@ -372,27 +373,27 @@ export class Cloth {
   }
 
   private startIdlePull() {
-    if (this.nodes.length === 0) return;
+    if (this.nodeCount === 0) return;
     const offscreen: number[] = [];
-    for (let i = 0; i < this.nodes.length; i++) {
-      const n = this.nodes[i];
-      if (n.ox < 0 || n.ox > this.width || n.oy < 0 || n.oy > this.height) {
+    for (let i = 0; i < this.nodeCount; i++) {
+      const ox = this.nox[i], oy = this.noy[i];
+      if (ox < 0 || ox > this.width || oy < 0 || oy > this.height) {
         offscreen.push(i);
       }
     }
     if (offscreen.length === 0) return;
     const nodeIndex = offscreen[Math.floor(Math.random() * offscreen.length)];
-    const node = this.nodes[nodeIndex];
+    const fromX = this.nx[nodeIndex], fromY = this.ny[nodeIndex];
 
     const angle = rand(0, Math.PI * 2);
     const distance = rand(IDLE_DISTANCE_MIN, IDLE_DISTANCE_MAX);
 
     this.autoPull = {
       nodeIndex,
-      fromX: node.x,
-      fromY: node.y,
-      toX: node.x + Math.cos(angle) * distance,
-      toY: node.y + Math.sin(angle) * distance,
+      fromX,
+      fromY,
+      toX: fromX + Math.cos(angle) * distance,
+      toY: fromY + Math.sin(angle) * distance,
       startTime: performance.now(),
       pullMs: IDLE_PULL_MS,
       holdMs: IDLE_HOLD_MS,
@@ -479,39 +480,43 @@ export class Cloth {
     const offsetX = restX + (restW - gridWidth) / 2;
     const offsetY = restY + (restH - gridHeight) / 2;
 
-    this.nodes = [];
+    const count = (this.nodeCount = this.cols * this.rows);
+    this.nox = new Float64Array(count);
+    this.noy = new Float64Array(count);
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
-        const x = offsetX + c * SPACING;
-        const y = offsetY + r * SPACING;
-        this.nodes.push({ x, y, px: x, py: y, ox: x, oy: y });
+        const i = r * this.cols + c;
+        this.nox[i] = offsetX + c * SPACING;
+        this.noy[i] = offsetY + r * SPACING;
       }
     }
+    this.nx = this.nox.slice();
+    this.ny = this.noy.slice();
+    this.npx = this.nox.slice();
+    this.npy = this.noy.slice();
 
     this.gridDrift = makeGridDrift( // cloth-drift
       Array.from({ length: this.cols }, (_, c) => offsetX + c * SPACING),
       Array.from({ length: this.rows }, (_, r) => offsetY + r * SPACING),
     );
 
-    this.constraints = [];
+    const edges = Math.max(0, (this.cols - 1) * this.rows + this.cols * (this.rows - 1));
+    this.conA = new Int32Array(edges);
+    this.conB = new Int32Array(edges);
+    let edge = 0;
     for (let r = 0; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const i = r * this.cols + c;
         if (c < this.cols - 1) {
-          this.constraints.push({ a: i, b: i + 1, restLength: SPACING });
+          this.conA[edge] = i;
+          this.conB[edge++] = i + 1;
         }
         if (r < this.rows - 1) {
-          this.constraints.push({
-            a: i,
-            b: i + this.cols,
-            restLength: SPACING,
-          });
+          this.conA[edge] = i;
+          this.conB[edge++] = i + this.cols;
         }
       }
     }
-
-    this.conA = Int32Array.from(this.constraints, (k) => k.a);
-    this.conB = Int32Array.from(this.constraints, (k) => k.b);
 
     this.buildWarpCells();
   }
@@ -536,10 +541,10 @@ export class Cloth {
     const texW = this.textTexture.width;
     const texH = this.textTexture.height;
 
-    const uvOf = (nodeIndex: number) => {
-      const n = this.nodes[nodeIndex];
-      return { u: (n.ox - tx) / tw, v: (n.oy - ty) / th };
-    };
+    const uvOf = (nodeIndex: number) => ({
+      u: (this.nox[nodeIndex] - tx) / tw,
+      v: (this.noy[nodeIndex] - ty) / th,
+    });
 
     for (let r = 0; r + WARP_STEP < this.rows; r += WARP_STEP) {
       for (let c = 0; c + WARP_STEP < this.cols; c += WARP_STEP) {
@@ -635,9 +640,8 @@ export class Cloth {
     const py = clientY - rect.top;
     let nearest = -1;
     let nearestDist = GRAB_RADIUS;
-    for (let i = 0; i < this.nodes.length; i++) {
-      const node = this.nodes[i];
-      const d = Math.hypot(node.x - px, node.y - py);
+    for (let i = 0; i < this.nodeCount; i++) {
+      const d = Math.hypot(this.nx[i] - px, this.ny[i] - py);
       if (d < nearestDist) {
         nearestDist = d;
         nearest = i;
@@ -712,19 +716,19 @@ export class Cloth {
 
   private update() {
     if (DRIFT_ENABLED) this.gridDrift?.update(performance.now() / 1000); // cloth-drift
-    const cols = this.cols;
-    for (let i = 0; i < this.nodes.length; i++) {
-      const node = this.nodes[i];
-      const vx = (node.x - node.px) * DAMPING;
-      const vy = (node.y - node.py) * DAMPING;
-      node.px = node.x;
-      node.py = node.y;
-      node.x += vx;
-      node.y += vy + GRAVITY;
+    const cols = this.cols, count = this.nodeCount;
+    const nx = this.nx, ny = this.ny, npx = this.npx, npy = this.npy, nox = this.nox, noy = this.noy;
+    for (let i = 0; i < count; i++) {
+      const x = nx[i], y = ny[i];
+      const vx = (x - npx[i]) * DAMPING;
+      const vy = (y - npy[i]) * DAMPING;
+      npx[i] = x;
+      npy[i] = y;
       // Spring back toward the resting grid position.
       if (DRIFT_ENABLED) this.gridDrift?.at(i % cols, (i / cols) | 0, this.drift); // cloth-drift
-      node.x += (node.ox + this.drift.x - node.x) * ANCHOR_K;
-      node.y += (node.oy + this.drift.y - node.y) * ANCHOR_K;
+      const mx = x + vx, my = y + vy + GRAVITY;
+      nx[i] = mx + (nox[i] + this.drift.x - mx) * ANCHOR_K;
+      ny[i] = my + (noy[i] + this.drift.y - my) * ANCHOR_K;
     }
 
     // Pick which single node this frame pins/pulls, and toward what
@@ -752,10 +756,9 @@ export class Cloth {
     } else if (this.pointerActive) {
       let nearest = -1;
       let nearestDistSq = HOVER_RADIUS_SQ;
-      for (let i = 0; i < this.nodes.length; i++) {
-        const n = this.nodes[i];
-        const dx = this.pointerX - n.x;
-        const dy = this.pointerY - n.y;
+      for (let i = 0; i < count; i++) {
+        const dx = this.pointerX - nx[i];
+        const dy = this.pointerY - ny[i];
         const distSq = dx * dx + dy * dy;
         if (distSq < nearestDistSq) {
           nearestDistSq = distSq;
@@ -769,9 +772,9 @@ export class Cloth {
     }
 
     if (this.activeIndex !== -1) {
-      const node = this.nodes[this.activeIndex];
-      node.x += (targetX - node.x) * pullStrength;
-      node.y += (targetY - node.y) * pullStrength;
+      const i = this.activeIndex;
+      nx[i] += (targetX - nx[i]) * pullStrength;
+      ny[i] += (targetY - ny[i]) * pullStrength;
     }
 
     const iterations = IS_LITE ? ITERATIONS_LITE : ITERATIONS;
@@ -783,15 +786,13 @@ export class Cloth {
   private satisfyConstraints() {
     const grabbed = this.activeIndex;
 
-    const conA = this.conA, conB = this.conB, nodes = this.nodes;
+    const conA = this.conA, conB = this.conB, nx = this.nx, ny = this.ny;
     // every constraint is one grid edge, so they all share SPACING as rest length
     const restLength = SPACING;
     for (let k = 0; k < conA.length; k++) {
       const a = conA[k], b = conB[k];
-      const nodeA = nodes[a];
-      const nodeB = nodes[b];
-      const dx = nodeB.x - nodeA.x;
-      const dy = nodeB.y - nodeA.y;
+      const dx = nx[b] - nx[a];
+      const dy = ny[b] - ny[a];
       // sqrt, not Math.hypot: hypot guards against overflow we can't hit
       // here and is several times slower — this line runs per constraint,
       // per pass, per frame.
@@ -800,20 +801,17 @@ export class Cloth {
       const offsetX = dx * 0.5 * diff;
       const offsetY = dy * 0.5 * diff;
 
-      const aPinned = a === grabbed;
-      const bPinned = b === grabbed;
-
-      if (aPinned) {
-        nodeB.x -= offsetX * 2;
-        nodeB.y -= offsetY * 2;
-      } else if (bPinned) {
-        nodeA.x += offsetX * 2;
-        nodeA.y += offsetY * 2;
+      if (a === grabbed) {
+        nx[b] -= offsetX * 2;
+        ny[b] -= offsetY * 2;
+      } else if (b === grabbed) {
+        nx[a] += offsetX * 2;
+        ny[a] += offsetY * 2;
       } else {
-        nodeA.x += offsetX;
-        nodeA.y += offsetY;
-        nodeB.x -= offsetX;
-        nodeB.y -= offsetY;
+        nx[a] += offsetX;
+        ny[a] += offsetY;
+        nx[b] -= offsetX;
+        ny[b] -= offsetY;
       }
     }
   }
@@ -877,17 +875,16 @@ export class Cloth {
     // Most of the mesh rests outside the card (REST_EXPANSE): skip lines
     // that lie entirely off one side of it instead of stroking them unseen.
     const w = this.width + 2, h = this.height + 2;
-    for (let i = 0; i < this.constraints.length; i++) {
-      const { a, b, restLength } = this.constraints[i];
-      const nodeA = this.nodes[a];
-      const nodeB = this.nodes[b];
+    const conA = this.conA, conB = this.conB, nx = this.nx, ny = this.ny;
+    for (let i = 0; i < conA.length; i++) {
+      const ax = nx[conA[i]], ay = ny[conA[i]], bx = nx[conB[i]], by = ny[conB[i]];
       if (
-        (nodeA.x < -2 && nodeB.x < -2) || (nodeA.x > w && nodeB.x > w) ||
-        (nodeA.y < -2 && nodeB.y < -2) || (nodeA.y > h && nodeB.y > h)
+        (ax < -2 && bx < -2) || (ax > w && bx > w) ||
+        (ay < -2 && by < -2) || (ay > h && by > h)
       ) continue;
-      const ex = nodeB.x - nodeA.x, ey = nodeB.y - nodeA.y;
+      const ex = bx - ax, ey = by - ay;
       const dist = Math.sqrt(ex * ex + ey * ey);
-      const stretch = Math.abs(dist - restLength) / restLength;
+      const stretch = Math.abs(dist - SPACING) / SPACING;
       const step = Math.min(
         Math.floor((stretch / this.LIGHT_STRETCH_CAP) * this.LIGHT_STEPS),
         this.LIGHT_STEPS - 1,
@@ -901,11 +898,9 @@ export class Cloth {
       ctx.strokeStyle = this.stepColors[step];
       ctx.beginPath();
       for (const idx of indices) {
-        const { a, b } = this.constraints[idx];
-        const nodeA = this.nodes[a];
-        const nodeB = this.nodes[b];
-        ctx.moveTo(nodeA.x, nodeA.y);
-        ctx.lineTo(nodeB.x, nodeB.y);
+        const a = conA[idx], b = conB[idx];
+        ctx.moveTo(nx[a], ny[a]);
+        ctx.lineTo(nx[b], ny[b]);
       }
       ctx.stroke();
     }
@@ -952,10 +947,8 @@ export class Cloth {
   // destination one.
   private drawWarpedText(ctx: CanvasRenderingContext2D, tex: HTMLCanvasElement) {
     for (const cell of this.warpCells) {
-      const tl = this.nodes[cell.tl];
-      const tr = this.nodes[cell.tr];
-      const bl = this.nodes[cell.bl];
-      const br = this.nodes[cell.br];
+      const { tl, tr, bl, br } = cell;
+      const nx = this.nx, ny = this.ny;
 
       drawTriangle(
         ctx,
@@ -966,12 +959,12 @@ export class Cloth {
         cell.sv0,
         cell.su0,
         cell.sv1,
-        tl.x,
-        tl.y,
-        tr.x,
-        tr.y,
-        bl.x,
-        bl.y,
+        nx[tl],
+        ny[tl],
+        nx[tr],
+        ny[tr],
+        nx[bl],
+        ny[bl],
       );
       drawTriangle(
         ctx,
@@ -982,12 +975,12 @@ export class Cloth {
         cell.sv1,
         cell.su0,
         cell.sv1,
-        tr.x,
-        tr.y,
-        br.x,
-        br.y,
-        bl.x,
-        bl.y,
+        nx[tr],
+        ny[tr],
+        nx[br],
+        ny[br],
+        nx[bl],
+        ny[bl],
       );
     }
   }
@@ -1012,7 +1005,7 @@ export class Cloth {
     }
     if (this.simClock > STEP_MS) this.simClock = 0;
     if (steps > 0) this.draw();
-    requestAnimationFrame(this.loop);
+    this.raf = requestAnimationFrame(this.loop);
   };
 }
 
