@@ -860,7 +860,8 @@ export class Cloth {
       const mb = Math.round(b + (255 - b) * mix);
       // White on burgundy: a low alpha would turn the lines pink, so light stays solid.
       const light = document.documentElement.getAttribute("data-theme") === "light";
-      const alpha = light ? 0.6 + t * 0.4 : this.ALPHA_MIN + t * (this.ALPHA_MAX - this.ALPHA_MIN);
+      // Phones scale the canvas up (see resize), which thins the lines further: fully solid there.
+      const alpha = light ? (IS_LITE ? 1 : 0.6 + t * 0.4) : this.ALPHA_MIN + t * (this.ALPHA_MAX - this.ALPHA_MIN);
       this.stepColors.push(`rgba(${mr}, ${mg}, ${mb}, ${alpha.toFixed(2)})`);
     }
   }
