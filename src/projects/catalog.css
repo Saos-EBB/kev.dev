@@ -155,18 +155,19 @@
   padding: 0.05rem 0.5rem;
   border: 1px solid color-mix(in srgb, var(--pc) 40%, transparent);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--color-text-muted);
 }
 
 .ctile-open {
   flex: none;
-  padding: 0.65rem 0.9rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
   border: 1px solid var(--pc-soft);
   background: none;
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
@@ -216,12 +217,13 @@
   top: 1rem;
   right: 1rem;
   z-index: 1;
-  padding: 0.65rem 0.9rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
   border: 1px solid var(--color-line);
   background: var(--projects-bg);
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
