@@ -28,7 +28,7 @@ import { initSkullContact, getSkullContactRevealScrollY } from "./contact/skull/
 import { initScrollProgress } from "./scroll/progress";
 import { initEdgeNav } from "./scroll/edge-nav";
 import { initBoxToGridTransition } from "./scroll/transition";
-import { mountSaosLoader } from "./intro/saos-intro";
+import { mountBalloonLoader } from "./intro/balloon-loader";
 import { LITE, LITE_QUERY, makeHeightOnlyResizeFilter, viewportHeight } from "./viewport";
 import { closeProjectSheet, initProjectSheet } from "./projects/project-sheet";
 import { initProjectWheel } from "./projects/project-wheel";
@@ -726,7 +726,7 @@ if (pageLoaded) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Loader / intro overlay.
-// First visit (dev: always; prod: first session): SAOS loader with color fill.
+// First visit (dev: always; prod: first session): the SAOS balloons, pumped up and burst.
 // Return visit: no animation, gate B opens immediately, gate A still required.
 // ─────────────────────────────────────────────────────────────────────────────
 const INTRO_SEEN_KEY = "saos-intro-seen";
@@ -748,8 +748,8 @@ let loaderHandle: { setProgress: (p: number) => void } | null = null;
 lenis.stop(); // held in all cases until maybeStart()
 
 if (shouldPlayIntro()) {
-  loaderHandle = mountSaosLoader(overlayEl, () => {
-    // Shatter animation done — mark intro complete and store the flag.
+  loaderHandle = mountBalloonLoader(overlayEl, () => {
+    // Burst done — mark intro complete and store the flag.
     if (import.meta.env.PROD) {
       try { sessionStorage.setItem(INTRO_SEEN_KEY, "1"); } catch { /* blocked */ }
     }
@@ -767,7 +767,7 @@ if (shouldPlayIntro()) {
   // 0.75 when fonts settle (may fire before or after window.load).
   document.fonts.ready.then(() => loaderHandle?.setProgress(0.75));
 
-  // 1.0 from the window.load listener above (sets gate A + triggers shatter).
+  // 1.0 from the window.load listener above (sets gate A + lets them burst).
   // If window.load already fired (pageLoaded === true), push it now.
   if (pageLoaded) loaderHandle.setProgress(1.0);
 } else {
