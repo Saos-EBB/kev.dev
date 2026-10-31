@@ -2,19 +2,13 @@
 // craniumCut01 skull from the 2D renderer's models, turned to face the
 // camera, and an extruded saw blade.
 import * as THREE from "three";
-
-interface Model { vs: { x: number; y: number; z: number }[]; fs: number[][] }
+import { loadCranium } from "../projects/widgets/renderer-models/cranium";
 
 export const BLADE_R = 0.62;
 const BLADE_R_IN = 0.53;
 
-const loaders = import.meta.glob("../projects/widgets/renderer-models/craniumCut01.js") as Record<
-  string,
-  () => Promise<{ default: Model }>
->;
-
 export async function loadSkullGeometry() {
-  const m = (await Object.values(loaders)[0]()).default;
+  const m = await loadCranium();
   const pos = new Float32Array(m.vs.length * 3);
   // model: face +y, vault -z  →  three: face +z (camera), vault +y
   m.vs.forEach((v, i) => { pos[i * 3] = v.x; pos[i * 3 + 1] = -v.z; pos[i * 3 + 2] = v.y; });

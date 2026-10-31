@@ -8,7 +8,7 @@
 // pool); without one they fade out at the end of their life, mid-air.
 import * as THREE from "three";
 
-export const JET = 3.6; // s the wound keeps spurting
+const JET = 3.6; // s the wound keeps spurting
 const PULSES = 7;
 const LIFE: [number, number] = [0.8, 1.7];
 const SPEED: [number, number] = [1.8, 4.8];
@@ -47,7 +47,8 @@ const BLOOD_VERT = /* glsl */ `
     vec4 mv = modelViewMatrix * vec4(position + p, 1.0);
     gl_Position = projectionMatrix * mv;
     // in flight it shrinks a little; landed it splats wider
-    gl_PointSize = aSize * mix(1.0 - 0.25 * vF, 1.3, vLanded) * uPx / -mv.z;
+    // (capped: a drop right in front of the camera would cover the screen)
+    gl_PointSize = min(aSize * mix(1.0 - 0.25 * vF, 1.3, vLanded) / -mv.z, 110.0) * uPx;
   }
 `;
 
@@ -92,8 +93,15 @@ export function createBlood(o: {
   px: number; // the renderer's pixel ratio
   floorY?: number; // a floor to collect on (parent space); none: no pool
   maxZ?: number; // cap on a drop's direction towards the camera
+  jet?: number; // s the wound keeps spurting (default JET)
+  pulses?: number; // how many spurts (default PULSES)
+  pressure?: number; // factor on the drops' speed (default 1)
+  dropSize?: number; // factor on the drops' size (default 1)
 }): Blood {
   const pool = o.floorY !== undefined;
+  const jet = o.jet ?? JET, pulses = o.pulses ?? PULSES, pressure = o.pressure ?? 1, dropSize = o.dropSize ?? 1;
+  let weights = 0;
+  for (let n = 0; n < pulses; n++) weights += 1 / (n + 1);
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(o.count * 3);
   const birth = new Float32Array(o.count), life = new Float32Array(o.count);
@@ -104,13 +112,13 @@ export function createBlood(o: {
     pos.set([o.hit.x, o.hit.y, o.hit.z], i * 3);
     // which spurt: earlier ones get more drops (weight 1/(n+1))
     let n = 0;
-    for (let r = Math.random() * 2.6; n < PULSES - 1 && r > 1 / (n + 1); n++) r -= 1 / (n + 1);
-    const strength = 1 - n / PULSES;
-    birth[i] = (n * JET) / PULSES + Math.random() * 0.12;
+    for (let r = Math.random() * weights; n < pulses - 1 && r > 1 / (n + 1); n++) r -= 1 / (n + 1);
+    const strength = 1 - n / pulses;
+    birth[i] = (n * jet) / pulses + Math.random() * 0.12;
     life[i] = rand(LIFE);
-    speed[i] = rand(SPEED) * (0.55 + 0.6 * strength);
+    speed[i] = rand(SPEED) * (0.55 + 0.6 * strength) * pressure;
     // mostly fine spray, every few a fat gob
-    size[i] = Math.random() < 0.12 ? 90 + Math.random() * 80 : 18 + Math.random() * 45;
+    size[i] = (Math.random() < 0.12 ? 90 + Math.random() * 80 : 18 + Math.random() * 45) * dropSize;
     d3.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.9).add(o.axis).normalize();
     if (o.maxZ !== undefined) d3.z = Math.min(d3.z, o.maxZ);
     dirs.set([d3.x, d3.y, d3.z], i * 3);
@@ -145,6 +153,6 @@ export function createBlood(o: {
     recolor() { dark.copy(o.ink).multiplyScalar(0.3); },
     // pool: until the last drop can have landed (the latest spurt + the
     // longest fall); no pool: until the last drop's life is over
-    duration: JET + (pool ? (SPEED[1] + Math.sqrt(SPEED[1] ** 2 + 2 * GRAVITY * 4)) / GRAVITY : LIFE[1]),
+    duration: jet + (pool ? (SPEED[1] * pressure + Math.sqrt((SPEED[1] * pressure) ** 2 + 2 * GRAVITY * 4)) / GRAVITY : LIFE[1]),
   };
 }

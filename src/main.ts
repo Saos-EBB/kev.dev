@@ -289,24 +289,31 @@ function fitToWidth(el: HTMLElement, targetWidth: number) {
   el.style.fontSize = `${(targetWidth / naturalWidth) * probeSize}px`;
 }
 
-// Same, for a block that already spans its container (so scrollWidth would
+// Same, for blocks that already span their container (so scrollWidth would
 // just report the container): probe the text's natural width shrink-wrapped.
-// maxHeightFrac caps the block's total height (line-height is 1, so font
+// maxHeightFrac caps a block's total height (line-height is 1, so font
 // size + vertical padding) at that share of the viewport — on wide screens
 // a full-width line would otherwise eat the space the projects need.
-function fitBlockToWidth(el: HTMLElement, maxHeightFrac = 1) {
-  const style = getComputedStyle(el);
-  const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-  const targetWidth = el.clientWidth - paddingX;
-  if (targetWidth <= 0) return; // display:none
+// All probes go in, then all reads: one forced layout, not one per block.
+function fitBlocksToWidth(els: HTMLElement[], maxHeightFrac = 1) {
   const probeSize = 100;
-  el.style.width = "max-content";
-  el.style.fontSize = `${probeSize}px`;
-  const naturalWidth = el.scrollWidth - paddingX || 1;
-  el.style.width = "";
-  const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const maxFont = Math.max(0, viewportHeight() * maxHeightFrac - paddingY);
-  el.style.fontSize = `${Math.min((targetWidth / naturalWidth) * probeSize, maxFont)}px`;
+  const blocks = els.flatMap((el) => {
+    const style = getComputedStyle(el);
+    const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const targetWidth = el.clientWidth - paddingX;
+    return targetWidth > 0 ? [{ el, style, paddingX, targetWidth }] : []; // 0: display:none
+  });
+  for (const { el } of blocks) {
+    el.style.width = "max-content";
+    el.style.fontSize = `${probeSize}px`;
+  }
+  const measured = blocks.map((b) => ({ ...b, naturalWidth: b.el.scrollWidth - b.paddingX || 1 }));
+  for (const { el } of blocks) el.style.width = "";
+  for (const { el, style, targetWidth, naturalWidth } of measured) {
+    const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+    const maxFont = Math.max(0, viewportHeight() * maxHeightFrac - paddingY);
+    el.style.fontSize = `${Math.min((targetWidth / naturalWidth) * probeSize, maxFont)}px`;
+  }
 }
 
 // Which name needs the most *rendered* width, not the most characters:
@@ -363,7 +370,7 @@ const projectsTitles = document.querySelectorAll<HTMLElement>(
   ".projects-title, .projects-headline",
 );
 function fitProjectsTitles() {
-  projectsTitles.forEach((el) => fitBlockToWidth(el, PROJECTS_TITLE_MAX_VH));
+  fitBlocksToWidth([...projectsTitles], PROJECTS_TITLE_MAX_VH);
   const headline = document.querySelector<HTMLElement>(".projects-headline");
   if (headline) {
     document.documentElement.style.setProperty(

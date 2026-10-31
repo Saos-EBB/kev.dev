@@ -8,7 +8,7 @@
 
 import type { EngFlow, EngProject } from "../engineering/types";
 import { esc, TENANT_MODULES, type ProjectCard } from "./project-cards";
-import { fitText } from "./big-cards";
+import { fitText, whenProjectsNear } from "./big-cards";
 import { LANG, pick, type Lang } from "../i18n";
 import { paintStates, phoneApp, reduced, type Phone } from "./scroll-phone";
 import { rideTo } from "./carousel";
@@ -127,7 +127,9 @@ export function initYourBrand(el: HTMLElement, card: ProjectCard, phone: Phone) 
     at = (e as CustomEvent<number>).detail;
     onRide(at);
   });
-  import("../engineering/data/yourbrand").then((m) => (onRide = ride(el, card, m.yourbrand, phone, at)));
+  whenProjectsNear(el, () => {
+    import("../engineering/data/yourbrand").then((m) => (onRide = ride(el, card, m.yourbrand, phone, at)));
+  });
 }
 
 interface Step {

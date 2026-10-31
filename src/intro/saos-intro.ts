@@ -372,30 +372,10 @@ export function mountSaosLoader(
     shown += (target - shown) * (1 - Math.exp(-dt * 8));
     if (target >= 1 && shown > 0.97) shown = 1;
     render(shown, (now - start) / 1000);
-    if (shown >= 1) {
-      shardImage ??= encodeShardImage();
-      settleTimer ??= setTimeout(triggerShatter, SETTLE_MS);
-    }
+    if (shown >= 1) settleTimer ??= setTimeout(triggerShatter, SETTLE_MS);
     else raf = requestAnimationFrame(frame);
   }
   raf = requestAnimationFrame(frame);
-
-  // The full pour canvas as an image for the shards, encoded during the
-  // settle beat with toBlob (off the main thread). toDataURL at the moment
-  // of the shatter used to block it: a synchronous PNG encode of a
-  // full-screen canvas, ~60 ms on a laptop and several times that on a phone.
-  let shardImage: Promise<string> | null = null;
-  // Decoded up front too, so the shards never show a blank frame while the
-  // canvas underneath is already gone.
-  function encodeShardImage() {
-    return new Promise<string>((resolve) =>
-      canvas.toBlob((blob) => resolve(blob ? URL.createObjectURL(blob) : canvas.toDataURL())),
-    ).then((url) => {
-      const img = new Image();
-      img.src = url;
-      return img.decode().then(() => url, () => url);
-    });
-  }
 
   // Escape / Space = emergency skip in case loading hangs.
   function onKeyDown(e: KeyboardEvent) {
@@ -411,22 +391,38 @@ export function mountSaosLoader(
     shatterFired = true;
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", onKeyDown);
-    // The shards carry the pour canvas as it stands (full, normally).
-    (shardImage ??= encodeShardImage()).then((url) => {
-      if (!destroyed) breakApart(url);
-    });
+    breakApart();
   }
 
-  function breakApart(url: string) {
-    const image = `url(${url})`;
+  // The shards carry the pour canvas as it stands (full, normally): each one
+  // is a small canvas with its piece copied over. Encoding the whole canvas
+  // to an image for them blocked the main thread for over a second.
+  function breakApart() {
     const shards = SHARDS.map((poly, i) => {
-      const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
-      const cy = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
-      const el = document.createElement("div");
+      const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
+      const cx = xs.reduce((sum, x) => sum + x, 0) / poly.length;
+      const cy = ys.reduce((sum, y) => sum + y, 0) / poly.length;
+      // the piece's box in the canvas's pixels, then everything in % of that box
+      const sx = Math.floor((Math.min(...xs) / 100) * canvas.width);
+      const sy = Math.floor((Math.min(...ys) / 100) * canvas.height);
+      const sw = Math.max(1, Math.ceil((Math.max(...xs) / 100) * canvas.width) - sx);
+      const sh = Math.max(1, Math.ceil((Math.max(...ys) / 100) * canvas.height) - sy);
+      const left = (sx / canvas.width) * 100, top = (sy / canvas.height) * 100;
+      const boxW = (sw / canvas.width) * 100, boxH = (sh / canvas.height) * 100;
+      const local = (x: number, y: number) => [((x - left) / boxW) * 100, ((y - top) / boxH) * 100];
+      const el = document.createElement("canvas");
       el.className = "saos-intro-shard";
-      el.style.backgroundImage = image;
-      el.style.clipPath = `polygon(${poly.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
-      el.style.transformOrigin = `${cx}% ${cy}%`;
+      el.width = sw;
+      el.height = sh;
+      el.getContext("2d")!.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+      el.style.inset = "auto";
+      el.style.left = `${left}%`;
+      el.style.top = `${top}%`;
+      el.style.width = `${boxW}%`;
+      el.style.height = `${boxH}%`;
+      el.style.clipPath = `polygon(${poly.map(([x, y]) => local(x, y).map((v) => `${v}%`).join(" ")).join(", ")})`;
+      const [ox, oy] = local(cx, cy);
+      el.style.transformOrigin = `${ox}% ${oy}%`;
       overlayEl.appendChild(el);
       return { el, i, cx, cy };
     });
@@ -434,7 +430,6 @@ export function mountSaosLoader(
 
     const tl = gsap.timeline({
       onComplete: () => {
-        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
         if (!destroyed) onShatterDone();
       },
     });

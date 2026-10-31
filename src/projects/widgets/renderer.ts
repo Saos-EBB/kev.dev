@@ -18,6 +18,7 @@
 import "./renderer.css";
 import type { ProjectCard } from "../project-cards";
 import { UI } from "../../i18n/ui";
+import { loadCranium } from "./renderer-models/cranium";
 
 const escHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -242,8 +243,8 @@ export function mount(host: HTMLElement, card?: ProjectCard) {
     if (!next) {
       status.textContent = UI.rLoading;
       try {
-        const mod = await loaders[`./renderer-models/${id}.js`]();
-        next = buildMesh(mod.default);
+        const model = id === "craniumCut01" ? await loadCranium() : (await loaders[`./renderer-models/${id}.js`]()).default;
+        next = buildMesh(model);
         cache.set(id, next);
       } catch {
         if (requested === id) status.textContent = UI.rError;

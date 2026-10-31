@@ -22,8 +22,8 @@ Full license texts ship with each package in `node_modules/<package>/`.
   (https://www.apache.org/licenses/LICENSE-2.0). Not stored here: the
   FaceDots tool loads it unmodified from Google's model storage, only
   after the visitor consents.
-- `src/projects/widgets/renderer-models/` (ducky, car, pochita30,
-  craniumCut01): 3D models converted for the renderer widget. All of them
+- `src/projects/widgets/renderer-models/` (ducky, car, pochita30) and
+  `public/models/craniumCut01.gzbin`: 3D models converted for the renderer widget. All of them
   are CC0 / public domain models from their respective authors.
   Pochita is a fan model of a character from *Chainsaw Man*
   (© Tatsuki Fujimoto / Shueisha); the character itself belongs to its
@@ -77,7 +77,7 @@ Full license texts ship with each package in `node_modules/<package>/`.
 
 | File | Font | License |
 |---|---|---|
-| `public/fonts/urban-sign.woff` | Urban Sign (Anggi Hermawan / Forberas Type Foundry), converted from OTF to WOFF | Free for personal use (commercial license at creativemarket.com/forberas); used non-commercially on this personal portfolio, not redistributed for other use |
+| `public/fonts/urban-sign.woff2` | Urban Sign (Anggi Hermawan / Forberas Type Foundry), converted from OTF to WOFF2 | Free for personal use (commercial license at creativemarket.com/forberas); used non-commercially on this personal portfolio, not redistributed for other use |
 | `public/fonts/ui/*` | Space Grotesk, Source Serif 4, Courier Prime, JetBrains Mono | SIL Open Font License 1.1 |
 | `public/favicon.svg`, `public/apple-touch-icon.png` | "kev" glyph outlines from Don Graffiti (Juan Miguel Castillo / Don Marciano), converted to SVG paths | Freeware — designer: "If the License is 'Free' do what ever you want with it, even for commercial use" (fontspace.com/don-graffiti-font-f31465) |
 

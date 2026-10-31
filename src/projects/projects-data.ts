@@ -408,12 +408,12 @@ const cards: ProjectCard[] = [
     // postings from its own test fixtures (parsers + regex filter, no
     // scraping, no LLM — so no cover letters in them).
     screenshots: [
-      { src: "/projects/jobbot/inbox.jpg", alt: "Posteingang: gefilterte Stellen nach Fit (Match/Offstack), Inserat geöffnet" },
-      { src: "/projects/jobbot/aussortiert.jpg", alt: "Aussortiert: was der Regex-Filter rausgeworfen hat" },
-      { src: "/projects/jobbot/suche.jpg", alt: "Einstellungsseite „Suche“: Portale und Suchbegriffe im Browser bearbeiten" },
-      { src: "/projects/jobbot/scrape.jpg", alt: "Scrape: Quellen wählen und den Lauf starten" },
+      { src: "/projects/jobbot/inbox.webp", alt: "Posteingang: gefilterte Stellen nach Fit (Match/Offstack), Inserat geöffnet" },
+      { src: "/projects/jobbot/aussortiert.webp", alt: "Aussortiert: was der Regex-Filter rausgeworfen hat" },
+      { src: "/projects/jobbot/suche.webp", alt: "Einstellungsseite „Suche“: Portale und Suchbegriffe im Browser bearbeiten" },
+      { src: "/projects/jobbot/scrape.webp", alt: "Scrape: Quellen wählen und den Lauf starten" },
     ],
-    mascot: { src: "/projects/jobbot.jpeg", alt: "Tschobbo, der lila Slime-Blob mit Sonnenbrille" },
+    mascot: { src: "/projects/jobbot.webp", alt: "Tschobbo, der lila Slime-Blob mit Sonnenbrille" },
     facets: ["screens"],
   },
   {

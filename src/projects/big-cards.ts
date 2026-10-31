@@ -120,6 +120,18 @@ function partsCard(card: ProjectCard, head: string): string {
 const FIT_BOXES = ".big-panel, .parts-panel";
 const MIN_FIT = 0.65;
 
+// Runs `load` once the projects section is within a screen of the viewport.
+// Watches the section, not the card: the carousel's clipping would hide a
+// card from an observer until it's already on screen.
+export function whenProjectsNear(el: HTMLElement, load: () => void) {
+  const io = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    io.disconnect();
+    load();
+  }, { rootMargin: "100% 0px" });
+  io.observe(el.closest("section") ?? el);
+}
+
 export function fitText(el: HTMLElement) {
   if (el.hidden || !el.clientHeight) return;
   let fit = 1;
