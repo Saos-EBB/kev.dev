@@ -16,10 +16,10 @@
 // centre is linear in the same e(t), so x, y and scale share the ease.
 //
 // Handover: the screen carries the same grid tile as `.projects-bg-grid`,
-// sized (cell = --grid-cell / maxScale) and phased so that at full zoom its
-// lines ARE the projects grid's lines. When the pin releases the zoomed
-// screen scrolls off exactly as #projects scrolls in below it, so there is
-// nothing to switch and nothing to jump. The project cards live in
+// scaled down by maxScale and phased so that at full zoom its lines ARE the
+// projects grid's lines. When the pin releases the zoomed screen scrolls off
+// exactly as #projects scrolls in below it, so there is nothing to switch and
+// nothing to jump. The project cards live in
 // #projects, outside the zoom, so they are never scaled and only appear
 // with the carousel; the fixed .projects-headline fades in at the end of
 // the zoom.
@@ -99,22 +99,16 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     const vh = viewportHeight();
     const root = getComputedStyle(document.documentElement);
     const cell = parseFloat(root.getPropertyValue("--grid-cell"));
-    const line = parseFloat(root.getPropertyValue("--grid-line"));
 
     // Covers the viewport: the screen fills one dimension and overflows the
     // other. The hair of margin keeps sub-pixel layout rounding from
     // letting a sliver of the monitor's frame show at the edge.
-    // The screen's tile is --grid-cell / maxScale, and the browser lays
-    // backgrounds out in 1/64 px steps — a tile that isn't one of those
-    // steps gets rounded, and at ~30x zoom that rounding adds up to several
-    // pixels across the viewport (the grid visibly jumped at the handover).
-    // So the tile is snapped down to a 1/64 step first and the scale
-    // derived from it: tile x maxScale is then exactly --grid-cell, and
-    // snapping down only ever zooms a hair further (still covering).
-    const snap = (v: number) => Math.floor(v * 64) / 64;
-    const coverScale = Math.max(vw / s.width, vh / s.height) * COVER_MARGIN;
-    const screenCell = snap(cell / coverScale);
-    maxScale = cell / screenCell;
+    // The grid isn't a tiny tile blown up: browsers round tile sizes to their
+    // own layout unit (Chromium 1/64 px, Firefox 1/60 px), and at this zoom
+    // that adds up to visible drift. .office-screen::before paints it at full
+    // size and is scaled down by this same factor, so at full zoom it renders
+    // 1:1, the same pixels as the projects grid in every browser.
+    maxScale = Math.max(vw / s.width, vh / s.height) * COVER_MARGIN;
 
     // Screen centre → viewport centre, where the viewport centre sits in
     // the wrapper once #about is pinned (its bottom on the viewport's).
@@ -131,27 +125,16 @@ export function initBoxToGridTransition(aboutSection: HTMLElement) {
     // a cell-wide tile resolves to exactly half the width), else on 0.
     // Matched by the shared breakpoint, not read off the element:
     // getComputedStyle() hands back the unresolved calc() string.
-    // The offset is snapped like the tile; what the snap leaves over
-    // (under maxScale / 64 px on screen) is taken up by the end translate.
     const isBento = window.matchMedia(`(min-width: ${BENTO_MIN_WIDTH_PX}px)`).matches;
     const targetX = isBento ? vw / 2 : 0;
     const targetY = vh;
     const phase = (v: number) => ((v % cell) + cell) % cell;
-    const signed = (v: number) => {
-      const p = phase(v);
-      return p > cell / 2 ? p - cell : p;
-    };
     // Screen's top-left on screen at full zoom (wrapper top = vh - z.height).
     const left = endX + maxScale * sx;
     const top = vh - z.height + endY + maxScale * sy;
-    const ox = snap(phase(targetX - left) / maxScale);
-    const oy = snap(phase(targetY - top) / maxScale);
-    endX += signed(targetX - (left + maxScale * ox));
-    endY += signed(targetY - (top + maxScale * oy));
-    screen.style.setProperty("--screen-cell", `${screenCell}px`);
-    screen.style.setProperty("--screen-line", `${line / maxScale}px`);
-    screen.style.setProperty("--screen-ox", `${ox}px`);
-    screen.style.setProperty("--screen-oy", `${oy}px`);
+    screen.style.setProperty("--screen-scale", `${maxScale}`);
+    screen.style.setProperty("--screen-ox", `${phase(targetX - left)}px`);
+    screen.style.setProperty("--screen-oy", `${phase(targetY - top)}px`);
   };
   measure();
 

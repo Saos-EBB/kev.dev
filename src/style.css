@@ -637,25 +637,37 @@ button:focus-visible {
 }
 
 /* The monitor's screen: a live HTML box, placed by transition.ts over the
-   bounding box of the SVG's #screen rect. Same grid tile as
-   .projects-bg-grid; transition.ts sets --screen-cell/-line/-ox/-oy so that
-   at full zoom the tile is exactly --grid-cell and its lines fall on the
-   projects grid's lines (cell = --grid-cell / maxScale). */
+   bounding box of the SVG's #screen rect. The grid sits on ::before: the same
+   tile as .projects-bg-grid at full size, scaled down by the zoom's end scale
+   (--screen-scale), so at full zoom it renders 1:1 and its lines fall on the
+   projects grid's lines. --screen-ox/-oy set by transition.ts phase it. */
 .office-screen {
   position: absolute;
+  overflow: hidden;
   background-color: var(--about-bg);
+}
+
+.office-screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% * var(--screen-scale, 8));
+  height: calc(100% * var(--screen-scale, 8));
+  transform: scale(calc(1 / var(--screen-scale, 8)));
+  transform-origin: 0 0;
   background-image:
     linear-gradient(
       to bottom,
-      var(--grid-ink) 0 var(--screen-line, var(--grid-line)),
-      transparent var(--screen-line, var(--grid-line))
+      var(--grid-ink) 0 var(--grid-line),
+      transparent var(--grid-line)
     ),
     linear-gradient(
       to right,
-      var(--grid-ink) 0 var(--screen-line, var(--grid-line)),
-      transparent var(--screen-line, var(--grid-line))
+      var(--grid-ink) 0 var(--grid-line),
+      transparent var(--grid-line)
     );
-  background-size: var(--screen-cell, calc(var(--grid-cell) / 8)) var(--screen-cell, calc(var(--grid-cell) / 8));
+  background-size: var(--grid-cell) var(--grid-cell);
   background-position: var(--screen-ox, 0) var(--screen-oy, 0);
 }
 
