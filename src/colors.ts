@@ -7,8 +7,10 @@ export const COLORS = {
   line: "#c80032",
 } as const;
 
-// "#rrggbb" -> [r, g, b]
+// "#rrggbb" or "#rgb" -> [r, g, b]. The short form is real: the production
+// build minifies #ffffff to #fff, and the browser hands that back as written.
 export const hexToRgb = (hex: string): [number, number, number] => {
-  const n = parseInt(hex.trim().slice(1), 16);
+  const h = hex.trim().slice(1);
+  const n = parseInt(h.length === 3 ? h.replace(/./g, "$&$&") : h, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };

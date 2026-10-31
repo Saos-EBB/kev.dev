@@ -9,6 +9,7 @@
 // and out and says which card is current (carousel.ts). Desktop only —
 // the big cards don't exist under LITE.
 
+import { hexToRgb } from "../colors";
 import "./scroll-phone.css";
 
 export const reduced = () =>
@@ -163,7 +164,7 @@ export function runPhone(stage: HTMLElement): Phone {
         if (theme !== palTheme) {
           palTheme = theme;
           const list = app.palette();
-          pal = [...list, list[0]].map((h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)));
+          pal = [...list, list[0]].map((h) => hexToRgb(h));
         }
         t = (((t % 1) + 1) % 1) * (pal.length - 1);
         const i = Math.floor(t), f = t - i, a = pal[i], b = pal[i + 1];
