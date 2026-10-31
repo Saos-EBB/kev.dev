@@ -65,6 +65,7 @@ export function renderArcade(card: ProjectCard, index: number, total: number): s
   return `
     <article class="arcade" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
       <p class="pcard-index">${LITE ? indexLine(card, index, total) : `<span>${esc(card.kind)}</span>`}</p>
+      <p class="ctile-claim">${esc(card.claim)}</p>
       <div class="arcade-cab">
         ${LINES}
         <div class="arcade-marquee">${displayText(card.title)}</div>
