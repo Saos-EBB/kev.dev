@@ -2,7 +2,7 @@ import "./theme.css";
 import { UI } from "../i18n/ui";
 
 // Light/dark toggle for the header icon (markup in main.ts, colors in the
-// `:root[data-theme="light"]` override in style.css). Dark is the site's
+// `:root[data-theme="light"]` override in style.css). Light is the site's
 // default look; the choice is remembered in localStorage so a return visit
 // keeps it.
 
@@ -31,13 +31,13 @@ const writeStored = (theme: Theme) => {
 
 // Set on import, not in initThemeToggle: main.ts builds the cloth and the
 // intro from the color tokens before it gets there.
-document.documentElement.setAttribute("data-theme", readStored() ?? "dark");
+document.documentElement.setAttribute("data-theme", readStored() ?? "light");
 
 export function initThemeToggle() {
   const button = document.querySelector<HTMLButtonElement>(".theme-toggle");
   if (!button) return;
 
-  let theme: Theme = readStored() ?? "dark";
+  let theme: Theme = readStored() ?? "light";
 
   const apply = () => {
     document.documentElement.setAttribute("data-theme", theme);
