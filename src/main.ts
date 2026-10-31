@@ -748,6 +748,8 @@ let loaderHandle: { setProgress: (p: number) => void } | null = null;
 lenis.stop(); // held in all cases until maybeStart()
 
 if (shouldPlayIntro()) {
+  // Nothing of the hero shows behind the mirror, so the loader gets the CPU.
+  cloth.hold(true);
   loaderHandle = mountBalloonLoader(overlayEl, () => {
     // Burst done — mark intro complete and store the flag.
     if (import.meta.env.PROD) {
@@ -755,9 +757,10 @@ if (shouldPlayIntro()) {
     }
     overlayEl.remove();
     introDone = true;
+    cloth.hold(false);
     cloth.startAutoPulls();
     maybeStart();
-  });
+  }, () => cloth.hold(false));
 
   // Progress milestones — monotone, always forward.
   // 0.2 is already implied by the loader mounting.
