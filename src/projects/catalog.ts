@@ -64,6 +64,7 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
       el.hidden = el.dataset.card !== id;
     });
     opener = from;
+    dialog.setAttribute("aria-label", dialog.querySelector(`.catalog-full[data-card="${id}"] .pcard-title`)?.getAttribute("aria-label") ?? UI.projects);
     dialog.hidden = false;
     // next frame: the slide-in transition needs the visible start state first
     requestAnimationFrame(() => dialog.classList.add("is-open"));
