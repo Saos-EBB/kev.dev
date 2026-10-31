@@ -51,8 +51,15 @@ export function renderCatalog(all: ProjectCard[], titleFx: (text: string) => str
 export function initCatalog(section: HTMLElement, lenis: Lenis) {
   const dialog = section.querySelector<HTMLElement>(".catalog-dialog")!;
   let opener: HTMLElement | null = null;
+  // Only the dialog's own slide, not a transition bubbling up from inside it.
+  const hideWhenSlidOut = (e: TransitionEvent) => {
+    if (e.target !== dialog) return;
+    dialog.removeEventListener("transitionend", hideWhenSlidOut);
+    dialog.hidden = true;
+  };
 
   const open = (id: string, from: HTMLElement) => {
+    dialog.removeEventListener("transitionend", hideWhenSlidOut); // reopened while still sliding out
     dialog.querySelectorAll<HTMLElement>(".catalog-full").forEach((el) => {
       el.hidden = el.dataset.card !== id;
     });
@@ -67,9 +74,8 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     if (dialog.hidden) return;
     dialog.classList.remove("is-open");
     lenis.start();
-    const done = () => { dialog.hidden = true; };
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches && !document.documentElement.classList.contains("force-motion")) done();
-    else dialog.addEventListener("transitionend", done, { once: true });
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches && !document.documentElement.classList.contains("force-motion")) dialog.hidden = true;
+    else dialog.addEventListener("transitionend", hideWhenSlidOut);
     opener?.focus();
   };
 
