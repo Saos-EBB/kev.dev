@@ -37,14 +37,14 @@ const SHARDS: [number, number][][] = [
 
 const IMPACT = { x: 50, y: 46 }; // percent, matches the pattern's center
 
-// White against the burgundy hero underneath: the shards carry this fill in
+// White against the dark cherry hero underneath: the shards carry this fill in
 // their snapshot, so the contrast is what makes the break visible. Fixed
 // colors, not theme tokens: the loader looks the same in both themes. Keep
 // INTRO_BG in sync with .saos-intro-still's background-color in saos-intro.css
 // (the fallback shown before the snapshot image loads).
 const INTRO_BG = "#ffffff";
-const BURGUNDY = "#800020";
-const BURGUNDY_EMPTY = "#eedde1"; // the letters before the pour reaches them
+const CHERRY = "#5c0f1f";
+const CHERRY_EMPTY = "#eedde1"; // the letters before the pour reaches them
 
 // Same stable "random" per shard on every run — deterministic, no Math.random.
 function shardNoise(i: number, salt: number): number {
@@ -53,7 +53,7 @@ function shardNoise(i: number, salt: number): number {
 }
 
 interface StillOptions {
-  /** Draw the wordmark pale instead of burgundy (loader: not-yet-ready state). */
+  /** Draw the wordmark pale instead of dark cherry (loader: not-yet-ready state). */
   gray?: boolean;
   /** Hint text below the wordmark. Default: "KLICKEN". */
   hint?: string;
@@ -82,7 +82,7 @@ function drawStillCanvas(width: number, height: number, opts: StillOptions = {})
   ctx.fillStyle = INTRO_BG;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.strokeStyle = BURGUNDY;
+  ctx.strokeStyle = CHERRY;
   ctx.globalAlpha = opts.gray ? 0.05 : 0.12;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -100,12 +100,12 @@ function drawStillCanvas(width: number, height: number, opts: StillOptions = {})
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   // Gray mode: very dim wordmark so the colored fill layer reads clearly on top.
-  ctx.fillStyle = opts.gray ? BURGUNDY_EMPTY : BURGUNDY;
+  ctx.fillStyle = opts.gray ? CHERRY_EMPTY : CHERRY;
   const size = Math.min(width * 0.32, height * 0.4);
   ctx.font = `${size}px ${display}`;
   ctx.fillText("SAOS", width / 2, (height * IMPACT.y) / 100);
 
-  ctx.fillStyle = BURGUNDY;
+  ctx.fillStyle = CHERRY;
   ctx.font = `${Math.max(12, Math.min(width * 0.018, 16))}px ${display}`;
   ctx.fillText(opts.hint ?? UI.introClick, width / 2, height * 0.86);
 
@@ -231,7 +231,7 @@ export function mountSaosIntro(
 // ─────────────────────────────────────────────────────────────────────────────
 // Loader mode: the intro stays until the page is genuinely ready, auto-shatters
 // once full instead of waiting for a click. Shows loading progress as colour
-// poured into the pale wordmark: a burgundy liquid rises inside
+// poured into the pale wordmark: a dark cherry liquid rises inside
 // the letters with a wavy surface that calms down as it fills.
 //
 // The level follows the real progress but never rises faster than MIN_MS
@@ -320,7 +320,7 @@ export function mountSaosLoader(
 
     const surf = surface(level, t);
     lctx.globalCompositeOperation = "source-in";
-    lctx.fillStyle = BURGUNDY;
+    lctx.fillStyle = CHERRY;
     lctx.beginPath();
     lctx.moveTo(0, h);
     for (let x = 0; x <= w; x += 6) lctx.lineTo(x, surf(x));
@@ -343,7 +343,7 @@ export function mountSaosLoader(
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.shadowColor = `color-mix(in srgb, ${BURGUNDY} 30%, transparent)`;
+    ctx.shadowColor = `color-mix(in srgb, ${CHERRY} 30%, transparent)`;
     ctx.shadowBlur = 18 * dpr;
     ctx.drawImage(liquid, 0, 0);
     ctx.restore();

@@ -935,7 +935,7 @@
   }
 }
 
-/* The layer colors are neon; on the burgundy page they need to be paler. */
+/* The layer colors are neon; on the dark cherry page they need to be paler. */
 :root[data-theme="light"] .yb-col {
   fill: color-mix(in srgb, var(--lc) 35%, #fff);
 }

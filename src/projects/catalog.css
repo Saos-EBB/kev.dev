@@ -50,6 +50,14 @@
   text-shadow: 0 0 12px color-mix(in srgb, var(--note-3) 55%, transparent);
 }
 
+:root[data-theme="light"] .catalog-tag {
+  padding: 0.05em 0.35em 0.15em;
+  border-radius: 0.2em;
+  background: var(--accent-fill);
+  color: #ffffff;
+  text-shadow: none;
+}
+
 .catalog-lead {
   margin: 0;
   max-width: 60ch;

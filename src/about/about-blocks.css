@@ -53,10 +53,15 @@
   color: var(--color-line);
 }
 
-/* White on burgundy, the phrases don't stand out from the text around them. */
+/* White on dark cherry, the phrases don't stand out from the text around them. */
 :root[data-theme="light"] .about-highlight,
 :root[data-theme="light"] .about-inline-link {
-  color: var(--note-3);
+  padding: 0.05em 0.3em;
+  border-radius: 0.2em;
+  background: var(--accent-fill);
+  color: #ffffff;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 /* Inline text link inside prose (the "Projekte" mention in the story) —

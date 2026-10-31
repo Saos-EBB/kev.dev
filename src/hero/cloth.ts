@@ -858,7 +858,7 @@ export class Cloth {
       const mr = Math.round(r + (255 - r) * mix);
       const mg = Math.round(g + (255 - g) * mix);
       const mb = Math.round(b + (255 - b) * mix);
-      // White on burgundy: a low alpha would turn the lines pink, so light stays solid.
+      // White on dark cherry: a low alpha would turn the lines pink, so light stays solid.
       const light = document.documentElement.getAttribute("data-theme") === "light";
       // Phones scale the canvas up (see resize), which thins the lines further: fully solid there.
       const alpha = light ? (IS_LITE ? 1 : 0.6 + t * 0.4) : this.ALPHA_MIN + t * (this.ALPHA_MAX - this.ALPHA_MIN);

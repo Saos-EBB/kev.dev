@@ -160,16 +160,16 @@
 /* Light mode — toggled via .theme-toggle (src/theme/theme.ts), which sets
    data-theme on <html> and remembers the choice in localStorage. First
    pass: swap the base page chrome (backgrounds/text) and
-   keep the room screen/LED readable. This theme is white on burgundy; the self-contained dark widgets (3D renderer canvas, Java
+   keep the room screen/LED readable. This theme is white on dark cherry; the self-contained dark widgets (3D renderer canvas, Java
    terminal) are left as they are. */
 :root[data-theme="light"] {
-  --color-bg: #800020;
+  --color-bg: #5c0f1f;
   --color-text: #ffffff;
   --color-text-muted: #f2d5dc;
-  --hero-bg: #800020;
-  --about-bg: #800020;
-  --projects-bg: #800020;
-  --contact-bg: #800020;
+  --hero-bg: #5c0f1f;
+  --about-bg: #5c0f1f;
+  --projects-bg: #5c0f1f;
+  --contact-bg: #5c0f1f;
   --color-room-accent: #ffffff;
   --color-line: #ffffff;
   --grid-color: #ffffff;
@@ -178,6 +178,10 @@
   --title-grad-from: #ffffff;
   --title-grad-mid: #ffffff;
   --title-grad-to: #f2d5dc;
+  /* Dark teal disappears on dark cherry as text (1.4:1), so it's a fill with
+     white on it; --note-3 is the same hue, light enough for text and lines. */
+  --accent-fill: #0f4c4c;
+  --note-3: #35ab9d;
   --note-5: #f2d5dc;
   --note-6: #ffffff;
   --note-9: #ffffff;

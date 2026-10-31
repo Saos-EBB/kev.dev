@@ -7,7 +7,11 @@
 
 :root[data-theme="light"] {
   --color-throw: #ffffff;
-  --color-contact-icon: var(--note-3);
+  --color-contact-icon: #ffffff;
+}
+
+:root[data-theme="light"] .contact .contact-icons a {
+  background: var(--accent-fill);
 }
 
 /* contact-skull.ts: the section becomes a scroll track (.contact--track,
