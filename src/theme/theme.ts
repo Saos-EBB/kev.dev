@@ -2,9 +2,9 @@ import "./theme.css";
 import { UI } from "../i18n/ui";
 
 // Light/dark toggle for the header icon (markup in main.ts, colors in the
-// `:root[data-theme="light"]` override in style.css). Light is the site's
-// default look; the choice is remembered in localStorage so a return visit
-// keeps it.
+// `:root[data-theme="light"]` override in style.css). Every visit starts
+// light; a choice only lasts the tab's session (sessionStorage), so the reloads
+// for language and breakpoint changes keep it.
 
 const STORAGE_KEY = "theme";
 type Theme = "light" | "dark";
@@ -14,7 +14,7 @@ const isTheme = (value: string | null): value is Theme =>
 
 const readStored = (): Theme | null => {
   try {
-    const value = localStorage.getItem(STORAGE_KEY);
+    const value = sessionStorage.getItem(STORAGE_KEY);
     return isTheme(value) ? value : null;
   } catch {
     return null;
@@ -23,9 +23,9 @@ const readStored = (): Theme | null => {
 
 const writeStored = (theme: Theme) => {
   try {
-    localStorage.setItem(STORAGE_KEY, theme);
+    sessionStorage.setItem(STORAGE_KEY, theme);
   } catch {
-    // localStorage unavailable (private mode etc.) — theme just won't persist.
+    // sessionStorage unavailable (private mode etc.) — theme just won't persist.
   }
 };
 
