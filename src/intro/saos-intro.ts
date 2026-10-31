@@ -37,12 +37,14 @@ const SHARDS: [number, number][][] = [
 
 const IMPACT = { x: 50, y: 46 }; // percent, matches the pattern's center
 
-// Deliberately lighter than --color-bg (the hero underneath): the shards
-// carry this fill in their snapshot, so without the contrast the break is
-// invisible against the hero. Keep in sync with .saos-intro-still's
-// background-color in saos-intro.css (the fallback shown before the
-// snapshot image loads).
-const INTRO_BG = "#161616";
+// White against the burgundy hero underneath: the shards carry this fill in
+// their snapshot, so the contrast is what makes the break visible. Fixed
+// colors, not theme tokens: the loader looks the same in both themes. Keep
+// INTRO_BG in sync with .saos-intro-still's background-color in saos-intro.css
+// (the fallback shown before the snapshot image loads).
+const INTRO_BG = "#ffffff";
+const BURGUNDY = "#800020";
+const BURGUNDY_EMPTY = "#eedde1"; // the letters before the pour reaches them
 
 // Same stable "random" per shard on every run — deterministic, no Math.random.
 function shardNoise(i: number, salt: number): number {
@@ -51,7 +53,7 @@ function shardNoise(i: number, salt: number): number {
 }
 
 interface StillOptions {
-  /** Draw the wordmark in muted grey instead of accent (loader: not-yet-ready state). */
+  /** Draw the wordmark pale instead of burgundy (loader: not-yet-ready state). */
   gray?: boolean;
   /** Hint text below the wordmark. Default: "KLICKEN". */
   hint?: string;
@@ -74,15 +76,13 @@ function drawStillCanvas(width: number, height: number, opts: StillOptions = {})
   ctx.scale(dpr, dpr);
 
   const css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue("--color-accent").trim() || "#cd57a6";
-  const muted = css.getPropertyValue("--color-text-muted").trim() || "#8a8a93";
   const cell = parseFloat(css.getPropertyValue("--grid-cell")) || 48;
   const display = css.getPropertyValue("--font-display").trim() || "sans-serif";
 
   ctx.fillStyle = INTRO_BG;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.strokeStyle = accent;
+  ctx.strokeStyle = BURGUNDY;
   ctx.globalAlpha = opts.gray ? 0.05 : 0.12;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -100,12 +100,12 @@ function drawStillCanvas(width: number, height: number, opts: StillOptions = {})
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   // Gray mode: very dim wordmark so the colored fill layer reads clearly on top.
-  ctx.fillStyle = opts.gray ? "#2e2c36" : accent;
+  ctx.fillStyle = opts.gray ? BURGUNDY_EMPTY : BURGUNDY;
   const size = Math.min(width * 0.32, height * 0.4);
   ctx.font = `${size}px ${display}`;
   ctx.fillText("SAOS", width / 2, (height * IMPACT.y) / 100);
 
-  ctx.fillStyle = opts.gray ? "#1e1c24" : muted;
+  ctx.fillStyle = BURGUNDY;
   ctx.font = `${Math.max(12, Math.min(width * 0.018, 16))}px ${display}`;
   ctx.fillText(opts.hint ?? UI.introClick, width / 2, height * 0.86);
 
@@ -231,7 +231,7 @@ export function mountSaosIntro(
 // ─────────────────────────────────────────────────────────────────────────────
 // Loader mode: the intro stays until the page is genuinely ready, auto-shatters
 // once full instead of waiting for a click. Shows loading progress as colour
-// poured into the gray wordmark: a liquid in the site's gradient rises inside
+// poured into the pale wordmark: a burgundy liquid rises inside
 // the letters with a wavy surface that calms down as it fills.
 //
 // The level follows the real progress but never rises faster than MIN_MS
@@ -248,6 +248,8 @@ const SETTLE_MS = 220; // brief beat at full before the shatter
 export function mountSaosLoader(
   overlayEl: HTMLElement,
   onShatterDone: () => void,
+  // The hero starts showing between the shards, so it has to be alive from here on.
+  onBreak?: () => void,
 ): { setProgress: (p: number) => void } {
   let destroyed = false;
   let shatterFired = false;
@@ -278,9 +280,6 @@ export function mountSaosLoader(
   const lctx = liquid.getContext("2d")!;
 
   const css = getComputedStyle(document.documentElement);
-  const accent = css.getPropertyValue("--color-accent").trim() || "#cd57a6";
-  const line = css.getPropertyValue("--color-line").trim() || "#cd57ff";
-  const blue = css.getPropertyValue("--note-3").trim() || "#57b9ff";
   const display = css.getPropertyValue("--font-display").trim() || "sans-serif";
   const size = Math.min(w * 0.32, h * 0.4);
   const textY = (h * IMPACT.y) / 100;
@@ -289,7 +288,7 @@ export function mountSaosLoader(
   // font can arrive after window.load) — drawn now with whatever font is
   // there, redrawn once fonts settle.
   let base: HTMLCanvasElement;
-  let top = 0, bottom = 0, left = 0, right = 0;
+  let top = 0, bottom = 0;
   function prepare() {
     base = drawStillCanvas(w, h, { gray: true, hint: UI.introLoading });
     lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -299,8 +298,6 @@ export function mountSaosLoader(
     const m = lctx.measureText("SAOS");
     top = textY - m.actualBoundingBoxAscent;
     bottom = textY + m.actualBoundingBoxDescent;
-    left = w / 2 - m.width / 2;
-    right = w / 2 + m.width / 2;
   }
   prepare();
   document.fonts.ready.then(() => { if (!destroyed && !shatterFired) prepare(); });
@@ -323,11 +320,7 @@ export function mountSaosLoader(
 
     const surf = surface(level, t);
     lctx.globalCompositeOperation = "source-in";
-    const grad = lctx.createLinearGradient(left, 0, right, 0);
-    grad.addColorStop(0, accent);
-    grad.addColorStop(0.5, line);
-    grad.addColorStop(1, blue);
-    lctx.fillStyle = grad;
+    lctx.fillStyle = BURGUNDY;
     lctx.beginPath();
     lctx.moveTo(0, h);
     for (let x = 0; x <= w; x += 6) lctx.lineTo(x, surf(x));
@@ -350,7 +343,7 @@ export function mountSaosLoader(
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
     ctx.save();
-    ctx.shadowColor = `color-mix(in srgb, ${line} 45%, transparent)`;
+    ctx.shadowColor = `color-mix(in srgb, ${BURGUNDY} 30%, transparent)`;
     ctx.shadowBlur = 18 * dpr;
     ctx.drawImage(liquid, 0, 0);
     ctx.restore();
@@ -391,6 +384,7 @@ export function mountSaosLoader(
     shatterFired = true;
     cancelAnimationFrame(raf);
     document.removeEventListener("keydown", onKeyDown);
+    onBreak?.();
     breakApart();
   }
 

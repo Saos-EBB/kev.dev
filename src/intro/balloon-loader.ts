@@ -196,15 +196,11 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
   return s;
 }
 
-// onBurst: the hero starts showing through the hole, so it has to be alive from here on.
-export function mountBalloonLoader(overlayEl: HTMLElement, onDone: () => void, onBurst?: () => void): { setProgress: (p: number) => void } {
+export function mountBalloonLoader(overlayEl: HTMLElement, onDone: () => void): { setProgress: (p: number) => void } {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches && !document.documentElement.classList.contains("force-motion");
   const cv = document.createElement("canvas");
   const gl = reduced ? null : cv.getContext("webgl2", { alpha: true, premultipliedAlpha: true, antialias: false });
-  if (!gl) {
-    onBurst?.();
-    return mountSaosLoader(overlayEl, onDone);
-  }
+  if (!gl) return mountSaosLoader(overlayEl, onDone);
 
   let target = 0;
   let program: WebGLProgram;
@@ -217,7 +213,6 @@ export function mountBalloonLoader(overlayEl: HTMLElement, onDone: () => void, o
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error("link");
   } catch {
-    onBurst?.();
     return mountSaosLoader(overlayEl, onDone);
   }
 
@@ -292,7 +287,7 @@ export function mountBalloonLoader(overlayEl: HTMLElement, onDone: () => void, o
   };
   void prepare().catch(() => finish());
 
-  let raf = 0, shown = 0, fullAt = 0, finished = false, burstSent = false, frames = 0, slow = 0, last = performance.now();
+  let raf = 0, shown = 0, fullAt = 0, finished = false, frames = 0, slow = 0, last = performance.now();
   function finish() {
     if (finished) return;
     finished = true;
@@ -350,7 +345,6 @@ export function mountBalloonLoader(overlayEl: HTMLElement, onDone: () => void, o
     const over = clamp01(sinceFull / OVER_S);
     const dt = sinceFull - OVER_S;
     const burst = dt <= 0 ? 0 : clamp01(dt / BURST_S);
-    if (dt > 0 && !burstSent) { burstSent = true; onBurst?.(); }
     if (dt >= END_S) return finish();
 
     const S = S0 * (0.8 + 0.2 * shown + 0.045 * over * over);

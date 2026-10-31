@@ -30,6 +30,7 @@ const GROUPS: Group[] = [
       { name: "Schädel: Säge", url: "#dev#skull#saw" },
       { name: "Horror", url: "#dev#horror" },
       { name: "Fatty", url: "#dev#fatty" },
+      { name: "Ladescreen: Ballons", url: "#dev#ballon", note: "noch in Arbeit" },
     ],
   },
   {

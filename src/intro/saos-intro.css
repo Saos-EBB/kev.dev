@@ -16,16 +16,16 @@
 
 /* Before the shatter starts the overlay is opaque; the shards carry the
    image themselves afterwards, so the container must not paint anything.
-   #161616 matches INTRO_BG in saos-intro.ts (deliberately lighter than
-   --color-bg/hero, only a fallback shown before the snapshot loads). */
+   White matches INTRO_BG in saos-intro.ts (only a fallback shown before
+   the snapshot loads). */
 .saos-intro-still {
   position: absolute;
   inset: 0;
-  background-color: #161616;
+  background-color: #ffffff;
   background-size: 100% 100%;
 }
 
-/* Loader mode: one canvas (gray wordmark + the poured liquid), drawn by
+/* Loader mode: one canvas (pale wordmark + the poured liquid), drawn by
    mountSaosLoader every frame; shares .saos-intro-still's fallback colour. */
 .saos-intro-pour {
   display: block;
