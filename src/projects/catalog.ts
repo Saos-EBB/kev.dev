@@ -120,7 +120,8 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     const tile = target.closest<HTMLElement>(".ctile");
     if (btn) location.hash = `projekt/${btn.dataset.catalogOpen}`;
     else if (tile && !getSelection()?.toString()) location.hash = `projekt/${tile.dataset.card}`;
-    else if ((e.target as HTMLElement).closest(".catalog-close")) close();
+    // Free space around the card closes too.
+    else if (target.closest(".catalog-close") || target === dialog || target.matches(".catalog-dialog-body, .catalog-full")) close();
   });
   document.addEventListener("keydown", (e) => {
     // the facet overlay (above this one) handles its own keys first
