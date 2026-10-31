@@ -79,6 +79,18 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     opener?.focus();
   };
 
+  // Tab cycles inside the open card instead of walking the hidden page behind it.
+  const keepFocusInside = (e: KeyboardEvent) => {
+    const all = [...dialog.querySelectorAll<HTMLElement>("a[href], button, input, select, textarea, [tabindex]")]
+      .filter((el) => el.tabIndex >= 0 && !el.closest("[inert]") && el.offsetParent !== null);
+    const first = all[0], last = all[all.length - 1];
+    const now = document.activeElement as HTMLElement;
+    if (!dialog.contains(now) || (e.shiftKey && now === first) || (!e.shiftKey && now === last)) {
+      e.preventDefault();
+      (e.shiftKey ? last : first)?.focus();
+    }
+  };
+
   // Past the big cards' long pinned ride in one jump, like the #contact links.
   document.querySelector(".catalog-jump")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -97,7 +109,9 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     } else if ((e.target as HTMLElement).closest(".catalog-close")) close();
   });
   document.addEventListener("keydown", (e) => {
-    // the facet overlay (above this one) handles its own Esc first
-    if (e.key === "Escape" && !document.querySelector(".facet-overlay:not([hidden])")) close();
+    // the facet overlay (above this one) handles its own keys first
+    if (document.querySelector(".facet-overlay:not([hidden])")) return;
+    if (e.key === "Escape") close();
+    else if (e.key === "Tab" && !dialog.hidden) keepFocusInside(e);
   });
 }
