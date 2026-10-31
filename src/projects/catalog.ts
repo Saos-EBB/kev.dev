@@ -7,16 +7,16 @@
 
 import type Lenis from "lenis";
 import { UI } from "../i18n/ui";
-import { displayText, esc, indexLine, renderProjectCard, type ProjectCard } from "./project-cards";
+import { displayText, esc, renderProjectCard, type ProjectCard } from "./project-cards";
 import { renderVisual } from "./project-visuals";
 import { renderArcade } from "./arcade";
 import "./catalog.css";
 
-function tile(card: ProjectCard, index: number, total: number): string {
+function tile(card: ProjectCard): string {
   const tags = card.tags?.slice(0, 3) ?? [];
   return `
     <article class="ctile" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
-      <p class="pcard-index">${indexLine(card, index, total)}</p>
+      <p class="pcard-index"><span>${esc(card.kind)}</span></p>
       <h3 class="ctile-title">${displayText(card.title)}</h3>
       <p class="ctile-claim">${esc(card.claim)}</p>
       <div class="ctile-viz pcard--${card.layout}" aria-hidden="true" inert>
@@ -38,7 +38,7 @@ export function renderCatalog(all: ProjectCard[], titleFx: (text: string) => str
       <p class="catalog-lead">${esc(UI.catalogLead)}</p>
     </div>
     <div class="catalog-grid">
-      ${small.map((c) => (c.id === "grundlagen" ? renderArcade : tile)(c, all.indexOf(c), all.length)).join("")}
+      ${small.map((c) => (c.id === "grundlagen" ? renderArcade(c, all.indexOf(c), all.length) : tile(c))).join("")}
     </div>
     <div class="catalog-dialog" role="dialog" aria-modal="true" aria-label="${esc(UI.projects)}" hidden data-lenis-prevent>
       <button type="button" class="catalog-close">✕ ${esc(UI.catalogClose)} · Esc</button>

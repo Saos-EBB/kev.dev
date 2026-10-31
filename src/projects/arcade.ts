@@ -4,6 +4,7 @@
 // the Grundlagen widget) and jumps to the picked game there; the widget
 // still asks for CheerpJ consent itself before anything loads.
 
+import { LITE } from "../viewport";
 import "./arcade.css";
 import { UI } from "../i18n/ui";
 import { displayText, esc, indexLine, type ProjectCard } from "./project-cards";
@@ -63,7 +64,7 @@ export function renderArcade(card: ProjectCard, index: number, total: number): s
   const first = GAMES[GAMES.length - 1];
   return `
     <article class="arcade" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
-      <p class="pcard-index">${indexLine(card, index, total)}</p>
+      <p class="pcard-index">${LITE ? indexLine(card, index, total) : `<span>${esc(card.kind)}</span>`}</p>
       <div class="arcade-cab">
         ${LINES}
         <div class="arcade-marquee">${displayText(card.title)}</div>
