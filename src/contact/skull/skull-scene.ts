@@ -40,6 +40,8 @@ const LINK_STAGGER = 0.12; // s between the three link shards leaving
 // Blood (blood.ts): a few spurts close together, under pressure.
 const BLOOD_COUNT = LITE ? 1300 : 3600;
 const BLOOD_JET = 0.3, BLOOD_PULSES = 3, BLOOD_PRESSURE = 1.4, BLOOD_DROP = 0.45;
+// Fades like the skull: brightest close to the camera, faint at the wound.
+const BLOOD_DEPTH = { front: 4.5, range: 4.5 };
 
 export type SkullScene = { setRise(r: number): void; finish(): void };
 
@@ -192,7 +194,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   // against the yaw), a little outward and up so the spurts arc, in a wide cone.
   const toCamera = new THREE.Vector3(0, 0, 1).applyAxisAngle(Y_AXIS, -YAW);
   const jetAxis = toCamera.clone().add(hit.clone().normalize().multiplyScalar(0.5)).add(new THREE.Vector3(0, 0.2, 0)).normalize();
-  const blood = createBlood({ hit, axis: jetAxis, count: BLOOD_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: BLOOD_PRESSURE, dropSize: BLOOD_DROP });
+  const blood = createBlood({ hit, axis: jetAxis, count: BLOOD_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: BLOOD_PRESSURE, dropSize: BLOOD_DROP, depth: BLOOD_DEPTH });
   skull.add(blood.points);
 
   await breathe();

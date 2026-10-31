@@ -22,6 +22,8 @@ const BLOOD_VERT = /* glsl */ `
   uniform float uGravity;
   uniform float uFloor;
   uniform float uPool;
+  uniform float uDepthFront;
+  uniform float uDepthRange;
   attribute float aBirth;
   attribute float aLife;
   attribute float aSpeed;
@@ -30,6 +32,7 @@ const BLOOD_VERT = /* glsl */ `
   varying float vF;
   varying float vSeed;
   varying float vLanded;
+  varying float vDepth;
   void main() {
     float age = uTime - aBirth;
     vF = clamp(age / aLife, 0.0, 1.0);
@@ -46,6 +49,9 @@ const BLOOD_VERT = /* glsl */ `
     p.y -= 0.5 * uGravity * t * t;
     vec4 mv = modelViewMatrix * vec4(position + p, 1.0);
     gl_Position = projectionMatrix * mv;
+    // measured from the parent's origin, so it stays right while the scene turns
+    vDepth = (modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).z + uDepthFront - mv.z;
+    vDepth /= uDepthRange;
     // in flight it shrinks a little; landed it splats wider
     // (capped: a drop right in front of the camera would cover the screen)
     gl_PointSize = min(aSize * mix(1.0 - 0.25 * vF, 1.3, vLanded) / -mv.z, 110.0) * uPx;
@@ -56,9 +62,11 @@ const BLOOD_FRAG = /* glsl */ `
   uniform vec3 uInk;
   uniform vec3 uDark;
   uniform float uPool;
+  uniform float uDepthRange;
   varying float vF;
   varying float vSeed;
   varying float vLanded;
+  varying float vDepth;
   void main() {
     vec2 c = gl_PointCoord - 0.5;
     float d = dot(c, c) * 4.0;
@@ -71,6 +79,11 @@ const BLOOD_FRAG = /* glsl */ `
     col += smoothstep(0.06, 0.0, dot(c + vec2(0.14, 0.14), c + vec2(0.14, 0.14))) * 0.6;
     // without a pool, a drop fades over the last fifth of its life
     float a = smoothstep(1.0, 0.8, d) * mix(1.0 - smoothstep(0.8, 1.0, vF), 1.0, uPool);
+    // same steps as the skull's wireframe (depthSteps in parts.ts)
+    if (uDepthRange > 0.0) {
+      float depthStep = min(floor(clamp(vDepth, 0.0, 1.0) * 16.0), 15.0) / 15.0;
+      a *= mix(0.85, 0.08, depthStep);
+    }
     gl_FragColor = vec4(col, a);
   }
 `;
@@ -97,6 +110,7 @@ export function createBlood(o: {
   pulses?: number; // how many spurts (default PULSES)
   pressure?: number; // factor on the drops' speed (default 1)
   dropSize?: number; // factor on the drops' size (default 1)
+  depth?: { front: number; range: number }; // fade with depth: from `front` ahead of the parent's origin, over `range`
 }): Blood {
   const pool = o.floorY !== undefined;
   const jet = o.jet ?? JET, pulses = o.pulses ?? PULSES, pressure = o.pressure ?? 1, dropSize = o.dropSize ?? 1;
@@ -141,6 +155,8 @@ export function createBlood(o: {
       uPool: { value: pool ? 1 : 0 },
       uInk: { value: o.ink },
       uDark: { value: dark },
+      uDepthFront: { value: o.depth?.front ?? 0 },
+      uDepthRange: { value: o.depth?.range ?? 0 },
     },
     vertexShader: BLOOD_VERT,
     fragmentShader: BLOOD_FRAG,
