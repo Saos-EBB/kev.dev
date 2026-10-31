@@ -22,6 +22,15 @@ const S: Record<string, Record<Lang, string>> = {
 };
 const tx = (key: keyof typeof S) => S[key][LANG] ?? S[key].de;
 
+// A pill is one width, the labels differ per language: too long gets an
+// ellipsis, like in the overlay's graph; the <title> keeps the full name.
+function fitLabel(text: SVGTextElement, max: number) {
+  const full = text.textContent!;
+  for (let n = full.length - 1; n > 0 && text.getComputedTextLength() > max; n--) {
+    text.textContent = `${full.slice(0, n).trimEnd()}…`;
+  }
+}
+
 // The ride: these flows, in this order, each step on one app screen.
 const RIDE = ["tenant", "login", "swipe", "chat"] as const;
 const TABS: Record<string, number> = { tenant: 0, login: 0, swipe: 1, chat: 2 };
@@ -237,9 +246,10 @@ function ride(el: HTMLElement, card: ProjectCard, P: EngProject, phone: Phone, a
       const ng = document.createElementNS(NS, "g");
       ng.setAttribute("class", "yb-node");
       ng.style.setProperty("--lc", layer.get(n.layer)!.color);
-      ng.innerHTML = `<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" rx="${q.h / 2}"/><text x="${q.x + 9}" y="${q.y + q.h / 2 + 3.2}">${esc(pick(n.label))}</text>`;
+      ng.innerHTML = `<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" rx="${q.h / 2}"/><text x="${q.x + 9}" y="${q.y + q.h / 2 + 3.2}">${esc(pick(n.label))}</text><title>${esc(pick(n.label))}</title>`;
       ng.addEventListener("click", () => pick_(n.id));
       svg.append(ng);
+      fitLabel(ng.querySelector("text")!, q.w - 15);
       nodeEls.set(n.id, ng);
     }
     dot = document.createElementNS(NS, "circle");

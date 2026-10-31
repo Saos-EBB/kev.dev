@@ -36,6 +36,8 @@ export interface CardText {
   // Labels only, by position; the numbers stay the card's.
   hoursChart?: string[];
   timelineChart?: string[];
+  // Whole list, like features.
+  tags?: string[];
   mascot?: string;
   widget?: string;
 }
@@ -59,6 +61,7 @@ export function localizeCard(card: ProjectCard): ProjectCard {
     kind: t.kind ?? card.kind,
     learnGoal: t.learnGoal ?? card.learnGoal,
     claim: t.claim ?? card.claim,
+    tags: t.tags ?? card.tags,
     points: t.points ?? card.points,
     what: t.what ?? card.what,
     meta: t.meta ?? card.meta,

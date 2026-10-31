@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { MapPin, Users, ChevronDown, Check, Search } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
+import { useDemoText } from './demo-text'
 
 type ConnStatus = 'NONE' | 'SENT' | 'CONNECTED'
 type Gender = 'f' | 'm' | 'd'
@@ -114,6 +115,7 @@ function DualRangeSlider({ min, max, from, to, onChange }: {
 
 function Card({ p, onConn }: { p: Profile; onConn: (id: string, c: ConnStatus) => void }) {
   const { t } = useTranslation()
+  const tr = useDemoText()
   return (
     <article className="rounded-xl bg-surface-container border border-outline-variant overflow-hidden flex flex-col">
       <div className="aspect-[3/4] flex items-center justify-center relative" style={{ background: p.color + '22' }}>
@@ -125,12 +127,12 @@ function Card({ p, onConn }: { p: Profile; onConn: (id: string, c: ConnStatus) =
           <p className="font-semibold text-on-surface text-xs">{p.nickname}, {p.age}</p>
           <div className="flex items-center gap-1 mt-0.5">
             <MapPin size={9} className="text-on-surface-variant flex-shrink-0" aria-hidden />
-            <p className="text-[10px] text-on-surface-variant truncate">{p.city} · {p.distance} km</p>
+            <p className="text-[10px] text-on-surface-variant truncate">{tr(p.city)} · {p.distance} km</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-1">
           {p.interests.slice(0, 2).map(i => (
-            <span key={i} className="px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[10px] font-medium">{i}</span>
+            <span key={i} className="px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[10px] font-medium">{tr(i)}</span>
           ))}
         </div>
         <div className="mt-auto">
@@ -154,6 +156,7 @@ function Card({ p, onConn }: { p: Profile; onConn: (id: string, c: ConnStatus) =
 
 export function DiscoverDemo() {
   const { t } = useTranslation()
+  const tr = useDemoText()
   const [profiles, setProfiles] = useState(PROFILES)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
 
@@ -172,7 +175,7 @@ export function DiscoverDemo() {
         <div className="grid grid-cols-3 gap-2">
           <div className="relative">
             <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-on-surface-variant pointer-events-none" aria-hidden />
-            <input readOnly value="Wien"
+            <input readOnly value={tr('Wien')}
               className="w-full pl-7 pr-2 py-2 rounded-xl bg-surface-container-high border border-outline-variant text-on-surface text-xs min-h-[36px] cursor-default focus:outline-none"
             />
           </div>

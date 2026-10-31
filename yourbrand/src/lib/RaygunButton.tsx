@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { MessageCircle } from 'lucide-react'
+import { useDemoText } from '@/lib/demos/demo-text'
 import { socialCirclePositions, nozzlePoint, barrelTip as barrelTipGeometry, rotationAngleDeg } from '@/lib/raygunGeometry'
 
 /**
@@ -38,6 +39,7 @@ const NOZZLE_DIST_RATIO = Math.hypot(191.5, -58.5) / 512
 const NOZZLE_ANGLE_DEG  = Math.atan2(-58.5, 191.5) * (180 / Math.PI)
 
 export function RaygunButton({ inline = false, autoTrigger = false }: { inline?: boolean; autoTrigger?: boolean } = {}) {
+  const tr = useDemoText()
   const RENDER_SIZE = inline ? 100 : 60
   const NOZZLE_DIST = NOZZLE_DIST_RATIO * RENDER_SIZE
 
@@ -313,7 +315,7 @@ export function RaygunButton({ inline = false, autoTrigger = false }: { inline?:
       <button
         ref={btnRef}
         onClick={handleClick}
-        aria-label="Kontakt öffnen"
+        aria-label={tr('Kontakt öffnen')}
         style={inline ? {
           background:    'none',
           border:        'none',
@@ -332,7 +334,7 @@ export function RaygunButton({ inline = false, autoTrigger = false }: { inline?:
           pointerEvents: 'auto',
         }}
       >
-        <img src="/images/laser_gun.png" alt="Kontakt" width={inline ? 100 : 60} height={inline ? 100 : 60} />
+        <img src="/images/laser_gun.png" alt={tr('Kontakt')} width={inline ? 100 : 60} height={inline ? 100 : 60} />
       </button>
 
       {SOCIAL_ITEMS.map((item, i) => (
@@ -342,7 +344,7 @@ export function RaygunButton({ inline = false, autoTrigger = false }: { inline?:
           href={item.href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={item.alt}
+          aria-label={tr(item.alt)}
           style={{
             position:       'fixed',
             top:            '1.2rem',
@@ -359,8 +361,8 @@ export function RaygunButton({ inline = false, autoTrigger = false }: { inline?:
           }}
         >
           {item.img
-            ? <img src={item.img} alt={item.alt} style={{ width: '48px', height: '48px' }} />
-            : item.Icon && <item.Icon size={48} strokeWidth={1.5} aria-label={item.alt} />}
+            ? <img src={item.img} alt={tr(item.alt)} style={{ width: '48px', height: '48px' }} />
+            : item.Icon && <item.Icon size={48} strokeWidth={1.5} aria-label={tr(item.alt)} />}
         </a>
       ))}
     </>

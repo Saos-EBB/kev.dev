@@ -7,8 +7,8 @@
 
 import type { Lang } from "../i18n";
 
-// German is the source language; a missing translation falls back to it.
-export type Text = { de: string } & Partial<Record<Lang, string>>;
+// Every text in all four languages: a missing translation is a type error.
+export type Text = Record<Lang, string>;
 
 export interface CodeExcerpt {
   file: string;

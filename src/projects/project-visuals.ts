@@ -152,7 +152,7 @@ function keys(): string {
   return `
     <div class="viz-keys">
       <div class="viz-keys-screen"><span class="viz-keys-letter">A</span><span class="viz-keys-animal">🐒</span></div>
-      <p class="viz-keys-say">„A wie Affe“</p>
+      <p class="viz-keys-say">${UI.vizKeysSay}</p>
       <ol class="viz-keys-modes"><li>${blobs}</li><li class="is-on">${animals}</li><li>${typing}</li></ol>
     </div>
   `;

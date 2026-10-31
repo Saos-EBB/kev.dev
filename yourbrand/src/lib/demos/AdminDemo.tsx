@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Inbox, Users, Zap, BookOpen, Check, X, AlertTriangle, Trash2, UserRoundX, Eye, EyeOff, ImageIcon, Music2, ChevronLeft, ChevronRight, Play } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n'
+import { useDemoText } from './demo-text'
 
 type Tab = 'tickets' | 'users' | 'strikes' | 'profanity' | 'media'
 
@@ -37,6 +38,7 @@ const MEDIA_DATA = [
 ]
 
 function TicketsPanel() {
+  const tr = useDemoText()
   const { t } = useTranslation()
   const [tickets, setTickets] = useState(TICKETS)
   return (
@@ -53,13 +55,13 @@ function TicketsPanel() {
                 {ticket.status === 'open' ? t.admin.reportsFilterOpen : t.admin.reportsFilterClosed}
               </span>
             </div>
-            <span className="text-xs text-on-surface-variant flex-shrink-0">{ticket.created}</span>
+            <span className="text-xs text-on-surface-variant flex-shrink-0">{tr(ticket.created)}</span>
           </div>
           <p className="text-sm text-on-surface">
             <span className="font-medium">{ticket.user}</span>
             {ticket.target ? <> → <span className="font-medium">{ticket.target}</span></> : ''}
           </p>
-          <p className="text-xs text-on-surface-variant italic">"{ticket.reason}"</p>
+          <p className="text-xs text-on-surface-variant italic">"{tr(ticket.reason)}"</p>
           {ticket.status === 'open' && (
             <div className="flex gap-2">
               <button
@@ -86,6 +88,7 @@ function TicketsPanel() {
 }
 
 function UsersPanel() {
+  const tr = useDemoText()
   const { t } = useTranslation()
   const [users, setUsers] = useState(USERS_DATA)
   const [vis, setVis] = useState<Record<string, boolean>>({})
@@ -115,7 +118,7 @@ function UsersPanel() {
               </button>
             </div>
             <p className="text-xs text-on-surface-variant/60">
-              {u.strikes} Strike{u.strikes !== 1 ? 's' : ''} · {t.admin.strikesSince} {u.joined}
+              {tr(u.strikes !== 1 ? '{n} Strikes' : '{n} Strike', { n: u.strikes })} · {t.admin.strikesSince} {u.joined}
             </p>
           </div>
           <button
@@ -131,6 +134,7 @@ function UsersPanel() {
 }
 
 function StrikesPanel() {
+  const tr = useDemoText()
   const { t } = useTranslation()
   const [strikes, setStrikes] = useState(STRIKES_DATA)
   return (
@@ -142,7 +146,7 @@ function StrikesPanel() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-on-surface">{s.user}</p>
-            <p className="text-xs text-on-surface-variant">{s.reason} · {s.date} · von {s.given_by}</p>
+            <p className="text-xs text-on-surface-variant">{tr('{reason} · {date} · von {by}', { reason: tr(s.reason), date: tr(s.date), by: s.given_by })}</p>
           </div>
           <button
             onClick={() => setStrikes(ss => ss.filter(x => x.id !== s.id))}
@@ -261,6 +265,7 @@ function MediaThumb({ m, large }: { m: MediaItem; large?: boolean }) {
 }
 
 function MediaPanel() {
+  const tr = useDemoText()
   const { t } = useTranslation()
   const [items, setItems] = useState(MEDIA_DATA)
   const [filter, setFilter] = useState<MediaFilter>('all')
@@ -348,7 +353,7 @@ function MediaPanel() {
                 <MediaThumb m={current} large />
                 <div className="px-4 py-3">
                   <p className="font-semibold text-on-surface text-sm">{current.uploader}</p>
-                  <p className="text-xs text-on-surface-variant">{current.uploaded}</p>
+                  <p className="text-xs text-on-surface-variant">{tr(current.uploaded)}</p>
                 </div>
               </div>
             </div>
@@ -384,7 +389,7 @@ function MediaPanel() {
                   <div className="p-2 flex flex-col gap-1.5">
                     <div>
                       <p className="text-xs font-semibold text-on-surface truncate">{m.uploader}</p>
-                      <p className="text-[10px] text-on-surface-variant">{m.uploaded}</p>
+                      <p className="text-[10px] text-on-surface-variant">{tr(m.uploaded)}</p>
                     </div>
                     <div className="flex gap-1">
                       <button onClick={() => gridAct(m.id, 'ok')}

@@ -317,8 +317,8 @@ export const ru = {
   },
 
   footer: {
-    impressum: 'Imprint',
-    datenschutz: 'Privacy Policy',
+    impressum: 'Выходные данные',
+    datenschutz: 'Политика конфиденциальности',
   },
 
   publicProfile: {

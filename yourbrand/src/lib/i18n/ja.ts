@@ -317,8 +317,8 @@ export const ja = {
   },
 
   footer: {
-    impressum: 'Imprint',
-    datenschutz: 'Privacy Policy',
+    impressum: '運営者情報',
+    datenschutz: 'プライバシーポリシー',
   },
 
   publicProfile: {

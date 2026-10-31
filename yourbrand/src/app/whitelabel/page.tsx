@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Lock, UserCheck,
   Building2, Globe, Sun, Moon, ArrowRight, Play,
@@ -15,6 +15,7 @@ import { useLanguageStore, type UiLang } from '@/lib/store/languageStore'
 import { useTranslation } from '@/lib/i18n'
 import { DEMOS_BY_ID } from '@/lib/demos/registry'
 import { RaygunButton } from '@/lib/RaygunButton'
+import { useDemoText } from '@/lib/demos/demo-text'
 import { useWhitelabelTheme } from '@/lib/site/whitelabel/useWhitelabelTheme'
 
 // The dev-only colour-palette editor of b2b-cv is not carried over.
@@ -67,6 +68,7 @@ function FeatureCard({
   selected: boolean
   onToggle: () => void
 }) {
+  const tr = useDemoText()
   const Icon = feat.icon
   return (
     <button
@@ -86,7 +88,7 @@ function FeatureCard({
           {feat.demoHref && (
             <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full bg-primary-fixed-dim/15 border border-primary-fixed-dim/30 px-2 py-0.5 text-[10px] font-semibold text-primary-fixed-dim">
               <Play size={8} aria-hidden />
-              Demo
+              {tr('Demo')}
             </span>
           )}
         </div>
@@ -106,6 +108,7 @@ function DetailPanel({
   onClose: () => void
   demoProps?: Record<string, unknown>
 }) {
+  const tr = useDemoText()
   const { t } = useTranslation()
   const Icon = feat.icon
   const DemoComponent = DEMOS_BY_ID[feat.id]?.Component
@@ -186,7 +189,7 @@ function DetailPanel({
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant">
             <Play size={20} className="text-on-surface-variant" aria-hidden />
           </div>
-          <p className="text-sm text-on-surface-variant">Demo — {content.videoLabel}</p>
+          <p className="text-sm text-on-surface-variant">{tr('Demo — {label}', { label: content.videoLabel })}</p>
         </div>
       ) : null}
     </div>
@@ -205,22 +208,28 @@ export default function B2BPage() {
   const { isDark, toggleTheme } = useWhitelabelTheme()
 
   const { uiLang, setUiLang } = useLanguageStore()
+  const tr = useDemoText()
+
+  // The page's own language tag and title follow the store, like its copy.
+  useEffect(() => {
+    document.documentElement.lang = uiLang
+    document.title = tr('YourBrand — Plattformkonzept')
+  }, [uiLang, tr])
+
   const { t } = useTranslation()
 
   const [customWords, setCustomWords] = useState(['scheiße', 'idiot', 'wichser', 'hurensohn', 'depp', 'arschloch', 'bastard'])
   const addWord    = (w: string) => setCustomWords(p => [...new Set([...p, w])])
   const removeWord = (w: string) => setCustomWords(p => p.filter(x => x !== w))
 
-  const isEn   = uiLang !== 'de'
-
-  const techRows  = isEn ? TECH_ROWS.en : TECH_ROWS.de
+  const techRows  = TECH_ROWS[uiLang]
 
   const features            = isDark ? DARK_FEATURES : LIGHT_FEATURES
   const selectedFeatDef     = selectedFeature !== null
     ? features.find(f => f.id === selectedFeature) ?? null
     : null
   const selectedFeatContent = selectedFeatDef
-    ? (isEn ? selectedFeatDef.en : selectedFeatDef.de)
+    ? selectedFeatDef[uiLang]
     : null
 
   React.useEffect(() => {
@@ -244,7 +253,7 @@ export default function B2BPage() {
 
   function getTierContent(tier: TierDef): TierContent {
     const side = isDark ? tier.dark : tier.light
-    return isEn ? side.en : side.de
+    return side[uiLang]
   }
 
   function handleFeatureToggle(id: string) {
@@ -273,7 +282,7 @@ export default function B2BPage() {
               className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-on-surface transition-colors"
             >
               <ChevronLeft size={14} className="rtl:rotate-180" aria-hidden />
-              Portfolio
+              {tr('Portfolio')}
             </a>
             <span className="text-outline-variant text-xs">|</span>
             <div className="flex items-center gap-2">
@@ -282,7 +291,7 @@ export default function B2BPage() {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-1" aria-label="B2B navigation">
+          <nav className="hidden lg:flex items-center gap-1" aria-label={tr('B2B-Navigation')}>
             <a href="#features" className="px-3 py-1.5 rounded-lg text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors">
               {t.b2b.nav.features}
             </a>
@@ -306,7 +315,7 @@ export default function B2BPage() {
                 const idx = B2B_LANGS.indexOf(uiLang)
                 setUiLang(B2B_LANGS[(idx === -1 ? 0 : idx + 1) % B2B_LANGS.length])
               }}
-              aria-label="Toggle language"
+              aria-label={tr('Sprache wechseln')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-sm font-medium transition-colors"
             >
               <Globe size={14} aria-hidden />
@@ -329,7 +338,7 @@ export default function B2BPage() {
               </svg>
             </button>}
             <button
-              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={tr(isDark ? 'Zum Light Mode wechseln' : 'Zum Dark Mode wechseln')}
               onClick={toggleTheme}
               className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
             >
@@ -406,7 +415,7 @@ export default function B2BPage() {
               <div className="flex flex-wrap gap-1.5 max-w-[220px] sm:max-w-none justify-center">
                 {(['Chat', 'Coins', 'Leaderboard', 'Hidden Zone'].map((mod) => (
                   <span key={mod} className="rounded-lg border border-outline-variant bg-surface-container px-2.5 py-1.5 text-xs font-medium text-on-surface-variant">
-                    {mod}
+                    {tr(mod)}
                   </span>
                 )))}
               </div>
@@ -445,7 +454,7 @@ export default function B2BPage() {
                 <div key={feat.id} data-feat-card className="h-full">
                   <FeatureCard
                     feat={feat}
-                    content={isEn ? feat.en : feat.de}
+                    content={feat[uiLang]}
                     selected={selectedFeature === feat.id}
                     onToggle={() => handleFeatureToggle(feat.id)}
                   />
@@ -568,7 +577,7 @@ export default function B2BPage() {
           <RaygunButton inline />
           <div className="flex flex-col items-start gap-0.5">
             <span className="text-2xl leading-none text-primary-fixed-dim">←</span>
-            <span className="text-xs font-medium text-on-surface-variant">click me</span>
+            <span className="text-xs font-medium text-on-surface-variant">{tr('click me')}</span>
           </div>
         </div>
       </section>

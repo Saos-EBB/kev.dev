@@ -48,10 +48,10 @@ const DEFAULT_ITEMS: RaygunItem[] = [
   { href: "https://github.com/", label: "GitHub", svg: GITHUB_SVG },
   {
     href: "mailto:kevin.schaberl.work@gmail.com",
-    label: "Email",
+    label: UI.email,
     svg: MAIL_SVG,
   },
-  { href: "#contact", label: "Phone", svg: PHONE_SVG },
+  { href: "#contact", label: UI.phone, svg: PHONE_SVG },
 ];
 
 const AUDIO_PATH = "/sounds/railgun.mp3";

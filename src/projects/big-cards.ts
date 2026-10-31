@@ -274,7 +274,7 @@ function keysCard(card: ProjectCard, head: string): string {
     <ol class="keys-queue" aria-hidden="true">
       <li><span>#41</span><span>Q</span><b>✕</b></li>
       <li><span>#42</span><span>W</span><b>✕</b></li>
-      <li class="is-on"><span>#43</span><span>„A wie Affe“</span><b>▶</b></li>
+      <li class="is-on"><span>#43</span><span>${esc(UI.vizKeysSay)}</span><b>▶</b></li>
     </ol>`;
   return `
     <article class="pcard pcard--big pcard--keyscard" data-card="${esc(card.id)}" style="--pc: ${card.accent}">
@@ -286,7 +286,7 @@ function keysCard(card: ProjectCard, head: string): string {
             <span class="keys-letter">A</span>
             <div class="keys-say">
               <span class="keys-animal">🐒</span>
-              <span class="keys-voice"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>„A wie Affe“</span>
+              <span class="keys-voice"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>${esc(UI.vizKeysSay)}</span>
             </div>
           </div>
           <div class="keys-row">

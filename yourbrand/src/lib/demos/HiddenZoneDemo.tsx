@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { runLogoBreak, cleanup } from '@/lib/physics/letterPhysics'
+import { useDemoText } from './demo-text'
 
 const FILMS = [
   { title: 'Fight Club (1999)', password: 'fightclub', quotes: ["The first rule of Fight Club is: You do not talk about Fight Club.", "It's only after we've lost everything that we're free to do anything.", 'I want you to hit me as hard as you can.', "This is your life, and it's ending one minute at a time.", 'You met me at a very strange time in my life.'] },
@@ -15,6 +16,7 @@ const FILMS = [
 const BRAND = undefined || 'YourBrand'
 
 export function HiddenZoneDemo() {
+  const tr = useDemoText()
   const [phase, setPhase] = useState<'logo' | 'entry' | 'unlocked'>('logo')
   const [film, setFilm] = useState(() => FILMS[Math.floor(Math.random() * FILMS.length)])
   const [logoClicks, setLogoClicks] = useState(0)
@@ -98,7 +100,7 @@ runLogoBreak(BRAND, el.getBoundingClientRect(), () => setPhase('entry'))
       <button
         onClick={reloadFilm}
         className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white/50 hover:text-white/80 transition-colors"
-        aria-label="Anderen Film laden"
+        aria-label={tr('Anderen Film laden')}
       >
         <RefreshCw size={14} aria-hidden />
       </button>
@@ -113,7 +115,7 @@ runLogoBreak(BRAND, el.getBoundingClientRect(), () => setPhase('entry'))
           ref={logoRef}
           onClick={handleLogoClick}
           className={`text-2xl font-bold tracking-tight text-white select-none transition-transform duration-100 ${logoPulse ? 'scale-95' : ''}`}
-          aria-label="Logo klicken"
+          aria-label={tr('Logo klicken')}
         >
           {BRAND}
         </button>
@@ -137,11 +139,11 @@ runLogoBreak(BRAND, el.getBoundingClientRect(), () => setPhase('entry'))
       <div className="rounded-xl bg-black flex flex-col items-center justify-center gap-4 px-6 text-center py-12 relative">
         {Controls}
         <div className="text-5xl">💀</div>
-        <p className="text-white text-xl font-bold tracking-wider">WILLKOMMEN IN DER HIDDEN ZONE</p>
-        <p className="text-white/50 text-sm max-w-xs">Beef Battles · Coin Economy · Exile · Leaderboard — L33T-Speak aktiviert 🔥</p>
+        <p className="text-white text-xl font-bold tracking-wider">{tr('WILLKOMMEN IN DER HIDDEN ZONE')}</p>
+        <p className="text-white/50 text-sm max-w-xs">{tr('Beef Battles · Coin Economy · Exile · Leaderboard — L33T-Speak aktiviert 🔥')}</p>
         <button onClick={() => { setPhase('logo'); setValue(''); setLogoClicks(0); setQuoteIdx(0); setTypePos(0); setHint(false) }}
           className="mt-2 px-5 py-2 rounded-full bg-white/10 border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition-colors">
-          ← Zurück
+          {tr('← Zurück')}
         </button>
       </div>
     )
@@ -168,10 +170,10 @@ runLogoBreak(BRAND, el.getBoundingClientRect(), () => setPhase('entry'))
           autoComplete="off" autoFocus
           className={`w-full max-w-xs rounded-lg bg-white/5 border border-white/10 text-white text-sm px-4 py-2.5 outline-none focus:border-white/30 transition-colors text-center${shaking ? ' animate-[shake_0.4s_ease]' : ''}`}
           style={shaking ? { animation: 'shake 0.4s ease' } : {}}
-          placeholder="Passwort eingeben + Enter"
+          placeholder={tr('Passwort eingeben + Enter')}
         />
         <button onClick={() => setHint(h => !h)} className="text-white/25 hover:text-white/45 text-[10px] transition-colors">
-          {hint ? 'Hint verbergen' : 'Hint anzeigen'}
+          {tr(hint ? 'Hint verbergen' : 'Hint anzeigen')}
         </button>
         {hint && (
           <p className="text-white/30 text-[10px] font-mono text-center">{film.password}</p>

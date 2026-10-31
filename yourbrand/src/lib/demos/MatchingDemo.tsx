@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { Heart, X, MapPin, Sparkles, RefreshCw, CheckCircle2, MessageCircle, Calendar } from 'lucide-react'
+import { useLanguageStore } from '@/lib/store/languageStore'
+import { useDemoText } from './demo-text'
 
 interface Candidate { id: string; nickname: string; age: number; city: string; distance: number; bio: string; score: number; color: string; interests: { name: string; green: boolean }[] }
 interface MatchItem { id: string; nickname: string; age: number; city: string; date: string; color: string }
@@ -45,6 +47,7 @@ const INITIAL_MATCHES: MatchItem[] = [
 ]
 
 function SwipeTab({ onMatch }: { onMatch: (n: string) => void }) {
+  const tr = useDemoText()
   const [idx, setIdx] = useState(0)
   const [dir, setDir] = useState<'like' | 'skip' | null>(null)
   const [swiping, setSwiping] = useState(false)
@@ -69,10 +72,10 @@ function SwipeTab({ onMatch }: { onMatch: (n: string) => void }) {
   if (!hasMore) return (
     <div className="flex flex-col items-center gap-3 py-12 text-center">
       <Sparkles size={32} className="text-on-surface-variant opacity-30" aria-hidden />
-      <p className="font-semibold text-on-surface text-sm">Alle Profile gesehen</p>
+      <p className="font-semibold text-on-surface text-sm">{tr('Alle Profile gesehen')}</p>
       <button onClick={() => { setIdx(0); setDir(null); setSwiping(false) }}
         className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary-fixed-dim text-on-primary-container text-xs font-semibold hover:opacity-90 transition-opacity">
-        <RefreshCw size={12} aria-hidden /> Neu laden
+        <RefreshCw size={12} aria-hidden /> {tr('Neu laden')}
       </button>
     </div>
   )
@@ -81,7 +84,7 @@ function SwipeTab({ onMatch }: { onMatch: (n: string) => void }) {
     <div className="flex flex-col items-center gap-4">
       <div className="w-full max-w-xs px-3 py-2 rounded-xl flex items-center gap-2 text-xs bg-surface-container border border-outline-variant">
         <Sparkles size={12} className="text-primary-fixed-dim flex-shrink-0" aria-hidden />
-        <span className="text-on-surface-variant">Score basiert auf gemeinsamen Interessen</span>
+        <span className="text-on-surface-variant">{tr('Score basiert auf gemeinsamen Interessen')}</span>
       </div>
 
       <div className="w-full max-w-xs transition-all duration-200"
@@ -98,16 +101,16 @@ function SwipeTab({ onMatch }: { onMatch: (n: string) => void }) {
               <p className="text-white font-bold text-lg">{current.nickname}, {current.age}</p>
               <div className="flex items-center gap-1">
                 <MapPin size={11} className="text-white/70" aria-hidden />
-                <span className="text-white/80 text-xs">{current.city} · {current.distance} km</span>
+                <span className="text-white/80 text-xs">{tr(current.city)} · {current.distance} km</span>
               </div>
             </div>
           </div>
           <div className="p-3 space-y-2">
-            <p className="text-on-surface-variant text-xs line-clamp-2">{current.bio}</p>
+            <p className="text-on-surface-variant text-xs line-clamp-2">{tr(current.bio)}</p>
             <div className="flex flex-wrap gap-1.5">
               {current.interests.map(i => (
                 <span key={i.name} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${i.green ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/40' : 'bg-red-500/20 text-red-400 ring-1 ring-red-500/40'}`}>
-                  {i.green ? '💚' : '🚩'} {i.name}
+                  {i.green ? '💚' : '🚩'} {tr(i.name)}
                 </span>
               ))}
             </div>
@@ -118,11 +121,11 @@ function SwipeTab({ onMatch }: { onMatch: (n: string) => void }) {
       <p className="text-xs text-on-surface-variant">{idx + 1} / {DECK.length}</p>
 
       <div className="flex items-center gap-6">
-        <button onClick={() => swipe('skip')} disabled={swiping} aria-label="Überspringen"
+        <button onClick={() => swipe('skip')} disabled={swiping} aria-label={tr('Überspringen')}
           className="h-14 w-14 rounded-full flex items-center justify-center border-2 border-red-500/40 bg-surface-container hover:bg-red-500/10 active:scale-95 disabled:opacity-40 transition-all">
           <X size={24} className="text-red-400" aria-hidden />
         </button>
-        <button onClick={() => swipe('like')} disabled={swiping} aria-label="Liken"
+        <button onClick={() => swipe('like')} disabled={swiping} aria-label={tr('Liken')}
           className="h-14 w-14 rounded-full flex items-center justify-center border-2 border-green-500/40 bg-surface-container hover:bg-green-500/10 active:scale-95 disabled:opacity-40 transition-all">
           <Heart size={24} className="text-green-400" fill="currentColor" aria-hidden />
         </button>
@@ -132,10 +135,11 @@ function SwipeTab({ onMatch }: { onMatch: (n: string) => void }) {
 }
 
 function MatchesTab({ matches }: { matches: MatchItem[] }) {
+  const tr = useDemoText()
   if (matches.length === 0) return (
     <div className="flex flex-col items-center gap-3 py-12 text-center">
       <Heart size={36} className="text-primary-fixed-dim" fill="currentColor" aria-hidden />
-      <p className="font-semibold text-on-surface text-sm">Noch keine Matches — swipe nach rechts!</p>
+      <p className="font-semibold text-on-surface text-sm">{tr('Noch keine Matches — swipe nach rechts!')}</p>
     </div>
   )
   return (
@@ -147,11 +151,11 @@ function MatchesTab({ matches }: { matches: MatchItem[] }) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-on-surface text-sm">{m.nickname}, {m.age}</p>
-            <p className="text-xs text-on-surface-variant flex items-center gap-1"><MapPin size={10} aria-hidden /> {m.city}</p>
+            <p className="text-xs text-on-surface-variant flex items-center gap-1"><MapPin size={10} aria-hidden /> {tr(m.city)}</p>
             <p className="text-xs text-on-surface-variant flex items-center gap-1"><Calendar size={10} aria-hidden /> {m.date}</p>
           </div>
           <button className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-primary-fixed-dim text-on-primary-container hover:opacity-90 transition-opacity">
-            <MessageCircle size={12} aria-hidden /> Chat
+            <MessageCircle size={12} aria-hidden /> {tr('Chat')}
           </button>
         </div>
       ))}
@@ -160,6 +164,8 @@ function MatchesTab({ matches }: { matches: MatchItem[] }) {
 }
 
 export function MatchingDemo() {
+  const tr = useDemoText()
+  const lang = useLanguageStore((s) => s.uiLang)
   const [tab, setTab] = useState<'swipe' | 'matches'>('swipe')
   const [matches, setMatches] = useState<MatchItem[]>(INITIAL_MATCHES)
   const [banner, setBanner] = useState<string | null>(null)
@@ -168,7 +174,7 @@ export function MatchingDemo() {
   function handleMatch(n: string) {
     if (bt.current) clearTimeout(bt.current)
     setBanner(n)
-    setMatches(ms => [{ id: `m${Date.now()}`, nickname: n, age: 26, city: 'Wien', date: new Date().toLocaleDateString('de-DE'), color: '#e879f9' }, ...ms])
+    setMatches(ms => [{ id: `m${Date.now()}`, nickname: n, age: 26, city: 'Wien', date: new Date().toLocaleDateString(lang), color: '#e879f9' }, ...ms])
     bt.current = setTimeout(() => setBanner(null), 2500)
   }
 
@@ -177,8 +183,8 @@ export function MatchingDemo() {
       {banner && (
         <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary-fixed-dim text-on-primary-container" role="status" aria-live="polite">
           <CheckCircle2 size={16} aria-hidden />
-          <span className="flex-1 font-semibold text-sm">It's a Match — {banner}!</span>
-          <button onClick={() => { setBanner(null); setTab('matches') }} className="text-xs font-bold underline underline-offset-2">Matches</button>
+          <span className="flex-1 font-semibold text-sm">{tr("It's a Match — {name}!", { name: banner })}</span>
+          <button onClick={() => { setBanner(null); setTab('matches') }} className="text-xs font-bold underline underline-offset-2">{tr('Matches')}</button>
         </div>
       )}
 
@@ -186,7 +192,7 @@ export function MatchingDemo() {
         {(['swipe', 'matches'] as const).map(id => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
             className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all ${tab === id ? 'bg-primary-fixed-dim text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'}`}>
-            {id === 'swipe' ? 'Entdecken' : `Matches${matches.length > 0 ? ` (${matches.length})` : ''}`}
+            {id === 'swipe' ? tr('Entdecken') : `${tr('Matches')}${matches.length > 0 ? ` (${matches.length})` : ''}`}
           </button>
         ))}
       </div>
