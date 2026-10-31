@@ -86,9 +86,15 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
   });
 
   section.addEventListener("click", (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-catalog-open]");
+    const target = e.target as HTMLElement;
+    const btn = target.closest<HTMLElement>("[data-catalog-open]");
+    // The whole tile opens, unless the visitor was just selecting its text.
+    const tile = target.closest<HTMLElement>(".ctile");
     if (btn) open(btn.dataset.catalogOpen!, btn);
-    else if ((e.target as HTMLElement).closest(".catalog-close")) close();
+    else if (tile && !getSelection()?.toString()) {
+      const own = tile.querySelector<HTMLElement>("[data-catalog-open]")!;
+      open(own.dataset.catalogOpen!, own);
+    } else if ((e.target as HTMLElement).closest(".catalog-close")) close();
   });
   document.addEventListener("keydown", (e) => {
     // the facet overlay (above this one) handles its own Esc first

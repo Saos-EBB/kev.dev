@@ -76,6 +76,7 @@
   padding: 1.25rem;
   border: 1px solid var(--pc-soft);
   background: color-mix(in srgb, var(--projects-bg) 82%, transparent);
+  cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -121,6 +122,11 @@
   inset: 0;
   grid-area: auto;
   font-size: 0.8rem;
+}
+
+/* The preview doesn't run here: don't promise it. */
+.ctile-viz .viz-hud--br {
+  display: none;
 }
 
 .ctile-face {
