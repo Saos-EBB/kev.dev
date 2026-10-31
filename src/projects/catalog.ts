@@ -74,10 +74,26 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     if (dialog.hidden) return;
     dialog.classList.remove("is-open");
     lenis.start();
+    if (route()) history.replaceState(null, "", location.pathname + location.search);
     if (matchMedia("(prefers-reduced-motion: reduce)").matches && !document.documentElement.classList.contains("force-motion")) dialog.hidden = true;
     else dialog.addEventListener("transitionend", hideWhenSlidOut);
-    opener?.focus();
+    // Came in by link: the page behind is still at the top, go to the tile.
+    if (linked && opener) lenis.scrollTo(opener, { immediate: true, offset: -innerHeight / 2 });
+    linked = false;
+    opener?.focus({ preventScroll: true });
   };
+
+  // Each card has a URL, #projekt/<id>: a link to it opens the card, Back closes it.
+  const route = () => /^#projekt\/([a-z0-9-]+)$/.exec(location.hash)?.[1] ?? null;
+  const follow = () => {
+    const id = route();
+    const btn = id && section.querySelector<HTMLElement>(`[data-catalog-open="${id}"]`);
+    if (btn) open(id, btn);
+    else if (!id) close();
+  };
+  window.addEventListener("hashchange", follow);
+  let linked = route() !== null;
+  if (linked) follow();
 
   // Tab cycles inside the open card instead of walking the hidden page behind it.
   const keepFocusInside = (e: KeyboardEvent) => {
@@ -102,11 +118,9 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     const btn = target.closest<HTMLElement>("[data-catalog-open]");
     // The whole tile opens, unless the visitor was just selecting its text.
     const tile = target.closest<HTMLElement>(".ctile");
-    if (btn) open(btn.dataset.catalogOpen!, btn);
-    else if (tile && !getSelection()?.toString()) {
-      const own = tile.querySelector<HTMLElement>("[data-catalog-open]")!;
-      open(own.dataset.catalogOpen!, own);
-    } else if ((e.target as HTMLElement).closest(".catalog-close")) close();
+    if (btn) location.hash = `projekt/${btn.dataset.catalogOpen}`;
+    else if (tile && !getSelection()?.toString()) location.hash = `projekt/${tile.dataset.card}`;
+    else if ((e.target as HTMLElement).closest(".catalog-close")) close();
   });
   document.addEventListener("keydown", (e) => {
     // the facet overlay (above this one) handles its own keys first
