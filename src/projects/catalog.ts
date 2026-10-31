@@ -79,6 +79,12 @@ export function initCatalog(section: HTMLElement, lenis: Lenis) {
     opener?.focus();
   };
 
+  // Past the big cards' long pinned ride in one jump, like the #contact links.
+  document.querySelector(".catalog-jump")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    lenis.scrollTo(section, { immediate: true });
+  });
+
   section.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-catalog-open]");
     if (btn) open(btn.dataset.catalogOpen!, btn);

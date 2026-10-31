@@ -191,6 +191,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <section class="projects" id="projects">
     <div class="projects-bg-grid" aria-hidden="true"></div>
     <div class="projects-saos" aria-hidden="true"></div>
+    ${LITE ? "" : `<a class="catalog-jump" href="#catalog">${UI.catalogTag} ↓</a>`}
     <h2 class="projects-title">${titleFx(UI.projects)}${
       LITE ? `<span class="projects-groups projects-groups--spot" aria-hidden="true">${groupTagsHtml()}</span>` : ""
     }</h2>

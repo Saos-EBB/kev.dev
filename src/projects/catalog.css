@@ -254,3 +254,23 @@
 .catalog-sub .catalog-tag {
   font-size: 2rem;
 }
+
+/* In the pinned projects section: the way past the big cards. */
+.catalog-jump {
+  position: absolute;
+  top: calc(var(--projects-title-h, 8rem) * 0.4);
+  right: clamp(1rem, 4vw, 3rem);
+  z-index: 52; /* above the headline's fixed words (51) */
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--note-3);
+  background: var(--projects-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  transition: color var(--transition-hover);
+}
+
+.catalog-jump:hover,
+.catalog-jump:focus-visible {
+  color: var(--note-3);
+}
