@@ -41,6 +41,7 @@ export function phoneStage(apps: string): string {
 export const phoneApp = (id: string, inner: string) => `<div class="sp-app" data-app="${id}">${inner}</div>`;
 
 const RIPPLE_MS = 650; // the ring's way from the top of the screen to the bottom
+const WAVE_SLICES = 3;
 
 export interface App {
   // The wave's colors, as #rrggbb.
@@ -91,12 +92,31 @@ export function runPhone(stage: HTMLElement): Phone {
     my = Math.max(-1, Math.min(1, (e.clientY - r.top) / r.height - 0.5));
   });
 
-  let raf = 0;
+  // Most values round to what's already there; an unchanged one costs no style work.
+  const written = new WeakMap<Element, Record<string, string>>();
+  const setVar = (el: HTMLElement | SVGElement, name: string, value: string) => {
+    let vars = written.get(el);
+    if (!vars) written.set(el, (vars = {}));
+    if (vars[name] === value) return;
+    vars[name] = value;
+    el.style.setProperty(name, value);
+  };
+
+  let raf = 0, waveFrame = 0;
   const frame = (now: number) => {
     raf = requestAnimationFrame(frame);
     const a = apps.get(cur);
     if (!a) return;
     const t = reduced() ? 0 : now / 1000;
+    // All reads before any write of this frame: a read after a write makes the
+    // browser recalculate styles, and in the wave that was once per element.
+    // The wave is slow enough that each element only needs every third frame,
+    // except while the ring passes.
+    const sr = screen.getBoundingClientRect();
+    const ring = (now - rippleAt) / RIPPLE_MS;
+    const slice = ring < 1.6 ? -1 : waveFrame % WAVE_SLICES;
+    waveFrame++;
+    const rects = a.waved.map((el, i) => (slice < 0 || i % WAVE_SLICES === slice ? el.getBoundingClientRect() : null));
     a.app.frame?.(now, t);
 
     kick += (push - kick) * 0.12;
@@ -107,23 +127,23 @@ export function runPhone(stage: HTMLElement): Phone {
 
     // The wave: color by place on the screen, time and content; the ring
     // brightens what it passes. Only what's visible on the screen.
-    const sr = screen.getBoundingClientRect();
-    const ring = (now - rippleAt) / RIPPLE_MS;
     const shift = a.app.shift?.() ?? 0;
-    let glow: number[] | null = null;
-    for (const el of a.waved) {
-      const r = el.getBoundingClientRect();
-      if (!r.width || r.bottom < sr.top || r.top > sr.bottom) continue;
+    for (let i = 0; i < rects.length; i++) {
+      const el = a.waved[i], r = rects[i];
+      if (!r || !r.width || r.bottom < sr.top || r.top > sr.bottom) continue;
       const y = (r.top + r.height / 2 - sr.top) / sr.height;
       const x = (r.left + r.width / 2 - sr.left) / sr.width;
       const c = a.color(y * 0.55 + x * 0.18 - t * 0.09 + shift);
       const lit = ring < 1.6 ? Math.exp(-((y - ring + 0.2) ** 2) / 0.012) : 0;
       const al = Math.min(100, 26 + 22 * (0.5 + 0.5 * Math.sin(y * 9 - t * 3 + x * 2)) + lit * 52);
-      el.style.setProperty("--c", rgb(lit > 0.2 ? c.map((v) => v + (255 - v) * lit * 0.5) : c));
-      el.style.setProperty("--a", `${al.toFixed(0)}%`);
-      if (!glow && y > 0.4) glow = c;
+      setVar(el, "--c", rgb(lit > 0.2 ? c.map((v) => v + (255 - v) * lit * 0.5) : c));
+      setVar(el, "--a", `${al.toFixed(0)}%`);
     }
-    if (glow) stage.style.setProperty("--wave", rgb(glow));
+    // Inherited by everything in the phone, so every write restyles all of it:
+    // coarse steps, a few times a second. Too slow a change to see.
+    if (waveFrame % 12 === 0) {
+      setVar(stage, "--wave", rgb(a.color(0.365 - t * 0.09 + shift).map((v) => Math.round(v / 4) * 4)));
+    }
   };
 
   // Runs only while the phone is on screen.
