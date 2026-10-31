@@ -716,7 +716,8 @@ const cards: ProjectCard[] = [
       "Es war durchgehend Neuland — Projektion, Rotation, das Einlesen von OBJ und STL, überall Probleme, die ich mir vorher nie gestellt hatte. Der Reiz war der Aufstieg: vom simplen Wireframe bis dahin, ein komplettes Schädel-CT aus DICOM-Daten auf einem 2D-Canvas zu rendern.",
     widget: {
       label: "3D-Modelle, mit der Maus drehbar",
-      mount: (el, card) => import("./widgets/renderer").then((m) => m.mount(el, card)),
+      fullscreen: true,
+      mount: (el) => import("./widgets/renderer").then((m) => m.mount(el)),
     },
     facets: ["live-demo"],
     open: [

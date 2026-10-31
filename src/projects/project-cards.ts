@@ -28,6 +28,7 @@ export interface ProjectLink {
 // the card's own copy instead of repeating it.
 export interface ProjectWidget {
   label: string;
+  fullscreen?: boolean; // the widget takes the whole screen and every input, Esc leaves
   mount: (el: HTMLElement, card: ProjectCard) => Promise<void | (() => void)> | void | (() => void);
 }
 

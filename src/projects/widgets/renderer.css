@@ -1,76 +1,177 @@
-/* Renderer workspace (see renderer.ts). Desktop: cards / canvas / cards,
-   filling the overlay's workspace. Narrow: canvas first, cards below.
-   --pc comes from the overlay panel (the card's accent). */
+/* Renderer demo, full screen (see renderer.ts): the file chain on the left,
+   the canvas filling the rest, a glowing frame over all of it that says the
+   demo has every input. Always dark, like the other self-contained widgets,
+   so it doesn't read the page theme's text colours. --pc comes from the
+   overlay panel (the card's accent). */
 .rwidget {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.rwidget-side {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.rwidget-side p {
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: var(--color-text);
-}
-
-/* --- center: canvas with HUD ---------------------------------------- */
-
-.rwidget-stage {
+  --rw-text: #f5f5f6;
+  --rw-muted: #a9a9b2;
+  --rw-soft: color-mix(in srgb, var(--pc) 40%, transparent);
   position: relative;
-  order: -1;
-  min-height: 0;
-  border: 1px solid var(--pc);
-  background:
-    radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--pc) 10%, transparent), transparent 65%),
-    var(--color-canvas-bg);
-  box-shadow: 0 18px 40px color-mix(in srgb, var(--color-shadow) 50%, transparent);
-}
-
-.rwidget-tabs {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  right: 0.75rem;
-  z-index: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.rwidget-tabs button {
+  display: grid;
+  grid-template-columns: minmax(19rem, 24rem) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-canvas-bg);
+  color: var(--rw-text);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid color-mix(in srgb, var(--pc) 40%, transparent);
-  background: color-mix(in srgb, var(--color-canvas-bg) 70%, transparent);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: color var(--transition-hover), border-color var(--transition-hover),
-    background-color var(--transition-hover);
 }
 
-.rwidget-tabs button:hover,
-.rwidget-tabs button:focus-visible {
-  color: var(--color-text);
-  border-color: var(--pc);
+.rwidget::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border: 3px solid var(--pc);
+  box-shadow:
+    inset 0 0 18px color-mix(in srgb, var(--pc) 75%, transparent),
+    inset 0 0 70px color-mix(in srgb, var(--pc) 30%, transparent);
+  animation: rwidget-glow 2.4s ease-in-out infinite alternate;
 }
 
-.rwidget-tabs button[aria-pressed="true"] {
+@keyframes rwidget-glow {
+  to {
+    box-shadow:
+      inset 0 0 30px var(--pc),
+      inset 0 0 110px color-mix(in srgb, var(--pc) 45%, transparent);
+  }
+}
+
+.rwidget-capture {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.9rem 4.5rem;
+  border-bottom: 1px solid var(--rw-soft);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.rwidget-capture i {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
   background: var(--pc);
-  border-color: var(--pc);
+  box-shadow: 0 0 10px var(--pc);
+}
+
+/* --- the file chain, the highlight next to the canvas ---------------- */
+
+.rchain {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.25rem;
+  border-right: 1px solid var(--rw-soft);
+  background: color-mix(in srgb, var(--pc) 7%, transparent);
+}
+
+.rchain summary {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  line-height: 1.1;
+  color: var(--pc);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--pc) 60%, transparent);
+  cursor: pointer;
+}
+
+.rchain-lead {
+  margin: 0.75rem 0 1rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--rw-muted);
+}
+
+.rchain-flow {
+  display: grid;
+  justify-items: start;
+  gap: 0.35rem;
+}
+
+.rchain-file {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--pc);
+  background: var(--color-canvas-bg);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--rw-text);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--pc) 45%, transparent);
+}
+
+.rchain-tool {
+  display: grid;
+  gap: 0.15rem;
+  margin-left: 1rem;
+  padding: 0.35rem 0 0.35rem 1rem;
+  border-left: 2px solid var(--pc);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--rw-muted);
+}
+
+.rchain-tool code {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--pc);
+}
+
+.rchain-side {
+  display: grid;
+  justify-items: start;
+  gap: 0.35rem;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--rw-soft);
+}
+
+.rchain-end {
+  width: 100%;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--rw-muted);
+}
+
+.rchain-end .rchain-file {
+  background: var(--pc);
   color: var(--color-canvas-bg);
 }
 
+.rchain-end p {
+  margin: 0.5rem 0 0;
+}
+
+.rchain-end .rwidget-hud--stats {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--rw-text);
+}
+
+/* --- canvas and its controls ----------------------------------------- */
+
+.rwidget-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--pc) 10%, transparent), transparent 60%);
+}
+
 .rwidget-canvas {
-  display: block;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
+  display: block;
   cursor: grab;
   touch-action: none;
 }
@@ -80,165 +181,155 @@
 }
 
 .rwidget-canvas:focus-visible {
-  outline: 2px solid var(--pc);
-  outline-offset: -2px;
+  outline: none;
 }
 
-.rwidget-hud {
+.rwidget-tabs,
+.rwidget-bar {
   position: absolute;
-  bottom: 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  left: 1rem;
+  right: 1rem;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   pointer-events: none;
 }
 
-.rwidget-hud--stats {
-  left: 0.9rem;
+.rwidget-tabs {
+  top: 1rem;
+}
+
+.rwidget-bar {
+  bottom: 1rem;
+}
+
+.rwidget-tabs > *,
+.rwidget-bar > * {
+  pointer-events: auto;
+}
+
+.rwidget-tabs button,
+.rwidget-bar button {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--rw-soft);
+  background: color-mix(in srgb, var(--color-canvas-bg) 75%, transparent);
+  color: var(--rw-text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.rwidget-tabs button:hover,
+.rwidget-bar button:hover {
+  border-color: var(--pc);
+}
+
+.rwidget-tabs button[aria-pressed="true"] {
+  border-color: var(--pc);
+  background: var(--pc);
+  color: var(--color-canvas-bg);
+}
+
+.rwidget button:focus-visible,
+.rwidget input:focus-visible {
+  outline: 2px solid var(--pc);
+  outline-offset: 2px;
+}
+
+.rwidget-bar b {
   color: var(--pc);
 }
 
-.rwidget-hud--hint {
-  right: 0.9rem;
-  color: var(--color-text-muted);
+.rwidget-cut {
+  flex: 1 1 12rem;
+  max-width: 22rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.5rem;
+  padding: 0 0.8rem;
+  border: 1px solid var(--rw-soft);
+  background: color-mix(in srgb, var(--color-canvas-bg) 75%, transparent);
+  font-size: 0.8rem;
+}
+
+.rwidget-cut input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--pc);
+}
+
+.rwidget-keys {
+  position: absolute;
+  top: 4.25rem;
+  right: 1rem;
+  z-index: 1;
+  display: grid;
+  justify-items: end;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--rw-muted);
+  pointer-events: none;
+}
+
+.rwidget-keys span {
+  margin-left: 0.25rem;
+}
+
+.rwidget-keys kbd {
+  margin-left: 0.25rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--rw-soft);
+  background: var(--color-canvas-bg);
+  font: inherit;
+  color: var(--rw-text);
 }
 
 .rwidget-status {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  inset: 50% 0 auto;
+  margin: 0;
+  text-align: center;
+  font-size: 0.9rem;
   pointer-events: none;
 }
 
-/* --- side cards ----------------------------------------------------- */
-
-.rwidget-steps,
-.rwidget-keys,
-.rwidget-decisions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  list-style: none;
-  font-size: 0.85rem;
-  line-height: 1.55;
-  color: var(--color-text-muted);
-}
-
-.rwidget-steps b {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--pc);
-}
-
-.rwidget-shades {
-  display: flex;
-  height: 0.6rem;
-  margin-top: 0.45rem;
-}
-
-.rwidget-shades i {
-  flex: 1;
-}
-
-.rwidget-side .rwidget-model-name {
-  font-family: var(--font-display);
-  font-size: 1.9rem;
-  line-height: 1;
-  color: var(--pc);
-}
-
-.rwidget-model-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-}
-
-.rwidget-model-stats div {
-  padding: 0.45rem 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent);
-}
-
-.rwidget-model-stats dt {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-muted);
-}
-
-.rwidget-model-stats dd {
-  font-family: var(--font-mono);
-  font-size: 1.05rem;
-  color: var(--color-text);
-}
-
-.rwidget-keys kbd {
-  display: inline-block;
-  min-width: 1.6rem;
-  margin-inline-end: 0.25rem;
-  padding: 0.1rem 0.35rem;
-  border: 1px solid color-mix(in srgb, var(--pc) 45%, transparent);
-  border-bottom-width: 2px;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  text-align: center;
-  color: var(--color-text);
-}
-
-.rwidget-decisions li {
-  position: relative;
-  padding-inline-start: 1rem;
-}
-
-.rwidget-decisions li::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: 0;
-  top: 0.6em;
-  width: 5px;
-  height: 5px;
-  background: var(--pc);
-}
-
-/* --- desktop workspace ---------------------------------------------- */
-
-@media (min-width: 1000px) {
-  .facet-overlay--workspace .rwidget {
-    display: grid;
-    grid-template-columns: minmax(15rem, 0.9fr) minmax(0, 2.2fr) minmax(15rem, 0.9fr);
-    grid-template-rows: minmax(0, 1fr);
-    gap: 1.25rem;
-    height: 100%;
+/* Narrow: canvas over the chain (collapsed by default), no key list on touch. */
+@media (max-width: 900px) {
+  .rwidget {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
-
-  .facet-overlay--workspace .rwidget-stage {
-    order: 0;
+  .rwidget-capture {
+    justify-content: flex-start;
+    padding: 0.9rem 4rem 0.9rem 1rem;
+    text-align: left;
   }
-
-  .facet-overlay--workspace .rwidget-side {
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: thin;
+  .rwidget-stage {
+    grid-row: 2;
   }
-
-  .facet-overlay--workspace .rwidget-canvas {
-    height: 100%;
-    aspect-ratio: auto;
+  .rchain {
+    grid-row: 3;
+    max-height: 45vh;
+    border-right: 0;
+    border-top: 1px solid var(--rw-soft);
   }
-}
-
-@media (max-width: 640px) {
-  /* No room for both HUD lines on a phone — the stats win. */
-  .rwidget-hud--hint {
+  .rchain summary {
+    font-size: 1.3rem;
+  }
+  .rwidget-keys {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.force-motion) .rwidget::after {
+    animation: none;
   }
 }

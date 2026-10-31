@@ -257,10 +257,15 @@ function ensureOverlay(lenis: Lenis): HTMLElement {
   const close = () => {
     if (!isOpen()) return;
     el.hidden = true;
+    if (document.fullscreenElement === el) void document.exitFullscreen();
     lenis.start();
     lastFocused?.focus();
     lastFocused = null;
   };
+  // The browser handles Esc in real fullscreen itself: leaving it closes the overlay too.
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && el.classList.contains("facet-overlay--fullscreen")) close();
+  });
 
   el.addEventListener("click", (e) => {
     if ((e.target as HTMLElement).closest("[data-close]")) close();
@@ -302,7 +307,7 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     const card = byId.get(btn.closest<HTMLElement>(".pcard")?.dataset.card ?? "");
     const el = ensureOverlay(lenis);
     parkActiveWidget();
-    el.classList.remove("facet-overlay--workspace");
+    el.classList.remove("facet-overlay--workspace", "facet-overlay--fullscreen");
     el.querySelector(".facet-overlay-sub")!.textContent = "";
     el.querySelector(".facet-overlay-title")!.innerHTML = displayText(
       `${card?.title ?? ""} — ${boxEl.querySelector(".pcard-box-heading")!.textContent}`,
@@ -332,6 +337,10 @@ export function initFacetOverlay(root: HTMLElement, cards: ProjectCard[], lenis:
     // A live widget gets the workspace: the whole screen, the project's
     // name as the title and the widget's own label under it.
     el.classList.toggle("facet-overlay--workspace", !!content.widget);
+    el.classList.toggle("facet-overlay--fullscreen", !!content.widget?.fullscreen);
+    // Still inside the click: browsers only allow this on a user gesture. Where
+    // it's refused or missing (iPhone), the overlay covers the window anyway.
+    if (content.widget?.fullscreen) el.requestFullscreen?.().catch(() => {});
     el.querySelector(".facet-overlay-title")!.innerHTML = displayText(content.widget ? card.title : content.title);
     el.querySelector(".facet-overlay-sub")!.textContent = content.widget ? content.title : "";
 
