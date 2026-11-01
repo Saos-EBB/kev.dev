@@ -229,9 +229,10 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>Musikplayer (YouTube)</h2>
       <p>
-        Der Play-Button im Kopfbereich spielt eine YouTube-Playlist ab, und
-        der Knopf am Schädel im Kontaktbereich öffnet am Ende ein YouTube-Video.
-        Für beides gilt dieselbe Einwilligung.
+        Der Knopf am Schädel im Kontaktbereich öffnet am Ende, nach Ihrer
+        Bestätigung, ein YouTube-Video; dabei werden dieselben Daten an Google
+        übertragen.
+        Der Play-Button im Kopfbereich spielt eine YouTube-Playlist ab.
         Beim ersten Klick erscheint zunächst ein Hinweis; erst wenn Sie
         dort „Abspielen“ wählen, wird der Player von <strong>Google Ireland Limited</strong>
         (Gordon House, Barrow Street, Dublin 4, Irland) im erweiterten
@@ -369,8 +370,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>Music player (YouTube)</h2>
       <p>
-        The button by the skull in the contact section ends by opening a
-        YouTube video, under the same consent as the player described here.
+        The button by the skull in the contact section ends, after you
+        confirm, by opening a YouTube video; the same data goes to Google.
         The play button in the header plays a YouTube playlist. The first
         click only shows a notice; the player is loaded only once you
         choose "Play" there — from <strong>Google Ireland Limited</strong>
@@ -504,8 +505,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>Музыкальный плеер (YouTube)</h2>
       <p>
-        Кнопка у черепа в разделе контактов в конце открывает видео YouTube,
-        на то же согласие, что и описанный здесь плеер.
+        Кнопка у черепа в разделе контактов в конце, после вашего подтверждения,
+        открывает видео YouTube; при этом те же данные передаются Google.
         Кнопка воспроизведения в шапке запускает плейлист YouTube. Первое
         нажатие лишь показывает уведомление; плеер загружается только
         после того, как вы выберете в нём «Воспроизвести», — плеер компании <strong>Google Ireland Limited</strong>
@@ -636,8 +637,8 @@ export const DATENSCHUTZ: LegalText = pick<LegalText>({
 
       <h2>音楽プレーヤー（YouTube）</h2>
       <p>
-        連絡先セクションの頭蓋骨のボタンは、最後に YouTube の動画を開きます。
-        同意はここで説明するプレーヤーと共通です。
+        連絡先セクションの頭蓋骨のボタンは、確認後、最後に YouTube の動画を開きます。
+        その際、同じデータが Google に送信されます。
         ヘッダーの再生ボタンで YouTube のプレイリストを再生します。最初の
         クリックではお知らせが表示されるだけで、そこで「再生」を選んだ場合に
         はじめて、<strong>Google Ireland Limited</strong>（Gordon House,

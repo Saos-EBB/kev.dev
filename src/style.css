@@ -19,6 +19,7 @@
   --color-line: #cd57ff; /* grid / cloth / rule lines, hover color */
   --color-text-muted: #8a8a93; /* secondary text */
   --color-accent: #cd57a6; /* focus outlines, highlights */
+  --text-accent: var(--color-accent); /* accent as text: header, footer, about highlights */
   --hero-bg: #08070a; /* hero section backdrop */
   --grid-color: #cd57ff; /* shared grid line color, all scenes */
   --about-bg: #08070a; /* about section backdrop */
@@ -178,10 +179,11 @@
   --title-grad-from: #ffffff;
   --title-grad-mid: #ffffff;
   --title-grad-to: #f2d5dc;
-  /* Dark teal disappears on dark cherry as text (1.4:1), so it's a fill with
-     white on it; --note-3 is the same hue, light enough for text and lines. */
-  --accent-fill: #0f4c4c;
-  --note-3: #35ab9d;
+  /* Baby blue: reads on dark cherry as text and lines; on a fill of it, the
+     text is dark cherry (white would be too faint). */
+  --accent-fill: #89cff0;
+  --note-3: #89cff0;
+  --text-accent: var(--note-3);
   --note-5: #f2d5dc;
   --note-6: #ffffff;
   --note-9: #ffffff;
@@ -262,17 +264,17 @@ a {
 }
 
 .site-header-brand {
-  color: var(--color-text-muted);
+  color: var(--text-accent);
   transition: color var(--transition-hover);
 }
 
 .site-header-brand:hover,
 .site-header-brand:focus-visible {
-  color: var(--color-line);
+  color: var(--color-text);
 }
 
 .brand-accent {
-  color: var(--color-accent);
+  color: var(--text-accent);
 }
 
 .site-header-links {
@@ -282,7 +284,7 @@ a {
 }
 
 .site-header-links a {
-  color: var(--color-text-muted);
+  color: var(--text-accent);
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -291,7 +293,7 @@ a {
 
 .site-header-links a:hover,
 .site-header-links a:focus-visible {
-  color: var(--color-line);
+  color: var(--color-text);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1413,7 +1415,7 @@ button:focus-visible {
 }
 
 .footer-copy {
-  color: var(--color-text-muted);
+  color: var(--text-accent);
 }
 
 .footer-links {
@@ -1423,14 +1425,14 @@ button:focus-visible {
 }
 
 .footer-links a {
-  color: var(--color-text-muted);
+  color: var(--text-accent);
   text-decoration: none;
   transition: color var(--transition-hover);
 }
 
 .footer-links a:hover,
 .footer-links a:focus-visible {
-  color: var(--color-line);
+  color: var(--color-text);
 }
 
 /* The three kev.dev sites; the one you're on is marked, not linked away. */

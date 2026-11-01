@@ -1,7 +1,6 @@
 // Consents for the features that load from third parties, each only
 // after the visitor agrees in a notice right where the feature is:
-//   youtube   — the header music player (music/youtube.ts) and the video
-//               at the end of the skull button (contact/skull/skull-more.ts)
+//   youtube   — the header music player (music/youtube.ts)
 //   cheerpj   — the Java runtime of the Grundlagen live demo
 //               (projects/widgets/grundlagen.ts)
 //   facedots  — Google's segmentation model, fetched the first time a
