@@ -29,19 +29,22 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0);
 // vault +y; the nearest front vertex is the hit point), a big blade sunk
 // deep (depth = how far its rim goes past the hit point).
 const HIT = { want: [-0.32, 0.6, 0.35], scale: 0.78, depth: 0.42, tilt: [0.25, -0.3] } as const;
-// The blades the [more?] button sends after it (skull-more.ts), one per press.
+// The blades the [more?] button sends after it (skull-more.ts), one per press;
+// the last one comes by itself when the song starts.
 const MORE_HITS = [
   { want: [-0.85, 0.35, -0.2], scale: 0.7, depth: 0.38, tilt: [-0.2, 0.25] },
   { want: [-0.5, -0.15, 0.5], scale: 0.62, depth: 0.32, tilt: [0.3, 0.2] },
   { want: [-0.7, -0.25, -0.55], scale: 0.72, depth: 0.4, tilt: [-0.3, -0.25] },
+  { want: [-0.55, 0.75, -0.35], scale: 0.8, depth: 0.42, tilt: [0.2, 0.3] },
 ] as const;
 const SETTLED_PAUSE = 600; // ms the frozen frame stands before the button appears
 
 // Where the three link shards come to rest, in normalized screen coords
-// (-1..1, y up) — portrait screens above/below the skull, landscape beside it.
+// (-1..1, y up) — portrait screens in a row above the skull (the
+// [more?] button has the space below it), landscape beside it.
 const LINK_REST = {
   wide: [[-0.62, 0.55], [0.64, 0.25], [-0.62, -0.5]],
-  tall: [[-0.55, 0.72], [0.55, 0.72], [0, -0.72]],
+  tall: [[-0.62, 0.76], [0.62, 0.76], [0, 0.76]],
 } as const;
 const LINK_STAGGER = 0.12; // s between the three link shards leaving
 
@@ -287,7 +290,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // narrow screens: step back so skull + blood fit the width
     const tall = w / h < 0.8;
     camera.position.set(0, 0.2, tall ? 8.5 : 5.8);
-    camera.lookAt(0, tall ? 0.1 : 0.08, 0);
+    // narrow screens: the skull's visible middle in the screen's
+    if (tall) camera.lookAt(visualCentre);
+    else camera.lookAt(0, 0.08, 0);
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     dirty = true;
@@ -444,8 +449,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       gap.x = x; gap.y = y;
       dirty = true;
     },
-    hitsLeft: () => MORE_HITS.length - (fired - 1),
+    hitsLeft: () => MORE_HITS.length - 1 - (fired - 1),
     async moreHit() {
+      if (fired > MORE_HITS.length) return;
       const i = fired++;
       settled = false;
       settledAt = 0;

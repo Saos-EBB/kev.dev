@@ -12,6 +12,13 @@
 
 :root[data-theme="light"] .contact .contact-icons a {
   background: var(--accent-fill);
+  color: var(--contact-bg);
+}
+
+:root[data-theme="light"] .contact .contact-icons a:hover,
+:root[data-theme="light"] .contact .contact-icons a:focus-visible {
+  background: #ffffff;
+  color: var(--contact-bg);
 }
 
 /* contact-skull.ts: the section becomes a scroll track (.contact--track,
@@ -185,15 +192,6 @@
 .skull-sure-title {
   margin: 0;
   font-size: 1.5rem;
-}
-
-.skull-sure-note {
-  margin: 0.75rem 0 0;
-  font-size: 0.85rem;
-}
-
-.skull-sure-note a {
-  color: inherit;
 }
 
 .skull-sure-actions {
