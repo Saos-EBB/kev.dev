@@ -1,11 +1,11 @@
 // The contact section — the page's closing beat. The projects grid carries
-// straight across the seam and dissolves once the section fills the screen;
-// then scrolling on lifts the craniumCut01 skull up from the bottom
-// (scrubbed). The section is a tall scroll track with a sticky, screen-high
+// straight across the seam and parts towards the screen edges once the section fills the screen;
+// the craniumCut01 skull comes at you from far behind
+// it as you scroll (scrubbed). The section is a tall scroll track with a sticky, screen-high
 // stage inside (not a ScrollTrigger pin): on phones touch scrolling runs on
 // its own thread and a pin, swapped in on the main thread, lags behind it —
 // it jumped and stuttered there. Sticky moves with the scroll itself.
-// From 70 % of the way up, the page scrolls the rest by itself at the speed
+// From 80 % of the way in, the page scrolls the rest by itself at the speed
 // you were scrolling. Once the skull is up, one saw blade cuts deep into it,
 // green blood bursts out of the wound like a splatter movie, and three shards that
 // fly out with it are the GitHub / mail / phone links (skull-scene.ts). The
@@ -24,11 +24,12 @@ import type Lenis from "lenis";
 import { LITE } from "../../viewport";
 import { BENTO_MIN_WIDTH_PX } from "../../projects/carousel";
 import type { SkullScene } from "./skull-scene";
+import { createSkullMore } from "./skull-more";
 import "./skull.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Grid dissolve → the skull rising from the bottom, one pinned & scrubbed
+// Grid parting and the skull approaching from behind it, one pinned & scrubbed
 // timeline; the saw blades' own timing lives in skull-scene.ts. Kept here
 // rather than in src/timings.ts so the main page's TIMINGS.contact stays
 // untouched.
@@ -37,18 +38,13 @@ const TIMING = {
   // much taller than its sticky stage (skull.css, .contact--track).
   scrub: 0.85, // lag (seconds) between scroll position and timeline position — reads as eased catching-up; this page's scroll is already Lenis-smoothed
 
-  grid: {
-    travel: 440, // px the bg grid keeps drifting down as it dissolves
-    duration: 1,
-    ease: "power1.in",
-    staggerEach: 0.01, // gap between each line starting its own wipe
-  },
+  gridDuration: 1, // timeline units the grid takes to leave through the screen edges
 
-  rise: 1.5, // timeline units the skull takes to come up, after the grid
+  rise: 2.5, // timeline units the skull takes to arrive; starts with the grid, ends well after it
 
-  // At this fraction of the skull's way up, the page scrolls the rest by
+  // At this fraction of the skull's way in, the page scrolls the rest by
   // itself, at the speed the user was scrolling.
-  autoScrollAt: 0.7,
+  autoScrollAt: 0.8,
   autoScroll: {
     minSpeed: 700, // px/s, floor for a very slow scroll so it still finishes promptly
     maxDuration: 1.2, // s, cap for the same reason
@@ -85,10 +81,13 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
   const forceMotion = document.documentElement.classList.contains("force-motion");
   const reducedMotion = !forceMotion && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Rise value the scrubbed timeline drives (0 = below the screen, 1 = up);
+  // Rise value the scrubbed timeline drives (0 = far away, 1 = arrived);
   // kept here so a scene that loads late picks up where scroll already is.
   const rise = { value: reducedMotion ? 1 : 0 };
   let scene: SkullScene | null = null;
+  const more = createSkullMore(stage);
+  // Middle of the grid's opening, in normalized screen coords (-1..1, y up).
+  let gap = { x: 0, y: 0 };
 
   // Load the scene once the section is within 1.5 screens.
   const io = new IntersectionObserver(([e]) => {
@@ -96,10 +95,12 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
     io.disconnect();
     import("./skull-scene")
       .then(({ createSkullScene }) =>
-        createSkullScene(stage, canvas, links),
+        createSkullScene(stage, canvas, links, more.setSettled),
       )
       .then((s) => {
         scene = s;
+        more.connect(s.hitsLeft, () => void s.moreHit());
+        s.setGap(gap.x, gap.y);
         if (reducedMotion) s.finish();
         else s.setRise(rise.value);
       })
@@ -156,16 +157,27 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
       }
       const w = section.clientWidth;
       const h = window.innerHeight;
+      // Lines leave through the nearer edge; the two either side of the
+      // screen's middle are where the gap opens, and the skull sits in it.
+      let top = 0, bottom = h, left = 0, right = w;
       hLines.forEach((line, i) => {
         const y = py + i * tileSize;
         line.style.top = `${y}px`;
         line.style.display = y <= h ? "" : "none";
+        line.style.setProperty("--dir", y < h / 2 ? "-1" : "1");
+        if (y < h / 2) top = Math.max(top, y);
+        else bottom = Math.min(bottom, y);
       });
       vLines.forEach((line, i) => {
         const x = px + i * tileSize;
         line.style.left = `${x}px`;
         line.style.display = x <= w ? "" : "none";
+        line.style.setProperty("--dir", x < w / 2 ? "-1" : "1");
+        if (x < w / 2) left = Math.max(left, x);
+        else right = Math.min(right, x);
       });
+      gap = { x: (left + right) / w - 1, y: 1 - (top + bottom) / h };
+      scene?.setGap(gap.x, gap.y);
     };
 
     // One spare line each way, so a phase shift never leaves a gap; the
@@ -175,16 +187,12 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
     for (let i = 0; i < rows; i++) {
       const line = document.createElement("div");
       line.className = "grid-line grid-line--h";
-      // Each line picks which of its two ends it retreats toward — mixed
-      // per line so the wipe reads as scattered, not a uniform sweep.
-      line.style.transformOrigin = Math.random() < 0.5 ? "left" : "right";
       bgGrid.appendChild(line);
       hLines.push(line);
     }
     for (let i = 0; i < cols; i++) {
       const line = document.createElement("div");
       line.className = "grid-line grid-line--v";
-      line.style.transformOrigin = Math.random() < 0.5 ? "top" : "bottom";
       bgGrid.appendChild(line);
       vLines.push(line);
     }
@@ -195,37 +203,17 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
   const tl = gsap.timeline({ paused: true });
 
   if (bgGrid) {
-    tl.to(bgGrid, {
-      y: TIMING.grid.travel,
-      duration: TIMING.grid.duration,
-      ease: TIMING.grid.ease,
-    })
-      .to(
-        hLines,
-        {
-          scaleX: 0,
-          duration: TIMING.grid.duration,
-          stagger: { each: TIMING.grid.staggerEach, from: "random" },
-        },
-        "<",
-      )
-      .to(
-        vLines,
-        {
-          scaleY: 0,
-          duration: TIMING.grid.duration,
-          stagger: { each: TIMING.grid.staggerEach, from: "random" },
-        },
-        "<",
-      );
+    // The grid parts from the middle: every line slides, whole, out through
+    // the nearest screen edge, so none ever ends in the middle (skull.css).
+    tl.fromTo(bgGrid, { "--part": 0 }, { "--part": 1, duration: TIMING.gridDuration, ease: "none" });
   }
 
-  tl.addLabel("rise").to(rise, {
+  tl.addLabel("rise", 0).to(rise, {
     value: 1,
     duration: TIMING.rise,
     ease: "none", // the scene eases the motion itself
     onUpdate: () => scene?.setRise(rise.value),
-  });
+  }, "rise");
   // A little slack after the rise, so it's fully up (rise = 1, which
   // starts the saw blades) before LANDED_PROGRESS — the track's very end.
   tl.to({}, { duration: 0.15 });
@@ -243,7 +231,7 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
     scrub: TIMING.scrub,
     animation: tl,
     onUpdate(self) {
-      // Past 70 % of the rise while scrolling down: finish the scroll at
+      // Past autoScrollAt of the rise while scrolling down: finish the scroll at
       // the speed the user was going (lenis.velocity is px per frame).
       if (!hasAutoScrolled && self.direction === 1 && self.progress > autoAt && self.progress < LANDED_PROGRESS) {
         hasAutoScrolled = true;
@@ -252,7 +240,7 @@ export function initSkullContact(section: HTMLElement, lenis: Lenis) {
         const duration = Math.min(Math.max((target - lenis.scroll) / speed, 0.15), TIMING.autoScroll.maxDuration);
         lenis.scrollTo(target, { duration, easing: (t: number) => t, lock: true });
       }
-      if (self.progress < riseStart) hasAutoScrolled = false; // re-armed once the skull is back down
+      if (self.progress < autoAt) hasAutoScrolled = false; // re-armed once scrolled back above it
     },
   });
 }

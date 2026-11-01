@@ -55,7 +55,7 @@
 .contact .contact-skull {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -114,4 +114,101 @@
   top: 50%;
   visibility: hidden;
   will-change: transform;
+}
+
+/* The grid parts as you scroll: --part (0 to 1, contact-skull.ts) pushes each
+   line along --dir, half a screen plus a cell, which is past the edge from
+   anywhere. All lines move as one, so the spacing stays and the gap in the
+   middle just grows. */
+.contact-bg-grid .grid-line--h {
+  transform: translateY(calc(var(--part, 0) * var(--dir, 1) * (50vh + var(--grid-cell))));
+}
+
+.contact-bg-grid .grid-line--v {
+  transform: translateX(calc(var(--part, 0) * var(--dir, 1) * (50vw + var(--grid-cell))));
+}
+
+/* The skull comes from behind the grid, so the grid lies over the canvas. */
+.contact .contact-bg-grid {
+  z-index: 1;
+}
+
+/* skull-more.ts: the button after the splatter, the question, the player. */
+.skull-more,
+.skull-sure button {
+  font: inherit;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-text);
+  background: var(--contact-bg);
+  border: 1px solid var(--color-contact-icon);
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  transition: color var(--transition-hover), border-color var(--transition-hover);
+}
+
+.skull-more:hover,
+.skull-more:focus-visible,
+.skull-sure button:hover,
+.skull-sure button:focus-visible {
+  color: var(--color-line);
+  border-color: var(--color-line);
+}
+
+.skull-more {
+  position: absolute;
+  left: 50%;
+  bottom: 6rem;
+  z-index: 3;
+  transform: translateX(-50%);
+}
+
+.skull-more[hidden],
+.skull-sure[hidden] {
+  display: none;
+}
+
+.skull-sure {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  width: min(26rem, calc(100% - 2rem));
+  padding: 1.5rem;
+  transform: translate(-50%, -50%);
+  background: var(--contact-bg);
+  border: 1px solid var(--color-contact-icon);
+  color: var(--color-text);
+  text-align: center;
+  cursor: auto;
+}
+
+.skull-sure-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.skull-sure-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+}
+
+.skull-sure-note a {
+  color: inherit;
+}
+
+.skull-sure-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.skull-player {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  width: min(22rem, calc(100vw - 2rem));
+  aspect-ratio: 16 / 9;
+  border: 0;
 }
