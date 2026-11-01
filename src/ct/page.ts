@@ -1,5 +1,4 @@
-// The CT-Schädel page (public at /ct-look, also /saos#dev#skull via
-// src/saos-entry.ts),
+// The CT-Schädel page (public at /ct-look),
 // rebuilt after the live prototype ("#skull infos /ct-live.zip") and the
 // CT-Desktop / CT-Mobile mockup. One point skull (ct-scene.ts) in a fixed
 // canvas over the right half; the section on screen sets its state and the
@@ -234,8 +233,8 @@ gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
 initScrollProgress(lenis); // the main page's scrollbar (src/scroll/progress.ts)
 
-// In-page links scroll without touching the URL, so /saos#dev#skull stays
-// in the address bar and a reload still lands on this page.
+// In-page links scroll without touching the URL, so /ct-look stays in the
+// address bar and a reload still lands on this page.
 document.addEventListener("click", (e) => {
   const a = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"]');
   if (!a) return;

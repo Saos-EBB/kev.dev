@@ -54,7 +54,7 @@ const BLOOD_JET = 0.3, BLOOD_PULSES = 3, BLOOD_PRESSURE = 1.4, BLOOD_DROP = 0.45
 // Fades like the skull: brightest close to the camera, faint at the wound.
 const BLOOD_DEPTH = { front: 4.5, range: 4.5 };
 
-export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(): Promise<void> };
+export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(): Promise<void>; wound(): readonly [number, number] };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
@@ -68,9 +68,23 @@ const breathe = () =>
     else setTimeout(resolve, 16);
   });
 
+// `stopAt`: seconds after the hit the time stands still (the blood in the air by
+// default; later than the blood's life, and it's gone).
+// `crown`: instead of the fixed hits, this many blades all over the skull.
+type SceneOptions = { stopAt?: number; crown?: number };
+type HitDef = {
+  want?: readonly number[];
+  scale: number;
+  depth: number;
+  tilt: readonly number[];
+  // Worked out by crownHits: the exact vertex, and the way out of the skull.
+  hit?: THREE.Vector3;
+  out?: THREE.Vector3;
+};
+
 // `section` is the screen-high sticky stage (contact-skull.ts), not the tall
 // scroll track around it: sizes, visibility and dragging are taken from it.
-export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], onSettled: (settled: boolean) => void): Promise<SkullScene> {
+export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], onSettled: (settled: boolean) => void, { stopAt = FREEZE_AT, crown = 0 }: SceneOptions = {}): Promise<SkullScene> {
   // Phones (LITE): no MSAA and at most 1.5x pixels — at 2-3x with
   // antialiasing the dense wire skull lagged there.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
@@ -83,7 +97,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const world = new THREE.Group();
   scene.add(world);
 
-  const lineColor = new THREE.Color(), throwColor = new THREE.Color(), bgColor = new THREE.Color();
+  const lineColor = new THREE.Color(), throwColor = new THREE.Color(), bgColor = new THREE.Color(), bladeColor = new THREE.Color();
   const readColors = () => {
     lineColor.set(css("--color-line") || "#cd57ff");
     throwColor.set(css("--color-throw") || "#89ff57");
@@ -187,9 +201,84 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const blades: ReturnType<typeof wireMesh>[] = [];
   const crackMat = new THREE.MeshBasicMaterial({ color: bgColor, side: THREE.DoubleSide, transparent: true }); // in the transparent pass so it's drawn after the skull's lines, and over them
 
-  const makeHit = async (def: typeof HIT | (typeof MORE_HITS)[number], startU: number) => {
-    const hit = nearestTo(new THREE.Vector3(...def.want));
-    const inDir = new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
+  // Blades all over the skull, at the first blade's size and depth, each standing
+  // straight out of it with its face as far towards the camera as that allows.
+  // Two discs can't touch if their centres are more than a diameter apart, so
+  // the directions are pushed apart until all of them are.
+  const crownHits = (count: number): HitDef[] => {
+    const radius = BLADE_R * HIT.scale;
+    const sample: THREE.Vector3[] = [];
+    for (let i = 0; i < pos.count; i += 7) sample.push(new THREE.Vector3().fromBufferAttribute(pos, i));
+    const units = sample.map((p) => p.clone().normalize());
+    const surface = (dir: THREE.Vector3) => {
+      let best = 0, bestDot = -2;
+      for (let i = 0; i < units.length; i++) {
+        const d = units[i].dot(dir);
+        if (d > bestDot) { bestDot = d; best = i; }
+      }
+      return sample[best];
+    };
+    const centre = (dir: THREE.Vector3) => surface(dir).clone().addScaledVector(dir, radius - HIT.depth);
+
+    const faceOf = (dir: THREE.Vector3) => {
+      const face = toCamera.clone().addScaledVector(dir, -toCamera.dot(dir));
+      if (face.lengthSq() < 1e-3) face.set(0, 1, 0).addScaledVector(dir, -dir.y);
+      return face.normalize();
+    };
+    // Do two discs cut each other? Where their planes meet, a line; they touch
+    // if that line runs through both, along a shared stretch.
+    const line = new THREE.Vector3(), toOther = new THREE.Vector3();
+    const reach = radius * 1.04;
+    const touch = (a: THREE.Vector3, na: THREE.Vector3, c: THREE.Vector3, nc: THREE.Vector3) => {
+      line.crossVectors(na, nc);
+      const sin2 = line.lengthSq();
+      if (sin2 < 1e-4) return Math.abs(toOther.subVectors(c, a).dot(na)) < 0.04 && a.distanceTo(c) < reach * 2;
+      // the point on the line nearest to a: in a's plane, on c's plane
+      const inPlane = new THREE.Vector3().crossVectors(line, na).normalize();
+      const dist = toOther.subVectors(c, a).dot(nc) / inPlane.dot(nc);
+      const onLine = a.clone().addScaledVector(inPlane, dist);
+      line.normalize();
+      const halfA = reach ** 2 - dist ** 2;
+      const offC = onLine.clone().sub(c);
+      const alongC = offC.dot(line);
+      const halfC = reach ** 2 - (offC.lengthSq() - alongC ** 2);
+      if (halfA <= 0 || halfC <= 0) return false;
+      return Math.abs(alongC) < Math.sqrt(halfA) + Math.sqrt(halfC);
+    };
+
+    // Even on a sphere to begin with (Fibonacci), then apart on the real shape.
+    const dirs = Array.from({ length: count }, (_, n) => {
+      const y = 1 - (2 * (n + 0.5)) / count, r = Math.sqrt(1 - y * y), a = n * Math.PI * (3 - Math.sqrt(5));
+      return new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
+    });
+    const push = new THREE.Vector3();
+    for (let round = 0; round < 400; round++) {
+      const at = dirs.map(centre), faces = dirs.map(faceOf);
+      let clear = true;
+      dirs.forEach((dir, n) => {
+        push.set(0, 0, 0);
+        at.forEach((other, m) => {
+          if (m === n || !touch(at[n], faces[n], other, faces[m])) return;
+          clear = false;
+          push.add(at[n].clone().sub(other).normalize());
+        });
+        dir.addScaledVector(push, 0.03).normalize();
+      });
+      if (clear) break;
+    }
+
+    // The ones the camera sees come first; the very first where the single hit is.
+    const facing = toCamera.clone().multiplyScalar(0.7).add(new THREE.Vector3(...HIT.want).normalize()).normalize();
+    dirs.sort((p, q) => q.dot(facing) - p.dot(facing));
+    return dirs.map((dir) => {
+      const turned = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), faceOf(dir)), "XYZ");
+      return { scale: HIT.scale, depth: HIT.depth, tilt: [turned.x, turned.y], hit: surface(dir).clone(), out: dir };
+    });
+  };
+
+  const makeHit = async (def: HitDef, startU: number) => {
+    const hit = def.hit ?? nearestTo(new THREE.Vector3(...def.want!));
+    const inDir = def.out ?? new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
     const stuck = hit.clone().addScaledVector(inDir, BLADE_R * def.scale - def.depth);
     const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
 
@@ -255,7 +344,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
         const origin = world.worldToLocal(skull.localToWorld(hit.clone()));
         const d = settle(u);
         for (const s of shards) {
-          s.m.visible = u > 0;
+          // With a later stop nothing hangs in the air: they're gone by then.
+          s.m.visible = u > 0 && (stopAt === FREEZE_AT || u < stopAt);
           if (!s.m.visible) continue;
           s.m.position.copy(origin).addScaledVector(s.vel, d);
           s.m.rotation.set(s.spin.x * d, s.spin.y * d, s.spin.z * d);
@@ -265,7 +355,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   };
 
   await breathe();
-  const first = await makeHit(HIT, -HIT_AT);
+  const placed = crown ? crownHits(crown) : [];
+  const moreDefs: readonly HitDef[] = crown ? placed.slice(1) : MORE_HITS;
+  const first = await makeHit(placed[0] ?? HIT, -HIT_AT);
   const hits = [first];
   let fired = 1; // how many of the blades are in play
 
@@ -274,7 +366,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     readColors();
     skullParts.lineMat.color.copy(lineColor);
     skullParts.fillMat.color.copy(bgColor);
-    for (const b of blades) { b.fillMat.color.copy(bgColor); b.lineMat.color.copy(throwColor); }
+    bladeColor.set(css("--color-blade") || throwColor);
+    for (const b of blades) { b.fillMat.color.copy(bgColor); b.lineMat.color.copy(bladeColor); }
     crackMat.color.copy(bgColor);
     for (const m of shardMats) { m.lineMat.color.copy(lineColor); m.fillMat.color.copy(bgColor); }
     for (const h of hits) h.blood.recolor(); // its ink is throwColor itself
@@ -422,9 +515,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     if (started) {
       let done = !building;
       for (const h of hits) {
-        if (!h.fired || h.u >= FREEZE_AT) continue;
-        h.u = instant ? FREEZE_AT : Math.min(h.u + dt, FREEZE_AT);
-        done = h.u >= FREEZE_AT && done;
+        if (!h.fired || h.u >= stopAt) continue;
+        h.u = instant ? stopAt : Math.min(h.u + dt, stopAt);
+        done = h.u >= stopAt && done;
         dirty = true;
       }
       if (!done) settledAt = 0;
@@ -449,14 +542,15 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       gap.x = x; gap.y = y;
       dirty = true;
     },
-    hitsLeft: () => MORE_HITS.length - 1 - (fired - 1),
+    wound: () => toScreen(skull.localToWorld(hits[fired - 1].hit.clone())), // the latest hit
+    hitsLeft: () => moreDefs.length - 1 - (fired - 1),
     async moreHit() {
-      if (fired > MORE_HITS.length) return;
+      if (fired > moreDefs.length) return;
       const i = fired++;
       settled = false;
       settledAt = 0;
       building = true;
-      hits[i] ??= await makeHit(MORE_HITS[i - 1], -BLADE_FLIGHT);
+      hits[i] ??= await makeHit(moreDefs[i - 1], -BLADE_FLIGHT);
       building = false;
       if (i < fired) hits[i].fired = true; // unless scrolled back out meanwhile
     },

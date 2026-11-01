@@ -25,9 +25,6 @@ const GROUPS: Group[] = [
   {
     title: "Dev-Seiten",
     items: [
-      { name: "Schädel", url: "#dev#skull" },
-      { name: "Schädel: Testbank", url: "#dev#skull#ct" },
-      { name: "Schädel: Säge", url: "#dev#skull#saw" },
       { name: "Horror", url: "#dev#horror" },
       { name: "Fatty", url: "#dev#fatty" },
       { name: "Ladescreen: Ballons", url: "#dev#ballon", note: "noch in Arbeit" },
@@ -38,7 +35,11 @@ const GROUPS: Group[] = [
     items: [
       { name: "kev.dev: YourBrand-Seite", url: `${KEV}/yourbrand/` },
       { name: "kev.dev: More stuff", url: `${KEV}/links` },
+      { name: "kev.dev: Engineering YourBrand", url: `${KEV}/#eng/yourbrand` },
+      { name: "kev.dev: Engineering TschoBBo", url: `${KEV}/#eng/tschobbo` },
+      { name: "kev.dev: Engineering kev.dev", url: `${KEV}/#eng/kevdev` },
       { name: "kev.dev: Kopf-CT", url: `${KEV}/ct-look` },
+      { name: "kev.dev: agressiveIntro", url: `${KEV}/agressiveIntro`, note: "nur per URL" },
       { name: "kev.dev: Impressum", url: `${KEV}/impressum.html` },
       { name: "kev.dev: Datenschutz", url: `${KEV}/datenschutz.html` },
       { name: "Casual-Demo: Halde", url: `${CASUAL}/demos/#halde` },
@@ -49,6 +50,13 @@ const GROUPS: Group[] = [
   {
     title: "Nicht online, nur Repo",
     items: [
+      { name: "TschoBBo", url: `${GH}JoBBoT`, note: "Bewerbungs-Bot" },
+      { name: "AniScript", url: `${GH}AniScript`, note: "Userscript" },
+      { name: "ReleaseWatcher", url: `${GH}ReleaseWatcher`, note: "Release-Radar" },
+      { name: "Oskalizer", url: `${GH}oskalizer`, note: "Tastatur-Spielzeug" },
+      { name: "Renderder", url: `${GH}Renderder`, note: "3D-Renderer" },
+      { name: "faceDots", url: `${GH}faceDots`, note: "Gesicht aus Punkten" },
+      { name: "java-learning", url: `${GH}java-learning`, note: "Bootcamp" },
       { name: "YourBrand.0.1", url: `${GH}YourBrand.0.1`, note: "Neubau" },
       { name: "XXX", url: `${GH}XXX`, note: "Backend" },
       { name: "XXX-Frontend", url: `${GH}XXX-Frontend` },

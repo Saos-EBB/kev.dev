@@ -46,6 +46,7 @@ export default defineConfig({
         main: root("index.html"),
         links: root("links.html"),
         ctLook: root("ct-look.html"),
+        agressiveIntro: root("agressiveIntro.html"),
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
