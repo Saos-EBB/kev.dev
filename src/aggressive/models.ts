@@ -4,7 +4,7 @@
 import { THEME } from "./ai-theme";
 import * as THREE from "three";
 import { depthSteps, wireMesh } from "../contact/skull/parts";
-import { COLORS } from "./wire-kit";
+import { COLORS, follow, roleOf, tint } from "./wire-kit";
 
 const cache = new Map<string, Promise<THREE.BufferGeometry>>();
 
@@ -46,15 +46,19 @@ export async function loadParts(name: string) {
 
 export function wireModel(geo: THREE.BufferGeometry, color: number = COLORS.ink) {
   const parts = wireMesh(geo, color, COLORS.bg, 0.32);
+  tint(parts.fillMat, COLORS.bg);
+  const role = roleOf(color);
   geo.computeBoundingSphere();
-  const radius = geo.boundingSphere!.radius + geo.boundingSphere!.center.length();
-  if (THEME === "white") {
-    // On white: strong in front, but dense models get thinner lines or they
-    // turn into a blue blob; the back fades less than on red, or nothing's left.
-    const tris = (geo.getIndex()?.count ?? geo.getAttribute("position").count) / 3;
-    const front = THREE.MathUtils.clamp(0.95 * Math.sqrt(6000 / tris), 0.55, 0.95);
-    depthSteps(parts.lineMat, radius, front, front * 0.3);
-  } else depthSteps(parts.lineMat, radius);
+  const ends = depthSteps(parts.lineMat, geo.boundingSphere!.radius + geo.boundingSphere!.center.length());
+  // On white: strong in front, but dense models get thinner lines or they
+  // turn into a blue blob; the back fades less than on red, or nothing's left.
+  const tris = (geo.getIndex()?.count ?? geo.getAttribute("position").count) / 3;
+  const front = THREE.MathUtils.clamp(0.95 * Math.sqrt(6000 / tris), 0.55, 0.95);
+  follow(parts.lineMat, () => {
+    if (role) parts.lineMat.color.setHex(COLORS[role]);
+    if (THEME === "white") ends(front, front * 0.3);
+    else ends(0.85, 0.08);
+  });
   return parts.group;
 }
 

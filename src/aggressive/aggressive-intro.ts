@@ -23,6 +23,7 @@ import { ABOUT } from "../about/about-content";
 import { initEngineering, hasEngineering, engHref } from "../engineering";
 import { projectCards } from "../projects/projects-data";
 import { LANG, pick, setLang, type Lang } from "../i18n";
+import { softReloaded } from "../i18n/soft-reload";
 import { revokeConsent, type ConsentId } from "../consent";
 import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
 import { renderConsents } from "../legal/legal-overlay";
@@ -31,12 +32,11 @@ import { createPinata } from "./pinata";
 import { createProjectFrame } from "./project-frame";
 import { createToolScene } from "./tool-scene";
 import Lenis from "lenis";
-import { PALETTE, switchTheme } from "./ai-theme";
+import { PALETTE, onTheme, switchTheme } from "./ai-theme";
 import { createPageScrollbar } from "./page-scrollbar";
 import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
-const INK = PALETTE.inkCss;
 const LOAD_MIN = 1.6; // s the grid takes to grow in even when everything is cached
 const PART = 1.1; // s the grid takes to leave
 const HIT_DELAY = 0.5; // s from the press to the blade striking (HIT_AT in skull-scene.ts)
@@ -189,8 +189,27 @@ function context(canvas: HTMLCanvasElement) {
   return ctx;
 }
 const paint = context(paintCanvas);
-paint.fillStyle = INK;
-paint.strokeStyle = INK;
+paint.fillStyle = PALETTE.inkCss;
+paint.strokeStyle = PALETTE.inkCss;
+// A theme switch repaints what's on the walls and the pane in the new ink:
+// both are one color, so its shape (the alpha) is all that has to stay.
+function repaint(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d")!;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = "source-in";
+  ctx.fillStyle = PALETTE.inkCss;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+  ctx.fillStyle = ctx.strokeStyle = PALETTE.inkCss;
+}
+onTheme(() => {
+  repaint(paintCanvas);
+  if (ended) {
+    repaint(sprayCanvas);
+    document.documentElement.style.setProperty("--color-throw", PALETTE.inkCss);
+  }
+});
 
 type Drop = { at: number; x: number; y: number; r: number; angle: number };
 type Drip = { x: number; y: number; width: number; left: number; speed: number };
@@ -743,7 +762,7 @@ function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.fillStyle = fog;
   ctx.fillRect(0, 0, w, h);
   const burst = () => {
-    ctx.fillStyle = INK;
+    ctx.fillStyle = PALETTE.inkCss;
     for (let i = 0; i < 420; i++) {
       const haze = Math.random() < 0.15;
       const a = Math.random() * Math.PI * 2, r = (Math.random() + Math.random() + Math.random() - 1.5) * reach * 1.4;
@@ -770,7 +789,7 @@ tourEnd.addEventListener("click", () => {
     ended = true;
     const spray = context(sprayCanvas);
     sprayCanvas.hidden = false;
-    document.documentElement.style.setProperty("--color-throw", INK);
+    document.documentElement.style.setProperty("--color-throw", PALETTE.inkCss);
     document.documentElement.dataset.theme = "light";
     const next = () => {
       if (skull.hitsLeft() < 0) return;
@@ -882,8 +901,8 @@ async function run() {
       goToPage(word.dataset.page!);
     });
   }
-  // A deep link doesn't wait to be pressed.
-  if (location.pathname !== BASE) button.click();
+  // A deep link doesn't wait to be pressed, nor does a language switch.
+  if (location.pathname !== BASE || softReloaded) button.click();
 }
 
 void run();

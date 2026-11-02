@@ -1,22 +1,48 @@
 // The page's two looks: white on cherry, or baby blue on white with a cherry
-// accent. Decided once at load, like the language: the scenes take their colors
-// when they're built. The value is set on <html> by the page's head already.
+// accent. Read at load (the page's head sets data-ai-theme on <html> already),
+// switched in place: the CSS follows the attribute, the scenes follow onTheme.
+import { spillFrames } from "../theme/spill";
+
 const KEY = "kev-ai-theme";
 const read = () => {
   try { return localStorage.getItem(KEY); } catch { return null; }
 };
-export const THEME = read() === "white" ? "white" : "red";
-const WHITE = THEME === "white";
+export let THEME: "white" | "red" = read() === "white" ? "white" : "red";
 
-export const PALETTE = {
-  bg: WHITE ? 0xffffff : 0x5c0f1f,
-  ink: WHITE ? 0x1683d6 : 0xffffff, // lines; on white a saturated blue, stronger than the paint
-  accent: WHITE ? 0x5c0f1f : 0x89cff0,
-  inkCss: WHITE ? "#89cff0" : "#ffffff",
-  inkRgb: WHITE ? "137, 207, 240" : "255, 255, 255",
+export const PALETTE = { bg: 0, ink: 0, accent: 0, inkCss: "", inkRgb: "" };
+const fill = () => {
+  const white = THEME === "white";
+  Object.assign(PALETTE, {
+    bg: white ? 0xffffff : 0x5c0f1f,
+    ink: white ? 0x1683d6 : 0xffffff, // lines; on white a saturated blue, stronger than the paint
+    accent: white ? 0x5c0f1f : 0x89cff0,
+    inkCss: white ? "#89cff0" : "#ffffff",
+    inkRgb: white ? "137, 207, 240" : "255, 255, 255",
+  });
 };
+fill();
+
+const listeners: (() => void)[] = [];
+export const onTheme = (fn: () => void) => { listeners.push(fn); };
 
 export function switchTheme() {
-  try { localStorage.setItem(KEY, WHITE ? "red" : "white"); } catch { /* stays as it is */ }
-  location.reload();
+  THEME = THEME === "white" ? "red" : "white";
+  try { localStorage.setItem(KEY, THEME); } catch { /* only for this visit then */ }
+  const apply = () => {
+    fill();
+    if (THEME === "white") document.documentElement.dataset.aiTheme = "white";
+    else delete document.documentElement.dataset.aiTheme;
+    for (const fn of listeners) fn();
+  };
+  // The new colors spill in from the top left, like on the main page (theme.ts).
+  if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return apply();
+  const clipPath = spillFrames(innerWidth, innerHeight);
+  const transition = document.startViewTransition(apply);
+  transition.ready.then(() => {
+    const spill = document.documentElement.animate(
+      { clipPath },
+      { duration: 2200, easing: "linear", fill: "both", pseudoElement: "::view-transition-new(root)" },
+    );
+    void transition.finished.then(() => spill.cancel());
+  }, () => {});
 }

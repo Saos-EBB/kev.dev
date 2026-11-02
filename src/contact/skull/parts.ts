@@ -85,18 +85,22 @@ export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, 
 // geometry's bounding sphere around its origin. The window ends a little
 // behind the middle, further back the fill hides the lines anyway.
 const DEPTH_STEPS = 16;
+// `front`/`back`: the opacity at either end, changeable later (theme switch).
 export function depthSteps(lineMat: THREE.LineBasicMaterial, radius: number, front = 0.85, back = 0.08) {
   lineMat.opacity = 1;
+  const ends = { uFront: { value: front }, uBack: { value: back } };
   lineMat.onBeforeCompile = (shader) => {
     shader.uniforms.uRadius = { value: radius };
+    Object.assign(shader.uniforms, ends);
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nuniform float uRadius;\nvarying float vDepth;")
       .replace("#include <project_vertex>", `#include <project_vertex>
         vDepth = ((modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0)).z + uRadius - mvPosition.z) / (uRadius * 1.25);`);
     shader.fragmentShader = shader.fragmentShader
-      .replace("#include <common>", "#include <common>\nvarying float vDepth;")
+      .replace("#include <common>", "#include <common>\nuniform float uFront;\nuniform float uBack;\nvarying float vDepth;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float depthStep = min(floor(clamp(vDepth, 0.0, 1.0) * ${DEPTH_STEPS}.0), ${DEPTH_STEPS - 1}.0) / ${DEPTH_STEPS - 1}.0;
-        diffuseColor.a = mix(${front.toFixed(3)}, ${back.toFixed(3)}, depthStep);`);
+        diffuseColor.a = mix(uFront, uBack, depthStep);`);
   };
+  return (f: number, b: number) => { ends.uFront.value = f; ends.uBack.value = b; };
 }
