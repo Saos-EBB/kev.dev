@@ -1,8 +1,9 @@
 // Wireframe building blocks in the skull's look: a fill in the background color
 // hides what's behind, the lines sit on top. Shared by the page scenes.
 import * as THREE from "three";
+import { PALETTE } from "./ai-theme";
 
-export const COLORS = { bg: 0x5c0f1f, ink: 0xffffff, blue: 0x89cff0 };
+export const COLORS = { bg: PALETTE.bg, ink: PALETTE.ink, blue: PALETTE.accent };
 
 // `sketch`: only the real edges, no triangles: a clean drawing, for models that
 // can't match the skull's scanned detail.

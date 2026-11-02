@@ -21,17 +21,18 @@ import { createSkullScene } from "../contact/skull/skull-scene";
 import { ABOUT } from "../about/about-content";
 import { initEngineering, hasEngineering, engHref } from "../engineering";
 import { projectCards } from "../projects/projects-data";
-import { pick } from "../i18n";
+import { LANG, pick, setLang, type Lang } from "../i18n";
 import { UI } from "../i18n/ui";
 import { createPinata } from "./pinata";
 import { createProjectFrame } from "./project-frame";
 import { createToolScene } from "./tool-scene";
 import Lenis from "lenis";
+import { PALETTE, switchTheme } from "./ai-theme";
 import { createPageScrollbar } from "./page-scrollbar";
 import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
-const INK = "#ffffff";
+const INK = PALETTE.inkCss;
 const LOAD_MIN = 1.6; // s the grid takes to grow in even when everything is cached
 const PART = 1.1; // s the grid takes to leave
 const HIT_DELAY = 0.5; // s from the press to the blade striking (HIT_AT in skull-scene.ts)
@@ -74,12 +75,17 @@ document.body.innerHTML = `
     <canvas class="ai-spray" aria-hidden="true" hidden></canvas>
     <nav class="ai-bar ai-bar--top" hidden>
       <button type="button" data-nav="home">[home]</button>
-      <button type="button" data-nav="about">[abt.me]</button>
-      <button type="button" data-nav="projects">[projects]</button>
-      <button type="button" data-nav="contact">[contact]</button>
+      <button type="button" data-nav="about"><span class="ai-long">[abt.me]</span><span class="ai-short">[abt]</span></button>
+      <button type="button" data-nav="projects"><span class="ai-long">[projects]</span><span class="ai-short">[stuff]</span></button>
+      <button type="button" data-nav="contact"><span class="ai-long">[contact]</span><span class="ai-short">[mail]</span></button>
+      <span class="ai-bar-end">
+        <button type="button" data-lang="de"${LANG === "de" ? ' class="is-on"' : ""}>[de]</button>
+        <button type="button" data-lang="en"${LANG === "en" ? ' class="is-on"' : ""}>[en]</button>
+        <button type="button" data-switch-theme>[theme]</button>
+      </span>
     </nav>
+    <div class="ai-mark" hidden><span>©</span> Saos</div>
     <footer class="ai-bar ai-bar--bottom" hidden>
-      <span>© copyright by saos</span>
       <a href="/links">[more stuff]</a>
       <a href="/datenschutz">[datenschutz]</a>
       <a href="/impressum">[impressum]</a>
@@ -639,7 +645,11 @@ function goToPage(name: string) {
 }
 // The header: after the end nothing's left to go back to but the start.
 q<HTMLElement>(".ai-bar--top").addEventListener("click", (e) => {
-  const name = (e.target as HTMLElement).closest<HTMLElement>("[data-nav]")?.dataset.nav;
+  const t = e.target as HTMLElement;
+  const lang = t.closest<HTMLElement>("[data-lang]")?.dataset.lang;
+  if (lang) return setLang(lang as Lang);
+  if (t.closest("[data-switch-theme]")) return switchTheme();
+  const name = t.closest<HTMLElement>("[data-nav]")?.dataset.nav;
   if (!name) return;
   if (ended) return location.reload();
   if (!more.hidden) closeMore();
@@ -674,8 +684,8 @@ function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
   let frames = 9;
   // the fog itself, then the fine drops in it
   const fog = ctx.createRadialGradient(x, y, 0, x, y, reach * 1.5);
-  fog.addColorStop(0, "rgba(255, 255, 255, 0.05)");
-  fog.addColorStop(1, "rgba(255, 255, 255, 0)");
+  fog.addColorStop(0, `rgba(${PALETTE.inkRgb}, 0.05)`);
+  fog.addColorStop(1, `rgba(${PALETTE.inkRgb}, 0)`);
   ctx.fillStyle = fog;
   ctx.fillRect(0, 0, w, h);
   const burst = () => {
@@ -771,7 +781,7 @@ async function run() {
       window.setTimeout(() => {
         words.forEach((word) => word.classList.add("is-shown"));
         tour.hidden = false;
-        document.querySelectorAll<HTMLElement>(".ai-bar").forEach((bar) => { bar.hidden = false; });
+        document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark").forEach((bar) => { bar.hidden = false; });
       }, WORDS_AFTER * 1000);
     }, HIT_DELAY * 1000);
   }, { once: true });

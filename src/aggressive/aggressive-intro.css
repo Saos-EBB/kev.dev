@@ -8,22 +8,35 @@
 :root {
   --ai-bg: #5c0f1f;
   --ai-accent: #89cff0;
+  --ai-ink: #ffffff; /* lines, borders, paint */
+  --ai-text: #ffffff; /* running text: the blue alone is too pale on white */
+  --ai-panel: #2c0710;
   /* read by the skull scene */
   --contact-bg: var(--ai-bg);
-  --color-line: #ffffff;
-  --color-throw: #ffffff;
-  --color-blade: #ffffff; /* stays when the blood changes to the background color */
+  --color-line: var(--ai-line, var(--ai-ink));
+  --color-throw: var(--ai-ink);
+  --color-blade: var(--ai-line, var(--ai-ink)); /* stays when the blood changes to the background color */
   /* read by the engineering overlay */
   --color-bg: var(--ai-bg);
-  --color-text: #ffffff;
-  --color-text-muted: #f2d5dc;
-  --color-line: #ffffff;
+  --color-text: var(--ai-text);
+  --color-text-muted: var(--ai-muted, #f2d5dc);
+  --color-line: var(--ai-line, var(--ai-ink));
   --color-accent: var(--ai-accent);
-  --color-terminal-bg: #2c0710;
+  --color-terminal-bg: var(--ai-panel);
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, "JetBrains Mono", Menlo, monospace;
   --font-display: "Urban Sign", sans-serif;
   --note-1: #57ff8f; --note-2: #57fff1; --note-3: #89cff0; --note-5: #f2d5dc; --note-6: #ffffff; --note-7: #a8ff57; --note-8: #57ffc8; --note-9: #ffffff;
+}
+
+:root[data-ai-theme="white"] {
+  --ai-bg: #ffffff;
+  --ai-accent: #5c0f1f;
+  --ai-ink: #89cff0;
+  --ai-line: #3f9fd6; /* the wire models: the paint's blue is too pale for thin lines */
+  --ai-text: #1f6e99;
+  --ai-muted: #4a8bb0;
+  --ai-panel: #eaf6fc;
 }
 
 html,
@@ -95,7 +108,7 @@ body.ai {
 
 .ai-room-under path {
   fill: none;
-  stroke: #ffffff;
+  stroke: var(--ai-ink);
 }
 
 .ai-room-under .ai-wall-grid {
@@ -192,10 +205,10 @@ body.ai {
   z-index: 2;
   transform: translateX(-50%) rotate(-2deg);
   padding: 0.7rem 1.6rem 0.8rem;
-  border: 5px solid #ffffff;
+  border: 5px solid var(--ai-ink);
   border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
   background: none;
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 clamp(2rem, 4.5vw, 3.25rem) / 1 "Urban Sign", sans-serif;
   letter-spacing: 0.04em;
   -webkit-text-stroke: 3px currentColor;
@@ -224,7 +237,7 @@ body.ai {
 
 .ai-line {
   position: absolute;
-  background: color-mix(in srgb, #ffffff 18%, transparent);
+  background: color-mix(in srgb, var(--ai-ink) 18%, transparent);
 }
 
 .ai-line--h {
@@ -275,7 +288,7 @@ body.ai {
   overflow: auto;
   visibility: hidden;
   background: var(--ai-bg);
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 1.05rem / 1.6 ui-monospace, "JetBrains Mono", monospace;
   cursor: auto;
   user-select: text;
@@ -321,7 +334,7 @@ body.ai {
   width: min(36vw, 480px);
   height: auto;
   aspect-ratio: 5 / 4;
-  border: 4px solid #ffffff;
+  border: 4px solid var(--ai-ink);
   border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
   background: var(--ai-bg);
 }
@@ -340,7 +353,7 @@ body.ai {
 
 .ai-page .ai-proj h2 {
   margin: 0;
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 clamp(2.5rem, 6vw, 4.5rem) / 1 "Urban Sign", sans-serif;
 }
 
@@ -359,10 +372,10 @@ body.ai {
   margin-top: 0.75rem;
   min-height: 44px;
   padding: 0.5rem 1rem;
-  border: 3px solid #ffffff;
+  border: 3px solid var(--ai-ink);
   border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
   background: none;
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 1.35rem / 1.2 "Urban Sign", sans-serif;
   text-decoration: none;
   cursor: pointer;
@@ -384,8 +397,8 @@ body.ai {
   box-sizing: border-box;
   padding: clamp(1.5rem, 6vh, 4rem) clamp(1.25rem, 10vw, 9rem) 6rem;
   overflow: auto;
-  background: #2c0710;
-  color: #ffffff;
+  background: var(--ai-panel);
+  color: var(--ai-text);
   font: 400 1.05rem / 1.6 ui-monospace, "JetBrains Mono", monospace;
   cursor: auto;
   user-select: text;
@@ -417,9 +430,9 @@ body.ai {
   float: right;
   width: 44px;
   height: 44px;
-  border: 3px solid #ffffff;
-  background: #2c0710;
-  color: #ffffff;
+  border: 3px solid var(--ai-ink);
+  background: var(--ai-panel);
+  color: var(--ai-text);
   font: inherit;
   cursor: pointer;
 }
@@ -499,7 +512,7 @@ body.ai {
   height: 3rem;
   padding: 0 clamp(1.25rem, 3vw, 2.5rem);
   background: var(--ai-bg);
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 0.85rem / 1 ui-monospace, "JetBrains Mono", monospace;
   cursor: auto;
   opacity: 0;
@@ -542,6 +555,37 @@ body.ai {
 .ai-bar button:focus-visible {
   color: var(--ai-accent);
   outline: none;
+}
+
+.ai-bar-end {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.ai-short {
+  display: none;
+}
+
+.ai-mark span {
+  font-family: ui-monospace, "JetBrains Mono", monospace; /* Urban Sign has no real © */
+}
+
+.ai-bar .is-on {
+  color: var(--ai-accent);
+}
+
+/* The copyright as a watermark, just above the footer's height. */
+.ai-mark {
+  position: absolute;
+  left: clamp(1.25rem, 3vw, 2.5rem);
+  bottom: 3.25rem;
+  z-index: 6;
+  color: var(--ai-accent);
+  font: 400 clamp(1.25rem, 2.2vw, 1.75rem) / 1 "Urban Sign", sans-serif;
+  opacity: 0.45;
+  pointer-events: none;
+  transition: bottom 240ms ease;
 }
 
 /* The mist on the pane in the finale, in front of everything. */
@@ -773,13 +817,11 @@ body.ai {
    and go down with it. */
 @media (hover: none) {
   .ai-bar {
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.25rem 1rem;
-    height: auto;
-    min-height: 3rem;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.78rem;
+    justify-content: space-between;
+    gap: 0.25rem;
+    padding: 0 0.6rem;
+    font-size: clamp(0.62rem, 2.9vw, 0.85rem); /* one line, however narrow */
+    white-space: nowrap;
     opacity: 1;
     transition: transform 240ms ease;
   }
@@ -798,8 +840,25 @@ body.ai {
   }
 
   .ai-tour.is-split {
-    bottom: 5.5rem;
+    bottom: 3.75rem;
     transition: bottom 240ms ease;
+  }
+
+  .ai-bars-away .ai-mark {
+    bottom: 0.75rem;
+  }
+
+  .ai-long {
+    display: none;
+  }
+
+  .ai-short {
+    display: inline;
+  }
+
+  .ai-bar-end {
+    gap: 0.25rem;
+    margin-left: 0;
   }
 
   .ai-bars-away .ai-tour.is-split {
@@ -822,6 +881,10 @@ body.ai {
   }
 
   .ai-tour {
-    top: 17%;
+    top: 19%;
+  }
+
+  .ai-word--left {
+    top: 12%;
   }
 }
