@@ -1,9 +1,12 @@
 // The page language. Picked once at load — from the visitor's earlier
 // choice, else the browser's language (see readLang) — because the scroll scenes measure text at start-up
 // (hero name, "PROJEKTE", contact letters); switching therefore stores the
-// choice and reloads, the same way LITE (viewport.ts) is decided once.
+// choice and reloads (behind a cover, soft-reload.ts), the same way LITE
+// (viewport.ts) is decided once.
 //
 // Every module reads LANG / the ui() strings at render time.
+
+import { softReload } from "./soft-reload";
 
 export type Lang = "de" | "en" | "ru" | "ja";
 
@@ -65,7 +68,7 @@ export function setLang(lang: Lang) {
   } catch {
     // storage blocked — the reload below then just stays German
   }
-  location.reload();
+  softReload();
 }
 
 // Picks the current language's entry, German as the fallback for anything
