@@ -36,11 +36,12 @@
   --ai-bg: #ffffff;
   --ai-accent: #5c0f1f;
   --ai-ink: #89cff0;
-  --ai-line: #1f7ab8; /* the wire models: the paint's blue is too pale for thin lines */
+  --ai-line: #3f9fd6; /* skull and contact: the paint's blue is too pale for thin lines */
+  --ai-line-strong: #1f7ab8; /* grid and room lines */
   --ai-text: #1f6e99;
   --ai-muted: #4a8bb0;
   --ai-panel: #eaf6fc;
-  --ai-grid-line: color-mix(in srgb, var(--ai-line) 70%, transparent);
+  --ai-grid-line: color-mix(in srgb, var(--ai-line-strong) 70%, transparent);
 }
 
 html,
@@ -107,7 +108,7 @@ body.ai {
 }
 
 :root[data-ai-theme="white"] .ai-room-under path {
-  stroke: var(--ai-line);
+  stroke: var(--ai-line-strong);
 }
 
 .ai-room-under.is-on {
