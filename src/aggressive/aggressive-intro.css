@@ -639,7 +639,7 @@ body.ai {
 }
 
 /* Desktop has the copyright in the footer, phones as a watermark. */
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) and (min-width: 901px) {
   .ai-mark {
     display: none;
   }
@@ -899,8 +899,9 @@ body.ai {
 
 /* Phones and the like, no hover to show the bars with: a classic header and
    footer that step aside while scrolling down. The arrows stand on the footer
-   and go down with it. */
-@media (hover: none) {
+   and go down with it. Not only by hover: some phones claim to have it, and a
+   narrow window gets the phone layout anyway. */
+@media (hover: none), (pointer: coarse), (max-width: 900px) {
   .ai-bar {
     justify-content: space-between;
     gap: 0.25rem;
@@ -968,7 +969,7 @@ body.ai {
   }
 }
 
-@media (hover: none) and (max-aspect-ratio: 4 / 5) {
+@media (hover: none) and (max-aspect-ratio: 4 / 5), (pointer: coarse) and (max-aspect-ratio: 4 / 5), (max-width: 900px) and (max-aspect-ratio: 4 / 5) {
   .ai-page--projects .ai-page-tool {
     top: 3.5rem;
   }
