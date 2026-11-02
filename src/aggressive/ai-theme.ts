@@ -10,7 +10,7 @@ const WHITE = THEME === "white";
 
 export const PALETTE = {
   bg: WHITE ? 0xffffff : 0x5c0f1f,
-  ink: WHITE ? 0x3f9fd6 : 0xffffff, // lines; on white a stronger blue than the paint
+  ink: WHITE ? 0x1f7ab8 : 0xffffff, // lines; on white a stronger blue than the paint
   accent: WHITE ? 0x5c0f1f : 0x89cff0,
   inkCss: WHITE ? "#89cff0" : "#ffffff",
   inkRgb: WHITE ? "137, 207, 240" : "255, 255, 255",
