@@ -166,17 +166,26 @@ const SITES: Site[] = [
 
 // The page the visitor just came from isn't offered again. Other sites of mine
 // only send their origin along, this one its whole path.
-const norm = (u: URL) => u.origin + u.pathname.replace(/(\/index)?(\.html)?\/?$/, "");
+const norm = (u: URL) => u.origin + u.pathname.replace(/(\/index)?(\.html)?\/?$/, "").replace(/^(\/adhdActivated)\/.*/, "$1");
 function cameFrom() {
   try { return document.referrer ? norm(new URL(document.referrer)) : null; } catch { return null; }
 }
 const from = cameFrom();
+// From one of the two main pages it takes on that page's look, and its current
+// theme there. Every other way in keeps the plain one.
+const stored = (area: Storage, key: string) => {
+  try { return area.getItem(key); } catch { return null; }
+};
+const here = location.origin;
+const source = from === `${here}/lessAdhd` ? "lessAdhd" : from === `${here}/adhdActivated` ? "adhdActivated" : null;
+if (source === "lessAdhd") document.documentElement.dataset.look = stored(sessionStorage, "theme") === "dark" ? "less-dark" : "less-light";
+if (source === "adhdActivated") document.documentElement.dataset.look = stored(localStorage, "kev-ai-theme") === "white" ? "activated-white" : "activated-red";
 const shown = SITES.filter((s) => norm(new URL(s.url, location.href)) !== from);
 
 document.documentElement.lang = LANG;
 document.getElementById("links")!.className = "links";
 document.getElementById("links")!.innerHTML = `
-  <a class="links-back" href="/">← kev.dev</a>
+  <a class="links-back" href="${source ? `/${source}` : "/"}">← ${source ?? "kev.dev"}</a>
   <h1 class="links-title">${UI.moreStuff}</h1>
   <p class="links-lead">${t("Was ich sonst noch gebaut habe, was es ist und warum es so ist.", "What else I built, what it is and why it is that way.", "Что ещё я построил, что это такое и почему оно так устроено.", "他に作ったもの、それが何で、なぜそうなのか。")}</p>
   ${shown.map((s) => `

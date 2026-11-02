@@ -11,6 +11,77 @@
   --muted: #f2d5dc;
   --line: color-mix(in srgb, #ffffff 25%, transparent);
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --bg: var(--cherry);
+  --text: #ffffff;
+  --label: var(--muted);
+  --btn-bg: var(--teal);
+  --btn-text: #ffffff;
+  --btn-border: 1px solid #ffffff;
+  --btn-hover: #146262;
+  --btn-hover-text: #ffffff;
+}
+
+/* Coming from /lessAdhd: its colors in either of its themes. */
+:root[data-look="less-light"] {
+  --btn-bg: #89cff0;
+  --btn-text: var(--cherry);
+  --btn-border: 1px solid #89cff0;
+  --btn-hover: #ffffff;
+  --btn-hover-text: var(--cherry);
+  --label: #89cff0;
+}
+
+:root[data-look="less-dark"] {
+  --bg: #08070a;
+  --text: #f5f5f6;
+  --muted: #8a8a93;
+  --line: color-mix(in srgb, #cd57ff 35%, transparent);
+  --label: #cd57a6;
+  --btn-bg: transparent;
+  --btn-text: #f5f5f6;
+  --btn-border: 1px solid #cd57ff;
+  --btn-hover: #cd57ff;
+  --btn-hover-text: #08070a;
+}
+
+/* Coming from /adhdActivated: its colors in either theme, and its sketched
+   buttons in its lettering. */
+:root[data-look^="activated"] {
+  --btn-border: 3px solid var(--ink);
+  --btn-bg: var(--bg);
+}
+
+:root[data-look="activated-red"] {
+  --ink: #ffffff;
+  --label: #89cff0;
+  --btn-text: #89cff0;
+  --btn-hover: #89cff0;
+  --btn-hover-text: var(--cherry);
+}
+
+:root[data-look="activated-white"] {
+  --ink: #89cff0;
+  --bg: #ffffff;
+  --text: #1f6e99;
+  --muted: #4a8bb0;
+  --line: #89cff0;
+  --label: var(--cherry);
+  --btn-text: var(--cherry);
+  --btn-hover: var(--cherry);
+  --btn-hover-text: #ffffff;
+}
+
+:root[data-look^="activated"] .site-open {
+  border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
+  font: 400 1.5rem / 1 "Urban Sign", sans-serif;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 1px currentColor;
+  transform: rotate(-1deg);
+  transition: transform 160ms ease;
+}
+
+:root[data-look^="activated"] .site-open:hover {
+  transform: rotate(1deg) scale(1.05);
 }
 
 * {
@@ -19,8 +90,8 @@
 }
 
 body {
-  background: var(--cherry);
-  color: #ffffff;
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--mono);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -31,7 +102,7 @@ a {
 }
 
 a:focus-visible {
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--text);
   outline-offset: 3px;
 }
 
@@ -85,20 +156,22 @@ a:focus-visible {
   font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--label);
 }
 
 .site-open {
   display: inline-block;
   padding: 0.6rem 1rem;
-  border: 1px solid #ffffff;
+  border: var(--btn-border);
   border-radius: 0.3rem;
-  background: var(--teal);
+  background: var(--btn-bg);
+  color: var(--btn-text);
   text-decoration: none;
 }
 
 .site-open:hover {
-  background: #146262;
+  background: var(--btn-hover);
+  color: var(--btn-hover-text);
 }
 
 .site-screens {
