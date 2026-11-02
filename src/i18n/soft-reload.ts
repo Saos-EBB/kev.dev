@@ -5,7 +5,8 @@
 import { spillFrames } from "../theme/spill";
 
 const KEY = "kev-soft-reload";
-const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduced = () =>
+  matchMedia("(prefers-reduced-motion: reduce)").matches && !document.documentElement.classList.contains("force-motion");
 
 function cover(color: string) {
   const d = document.createElement("div");

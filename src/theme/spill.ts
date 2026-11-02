@@ -113,16 +113,15 @@ export function spillFrames(w: number, h: number): string[] {
 // A theme switch with the spill, for both pages (theme.ts, ai-theme.ts).
 // `apply` switches; `color` is the new background, for browsers without view
 // transitions: there it spills over the old page, which switches underneath
-// once it's covered. Reduced motion just switches. `cover`: that way even with
-// view transitions, for a page where they don't hold up (adhdActivated: on a
-// real Android phone the switch came out instant, never reproduced here).
-export function spillSwitch(apply: () => void, color: string, cover = false) {
+// once it's covered. Reduced motion just switches, unless the page forces
+// motion (.force-motion, main.ts and wire-kit.ts).
+export function spillSwitch(apply: () => void, color: string) {
   const reduced =
     matchMedia("(prefers-reduced-motion: reduce)").matches &&
     !document.documentElement.classList.contains("force-motion");
   if (reduced) return apply();
   const clipPath = spillFrames(innerWidth, innerHeight);
-  if (document.startViewTransition && !cover) {
+  if (document.startViewTransition) {
     const transition = document.startViewTransition(apply);
     transition.ready.then(() => {
       const spill = document.documentElement.animate(
