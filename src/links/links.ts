@@ -11,8 +11,8 @@ type Site = { name: string; url: string; what: string; why: string; shots: [stri
 
 const SITES: Site[] = [
   {
-    name: t("Das Portfolio", "The portfolio", "Портфолио", "ポートフォリオ"),
-    url: "/",
+    name: t("Das Portfolio: lessAdhd", "The portfolio: lessAdhd", "Портфолио: lessAdhd", "ポートフォリオ: lessAdhd"),
+    url: "/lessAdhd",
     what: t(
       "Meine Hauptseite: ein einziger Scroll-Ablauf mit Projekten, Über mich und Kontakt, ohne Frontend-Framework in TypeScript gebaut.",
       "My main site: one single scroll flow with projects, about and contact, built in TypeScript without a frontend framework.",
@@ -29,8 +29,8 @@ const SITES: Site[] = [
     ],
   },
   {
-    name: "agressiveIntro",
-    url: "/agressiveIntro",
+    name: "adhdActivated",
+    url: "/adhdActivated",
     what: t(
       "Dieselben Inhalte als Raum: Ein Sägeblatt trifft einen Schädel, und das Blut macht die Wege zu Über mich, Projekten und Kontakt erst sichtbar. Am Ende fliegen alle Blätter.",
       "The same content as a room: a saw blade hits a skull, and only the blood reveals the ways to about, projects and contact. At the end all the blades fly.",

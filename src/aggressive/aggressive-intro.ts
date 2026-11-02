@@ -1,4 +1,5 @@
-// /agressiveIntro, public but linked nowhere: the page as a room. The main page's grid
+// /adhdActivated, the start page: the site as a room. Its pages have routes of
+// their own below it (see syncRoute). The main page's grid
 // grows in as the loading screen, the screen's edge glows once, then the grid
 // parts towards the edges (like the transition into the main page's contact
 // section) and uncovers the skull that was hidden behind it. One button without
@@ -49,7 +50,6 @@ const PIXELS_PER_WORD_DROP = 75; // aimed at each word, so all of them become re
 const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] };
 
 document.documentElement.dataset.theme = "light";
-document.title = "aggresiveIntro";
 document.body.classList.add("ai");
 document.body.innerHTML = `
   <div class="ai-stage">
@@ -57,9 +57,9 @@ document.body.innerHTML = `
     <canvas class="ai-paint" aria-hidden="true"></canvas>
     <svg class="ai-room" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
     <nav class="ai-words">
-      <a class="ai-word ai-word--left" href="/#about" data-page="about" tabindex="-1">${UI.navAbout}</a>
-      <a class="ai-word ai-word--right" href="/#projects" data-page="projects" tabindex="-1">${UI.navProjects}</a>
-      <a class="ai-word ai-word--floor" href="/#contact" data-page="contact" tabindex="-1">${UI.navContact}</a>
+      <a class="ai-word ai-word--left" href="/adhdActivated/about" data-page="about" tabindex="-1">${UI.navAbout}</a>
+      <a class="ai-word ai-word--right" href="/adhdActivated/projects" data-page="projects" tabindex="-1">${UI.navProjects}</a>
+      <a class="ai-word ai-word--floor" href="/adhdActivated/contact" data-page="contact" tabindex="-1">${UI.navContact}</a>
     </nav>
     <canvas class="ai-skull" aria-hidden="true"></canvas>
     <button class="ai-button" type="button" hidden>PRESS</button>
@@ -94,14 +94,19 @@ document.body.innerHTML = `
       <span class="ai-bar-copy">© copyright saos / kevinschaberl</span>
       <a href="/links">[more stuff]</a>
       <span class="ai-bar-end">
-        <a href="/datenschutz" data-legal="datenschutz">[${UI.datenschutz.toLowerCase()}]</a>
-        <a href="/impressum" data-legal="impressum">[${UI.impressum.toLowerCase()}]</a>
+        <a href="/adhdActivated/privacy" data-legal="privacy">[${UI.datenschutz.toLowerCase()}]</a>
+        <a href="/adhdActivated/imprint" data-legal="imprint">[${UI.impressum.toLowerCase()}]</a>
       </span>
     </footer>
     <div class="ai-scrollbar" aria-hidden="true" hidden><div class="ai-scrollbar-dot"></div></div>
   </div>`;
 
 const q = <T extends Element>(sel: string) => document.querySelector<T>(sel)!;
+const BASE = "/adhdActivated";
+let syncing = false, roomReady = false, moreOpenAt: string | null = null;
+function setUrl(path: string) {
+  if (!syncing && location.pathname !== path) history.pushState({ inner: true }, "", path);
+}
 const stage = q<HTMLElement>(".ai-stage");
 const skullCanvas = q<HTMLCanvasElement>(".ai-skull");
 const paintCanvas = q<HTMLCanvasElement>(".ai-paint");
@@ -334,7 +339,7 @@ const PAGES: Record<string, () => string> = {
     <p class="ai-page-lead">${STORY.endLine}</p>
     <ul>
       <li><a href="mailto:kevin.schaberl.work@gmail.com">${STORY.endMail}</a></li>
-      <li><a href="/">${STORY.endBack}</a></li>
+      <li><a href="/lessAdhd">${STORY.endBack}</a></li>
     </ul>`,
 };
 
@@ -486,6 +491,7 @@ async function openPage(name: string, saw = false) {
     page.classList.remove("is-open");
   }
   currentPage = name;
+  setUrl(`${BASE}/${name}`);
   const hasScene = name !== "end";
   const drops = name === "contact" ? [
     ["https://github.com/saos-ebb", "GitHub"],
@@ -524,7 +530,7 @@ async function openPage(name: string, saw = false) {
     stopGlass = runDrops(ctx, glassDrops(...woundAt), () => {
       page.classList.add("is-open"); // the same picture, now real text and links
       pageScroll.resize();
-      pageScroll.start();
+      if (more.hidden) pageScroll.start();
       freeze.hidden = true;
       glass.hidden = true;
       throwing = false;
@@ -551,6 +557,7 @@ function closePage(then?: () => void) {
   page.hidden = true;
   page.classList.remove("is-open");
   currentPage = null;
+  setUrl(BASE);
   tourAt = -1;
   updateTour();
   ctx.globalCompositeOperation = "destination-out";
@@ -567,10 +574,13 @@ page.addEventListener("click", (e) => {
   const t = e.target as HTMLElement;
   const id = t.closest<HTMLElement>("[data-more]")?.dataset.more;
   if (id) {
-    openMore(moreHtml(id));
+    openProject(id);
   }
 });
-function openMore(html: string) {
+const openProject = (id: string) => openMore(moreHtml(id), `${BASE}/projects/${id}`);
+function openMore(html: string, path: string) {
+  moreOpenAt = path;
+  setUrl(path);
   more.innerHTML = html;
   more.hidden = false;
   pageScroll.stop();
@@ -581,20 +591,30 @@ function openMore(html: string) {
   scrollbar.render();
 }
 // Imprint and privacy: the main page's texts in this page's own overlay.
+function openLegal(name: string) {
+  const legal = name === "imprint" ? IMPRESSUM : DATENSCHUTZ;
+  openMore(`
+    <button class="ai-more-close" type="button" aria-label="${STORY.close}">✕</button>
+    ${UI.legalNote ? `<p class="ai-page-facts" lang="${LANG}">${UI.legalNote}</p>` : ""}
+    <div class="ai-legal">${legal.html}</div>`, `${BASE}/${name}`);
+  const slot = more.querySelector<HTMLElement>(".legal-consents");
+  if (slot) renderConsents(slot);
+}
 q<HTMLElement>(".ai-bar--bottom").addEventListener("click", (e) => {
   const link = (e.target as HTMLElement).closest<HTMLElement>("[data-legal]");
   if (!link) return;
   e.preventDefault();
-  const legal = link.dataset.legal === "impressum" ? IMPRESSUM : DATENSCHUTZ;
-  openMore(`
-    <button class="ai-more-close" type="button" aria-label="${STORY.close}">✕</button>
-    ${UI.legalNote ? `<p class="ai-page-facts" lang="${LANG}">${UI.legalNote}</p>` : ""}
-    <div class="ai-legal">${legal.html}</div>`);
-  const slot = more.querySelector<HTMLElement>(".legal-consents");
-  if (slot) renderConsents(slot);
+  openLegal(link.dataset.legal!);
 });
-const closeMore = () => {
+// Back where it was opened from, if that's in this visit's history.
+const leaveMore = () => {
+  if (history.state?.inner) history.back();
+  else closeMore();
+};
+const closeMore = (url = true) => {
   more.hidden = true;
+  moreOpenAt = null;
+  if (url) setUrl(currentPage ? `${BASE}/${currentPage}` : BASE);
   moreScroll.stop();
   if (currentPage) pageScroll.start();
   scrollbar.render();
@@ -605,7 +625,7 @@ page.addEventListener("scroll", () => scrollbar.render(), { passive: true });
 more.addEventListener("scroll", () => scrollbar.render(), { passive: true });
 more.addEventListener("click", (e) => {
   const t = e.target as HTMLElement;
-  if (t.closest(".ai-more-close")) closeMore();
+  if (t.closest(".ai-more-close")) leaveMore();
   const revoke = t.closest<HTMLElement>("[data-revoke]")?.dataset.revoke as ConsentId | undefined;
   if (revoke) {
     revokeConsent(revoke);
@@ -613,7 +633,7 @@ more.addEventListener("click", (e) => {
   }
 });
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !more.hidden && !location.hash.startsWith("#eng/")) closeMore();
+  if (e.key === "Escape" && !more.hidden && !location.hash.startsWith("#eng/")) leaveMore();
 });
 // The graph and code overlay is the main page's, on its own hash route; it only
 // wants something that scrolls to stop, and nothing scrolls behind it here.
@@ -682,8 +702,11 @@ q<HTMLElement>(".ai-bar--top").addEventListener("click", (e) => {
   const name = t.closest<HTMLElement>("[data-nav]")?.dataset.nav;
   if (!name) return;
   if (ended) return location.reload();
-  if (!more.hidden) closeMore();
-  if (name === "home") closePage();
+  if (!more.hidden) closeMore(false);
+  if (name === "home") {
+    closePage();
+    setUrl(BASE);
+  }
   else goToPage(name);
 });
 tourStart.addEventListener("click", () => {
@@ -762,6 +785,40 @@ tourEnd.addEventListener("click", () => {
   else finale();
 });
 
+// ── the routes ──
+// The address follows whatever opens (setUrl in openPage, closePage, openMore),
+// and going back and forth, or arriving by a deep link, opens what it names.
+function targetOf(path: string) {
+  const [first, second] = path.slice(BASE.length).split("/").filter(Boolean);
+  if (first === "privacy" || first === "imprint") return { legal: first };
+  if (first === "projects" && projectCards.some((c) => c.id === second)) return { page: first, project: second };
+  if (first && first in PAGES) return { page: first };
+  return {};
+}
+type Target = { page?: string; project?: string; legal?: string };
+function syncRoute() {
+  if (ended) return location.reload(); // nothing to go back to from the end but a new start
+  if (throwing) { window.setTimeout(syncRoute, 150); return; }
+  const to: Target = targetOf(location.pathname);
+  syncing = true;
+  if (moreOpenAt !== location.pathname) {
+    if (!more.hidden) closeMore(false);
+    if (to.legal) openLegal(to.legal);
+  }
+  if (!to.legal && to.page !== (currentPage ?? undefined)) {
+    if (touring) tourAt = TOUR.findIndex((step) => step.page === to.page);
+    if (to.page) void openPage(to.page).then(() => showProject(to));
+    else closePage();
+  } else showProject(to);
+  syncing = false;
+}
+function showProject(to: Target) {
+  if (!to.project) return;
+  scrollToProject(to.project);
+  if (moreOpenAt !== location.pathname) openProject(to.project);
+}
+window.addEventListener("popstate", () => { if (roomReady) syncRoute(); });
+
 // ── the sequence ──
 async function run() {
   growGrid(0);
@@ -812,6 +869,8 @@ async function run() {
         words.forEach((word) => word.classList.add("is-shown"));
         tour.hidden = false;
         document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark").forEach((bar) => { bar.hidden = false; });
+        roomReady = true;
+        if (location.pathname !== BASE) syncRoute(); // arrived by a deep link
       }, WORDS_AFTER * 1000);
     }, HIT_DELAY * 1000);
   }, { once: true });
@@ -822,6 +881,8 @@ async function run() {
       goToPage(word.dataset.page!);
     });
   }
+  // A deep link doesn't wait to be pressed.
+  if (location.pathname !== BASE) button.click();
 }
 
 void run();
