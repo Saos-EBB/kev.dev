@@ -22,6 +22,9 @@ import { ABOUT } from "../about/about-content";
 import { initEngineering, hasEngineering, engHref } from "../engineering";
 import { projectCards } from "../projects/projects-data";
 import { LANG, pick, setLang, type Lang } from "../i18n";
+import { revokeConsent, type ConsentId } from "../consent";
+import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
+import { renderConsents } from "../legal/legal-overlay";
 import { UI } from "../i18n/ui";
 import { createPinata } from "./pinata";
 import { createProjectFrame } from "./project-frame";
@@ -75,9 +78,11 @@ document.body.innerHTML = `
     <canvas class="ai-spray" aria-hidden="true" hidden></canvas>
     <nav class="ai-bar ai-bar--top" hidden>
       <button type="button" data-nav="home">[home]</button>
+      <span class="ai-bar-mid">
       <button type="button" data-nav="about"><span class="ai-long">[abt.me]</span><span class="ai-short">[abt]</span></button>
       <button type="button" data-nav="projects"><span class="ai-long">[projects]</span><span class="ai-short">[stuff]</span></button>
       <button type="button" data-nav="contact"><span class="ai-long">[contact]</span><span class="ai-short">[mail]</span></button>
+      </span>
       <span class="ai-bar-end">
         <button type="button" data-lang="de"${LANG === "de" ? ' class="is-on"' : ""}>[de]</button>
         <button type="button" data-lang="en"${LANG === "en" ? ' class="is-on"' : ""}>[en]</button>
@@ -86,9 +91,12 @@ document.body.innerHTML = `
     </nav>
     <div class="ai-mark" hidden><span>©</span> Saos</div>
     <footer class="ai-bar ai-bar--bottom" hidden>
+      <span class="ai-bar-copy">© copyright saos / kevinschaberl</span>
       <a href="/links">[more stuff]</a>
-      <a href="/datenschutz">[datenschutz]</a>
-      <a href="/impressum">[impressum]</a>
+      <span class="ai-bar-end">
+        <a href="/datenschutz" data-legal="datenschutz">[${UI.datenschutz.toLowerCase()}]</a>
+        <a href="/impressum" data-legal="impressum">[${UI.impressum.toLowerCase()}]</a>
+      </span>
     </footer>
     <div class="ai-scrollbar" aria-hidden="true" hidden><div class="ai-scrollbar-dot"></div></div>
   </div>`;
@@ -559,15 +567,31 @@ page.addEventListener("click", (e) => {
   const t = e.target as HTMLElement;
   const id = t.closest<HTMLElement>("[data-more]")?.dataset.more;
   if (id) {
-    more.innerHTML = moreHtml(id);
-    more.hidden = false;
-    pageScroll.stop();
-    moreScroll.resize();
-    moreScroll.scrollTo(0, { immediate: true, force: true });
-    moreScroll.start();
-    more.querySelector<HTMLElement>(".ai-more-close")!.focus();
-    scrollbar.render();
+    openMore(moreHtml(id));
   }
+});
+function openMore(html: string) {
+  more.innerHTML = html;
+  more.hidden = false;
+  pageScroll.stop();
+  moreScroll.resize();
+  moreScroll.scrollTo(0, { immediate: true, force: true });
+  moreScroll.start();
+  more.querySelector<HTMLElement>(".ai-more-close")!.focus();
+  scrollbar.render();
+}
+// Imprint and privacy: the main page's texts in this page's own overlay.
+q<HTMLElement>(".ai-bar--bottom").addEventListener("click", (e) => {
+  const link = (e.target as HTMLElement).closest<HTMLElement>("[data-legal]");
+  if (!link) return;
+  e.preventDefault();
+  const legal = link.dataset.legal === "impressum" ? IMPRESSUM : DATENSCHUTZ;
+  openMore(`
+    <button class="ai-more-close" type="button" aria-label="${STORY.close}">✕</button>
+    ${UI.legalNote ? `<p class="ai-page-facts" lang="${LANG}">${UI.legalNote}</p>` : ""}
+    <div class="ai-legal">${legal.html}</div>`);
+  const slot = more.querySelector<HTMLElement>(".legal-consents");
+  if (slot) renderConsents(slot);
 });
 const closeMore = () => {
   more.hidden = true;
@@ -580,7 +604,13 @@ const scrollbar = createPageScrollbar(q<HTMLElement>(".ai-scrollbar"), () =>
 page.addEventListener("scroll", () => scrollbar.render(), { passive: true });
 more.addEventListener("scroll", () => scrollbar.render(), { passive: true });
 more.addEventListener("click", (e) => {
-  if ((e.target as HTMLElement).closest(".ai-more-close")) closeMore();
+  const t = e.target as HTMLElement;
+  if (t.closest(".ai-more-close")) closeMore();
+  const revoke = t.closest<HTMLElement>("[data-revoke]")?.dataset.revoke as ConsentId | undefined;
+  if (revoke) {
+    revokeConsent(revoke);
+    renderConsents(t.closest<HTMLElement>(".legal-consents")!); // nothing that needs one runs on this page
+  }
 });
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !more.hidden && !location.hash.startsWith("#eng/")) closeMore();

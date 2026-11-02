@@ -300,6 +300,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     const crackPts = crackTris(hit);
     const crackGeo = new THREE.BufferGeometry();
     crackGeo.setAttribute("position", new THREE.Float32BufferAttribute(crackPts, 3));
+    crackGeo.setDrawRange(0, 0); // nothing until pose() says so: a blade gets built while the scene keeps rendering
     const cracks = new THREE.Mesh(crackGeo, crackMat);
     cracks.renderOrder = 1;
     skull.add(cracks);
@@ -313,6 +314,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       ? def.out.clone().add(new THREE.Vector3(0, 0.1, 0)).normalize()
       : toCamera.clone().add(hit.clone().normalize().multiplyScalar(0.5)).add(new THREE.Vector3(0, 0.2, 0)).normalize();
     const blood = createBlood({ hit, axis: jetAxis, count: def.out ? AROUND_COUNT : BLOOD_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: def.out ? AROUND_PRESSURE : BLOOD_PRESSURE, dropSize: def.out ? AROUND_DROP : BLOOD_DROP, depth: def.out ? AROUND_DEPTH : BLOOD_DEPTH });
+    blood.setTime(-1);
     skull.add(blood.points);
 
     await breathe();

@@ -39,7 +39,7 @@ const GROUPS: Group[] = [
       { name: "kev.dev: Engineering TschoBBo", url: `${KEV}/#eng/tschobbo` },
       { name: "kev.dev: Engineering kev.dev", url: `${KEV}/#eng/kevdev` },
       { name: "kev.dev: Kopf-CT", url: `${KEV}/ct-look` },
-      { name: "kev.dev: agressiveIntro", url: `${KEV}/agressiveIntro`, note: "nur per URL" },
+      { name: "kev.dev: agressiveIntro", url: `${KEV}/agressiveIntro` },
       { name: "kev.dev: Impressum", url: `${KEV}/impressum` },
       { name: "kev.dev: Datenschutz", url: `${KEV}/datenschutz` },
       { name: "Casual-Demo: Halde", url: `${CASUAL}/demos/#halde` },
