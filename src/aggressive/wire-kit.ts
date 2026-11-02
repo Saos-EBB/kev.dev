@@ -102,6 +102,8 @@ export function dragTurn(el: HTMLElement) {
 // Every visitor gets the full scenes for now, as with FORCE_MOTION_EVERYWHERE in
 // main.ts; false respects the OS setting again.
 const FORCE_MOTION = true;
+// The same switch for what reads the class (the theme spill, spill.ts).
+if (FORCE_MOTION) document.documentElement.classList.add("force-motion");
 export const reducedMotion = () => !FORCE_MOTION && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 export function dispose(o: THREE.Object3D) {

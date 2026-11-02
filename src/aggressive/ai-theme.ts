@@ -35,5 +35,5 @@ export function switchTheme() {
     for (const fn of listeners) fn();
   };
   // The new colors spill in from the top left, like on the main page (theme.ts).
-  spillSwitch(apply, THEME === "white" ? "#ffffff" : "#5c0f1f", true);
+  spillSwitch(apply, THEME === "white" ? "#ffffff" : "#5c0f1f");
 }
