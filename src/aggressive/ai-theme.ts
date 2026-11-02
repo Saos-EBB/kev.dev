@@ -1,7 +1,7 @@
 // The page's two looks: white on cherry, or baby blue on white with a cherry
 // accent. Read at load (the page's head sets data-ai-theme on <html> already),
 // switched in place: the CSS follows the attribute, the scenes follow onTheme.
-import { spillFrames } from "../theme/spill";
+import { spillSwitch } from "../theme/spill";
 
 const KEY = "kev-ai-theme";
 const read = () => {
@@ -35,14 +35,5 @@ export function switchTheme() {
     for (const fn of listeners) fn();
   };
   // The new colors spill in from the top left, like on the main page (theme.ts).
-  if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return apply();
-  const clipPath = spillFrames(innerWidth, innerHeight);
-  const transition = document.startViewTransition(apply);
-  transition.ready.then(() => {
-    const spill = document.documentElement.animate(
-      { clipPath },
-      { duration: 2200, easing: "linear", fill: "both", pseudoElement: "::view-transition-new(root)" },
-    );
-    void transition.finished.then(() => spill.cancel());
-  }, () => {});
+  spillSwitch(apply, THEME === "white" ? "#ffffff" : "#5c0f1f");
 }

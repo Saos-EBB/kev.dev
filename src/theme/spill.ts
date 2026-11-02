@@ -3,6 +3,10 @@
 // clip-path keyframes for ::view-transition-new(root) (theme.ts). Every
 // frame has the same points, so the browser interpolates between them; a new
 // random spill per call. u runs down the slope, v across it.
+// polygon() in percent, not path() in px: Chrome draws px clip-paths on the
+// view transition at the wrong scale on the first switch after a load when the
+// screen's scale has a fraction (Windows at 125/150 %, many Android phones).
+// One outline, so the drops hang on it by a seam of no width.
 
 const FRAMES = 24;
 const FOOT_SAMPLES = 8; // points per finger flank
@@ -50,8 +54,9 @@ export function spillFrames(w: number, h: number): string[] {
   const k = [rand(3, 5) / reach, rand(8, 13) / reach];
   const ph = [rand(0, 6.3), rand(0, 6.3)];
 
+  const pct = (n: number, of: number) => `${((n / of) * 100).toFixed(3)}%`;
   const toXY = (u: number, v: number) =>
-    `${Math.round((u + v) / Math.SQRT2)} ${Math.round((u - v) / Math.SQRT2)}`;
+    `${pct((u + v) / Math.SQRT2, w)} ${pct((u - v) / Math.SQRT2, h)}`;
 
   const frame = (t: number) => {
     // Slow to get going while the pool spreads, the fingers run ahead of it,
@@ -81,8 +86,9 @@ export function spillFrames(w: number, h: number): string[] {
       }
       for (let i = FOOT_SAMPLES - 1; i >= 0; i--) flank(i / FOOT_SAMPLES, 1);
     }
-    pts.push(toXY(front(V), V), toXY(-L, V), toXY(-L, -V));
-    let d = `M${pts.join("L")}Z`;
+    pts.push(toXY(front(V), V), toXY(-L, V));
+    const corner = toXY(-L, -V); // off screen, inside the poured part: where the seams start
+    pts.push(corner);
 
     // Same turning direction as the outline above, so overlaps add up
     // instead of cutting holes (nonzero fill).
@@ -96,10 +102,41 @@ export function spillFrames(w: number, h: number): string[] {
         const a = (i / DROP_SAMPLES) * Math.PI * 2;
         ring.push(toXY(u + r * Math.cos(a), f.v + f.sway * Math.sin(4 + f.phase) + r * Math.sin(a)));
       }
-      d += `M${ring.join("L")}Z`;
+      pts.push(...ring, ring[0], corner);
     }
-    return `path("${d}")`;
+    return `polygon(${pts.join(",")})`;
   };
 
   return Array.from({ length: FRAMES + 1 }, (_, i) => frame(i / FRAMES));
+}
+
+// A theme switch with the spill, for both pages (theme.ts, ai-theme.ts).
+// `apply` switches; `color` is the new background, for browsers without view
+// transitions: there it spills over the old page, which switches underneath
+// once it's covered. Reduced motion just switches.
+export function spillSwitch(apply: () => void, color: string) {
+  const reduced =
+    matchMedia("(prefers-reduced-motion: reduce)").matches &&
+    !document.documentElement.classList.contains("force-motion");
+  if (reduced) return apply();
+  const clipPath = spillFrames(innerWidth, innerHeight);
+  if (document.startViewTransition) {
+    const transition = document.startViewTransition(apply);
+    transition.ready.then(() => {
+      const spill = document.documentElement.animate(
+        { clipPath },
+        { duration: 2200, easing: "linear", fill: "both", pseudoElement: "::view-transition-new(root)" },
+      );
+      void transition.finished.then(() => spill.cancel());
+    }, () => {}); // a second click while this one prepares: that one wins
+    return;
+  }
+  const cover = document.createElement("div");
+  cover.setAttribute("aria-hidden", "true");
+  cover.style.cssText = `position:fixed;inset:0;z-index:2147483647;background:${color};pointer-events:none`;
+  document.documentElement.append(cover);
+  void cover.animate({ clipPath }, { duration: 1400, easing: "linear", fill: "both" }).finished.then(() => {
+    apply();
+    void cover.animate({ opacity: [1, 0] }, { duration: 400, fill: "both" }).finished.then(() => cover.remove());
+  });
 }
