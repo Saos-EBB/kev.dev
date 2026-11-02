@@ -113,14 +113,16 @@ export function spillFrames(w: number, h: number): string[] {
 // A theme switch with the spill, for both pages (theme.ts, ai-theme.ts).
 // `apply` switches; `color` is the new background, for browsers without view
 // transitions: there it spills over the old page, which switches underneath
-// once it's covered. Reduced motion just switches.
-export function spillSwitch(apply: () => void, color: string) {
+// once it's covered. Reduced motion just switches. `cover`: that way even with
+// view transitions, for a page where they don't hold up (adhdActivated: on a
+// real Android phone the switch came out instant, never reproduced here).
+export function spillSwitch(apply: () => void, color: string, cover = false) {
   const reduced =
     matchMedia("(prefers-reduced-motion: reduce)").matches &&
     !document.documentElement.classList.contains("force-motion");
   if (reduced) return apply();
   const clipPath = spillFrames(innerWidth, innerHeight);
-  if (document.startViewTransition) {
+  if (document.startViewTransition && !cover) {
     const transition = document.startViewTransition(apply);
     transition.ready.then(() => {
       const spill = document.documentElement.animate(
@@ -131,12 +133,14 @@ export function spillSwitch(apply: () => void, color: string) {
     }, () => {}); // a second click while this one prepares: that one wins
     return;
   }
-  const cover = document.createElement("div");
-  cover.setAttribute("aria-hidden", "true");
-  cover.style.cssText = `position:fixed;inset:0;z-index:2147483647;background:${color};pointer-events:none`;
-  document.documentElement.append(cover);
-  void cover.animate({ clipPath }, { duration: 1400, easing: "linear", fill: "both" }).finished.then(() => {
+  // The new color pours over, the page switches under it, and it runs back off.
+  const pour = document.createElement("div");
+  pour.setAttribute("aria-hidden", "true");
+  pour.style.cssText = `position:fixed;inset:0;z-index:2147483647;background:${color};pointer-events:none`;
+  document.documentElement.append(pour);
+  void pour.animate({ clipPath }, { duration: 1100, easing: "linear", fill: "both" }).finished.then(() => {
     apply();
-    void cover.animate({ opacity: [1, 0] }, { duration: 400, fill: "both" }).finished.then(() => cover.remove());
+    const back = spillFrames(innerWidth, innerHeight).reverse();
+    void pour.animate({ clipPath: back }, { duration: 900, easing: "linear", fill: "both" }).finished.then(() => pour.remove());
   });
 }
