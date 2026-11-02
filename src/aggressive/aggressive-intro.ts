@@ -689,6 +689,7 @@ function scrollToProject(id: string) {
   }
 }
 function goToPage(name: string) {
+  touring = false; // picked by hand: the tour is over
   tourAt = TOUR.findIndex((step) => step.page === name);
   updateTour();
   void openPage(name, true);
@@ -718,7 +719,7 @@ tourStart.addEventListener("click", () => {
 tourNext.addEventListener("click", () => {
   if (touring) return goTour(tourAt + 1);
   const at = FREE_ORDER.indexOf(currentPage!);
-  const next = [1, 2].map((n) => FREE_ORDER[(at + n) % 3]).find((p) => !seenPages.has(p));
+  const next = currentPage === "projects" ? "contact" : [1, 2].map((n) => FREE_ORDER[(at + n) % 3]).find((p) => !seenPages.has(p));
   if (next) void openPage(next);
 });
 tourPrev.addEventListener("click", () => {
