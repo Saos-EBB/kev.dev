@@ -25,7 +25,7 @@
   "rewrites": [
     {
       "source": "/adhdActivated/:path*",
-      "destination": "/adhdActivated.html"
+      "destination": "/adhdActivated"
     }
   ]
 }
