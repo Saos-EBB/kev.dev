@@ -11,6 +11,44 @@ type Site = { name: string; url: string; what: string; why: string; shots: [stri
 
 const SITES: Site[] = [
   {
+    name: t("Das Portfolio", "The portfolio", "Портфолио", "ポートフォリオ"),
+    url: "/",
+    what: t(
+      "Meine Hauptseite: ein einziger Scroll-Ablauf mit Projekten, Über mich und Kontakt, ohne Frontend-Framework in TypeScript gebaut.",
+      "My main site: one single scroll flow with projects, about and contact, built in TypeScript without a frontend framework.",
+      "Мой основной сайт: единый сценарий прокрутки с проектами, разделом обо мне и контактами, написан на TypeScript без фронтенд-фреймворка.",
+      "メインサイトです。プロジェクト、自己紹介、連絡先を1つのスクロールにまとめ、フロントエンドフレームワークなしでTypeScriptで作りました。",),
+    why: t(
+      "Die Seite soll selbst zeigen, was ich kann, statt es nur zu behaupten. Wer tiefer will, öffnet bei den großen Projekten Graph und Code.",
+      "The site should show what I can do instead of just claiming it. Whoever wants more opens the graph and code on the big projects.",
+      "Сайт должен сам показывать, что я умею, а не просто заявлять об этом. Кому интересно глубже, откроет граф и код у больших проектов.",
+      "できることを主張するだけでなく、サイト自体で見せるためです。もっと知りたい人は、大きなプロジェクトのグラフとコードを開けます。",),
+    shots: [
+      ["main-1", t("Der Einstieg", "The start", "Начало", "トップ")],
+      ["main-2", t("Der Kontakt mit dem Schädel", "Contact with the skull", "Контакты с черепом", "頭蓋骨のある連絡先")],
+    ],
+  },
+  {
+    name: "agressiveIntro",
+    url: "/agressiveIntro",
+    what: t(
+      "Dieselben Inhalte als Raum: Ein Sägeblatt trifft einen Schädel, und das Blut macht die Wege zu Über mich, Projekten und Kontakt erst sichtbar. Am Ende fliegen alle Blätter.",
+      "The same content as a room: a saw blade hits a skull, and only the blood reveals the ways to about, projects and contact. At the end all the blades fly.",
+      "То же содержание в виде комнаты: пильный диск бьёт по черепу, и только кровь открывает пути к разделам обо мне, проектам и контактам. В конце летят все диски.",
+      "同じ内容を部屋にしました。のこぎりの刃が頭蓋骨に当たり、血によって自己紹介、プロジェクト、連絡先への道が現れます。最後にはすべての刃が飛びます。",),
+    why: t(
+      "Die laute Variante, bei der man etwas anfassen kann: Der Hammer zerschlägt die Tastatur, und was aus der Piñata fällt, lässt sich herumwerfen.",
+      "The loud version, with things to touch: the hammer smashes the keyboard, and what falls out of the piñata can be thrown around.",
+      "Громкий вариант, где можно что-то потрогать: молоток разбивает клавиатуру, а то, что выпало из пиньяты, можно разбрасывать.",
+      "触って遊べる、にぎやかなバージョンです。ハンマーがキーボードを壊し、ピニャータから落ちた物は投げて遊べます。",),
+    shots: [
+      ["intro-1", t("Der Raum", "The room", "Комната", "部屋")],
+      ["intro-2", t("Über mich: der Hammer und die Tastatur", "About: the hammer and the keyboard", "Обо мне: молоток и клавиатура", "自己紹介: ハンマーとキーボード")],
+      ["intro-3", t("Kontakt: was aus der Piñata fällt", "Contact: what falls out of the piñata", "Контакты: что выпало из пиньяты", "連絡先: ピニャータから落ちた物")],
+      ["intro-4", t("Das Ende: der Blutnebel", "The end: the blood mist", "Конец: кровавый туман", "最後: 血の霧")],
+    ],
+  },
+  {
     name: "kev.dev Casual",
     url: "https://kevdev-casual.vercel.app",
     what: t(
@@ -108,13 +146,22 @@ const SITES: Site[] = [
   },
 ];
 
+// The page the visitor just came from isn't offered again. Other sites of mine
+// only send their origin along, this one its whole path.
+const norm = (u: URL) => u.origin + u.pathname.replace(/(\/index)?(\.html)?\/?$/, "");
+function cameFrom() {
+  try { return document.referrer ? norm(new URL(document.referrer)) : null; } catch { return null; }
+}
+const from = cameFrom();
+const shown = SITES.filter((s) => norm(new URL(s.url, location.href)) !== from);
+
 document.documentElement.lang = LANG;
 document.getElementById("links")!.className = "links";
 document.getElementById("links")!.innerHTML = `
   <a class="links-back" href="/">← kev.dev</a>
   <h1 class="links-title">${UI.moreStuff}</h1>
   <p class="links-lead">${t("Was ich sonst noch gebaut habe, was es ist und warum es so ist.", "What else I built, what it is and why it is that way.", "Что ещё я построил, что это такое и почему оно так устроено.", "他に作ったもの、それが何で、なぜそうなのか。")}</p>
-  ${SITES.map((s) => `
+  ${shown.map((s) => `
     <section class="site">
       <h2>${s.name}</h2>
       <div class="site-text">

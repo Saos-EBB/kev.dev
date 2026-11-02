@@ -1,4 +1,4 @@
-// Procedural brain kit for the CT skull (skull variant, /saos#dev#skull):
+// Procedural brain kit for the CT skull (the Kopf-CT page, /ct-look):
 // every region is its own piece, the pieces visibly "plugged together"
 // (grooves along every border), rendered as dots. Ported from the offline
 // prototype that made the CT-Schädel mockup images ("#skull infos /

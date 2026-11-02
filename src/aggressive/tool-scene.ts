@@ -1,167 +1,216 @@
-// The story of the aggresiveIntro pages: a tool from the old trade hits a thing
-// from the new one. One wireframe scene per page, in the skull's look: the tool
-// flies in once the page has formed, the target breaks, then it all just hangs.
+// The about page's scene: the hammer really breaks the keyboard. Four to seven
+// blows, each tears a hole into the case and throws the keys around it, the last
+// one snaps the case in two. Runs by itself; dragging turns it.
 import * as THREE from "three";
+import { loadModel, loadParts, wireModel } from "./models";
+import { COLORS, dispose, dragTurn, part, place, reducedMotion, runScene } from "./wire-kit";
 
-export type ToolName = "about" | "projects" | "contact";
-
-const FLY = 0.42; // s from out of frame to the hit
-const SETTLE = 2.6; // how fast the fragments slow down (1/s)
-
+const FIRST_AT = 1.4, BETWEEN = 1.9; // s: a look at it whole first, then one blow at a time
+const SWING = 0.2; // s of the blow itself
+const HOLD = 0.2, REBOUND = 0.22; // s at the top; s of the bounce off the keys
+const HAMMER = 1.15; // its size
+const GRIP = -0.72, HEAD = 0.885, FACE = 0.32; // along its handle: the hand, the head; the face's distance from the handle
+const FOREARM = 1.6, ELBOW = 0.5; // its length; how far (radians) the hand hangs below the elbow at the impact
+const SIZE = 3;
+const FLOOR = -1.5, GRAVITY = 9;
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
-type Look = { color: number; opacity: number };
-type Fragment = { o: THREE.Object3D; home: THREE.Vector3; v: THREE.Vector3; s: THREE.Vector3; turn: THREE.Euler };
-type Pose = { pos: [number, number, number]; rot: [number, number, number] };
-type Built = { tool: THREE.Object3D; rest: Pose; from: Pose; fragments: Fragment[]; tilt: [number, number] };
 
-export function createToolScene(canvas: HTMLCanvasElement, name: ToolName, colors: { bg: number; ink: number; tool: number }) {
-  const TARGET: Look = { color: colors.ink, opacity: 0.65 };
-  const DIM: Look = { color: colors.ink, opacity: 0.25 };
-  const BRIGHT: Look = { color: colors.ink, opacity: 0.9 };
-  const TOOL: Look = { color: colors.tool, opacity: 0.95 };
+type Loose = { o: THREE.Object3D; v: THREE.Vector3; s: THREE.Vector3; free: boolean; rest: boolean };
 
-  const part = (geo: THREE.BufferGeometry, look: Look) => {
-    const g = new THREE.Group();
-    g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: colors.bg, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 })));
-    g.add(new THREE.LineSegments(new THREE.WireframeGeometry(geo), new THREE.LineBasicMaterial({ color: look.color, transparent: true, opacity: look.opacity })));
-    return g;
-  };
-  const place = <T extends THREE.Object3D>(o: T, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => {
-    o.position.set(x, y, z);
-    o.rotation.set(rx, ry, rz);
-    return o;
-  };
-  const box = (w: number, h: number, d: number, sx: number, sy: number, sz: number, look: Look) => part(new THREE.BoxGeometry(w, h, d, sx, sy, sz), look);
-  const shape = (pts: number[][], depth: number, look: Look, holes: number[][][] = []) => {
-    const s = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
-    for (const h of holes) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
-    const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false });
-    g.translate(0, 0, -depth / 2);
-    return part(g, look);
-  };
-  const tube = (pts: number[][], r: number, seg: number, rad: number, look: Look) =>
-    part(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y, z = 0]) => new THREE.Vector3(x, y, z))), seg, r, rad, false), look);
-  const fragment = (o: THREE.Object3D, v: [number, number, number]): Fragment => ({
-    o, home: o.position.clone(), v: new THREE.Vector3(...v), s: new THREE.Vector3(rand(-7, 7), rand(-7, 7), rand(-7, 7)), turn: o.rotation.clone(),
-  });
-  const shards = (root: THREE.Object3D, at: [number, number, number], count: number) =>
-    Array.from({ length: count }, () => {
-      const o = place(shape([[0, 0], [rand(0.15, 0.32), rand(-0.06, 0.08)], [rand(0.04, 0.22), rand(0.15, 0.32)]], 0.015, BRIGHT), ...at);
-      root.add(o);
-      return fragment(o, [rand(-1.6, 1.6), rand(0.2, 2), rand(-0.3, 1.6)]);
-    });
+const triGeometry = (src: number[]) => {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(src, 3));
+  return g;
+};
 
-  const BUILD: Record<ToolName, (root: THREE.Group) => Built> = {
-    // The floor layer's hammer on the keyboard.
-    about(root) {
-      root.add(place(box(5, 0.18, 1.9, 16, 1, 6, DIM), 0, -0.1, 0));
-      const fragments: Fragment[] = [];
-      for (let r = 0; r < 5; r++) for (let c = 0; c < 14; c++) {
-        const x = (c - 6.5) * 0.335 + (r % 2) * 0.05, z = (r - 2) * 0.335;
-        const key = place(part(new THREE.CylinderGeometry(0.13, 0.19, 0.14, 4, 1).rotateY(Math.PI / 4), TARGET), x, 0.07, z);
-        root.add(key);
-        if (Math.hypot(x, z * 1.2) < 0.8) fragments.push(fragment(key, [x * 3 + rand(-0.5, 0.5), rand(1.1, 2.2), z * 3 + rand(-0.3, 0.6)]));
-      }
-      const tool = new THREE.Group();
-      tool.add(place(part(new THREE.CylinderGeometry(0.17, 0.2, 0.34, 12, 1), TOOL), 0, 0.17, 0));
-      tool.add(place(part(new THREE.CylinderGeometry(0.14, 0.17, 0.26, 12, 1), TOOL), 0, 0.47, 0));
-      tool.add(place(shape([[-0.14, 0], [0.14, 0], [0.4, 0.3], [0.56, 0.2], [0.24, -0.18], [-0.24, -0.18]], 0.2, TOOL), 0, 0.78, 0));
-      tool.add(tube([[0, 0.45], [0.75, 0.47], [1.5, 0.5], [2.3, 0.6]], 0.08, 20, 8, TOOL));
-      root.add(tool);
-      return { tool, rest: { pos: [0, 0.05, 0], rot: [0, 0.3, 0.72] }, from: { pos: [-0.4, 3.4, 0.3], rot: [0, 0.3, 2.2] }, fragments: fragments.concat(shards(root, [0, 0.1, 0], 6)), tilt: [0.6, -0.5] };
-    },
-    // The renovation's crowbar through the monitor.
-    projects(root) {
-      const W = 2.2, H = 1.35;
-      root.add(place(shape([[-W, -H], [W, -H], [W, H], [-W, H]], 0.2, TARGET, [[[-W + 0.13, -H + 0.13], [-W + 0.13, H - 0.13], [W - 0.13, H - 0.13], [W - 0.13, -H + 0.13]]]), 0, 0.4, 0));
-      root.add(place(box(0.42, 0.9, 0.16, 2, 3, 1, TARGET), 0, -1.35, -0.1), place(box(1.8, 0.1, 0.9, 6, 1, 3, TARGET), 0, -1.8, 0));
-      const hit = [0.35, 0.15];
-      for (let i = 0; i < 18; i++) {
-        if (i % 3 === 0) continue;
-        const a = (i / 18) * Math.PI * 2, b = ((i + 1) / 18) * Math.PI * 2;
-        const edge = (t: number) => {
-          const x = Math.cos(t) * 3, y = Math.sin(t) * 3, k = Math.min(2.07 / Math.max(Math.abs(x), 1e-3), 1.22 / Math.max(Math.abs(y), 1e-3));
-          return [x * k, y * k];
-        };
-        root.add(place(shape([[hit[0] + Math.cos(a) * 0.35, hit[1] + Math.sin(a) * 0.35], edge(a), edge(b)], 0.02, TARGET), 0, 0.4, 0.02 + (i % 2) * 0.03));
-      }
-      const tool = new THREE.Group();
-      tool.add(tube([[0, 0], [0.5, 0.05], [1.4, 0.05], [2, 0.05], [2.3, 0.2], [2.5, 0.5], [2.4, 0.72], [2.2, 0.7]], 0.075, 60, 6, TOOL));
-      tool.add(shape([[-0.1, 0], [0.2, 0.12], [0.5, 0.09], [0.5, -0.09], [0.2, -0.12]], 0.05, TOOL));
-      root.add(tool);
-      return { tool, rest: { pos: [0.35, 0.55, -0.1], rot: [0, -0.8, -0.3] }, from: { pos: [3.2, -0.4, 3.6], rot: [0, -0.8, -0.3] }, fragments: shards(root, [0.35, 0.55, 0.05], 16), tilt: [0.15, -0.55] };
-    },
-    // The carpet knife through the envelope, pinned to the wall.
-    contact(root) {
-      root.add(place(box(5.6, 4.2, 0.05, 14, 11, 1, DIM), 0, 0, -0.06));
-      const W = 1.7, H = 1.1;
-      root.add(box(W * 2, H * 2, 0.04, 8, 6, 1, TARGET));
-      root.add(place(shape([[-W, H], [W, H], [0, -0.08]], 0.02, BRIGHT), 0, 0, 0.04));
-      root.add(place(shape([[-W, -H], [0, 0.02], [W, -H]], 0.02, TARGET), 0, 0, 0.03));
-      const tool = new THREE.Group();
-      tool.add(shape([[0, 0], [0.42, 0.26], [0.72, 0.26], [0.72, 0]], 0.02, TOOL)); // the blade
-      tool.add(shape([[0.7, -0.04], [2.5, -0.1], [2.75, 0.06], [2.6, 0.3], [0.7, 0.3]], 0.2, TOOL));
-      root.add(tool);
-      return { tool, rest: { pos: [0.05, 0.25, -0.2], rot: [0, -0.72, -0.15] }, from: { pos: [2.6, 0.7, 2.2], rot: [0, -0.72, -0.15] }, fragments: shards(root, [0.05, 0.25, 0.1], 12), tilt: [0.08, 0.5] };
-    },
-  };
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.setClearColor(0x000000, 0);
+export function createToolScene(canvas: HTMLCanvasElement) {
+  const reduced = reducedMotion();
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 40);
-  camera.position.z = 8.6;
   const root = new THREE.Group();
   scene.add(root);
-  const built = BUILD[name](root);
+  const turn = dragTurn(canvas);
+  const keyboard = new THREE.Group();
+  root.add(keyboard);
 
-  const resize = () => {
-    const r = canvas.getBoundingClientRect();
-    renderer.setSize(r.width, r.height, false);
-    camera.aspect = r.width / Math.max(r.height, 1);
-    // A narrow canvas: step back until the whole scene fits its width.
-    camera.position.z = 8.6 * Math.max(1, 1.35 / camera.aspect);
-    camera.updateProjectionMatrix();
+  // A hammer as it's really swung: gripped at the end of the handle, the forearm
+  // turns at the elbow, the wrist snaps last, so the head comes down on an arc and
+  // lands with its flat face, the handle level, on the keyboard. All of it in one
+  // plane, standing on the target.
+  const rig = new THREE.Group();
+  rig.rotation.y = 0.2; // seen from the side, the whole arc in view
+  rig.visible = false;
+  const forearm = new THREE.Group();
+  const wrist = place(new THREE.Group(), -FOREARM);
+  forearm.add(wrist);
+  rig.add(forearm);
+  root.add(rig);
+  forearm.position.set(
+    (HEAD - GRIP) * HAMMER + FOREARM * Math.cos(ELBOW),
+    FACE * HAMMER + FOREARM * Math.sin(ELBOW),
+    0,
+  );
+  const hammerReady = loadModel("hammer").then((geo) => {
+    const o = wireModel(geo, COLORS.blue);
+    o.scale.setScalar(HAMMER);
+    // In the model the handle runs along y, the head on top, its face towards -x.
+    wrist.add(place(o, 0, -GRIP * HAMMER));
+  });
+  // Both 0 at the impact, 1 at the top of the backswing.
+  const pose = (lift: number, cock: number) => {
+    forearm.rotation.z = ELBOW - lift * 0.5;
+    wrist.rotation.z = Math.PI / 2 - cock * 1.4 - forearm.rotation.z;
   };
-  const observer = new ResizeObserver(resize);
-  observer.observe(canvas);
-  resize();
+  pose(0.2, 0.2);
 
-  let frameId = 0;
-  const start = performance.now();
-  const tick = (now: number) => {
-    const t = (now - start) / 1000, after = t - FLY;
-    const k = Math.min(t / FLY, 1), e = k * k * k;
-    root.rotation.set(built.tilt[0], built.tilt[1] + Math.sin(t * 0.3) * 0.08, 0);
-    const wobble = after > 0 ? Math.exp(-5 * after) * Math.sin(after * 34) * 0.05 : 0;
-    const { from, rest, tool } = built;
-    tool.position.set(...(from.pos.map((p, i) => p + (rest.pos[i] - p) * e) as [number, number, number]));
-    tool.rotation.set(from.rot[0] + (rest.rot[0] - from.rot[0]) * e + wobble, from.rot[1] + (rest.rot[1] - from.rot[1]) * e, from.rot[2] + (rest.rot[2] - from.rot[2]) * e + wobble);
-    const d = after > 0 ? (1 - Math.exp(-SETTLE * after)) / SETTLE : 0;
-    for (const f of built.fragments) {
-      f.o.position.copy(f.home).addScaledVector(f.v, d);
-      f.o.rotation.set(f.turn.x + f.s.x * d, f.turn.y + f.s.y * d, f.turn.z + f.s.z * d);
-      f.o.visible = after > 0 || f.v.lengthSq() === 0 || f.o.userData.keep === true;
+  const blows = 4 + Math.floor(Math.random() * 4); // 4 to 7
+  const loose: Loose[] = [];
+  let baseTris: number[][] = [];
+  let baseLeft: THREE.Group | null = null, baseRight: THREE.Group | null = null;
+  let clock = -1, done = 0, stopped = false, top = 0, snapped = 0;
+  const targets: THREE.Vector3[] = [];
+
+  const drawBase = () => {
+    baseLeft?.removeFromParent();
+    baseRight?.removeFromParent();
+    const sides: number[][] = [[], []];
+    for (const t of baseTris) {
+      const x = (t[0] + t[3] + t[6]) / 3, z = (t[2] + t[5] + t[8]) / 3;
+      sides[x + Math.sin(z * 14) * 0.08 < 0 ? 0 : 1].push(...t);
     }
-    renderer.render(scene, camera);
-    frameId = requestAnimationFrame(tick);
+    [baseLeft, baseRight] = sides.map((s) => {
+      const g = part(triGeometry(s), { opacity: 0.55 });
+      const holder = new THREE.Group();
+      holder.add(g);
+      keyboard.add(holder);
+      return holder;
+    });
   };
-  // Keys stay on the board until they're hit; only the loose shards wait unseen.
-  for (const f of built.fragments) f.o.userData.keep = !(f.o.children[0] as THREE.Mesh).geometry.type.startsWith("Extrude");
-  frameId = requestAnimationFrame(tick);
+
+  void Promise.all([loadParts("keyboard"), hammerReady]).then(([{ tris, parts }]) => {
+    if (stopped) return;
+    keyboard.scale.setScalar(1);
+    const scaled = tris.map((t) => t.map((v) => v * SIZE));
+    baseTris = scaled.slice(0, parts[0]);
+    drawBase();
+    top = -Infinity;
+    for (let i = 1; i < parts.length; i++) {
+      const own = scaled.slice(parts[i - 1], parts[i]).flat();
+      const centre = new THREE.Vector3();
+      for (let k = 0; k < own.length; k += 3) {
+        centre.x += own[k]; centre.y += own[k + 1]; centre.z += own[k + 2];
+        top = Math.max(top, own[k + 1]);
+      }
+      centre.divideScalar(own.length / 3);
+      for (let k = 0; k < own.length; k += 3) { own[k] -= centre.x; own[k + 1] -= centre.y; own[k + 2] -= centre.z; }
+      const o = part(triGeometry(own), { opacity: 0.8 });
+      o.position.copy(centre);
+      keyboard.add(o);
+      loose.push({ o, v: new THREE.Vector3(), s: new THREE.Vector3(), free: false, rest: false });
+    }
+    // Spread over the board, so each blow finds keys of its own.
+    for (let i = 0; i < blows; i++) {
+      const x = ((i + 0.5) / blows - 0.5) * 2.2 * (i % 2 ? 1 : 0.8);
+      targets.push(new THREE.Vector3(x, top, rand(-0.35, 0.5)));
+    }
+    clock = 0; // only now: the page is up (it mounts this) and both models are here
+    if (reduced) while (done < blows) strike(done);
+  });
+
+  function strike(i: number) {
+    const at = targets[i];
+    done = i + 1;
+    const last = done === blows;
+    const radius = last ? Infinity : 0.72;
+    for (const k of loose) {
+      if (k.free) continue;
+      const d = Math.hypot(k.o.position.x - at.x, k.o.position.z - at.z);
+      if (d > radius) continue;
+      k.free = true;
+      const away = new THREE.Vector3(k.o.position.x - at.x, 0, k.o.position.z - at.z).normalize();
+      k.v.copy(away).multiplyScalar(last ? rand(0.6, 2) : rand(1, 2.6)).setY(rand(2.5, 5.5));
+      k.s.set(rand(-9, 9), rand(-9, 9), rand(-9, 9));
+    }
+    // A hole in the case where it hit; pieces of it join the keys.
+    const kept: number[][] = [];
+    let thrown = 0;
+    for (const t of baseTris) {
+      const x = (t[0] + t[3] + t[6]) / 3, z = (t[2] + t[5] + t[8]) / 3, y = (t[1] + t[4] + t[7]) / 3;
+      if (!last && y > top - 0.42 && Math.hypot(x - at.x, z - at.z) < 0.42) {
+        // Long slivers of the mesh would fly around as spikes: only real chips.
+        const span = Math.max(t[0], t[3], t[6]) - Math.min(t[0], t[3], t[6]) + Math.max(t[2], t[5], t[8]) - Math.min(t[2], t[5], t[8]);
+        if (span < 0.45 && thrown++ < 26) {
+          const c = [x, y, z], own = t.map((v, n) => v - c[n % 3]);
+          const o = place(part(triGeometry(own), { opacity: 0.9 }), x, y, z);
+          keyboard.add(o);
+          loose.push({ o, v: new THREE.Vector3(rand(-2, 2), rand(2, 5), rand(-1.5, 2)), s: new THREE.Vector3(rand(-9, 9), rand(-9, 9), rand(-9, 9)), free: true, rest: false });
+        }
+      } else kept.push(t);
+    }
+    baseTris = kept;
+    drawBase();
+    if (last) snapped = performance.now();
+  }
+
+  const handle = runScene(canvas, camera, scene, (t, dt) => {
+    camera.position.z = 12 * Math.max(1, 1.35 / camera.aspect);
+    root.rotation.set(0.55 + turn.x, -0.45 + turn.y + Math.sin(t * 0.3) * 0.05, 0);
+    if (clock < 0) return;
+    const now = (clock += dt); // frame time: after a stall the blows don't catch up in a burst
+
+    // One beat per blow: back up slowly, a short hold, then down, faster and
+    // faster, the wrist last, and a small bounce off the keyboard.
+    if (done < blows && !reduced) {
+      const hitAt = FIRST_AT + done * BETWEEN, to = targets[done];
+      const since = now - (hitAt - BETWEEN);
+      const rise = THREE.MathUtils.smoothstep(since, REBOUND, BETWEEN - SWING - HOLD);
+      const fall = THREE.MathUtils.clamp(1 - (hitAt - now) / SWING, 0, 1);
+      const bounce = done && since < REBOUND ? Math.sin((since / REBOUND) * Math.PI) * 0.12 : 0;
+      if (done) rig.position.lerpVectors(targets[done - 1], to, rise); // moves on while it's up
+      else rig.position.copy(to);
+      rig.visible = true;
+      pose(rise * (1 - fall ** 3) + bounce, rise * (1 - fall ** 5) + bounce);
+      if (now >= hitAt) {
+        pose(0, 0);
+        strike(done);
+      }
+    } else if (done === blows && !reduced) {
+      // Done: it stays a little above the wreck, where it last hit.
+      const a = Math.min((performance.now() - snapped) / 400, 1);
+      pose(a * 0.25, a * 0.15);
+    }
+
+    // the case breaks in two
+    if (snapped || (reduced && done === blows)) {
+      const a = reduced ? 1 : Math.min((performance.now() - snapped) / 500, 1);
+      if (baseLeft && baseRight) {
+        baseLeft.rotation.z = 0.28 * a;
+        baseRight.rotation.z = -0.28 * a;
+        baseLeft.position.set(-0.18 * a, -0.45 * a * a, 0);
+        baseRight.position.set(0.18 * a, -0.45 * a * a, 0);
+      }
+    }
+
+    for (const k of loose) {
+      if (!k.free || k.rest) continue;
+      k.v.y -= GRAVITY * dt;
+      k.o.position.addScaledVector(k.v, dt);
+      k.o.rotation.x += k.s.x * dt; k.o.rotation.y += k.s.y * dt; k.o.rotation.z += k.s.z * dt;
+      if (k.o.position.y < FLOOR) {
+        k.o.position.y = FLOOR;
+        if (Math.abs(k.v.y) < 1.2) { k.rest = true; continue; }
+        k.v.y *= -0.35; k.v.x *= 0.6; k.v.z *= 0.6; k.s.multiplyScalar(0.5);
+      }
+    }
+  });
 
   return {
-    // The scene as it stands, for the pane the way back tears up.
-    paint(ctx: CanvasRenderingContext2D) {
-      const r = canvas.getBoundingClientRect();
-      renderer.render(scene, camera);
-      ctx.drawImage(canvas, r.left, r.top, r.width, r.height);
-    },
+    paint: handle.paint,
     stop() {
-      cancelAnimationFrame(frameId);
-      observer.disconnect();
-      renderer.dispose();
+      stopped = true;
+      handle.stop();
+      turn.stop();
+      dispose(root);
     },
   };
 }

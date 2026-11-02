@@ -8,26 +8,40 @@
 // time the blood is the background color and hits the screen itself, like a pane
 // of glass, and the page is already written on it: each blot paints its piece.
 //
-// The story: a tool from the old trade hits a thing from the new one, one per
-// page (tool-scene.ts). Once all three are seen, the button comes back for the end.
+// After PRESS everything is optional: the words open a page with one click, or
+// the guided tour (two arrows) clicks through the story, and only it reaches the
+// end. About: text plus the hammer on the keyboard (tool-scene.ts). Projects: a
+// tl;dr per project while its model kicks the last one out of the frame
+// (project-frame.ts), more behind a button. Contact: a piñata (pinata.ts).
 //
 // The skull, blade and flying blood are the contact section's scene; only the
 // paint on the walls is new.
 import gsap from "gsap";
 import { createSkullScene } from "../contact/skull/skull-scene";
 import { ABOUT } from "../about/about-content";
-import { pick } from "../i18n";
+import { initEngineering, hasEngineering, engHref } from "../engineering";
+import { projectCards } from "../projects/projects-data";
+import { LANG, pick, setLang, type Lang } from "../i18n";
+import { revokeConsent, type ConsentId } from "../consent";
+import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
+import { renderConsents } from "../legal/legal-overlay";
 import { UI } from "../i18n/ui";
-import { createToolScene, type ToolName } from "./tool-scene";
+import { createPinata } from "./pinata";
+import { createProjectFrame } from "./project-frame";
+import { createToolScene } from "./tool-scene";
+import Lenis from "lenis";
+import { PALETTE, switchTheme } from "./ai-theme";
+import { createPageScrollbar } from "./page-scrollbar";
 import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
-const INK = "#ffffff";
+const INK = PALETTE.inkCss;
 const LOAD_MIN = 1.6; // s the grid takes to grow in even when everything is cached
 const PART = 1.1; // s the grid takes to leave
 const HIT_DELAY = 0.5; // s from the press to the blade striking (HIT_AT in skull-scene.ts)
 const BLADE_DELAY = 0.55; // s the same for a further blade (BLADE_FLIGHT there)
 const GLASS_CELL = 70; // px: one big blot per cell, so the pane ends up fully covered
+const WORDS_AFTER = 0.9; // s from the blade striking to the words showing
 const DROPS_PER_PIXEL = 1500 / (1280 * 800); // on the walls at large
 const PIXELS_PER_WORD_DROP = 75; // aimed at each word, so all of them become readable
 
@@ -39,6 +53,7 @@ document.title = "aggresiveIntro";
 document.body.classList.add("ai");
 document.body.innerHTML = `
   <div class="ai-stage">
+    <svg class="ai-room-under" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
     <canvas class="ai-paint" aria-hidden="true"></canvas>
     <svg class="ai-room" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
     <nav class="ai-words">
@@ -51,7 +66,39 @@ document.body.innerHTML = `
     <div class="ai-grid" aria-hidden="true"></div>
     <div class="ai-glow" aria-hidden="true"></div>
     <canvas class="ai-glass" aria-hidden="true" hidden></canvas>
+    <canvas class="ai-freeze" aria-hidden="true" hidden></canvas>
     <article class="ai-page" hidden></article>
+    <article class="ai-more" hidden></article>
+    <div class="ai-tour" hidden>
+      <button class="ai-button ai-tour-start" type="button">GUIDED TOUR</button>
+      <button class="ai-button ai-tour-arrow ai-tour-prev" type="button" aria-label="${UI.projectBack}" hidden>←</button>
+      <button class="ai-button ai-tour-arrow ai-tour-next" type="button" aria-label="${UI.projectOpen}" hidden>→</button>
+      <button class="ai-button ai-tour-arrow ai-tour-end" type="button" hidden>END IT</button>
+    </div>
+    <canvas class="ai-spray" aria-hidden="true" hidden></canvas>
+    <nav class="ai-bar ai-bar--top" hidden>
+      <button type="button" data-nav="home">[home]</button>
+      <span class="ai-bar-mid">
+      <button type="button" data-nav="about"><span class="ai-long">[abt.me]</span><span class="ai-short">[abt]</span></button>
+      <button type="button" data-nav="projects"><span class="ai-long">[projects]</span><span class="ai-short">[stuff]</span></button>
+      <button type="button" data-nav="contact"><span class="ai-long">[contact]</span><span class="ai-short">[mail]</span></button>
+      </span>
+      <span class="ai-bar-end">
+        <button type="button" data-lang="de"${LANG === "de" ? ' class="is-on"' : ""}>[de]</button>
+        <button type="button" data-lang="en"${LANG === "en" ? ' class="is-on"' : ""}>[en]</button>
+        <button type="button" data-switch-theme>[theme]</button>
+      </span>
+    </nav>
+    <div class="ai-mark" hidden><span>©</span> Saos</div>
+    <footer class="ai-bar ai-bar--bottom" hidden>
+      <span class="ai-bar-copy">© copyright saos / kevinschaberl</span>
+      <a href="/links">[more stuff]</a>
+      <span class="ai-bar-end">
+        <a href="/datenschutz" data-legal="datenschutz">[${UI.datenschutz.toLowerCase()}]</a>
+        <a href="/impressum" data-legal="impressum">[${UI.impressum.toLowerCase()}]</a>
+      </span>
+    </footer>
+    <div class="ai-scrollbar" aria-hidden="true" hidden><div class="ai-scrollbar-dot"></div></div>
   </div>`;
 
 const q = <T extends Element>(sel: string) => document.querySelector<T>(sel)!;
@@ -65,8 +112,25 @@ const words = [...document.querySelectorAll<HTMLAnchorElement>(".ai-word")];
 
 // ── the room's edges ──
 const [l, t, r, b] = TALL() ? BACK_WALL.tall : BACK_WALL.wide;
-q<SVGElement>(".ai-room").innerHTML = `
-  <path d="M${l} ${t}H${r}V${b}H${l}Z M0 0L${l} ${t} M100 0L${r} ${t} M100 100L${r} ${b} M0 100L${l} ${b}" vector-effect="non-scaling-stroke"/>`;
+const edges = `M${l} ${t}H${r}V${b}H${l}Z M0 0L${l} ${t} M100 0L${r} ${t} M100 100L${r} ${b} M0 100L${l} ${b}`;
+const line = (d: string, cls: string) => `<path class="${cls}" d="${d}" vector-effect="non-scaling-stroke"/>`;
+// Phones: blood alone doesn't show a room on so little wall, so the walls carry
+// the grid in perspective, drawn twice: white under the paint, background color
+// over it, so it reads on both. It comes with the hit; the start stays blank.
+let wallGrid = "";
+if (TALL()) {
+  const mix = (a: number, c: number, k: number) => a + (c - a) * k;
+  for (const k of [0.42, 0.68, 0.84, 0.94]) {
+    const x0 = mix(0, l, k), x1 = mix(100, r, k), y0 = mix(0, t, k), y1 = mix(100, b, k);
+    wallGrid += `M${x0} ${y0}H${x1}V${y1}H${x0}Z`;
+  }
+  for (const k of [0.25, 0.5, 0.75]) {
+    const x = mix(l, r, k), y = mix(t, b, k);
+    wallGrid += `M${x} ${t}L${k * 100} 0M${x} ${b}L${k * 100} 100M${l} ${y}L0 ${k * 100}M${r} ${y}L100 ${k * 100}`;
+  }
+  q<SVGElement>(".ai-room-under").innerHTML = line(wallGrid, "ai-wall-grid") + line(edges, "ai-wall-edge");
+}
+q<SVGElement>(".ai-room").innerHTML = (wallGrid ? line(wallGrid, "ai-wall-grid") : "") + line(edges, "ai-wall-edge");
 
 // ── the grid ──
 const w = innerWidth, h = innerHeight;
@@ -206,65 +270,65 @@ function openWords() {
 // The story's lines. A draft: Kevin's to rewrite in his own words.
 const STORY = pick({
   de: {
-    about: "Der Hammer ist vom Boden. Fast sieben Jahre Bodenleger und Sonnenschutz, dann zwei Jahre unser Haus saniert. Heute baue ich Software.",
-    projects: "Die Brechstange ist von der Sanierung. Erst aufmachen, dann verstehen, dann neu bauen. So entstehen auch diese Projekte.",
-    contact: "Mit dem Messer habe ich Böden zugeschnitten. Jetzt macht es deine Mail auf.",
+    close: "Schließen", why: "Warum", learned: "Gelernt", decisions: "Entscheidungen", challenge: "Die Herausforderung", graph: "Graph und Code ansehen",
     endTitle: "Früher Böden.",
     endLine: "Heute Software. Das Werkzeug hab ich behalten.",
     endMail: "Schreib mir",
     endBack: "Zur ganzen Seite",
-    finish: "ENDE",
   },
   en: {
-    about: "The hammer is from the floor. Almost seven years laying floors and fitting sun protection, then two years renovating our house. Today I build software.",
-    projects: "The crowbar is from the renovation. Open it up, understand it, build it new. These projects get made the same way.",
-    contact: "I used this knife to cut floors. Now it opens your mail.",
+    close: "Close", why: "Why", learned: "Learned", decisions: "Decisions", challenge: "The challenge", graph: "See graph and code",
     endTitle: "Floors back then.",
     endLine: "Software today. I kept the tools.",
     endMail: "Write to me",
     endBack: "To the whole site",
-    finish: "END",
   },
   ru: {
-    about: "Молоток с пола. Почти семь лет полы и солнцезащита, затем два года ремонта нашего дома. Сегодня я создаю софт.",
-    projects: "Лом с ремонта. Сначала вскрыть, потом понять, потом построить заново. Так появляются и эти проекты.",
-    contact: "Этим ножом я резал полы. Теперь он вскрывает твоё письмо.",
+    close: "Закрыть", why: "Зачем", learned: "Чему научился", decisions: "Решения", challenge: "Главная сложность", graph: "Граф и код",
     endTitle: "Раньше полы.",
     endLine: "Сегодня софт. Инструменты я оставил.",
     endMail: "Напиши мне",
     endBack: "На весь сайт",
-    finish: "КОНЕЦ",
   },
   ja: {
-    about: "このハンマーは床の仕事のもの。床職人と日よけの仕事を約7年、その後2年かけて家を改修しました。今はソフトウェアを作っています。",
-    projects: "このバールは改修のもの。まず開けて、理解して、作り直す。これらのプロジェクトも同じように生まれます。",
-    contact: "このナイフで床を切っていました。今はあなたのメールを開けます。",
+    close: "閉じる", why: "なぜ", learned: "学んだこと", decisions: "判断", challenge: "課題", graph: "グラフとコードを見る",
     endTitle: "昔は床。",
     endLine: "今はソフトウェア。道具は持ったままです。",
     endMail: "メールする",
     endBack: "サイト全体へ",
-    finish: "終わり",
   },
 });
 
+const esc = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+// The main page's about, slimmed down; its highlights are blue here (CSS).
 const PAGES: Record<string, () => string> = {
   about: () => `
     <h1>${UI.navAbout}</h1>
     <p class="ai-page-lead">${ABOUT.role}</p>
-    <p>${STORY.about}</p>
+    <p class="ai-page-facts">${ABOUT.facts.join(" · ")}</p>
+    <p>${ABOUT.story[0]}</p>
+    <p>${ABOUT.story[1]}</p>
+    <blockquote>${ABOUT.principles[0]}</blockquote>
+    <p>${ABOUT.work[3]}</p>
+    <p>${ABOUT.work[6]}</p>
     <h2>${ABOUT.cv[0].heading}</h2>
-    <ul>${ABOUT.cv[0].items.map((item) => `<li>${item.replace(/<[^>]+>/g, "")}</li>`).join("")}</ul>`,
+    <ul>${ABOUT.cv[0].items.map((item) => `<li>${item}</li>`).join("")}</ul>
+    <p>${ABOUT.end}</p>`,
   projects: () => `
     <h1>${UI.navProjects}</h1>
-    <p>${STORY.projects}</p>
-    <ul>${["YourBrand", "TschoBBo", "kev.dev", "AniScript", "ReleaseWatcher", "Oskalizer"].map((name) => `<li>${name}</li>`).join("")}</ul>`,
+    ${projectCards.map((c) => `
+      <section class="ai-proj" data-project="${c.id}">
+        <h2>${esc(c.title)}</h2>
+        <p class="ai-page-facts">${esc(c.kind)}</p>
+        <ul class="ai-proj-points">${(c.points ?? [c.claim]).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+        <button class="ai-proj-more" type="button" data-more="${c.id}">Wanna know more?</button>
+      </section>`).join("")}`,
   contact: () => `
     <h1>${UI.navContact}</h1>
-    <p>${STORY.contact}</p>
-    <ul>
-      <li><a href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></li>
-      <li><a href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-    </ul>`,
+    <p class="ai-page-lead">${ABOUT.facts[1]}</p>
+    <p class="ai-page-facts">${ABOUT.facts[0]}</p>
+    <p>kevin.schaberl.work@gmail.com</p>`,
   end: () => `
     <h1>${STORY.endTitle}</h1>
     <p class="ai-page-lead">${STORY.endLine}</p>
@@ -284,6 +348,7 @@ function pageImage(page: HTMLElement) {
   const range = document.createRange();
   while (walker.nextNode()) {
     const node = walker.currentNode as Text;
+    if (node.parentElement!.closest(".ai-drop")) continue; // they come with the scene
     const style = getComputedStyle(node.parentElement!);
     ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
     ctx.fillStyle = style.color;
@@ -297,6 +362,26 @@ function pageImage(page: HTMLElement) {
     }
   }
   return canvas;
+}
+
+// A project's overlay page: everything the card knows.
+function moreHtml(id: string) {
+  const c = projectCards.find((x) => x.id === id)!;
+  const block = (title: string, body?: string) => (body ? `<h2>${title}</h2><p>${esc(body)}</p>` : "");
+  return `
+    <button class="ai-more-close" type="button" aria-label="${STORY.close}">✕</button>
+    <h1>${esc(c.title)}</h1>
+    <p class="ai-page-lead">${esc(c.claim)}</p>
+    ${c.tags?.length ? `<p class="ai-page-facts">${c.tags.map(esc).join(" · ")}</p>` : ""}
+    <p class="ai-more-links">
+      ${c.graph && hasEngineering(c.graph) ? `<a class="ai-proj-more" href="${engHref(c.graph)}">${STORY.graph}</a>` : ""}
+      ${(c.links ?? []).filter((l) => l.href).map((l) => `<a class="ai-proj-more" href="${esc(l.href!)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} ↗</a>`).join("")}
+    </p>
+    ${block(STORY.why, c.what)}
+    ${block(STORY.learned, c.learnGoal)}
+    ${c.decisions?.length ? `<h2>${STORY.decisions}</h2><ul>${c.decisions.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
+    ${block(STORY.challenge, c.challenge)}
+    ${c.screenshots?.length ? `<div class="ai-more-shots">${c.screenshots.map((x) => `<img src="${esc(x.src)}" alt="${esc(x.alt)}" loading="lazy" decoding="async" />`).join("")}</div>` : ""}`;
 }
 
 function glassDrops(fromX: number, fromY: number) {
@@ -318,21 +403,106 @@ const glass = q<HTMLCanvasElement>(".ai-glass");
 const page = q<HTMLElement>(".ai-page");
 let throwing = false;
 let stopGlass = () => {};
-let toolScene: ReturnType<typeof createToolScene> | null = null;
+let pageScene: { paint(ctx: CanvasRenderingContext2D): void; stop(): void } | null = null;
 let woundAt: [number, number] = [w / 2, h / 2];
-const seen = new Set<string>();
-const toolColors = { bg: 0x5c0f1f, ink: 0xffffff, tool: 0x89cff0 };
+let currentPage: string | null = null;
+const freeze = q<HTMLCanvasElement>(".ai-freeze");
+const more = q<HTMLElement>(".ai-more");
+type Scene = Awaited<ReturnType<typeof createSkullScene>>;
+let skull: Scene;
 
-async function openPage(name: string, scene: Awaited<ReturnType<typeof createSkullScene>>) {
-  if (throwing) return;
+// Mouse wheel on the pages as smooth as on the main page. The page's Lenis takes
+// the wheel anywhere on the stage (over the frame, arrows and bars as well);
+// touch stays native.
+const smooth = (wrapper: HTMLElement, eventsTarget: HTMLElement) => {
+  const lenis = new Lenis({ wrapper, content: wrapper, eventsTarget, autoRaf: true });
+  lenis.stop();
+  return lenis;
+};
+const pageScroll = smooth(page, stage);
+const moreScroll = smooth(more, more);
+
+// On a phone there's no hover: the bars are simply there, go away scrolling down
+// and come back scrolling up (the CSS only acts on this without a hover).
+let barsY = 0;
+function barsFollow(el: HTMLElement) {
+  const y = el.scrollTop, dy = y - barsY;
+  if (Math.abs(dy) < 6 && y > 40) return;
+  stage.classList.toggle("ai-bars-away", dy > 0 && y > 40);
+  barsY = y;
+}
+const barsBack = () => {
+  barsY = 0;
+  stage.classList.remove("ai-bars-away");
+};
+page.addEventListener("scroll", () => barsFollow(page), { passive: true });
+
+// The next project takes over the moment its title comes up from below: the old
+// model gets kicked out then and the new one stands in the frame by the time its
+// text has reached the frame's height. Same line scrolling back.
+let frame: ReturnType<typeof createProjectFrame> | null = null;
+function activeProject() {
+  let best = "";
+  for (const el of page.querySelectorAll<HTMLElement>(".ai-proj")) {
+    if (!best || el.querySelector("h2")!.getBoundingClientRect().top < h * 0.95) best = el.dataset.project!;
+  }
+  return best;
+}
+page.addEventListener("scroll", () => { if (frame) frame.show(activeProject()); }, { passive: true });
+
+function mountScene(name: string) {
+  if (name === "about") {
+    pageScene = createToolScene(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!);
+  } else if (name === "projects") {
+    frame = createProjectFrame(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!);
+    frame.show(activeProject());
+    pageScene = frame;
+  } else if (name === "contact") {
+    pageScene = createPinata(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, [...page.querySelectorAll<HTMLElement>(".ai-drop")]);
+  }
+}
+function dropScene() {
+  pageScene?.stop();
+  pageScene = null;
+  frame = null;
+}
+
+async function openPage(name: string, saw = false) {
+  if (throwing || name === currentPage) return;
   throwing = true;
   // Blood in the background color: the scene rereads its colors when the theme attribute is set.
   document.documentElement.style.setProperty("--color-throw", getComputedStyle(document.documentElement).getPropertyValue("--ai-bg").trim());
   document.documentElement.dataset.theme = "light";
 
-  const tool = name !== "end";
-  page.innerHTML = `${tool ? `<button class="ai-page-back" type="button" aria-label="${UI.projectBack}">←</button>` : ""}${PAGES[name]()}${tool ? `<canvas class="ai-page-tool" aria-hidden="true"></canvas>` : ""}`;
+  // From another page: that one stays up as a picture until the blots cover it.
+  stopGlass();
+  const wasOpen = Boolean(currentPage);
+  if (currentPage) {
+    const still = context(freeze);
+    still.drawImage(pageImage(page), 0, 0, w, h);
+    pageScene?.paint(still);
+    freeze.hidden = false;
+    dropScene();
+    page.classList.remove("is-open");
+  }
+  currentPage = name;
+  const hasScene = name !== "end";
+  const drops = name === "contact" ? [
+    ["https://github.com/saos-ebb", "GitHub"],
+    ["mailto:kevin.schaberl.work@gmail.com", UI.email],
+    ["tel:+436764718807", UI.phone],
+  ] : [];
+  // In the order the piñata drops them: phone, cat, letter.
+  const dropLinks = name === "contact" ? [drops[2], drops[0], drops[1]].map(([href, label]) => `<a class="ai-drop" href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""}>${label}</a>`).join("") : "";
+  page.className = `ai-page ai-page--${name}`;
+  page.innerHTML = `${PAGES[name]()}${hasScene ? `<canvas class="ai-page-tool" aria-hidden="true"></canvas>` : ""}${dropLinks}`;
   page.hidden = false; // laid out but invisible (.ai-page) until the pane is covered
+  pageScroll.stop();
+  pageScroll.resize();
+  pageScroll.scrollTo(0, { immediate: true, force: true });
+  barsBack();
+  seenPages.add(name);
+  updateTour();
   await document.fonts.ready;
   const image = pageImage(page);
   glass.hidden = false;
@@ -342,50 +512,261 @@ async function openPage(name: string, scene: Awaited<ReturnType<typeof createSku
   ctx.fillStyle = pattern;
   ctx.strokeStyle = pattern;
 
-  // The end: everything that's left goes in at once.
-  for (let n = name === "end" ? 3 : 1; n > 0; n--) await scene.moreHit();
+  // A blade only when it can be seen going in: from the room, not from a page
+  // under the pane. The tour never spends one, they're for the end.
+  const seen = saw && !wasOpen;
+  if (seen) await skull.moreHit();
   window.setTimeout(() => {
-    const [x, y] = scene.wound();
-    woundAt = [((x + 1) / 2) * w, ((1 - y) / 2) * h];
+    if (seen) {
+      const [x, y] = skull.wound();
+      woundAt = [((x + 1) / 2) * w, ((1 - y) / 2) * h];
+    }
     stopGlass = runDrops(ctx, glassDrops(...woundAt), () => {
       page.classList.add("is-open"); // the same picture, now real text and links
+      pageScroll.resize();
+      pageScroll.start();
+      freeze.hidden = true;
+      glass.hidden = true;
       throwing = false;
-      seen.add(name);
-      if (tool) toolScene = createToolScene(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, name as ToolName, toolColors);
+      mountScene(name);
+      updateTour();
     });
-  }, BLADE_DELAY * 1000);
+  }, seen ? BLADE_DELAY * 1000 : 0);
 }
 
 // The way back: the page as it stands goes onto the pane, the real one away,
 // and the same blots now tear holes into the pane until the room shows again.
-page.addEventListener("click", (e) => {
-  if (throwing || !(e.target as HTMLElement).closest(".ai-page-back")) return;
+function closePage(then?: () => void) {
+  if (throwing || !currentPage) return;
   throwing = true;
   stopGlass();
   const image = pageImage(page);
+  glass.hidden = false;
   const ctx = context(glass);
   ctx.drawImage(image, 0, 0, w, h);
-  toolScene?.paint(ctx);
-  toolScene?.stop();
-  toolScene = null;
+  pageScene?.paint(ctx);
+  dropScene();
+  pageScroll.stop();
+  barsBack();
   page.hidden = true;
   page.classList.remove("is-open");
+  currentPage = null;
+  tourAt = -1;
+  updateTour();
   ctx.globalCompositeOperation = "destination-out";
   ctx.fillStyle = "#000000";
   ctx.strokeStyle = "#000000";
   stopGlass = runDrops(ctx, glassDrops(...woundAt), () => {
     glass.hidden = true;
     throwing = false;
-    if (["about", "projects", "contact"].every((n) => seen.has(n))) showEnd?.();
+    then?.();
   });
+}
+
+page.addEventListener("click", (e) => {
+  const t = e.target as HTMLElement;
+  const id = t.closest<HTMLElement>("[data-more]")?.dataset.more;
+  if (id) {
+    openMore(moreHtml(id));
+  }
 });
-let showEnd: (() => void) | undefined;
+function openMore(html: string) {
+  more.innerHTML = html;
+  more.hidden = false;
+  pageScroll.stop();
+  moreScroll.resize();
+  moreScroll.scrollTo(0, { immediate: true, force: true });
+  moreScroll.start();
+  more.querySelector<HTMLElement>(".ai-more-close")!.focus();
+  scrollbar.render();
+}
+// Imprint and privacy: the main page's texts in this page's own overlay.
+q<HTMLElement>(".ai-bar--bottom").addEventListener("click", (e) => {
+  const link = (e.target as HTMLElement).closest<HTMLElement>("[data-legal]");
+  if (!link) return;
+  e.preventDefault();
+  const legal = link.dataset.legal === "impressum" ? IMPRESSUM : DATENSCHUTZ;
+  openMore(`
+    <button class="ai-more-close" type="button" aria-label="${STORY.close}">✕</button>
+    ${UI.legalNote ? `<p class="ai-page-facts" lang="${LANG}">${UI.legalNote}</p>` : ""}
+    <div class="ai-legal">${legal.html}</div>`);
+  const slot = more.querySelector<HTMLElement>(".legal-consents");
+  if (slot) renderConsents(slot);
+});
+const closeMore = () => {
+  more.hidden = true;
+  moreScroll.stop();
+  if (currentPage) pageScroll.start();
+  scrollbar.render();
+};
+const scrollbar = createPageScrollbar(q<HTMLElement>(".ai-scrollbar"), () =>
+  !more.hidden ? more : page.classList.contains("is-open") ? page : null);
+page.addEventListener("scroll", () => scrollbar.render(), { passive: true });
+more.addEventListener("scroll", () => scrollbar.render(), { passive: true });
+more.addEventListener("click", (e) => {
+  const t = e.target as HTMLElement;
+  if (t.closest(".ai-more-close")) closeMore();
+  const revoke = t.closest<HTMLElement>("[data-revoke]")?.dataset.revoke as ConsentId | undefined;
+  if (revoke) {
+    revokeConsent(revoke);
+    renderConsents(t.closest<HTMLElement>(".legal-consents")!); // nothing that needs one runs on this page
+  }
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !more.hidden && !location.hash.startsWith("#eng/")) closeMore();
+});
+// The graph and code overlay is the main page's, on its own hash route; it only
+// wants something that scrolls to stop, and nothing scrolls behind it here.
+initEngineering({ isStopped: true, stop() {}, start() {} } as unknown as Parameters<typeof initEngineering>[0]);
+
+// ── the guided tour ──
+// The big three get a step each, so the rest stays a scroll away and not a
+// dozen clicks. Without the tour the same arrows lead on from page to page once
+// it's read to its end, and having seen them all brings END IT too.
+const big = projectCards.filter((c) => c.graph).map((c) => c.id);
+const TOUR: { page: string; project?: string }[] = [
+  { page: "about" },
+  ...big.map((project) => ({ page: "projects", project })),
+  { page: "contact" },
+  { page: "end" },
+];
+const tour = q<HTMLElement>(".ai-tour");
+const tourStart = q<HTMLButtonElement>(".ai-tour-start");
+const tourPrev = q<HTMLButtonElement>(".ai-tour-prev");
+const tourNext = q<HTMLButtonElement>(".ai-tour-next");
+const tourEnd = q<HTMLButtonElement>(".ai-tour-end");
+let tourAt = -1, touring = false;
+const FREE_ORDER = ["about", "projects", "contact"];
+const seenPages = new Set<string>();
+const atPageEnd = () => page.scrollTop + page.clientHeight >= page.scrollHeight - 40;
+
+function updateTour() {
+  scrollbar.render();
+  const onPage = Boolean(currentPage);
+  const allSeen = FREE_ORDER.every((p) => seenPages.has(p));
+  tour.classList.toggle("is-split", touring || onPage);
+  tourStart.hidden = touring || onPage;
+  tourPrev.hidden = touring ? tourAt < 0 : !onPage;
+  tourNext.hidden = touring ? tourAt >= TOUR.length - 1 : !onPage || allSeen || !atPageEnd();
+  tourEnd.hidden = touring ? tourAt !== TOUR.length - 1 : !allSeen || (onPage && !atPageEnd());
+}
+page.addEventListener("scroll", updateTour, { passive: true });
+window.addEventListener("resize", updateTour);
+function goTour(i: number) {
+  if (throwing) return;
+  tourAt = i;
+  updateTour();
+  if (i < 0) return closePage();
+  const step = TOUR[i];
+  if (step.page !== currentPage) void openPage(step.page).then(() => step.project && scrollToProject(step.project));
+  else if (step.project) scrollToProject(step.project);
+}
+function scrollToProject(id: string) {
+  const el = page.querySelector<HTMLElement>(`.ai-proj[data-project="${id}"]`);
+  if (el) {
+    const r = el.getBoundingClientRect();
+    pageScroll.scrollTo(page.scrollTop + r.top - (h - r.height) / 2, { duration: 1.1, force: true });
+  }
+}
+function goToPage(name: string) {
+  tourAt = TOUR.findIndex((step) => step.page === name);
+  updateTour();
+  void openPage(name, true);
+}
+// The header: after the end nothing's left to go back to but the start.
+q<HTMLElement>(".ai-bar--top").addEventListener("click", (e) => {
+  const t = e.target as HTMLElement;
+  const lang = t.closest<HTMLElement>("[data-lang]")?.dataset.lang;
+  if (lang) return setLang(lang as Lang);
+  if (t.closest("[data-switch-theme]")) return switchTheme();
+  const name = t.closest<HTMLElement>("[data-nav]")?.dataset.nav;
+  if (!name) return;
+  if (ended) return location.reload();
+  if (!more.hidden) closeMore();
+  if (name === "home") closePage();
+  else goToPage(name);
+});
+tourStart.addEventListener("click", () => {
+  touring = true;
+  updateTour();
+  tourNext.focus();
+  goTour(0);
+});
+tourNext.addEventListener("click", () => {
+  if (touring) return goTour(tourAt + 1);
+  const at = FREE_ORDER.indexOf(currentPage!);
+  const next = [1, 2].map((n) => FREE_ORDER[(at + n) % 3]).find((p) => !seenPages.has(p));
+  if (next) void openPage(next);
+});
+tourPrev.addEventListener("click", () => {
+  if (touring) goTour(tourAt - 1);
+  else closePage();
+});
+// The end: only the clean skull on the bare background, all fifteen blades go
+// in one after another, the blood stays in the air, and it all turns like a ball.
+const FROZEN_AT = 0.42; // early, while the blood is still close to its wound
+const sprayCanvas = q<HTMLCanvasElement>(".ai-spray");
+let ended = false;
+// What reaches the visitor: each blow leaves a fine mist on the pane in front of
+// them, thickest towards the wound, and it stays there when the skull is turned.
+function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  const reach = Math.min(w, h) * 0.42;
+  let frames = 9;
+  // the fog itself, then the fine drops in it
+  const fog = ctx.createRadialGradient(x, y, 0, x, y, reach * 1.5);
+  fog.addColorStop(0, `rgba(${PALETTE.inkRgb}, 0.05)`);
+  fog.addColorStop(1, `rgba(${PALETTE.inkRgb}, 0)`);
+  ctx.fillStyle = fog;
+  ctx.fillRect(0, 0, w, h);
+  const burst = () => {
+    ctx.fillStyle = INK;
+    for (let i = 0; i < 420; i++) {
+      const haze = Math.random() < 0.15;
+      const a = Math.random() * Math.PI * 2, r = (Math.random() + Math.random() + Math.random() - 1.5) * reach * 1.4;
+      const px = haze ? Math.random() * w : x + Math.cos(a) * r, py = haze ? Math.random() * h : y + Math.sin(a) * r;
+      const size = Math.random() < 0.01 ? 1.4 + Math.random() : 0.35 + Math.random() * 0.6;
+      ctx.globalAlpha = 0.15 + Math.random() * 0.55;
+      ctx.beginPath();
+      ctx.arc(px, py, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    if (--frames > 0) requestAnimationFrame(burst);
+  };
+  burst();
+}
+tourEnd.addEventListener("click", () => {
+  if (throwing) return;
+  touring = false;
+  tour.hidden = true;
+  // Only the skull on the bare background again, like at the start.
+  for (const sel of [".ai-paint", ".ai-room", ".ai-room-under", ".ai-words"]) q<HTMLElement>(sel).style.display = "none";
+  const finale = () => {
+    ended = true;
+    const spray = context(sprayCanvas);
+    sprayCanvas.hidden = false;
+    document.documentElement.style.setProperty("--color-throw", INK);
+    document.documentElement.dataset.theme = "light";
+    skull.clean();
+    const next = () => {
+      if (skull.hitsLeft() < 0) return;
+      void skull.moreHit(FROZEN_AT).then(() => {
+        const [x, y] = skull.wound();
+        window.setTimeout(() => sprayScreen(spray, ((x + 1) / 2) * w, ((1 - y) / 2) * h), BLADE_DELAY * 1000);
+        window.setTimeout(next, 260);
+      });
+    };
+    next();
+  };
+  if (currentPage) closePage(finale);
+  else finale();
+});
 
 // ── the sequence ──
 async function run() {
   growGrid(0);
   let loaded = false;
-  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 13 }).then((scene) => {
+  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15 }).then((scene) => {
     scene.setRise(0.99); // in place, but the blade only starts at 1
     loaded = true;
     return scene;
@@ -407,6 +788,7 @@ async function run() {
   });
 
   const scene = await loading;
+  skull = scene;
   partGrid(0);
   await gsap.fromTo(glow, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.12 });
 
@@ -420,31 +802,24 @@ async function run() {
 
   button.addEventListener("click", () => {
     button.remove();
+    q<SVGElement>(".ai-room-under").classList.add("is-on");
     scene.setRise(1);
     window.setTimeout(() => {
       const [x, y] = scene.wound();
       runDrops(paint, makeDrops(((x + 1) / 2) * w, ((1 - y) / 2) * h), openWords);
+      // Once the blood aimed at them has mostly landed.
+      window.setTimeout(() => {
+        words.forEach((word) => word.classList.add("is-shown"));
+        tour.hidden = false;
+        document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark").forEach((bar) => { bar.hidden = false; });
+      }, WORDS_AFTER * 1000);
     }, HIT_DELAY * 1000);
   }, { once: true });
-
-  // All three seen: the button comes back, and the last press ends the story.
-  showEnd = () => {
-    showEnd = undefined;
-    const end = document.createElement("button");
-    end.className = "ai-button ai-button--end";
-    end.type = "button";
-    end.textContent = STORY.finish;
-    stage.append(end);
-    end.addEventListener("click", () => {
-      end.remove();
-      void openPage("end", scene);
-    }, { once: true });
-  };
 
   for (const word of words) {
     word.addEventListener("click", (e) => {
       e.preventDefault();
-      void openPage(word.dataset.page!, scene);
+      goToPage(word.dataset.page!);
     });
   }
 }

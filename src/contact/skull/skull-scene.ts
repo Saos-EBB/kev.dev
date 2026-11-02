@@ -14,7 +14,7 @@
 import * as THREE from "three";
 import { LITE } from "../../viewport";
 import { BLADE_R, bladeGeometry, depthSteps, loadSkullGeometry, wireMesh } from "./parts";
-import { createBlood } from "./blood";
+import { createBlood, type Blood } from "./blood";
 
 const BLADE_FLIGHT = 0.55; // s from off-screen to stuck
 const HIT_AT = 0.5; // s after the skull is up
@@ -53,8 +53,15 @@ const BLOOD_COUNT = LITE ? 1300 : 3600;
 const BLOOD_JET = 0.3, BLOOD_PULSES = 3, BLOOD_PRESSURE = 1.4, BLOOD_DROP = 0.45;
 // Fades like the skull: brightest close to the camera, faint at the wound.
 const BLOOD_DEPTH = { front: 4.5, range: 4.5 };
+// Blades around the skull spurt sideways and away, so depth may not eat them,
+// and their blood stays close enough to see which wound it came from.
+const AROUND_PRESSURE = 0.82, AROUND_DROP = 0.2, AROUND_COUNT = LITE ? 1000 : 2800;
+// The finale's fog on top of that: very fine, thrown at the camera, some of it
+// gets right up to it.
+const MIST_COUNT = LITE ? 3000 : 10000, MIST_PRESSURE = 1.7, MIST_DROP = 0.07;
+const AROUND_DEPTH = { front: 3, range: 12 };
 
-export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(): Promise<void>; wound(): readonly [number, number] };
+export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number] };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
@@ -102,6 +109,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     lineColor.set(css("--color-line") || "#cd57ff");
     throwColor.set(css("--color-throw") || "#89ff57");
     bgColor.set(css("--contact-bg") || "#08070a");
+    bladeColor.set(css("--color-blade") || throwColor);
   };
   readColors();
 
@@ -282,7 +290,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     const stuck = hit.clone().addScaledVector(inDir, BLADE_R * def.scale - def.depth);
     const start = stuck.clone().addScaledVector(inDir, 6).add(new THREE.Vector3(0, 0.3, 0.6));
 
-    const blade = wireMesh(bladeGeometry(), throwColor, bgColor, 0.95, true);
+    const blade = wireMesh(bladeGeometry(), bladeColor, bgColor, 0.95, true);
     blades.push(blade);
     blade.group.visible = false;
     blade.group.scale.setScalar(def.scale);
@@ -292,6 +300,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     const crackPts = crackTris(hit);
     const crackGeo = new THREE.BufferGeometry();
     crackGeo.setAttribute("position", new THREE.Float32BufferAttribute(crackPts, 3));
+    crackGeo.setDrawRange(0, 0); // nothing until pose() says so: a blade gets built while the scene keeps rendering
     const cracks = new THREE.Mesh(crackGeo, crackMat);
     cracks.renderOrder = 1;
     skull.add(cracks);
@@ -299,8 +308,13 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
 
     // Blood out of the wound: straight at the camera (in skull space, so
     // against the yaw), a little outward and up so the spurts arc, in a wide cone.
-    const jetAxis = toCamera.clone().add(hit.clone().normalize().multiplyScalar(0.5)).add(new THREE.Vector3(0, 0.2, 0)).normalize();
-    const blood = createBlood({ hit, axis: jetAxis, count: BLOOD_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: BLOOD_PRESSURE, dropSize: BLOOD_DROP, depth: BLOOD_DEPTH });
+    // A blade placed around the skull: straight out of its own wound, or blood
+    // from the far side would come through the head.
+    const jetAxis = def.out
+      ? def.out.clone().add(new THREE.Vector3(0, 0.1, 0)).normalize()
+      : toCamera.clone().add(hit.clone().normalize().multiplyScalar(0.5)).add(new THREE.Vector3(0, 0.2, 0)).normalize();
+    const blood = createBlood({ hit, axis: jetAxis, count: def.out ? AROUND_COUNT : BLOOD_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: def.out ? AROUND_PRESSURE : BLOOD_PRESSURE, dropSize: def.out ? AROUND_DROP : BLOOD_DROP, depth: def.out ? AROUND_DEPTH : BLOOD_DEPTH });
+    blood.setTime(-1);
     skull.add(blood.points);
 
     await breathe();
@@ -325,6 +339,14 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       startU,
       u: startU, // seconds since the blade struck, negative while it's on its way
       fired: false,
+      stop: stopAt,
+      mist: null as Blood | null,
+      addMist() {
+        if (this.mist) return;
+        const axis = jetAxis.clone().multiplyScalar(0.5).add(toCamera).normalize();
+        this.mist = createBlood({ hit, axis, count: MIST_COUNT, ink: throwColor, px, jet: BLOOD_JET, pulses: BLOOD_PULSES, pressure: MIST_PRESSURE, dropSize: MIST_DROP, depth: AROUND_DEPTH });
+        skull.add(this.mist.points);
+      },
       // Blade, cracks, blood and shards at this hit's time.
       pose() {
         const u = this.fired ? this.u : -1e3;
@@ -339,13 +361,14 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
         // cracks spread over 0.5 s (6 vertices per ribbon segment)
         crackGeo.setDrawRange(0, u > 0 ? Math.floor(Math.min(1, u / 0.5) * crackCount / 6) * 6 : 0);
         blood.setTime(u);
+        this.mist?.setTime(u);
 
         // shards: burst from the hit point, slow down, hang there
         const origin = world.worldToLocal(skull.localToWorld(hit.clone()));
         const d = settle(u);
         for (const s of shards) {
           // With a later stop nothing hangs in the air: they're gone by then.
-          s.m.visible = u > 0 && (stopAt === FREEZE_AT || u < stopAt);
+          s.m.visible = u > 0 && (this.stop === FREEZE_AT || u < this.stop);
           if (!s.m.visible) continue;
           s.m.position.copy(origin).addScaledVector(s.vel, d);
           s.m.rotation.set(s.spin.x * d, s.spin.y * d, s.spin.z * d);
@@ -366,11 +389,10 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     readColors();
     skullParts.lineMat.color.copy(lineColor);
     skullParts.fillMat.color.copy(bgColor);
-    bladeColor.set(css("--color-blade") || throwColor);
     for (const b of blades) { b.fillMat.color.copy(bgColor); b.lineMat.color.copy(bladeColor); }
     crackMat.color.copy(bgColor);
     for (const m of shardMats) { m.lineMat.color.copy(lineColor); m.fillMat.color.copy(bgColor); }
-    for (const h of hits) h.blood.recolor(); // its ink is throwColor itself
+    for (const h of hits) { h.blood.recolor(); h.mist?.recolor(); } // its ink is throwColor itself
     dirty = true;
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
@@ -396,6 +418,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   // Sideways and up/down for a mouse; on touch only sideways (touch-action
   // pan-y in skull.css), so a vertical swipe still scrolls the page.
   const turn = { x: 0, y: 0, tx: 0, ty: 0 };
+  let free = false, misty = false;
+  const freeTurn = new THREE.Quaternion(), freeStep = new THREE.Quaternion(), freeEuler = new THREE.Euler();
   let drag: { id: number; x: number; y: number } | null = null;
   section.addEventListener("pointerdown", (e) => {
     if ((e.target as HTMLElement).closest("a, button")) return; // the link shards and the button stay clickable
@@ -405,6 +429,13 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   });
   section.addEventListener("pointermove", (e) => {
     if (!drag || e.pointerId !== drag.id) return;
+    if (free) {
+      freeEuler.set((e.clientY - drag.y) * 0.008, (e.clientX - drag.x) * 0.008, 0);
+      freeTurn.premultiply(freeStep.setFromEuler(freeEuler));
+      drag.x = e.clientX; drag.y = e.clientY;
+      dirty = true;
+      return;
+    }
     turn.ty += (e.clientX - drag.x) * 0.008;
     if (e.pointerType === "mouse") turn.tx = Math.max(-0.9, Math.min(0.9, turn.tx + (e.clientY - drag.y) * 0.006));
     drag.x = e.clientX; drag.y = e.clientY;
@@ -451,7 +482,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // the drag, eased
     turn.x += (turn.tx - turn.x) * 0.15;
     turn.y += (turn.ty - turn.y) * 0.15;
-    world.rotation.set(turn.x, turn.y, 0);
+    if (free) world.quaternion.copy(freeTurn);
+    else world.rotation.set(turn.x, turn.y, 0);
     if (Math.abs(turn.tx - turn.x) + Math.abs(turn.ty - turn.y) > 1e-3) dirty = true;
 
     // approach: from far behind the grid, in the middle of its opening, up to
@@ -515,9 +547,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     if (started) {
       let done = !building;
       for (const h of hits) {
-        if (!h.fired || h.u >= stopAt) continue;
-        h.u = instant ? stopAt : Math.min(h.u + dt, stopAt);
-        done = h.u >= stopAt && done;
+        if (!h.fired || h.u >= h.stop) continue;
+        h.u = instant ? h.stop : Math.min(h.u + dt, h.stop);
+        done = h.u >= h.stop && done;
         dirty = true;
       }
       if (!done) settledAt = 0;
@@ -543,8 +575,20 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       dirty = true;
     },
     wound: () => toScreen(skull.localToWorld(hits[fired - 1].hit.clone())), // the latest hit
+    // A clean skull again, every blade back in play, and from now on it turns
+    // like a ball, any way round.
+    clean() {
+      for (const h of hits) { h.fired = false; h.u = h.startU; }
+      fired = 0;
+      misty = true;
+      free = true;
+      freeTurn.setFromEuler(world.rotation);
+      section.style.touchAction = "none";
+      dirty = true;
+    },
     hitsLeft: () => moreDefs.length - 1 - (fired - 1),
-    async moreHit() {
+    // `stop`: this hit freezes that long after striking; by default as the rest.
+    async moreHit(stop = stopAt) {
       if (fired > moreDefs.length) return;
       const i = fired++;
       settled = false;
@@ -552,6 +596,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       building = true;
       hits[i] ??= await makeHit(moreDefs[i - 1], -BLADE_FLIGHT);
       building = false;
+      hits[i].stop = stop;
+      if (misty) hits[i].addMist();
+      hits[i].u = -BLADE_FLIGHT;
       if (i < fired) hits[i].fired = true; // unless scrolled back out meanwhile
     },
     finish() {

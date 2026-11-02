@@ -8,11 +8,37 @@
 :root {
   --ai-bg: #5c0f1f;
   --ai-accent: #89cff0;
+  --ai-ink: #ffffff; /* lines, borders, paint */
+  --ai-text: #ffffff; /* running text: the blue alone is too pale on white */
+  --ai-panel: #2c0710;
+  --ai-pill: clamp(14rem, 25vw, 20rem); /* the room's buttons */
+  --ai-pill-font: clamp(1.9rem, 4.2vw, 3rem);
   /* read by the skull scene */
   --contact-bg: var(--ai-bg);
-  --color-line: #ffffff;
-  --color-throw: #ffffff;
-  --color-blade: #ffffff; /* stays when the blood changes to the background color */
+  --color-line: var(--ai-line, var(--ai-ink));
+  --color-throw: var(--ai-ink);
+  --color-blade: var(--ai-line, var(--ai-ink)); /* stays when the blood changes to the background color */
+  /* read by the engineering overlay */
+  --color-bg: var(--ai-bg);
+  --color-text: var(--ai-text);
+  --color-text-muted: var(--ai-muted, #f2d5dc);
+  --color-line: var(--ai-line, var(--ai-ink));
+  --color-accent: var(--ai-accent);
+  --color-terminal-bg: var(--ai-panel);
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --font-display: "Urban Sign", sans-serif;
+  --note-1: #57ff8f; --note-2: #57fff1; --note-3: #89cff0; --note-5: #f2d5dc; --note-6: #ffffff; --note-7: #a8ff57; --note-8: #57ffc8; --note-9: #ffffff;
+}
+
+:root[data-ai-theme="white"] {
+  --ai-bg: #ffffff;
+  --ai-accent: #5c0f1f;
+  --ai-ink: #89cff0;
+  --ai-line: #3f9fd6; /* the wire models: the paint's blue is too pale for thin lines */
+  --ai-text: #1f6e99;
+  --ai-muted: #4a8bb0;
+  --ai-panel: #eaf6fc;
 }
 
 html,
@@ -62,6 +88,41 @@ body.ai {
   stroke-width: 3px;
 }
 
+.ai-room .ai-wall-grid {
+  stroke-width: 1px;
+  stroke-opacity: 0.55;
+}
+
+/* Phones only (the script fills it there): the same lines, white, under the paint. */
+.ai-room-under {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+
+.ai-room-under.is-on {
+  opacity: 1;
+}
+
+.ai-room-under path {
+  fill: none;
+  stroke: var(--ai-ink);
+}
+
+.ai-room-under .ai-wall-grid {
+  stroke-width: 1px;
+  stroke-opacity: 0.3;
+}
+
+.ai-room-under .ai-wall-edge {
+  stroke-width: 2px;
+  stroke-opacity: 0.75;
+}
+
 .ai-words {
   position: absolute;
   inset: 0;
@@ -70,11 +131,26 @@ body.ai {
 
 .ai-word {
   position: absolute;
-  color: var(--ai-bg);
-  font: 400 clamp(2.5rem, 7vw, 7rem) / 1 "Urban Sign", sans-serif;
+  /* The GUIDED TOUR button, all of them the same size. */
+  box-sizing: border-box;
+  width: var(--ai-pill);
+  padding: 0.5rem 0.5rem 0.6rem;
+  border: 5px solid var(--ai-ink);
+  border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
+  background: var(--ai-bg);
+  color: var(--ai-accent);
+  font: 400 var(--ai-pill-font) / 1 "Urban Sign", sans-serif;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 3px currentColor;
+  text-align: center;
   text-decoration: none;
   white-space: nowrap;
-  transition: color 160ms ease;
+  opacity: 0;
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease, opacity 600ms ease;
+}
+
+.ai-word.is-shown {
+  opacity: 1;
 }
 
 .ai-word.is-open {
@@ -83,52 +159,52 @@ body.ai {
 
 .ai-word.is-open:hover,
 .ai-word.is-open:focus-visible {
-  color: #1f6fa3;
+  transform: translate(-50%, -50%) rotate(1deg) scale(1.08);
+  background: var(--ai-accent);
+  color: var(--ai-bg);
   outline: none;
 }
 
-/* On the walls: turned the way the room's edges run. */
+/* On the walls and the floor. */
 .ai-word--left {
   top: 46%;
-  left: 13%;
-  transform: translate(-50%, -50%) perspective(60vw) rotateY(52deg);
+  left: 15%;
+  transform: translate(-50%, -50%) rotate(-2deg);
 }
 
 .ai-word--right {
   top: 46%;
-  left: 87%;
-  transform: translate(-50%, -50%) perspective(60vw) rotateY(-52deg);
+  left: 85%;
+  transform: translate(-50%, -50%) rotate(2deg);
 }
 
 .ai-word--floor {
   top: 86%;
   left: 50%;
-  transform: translate(-50%, -50%) perspective(60vh) rotateX(48deg);
+  transform: translate(-50%, -50%) rotate(-2deg);
 }
 
+/* Phones: one above the skull, two below it. */
 @media (max-aspect-ratio: 4 / 5) {
-  .ai-word {
-    font-size: clamp(2.5rem, 13vw, 5rem);
-  }
-
   .ai-word--left {
-    top: 8%;
+    top: 9%;
     left: 50%;
-    transform: translate(-50%, -50%) perspective(60vh) rotateX(-40deg);
+    transform: translate(-50%, -50%) rotate(-2deg);
   }
 
   .ai-word--right {
-    top: 20%;
+    top: 75%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) rotate(2deg);
   }
 
   .ai-word--floor {
-    top: 84%;
+    top: 88%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-2deg);
   }
 }
 
-/* Drawn by hand: square, wobbly corners, the letters inked over twice. */
 .ai-button {
   position: absolute;
   bottom: 2.25rem;
@@ -136,10 +212,10 @@ body.ai {
   z-index: 2;
   transform: translateX(-50%) rotate(-2deg);
   padding: 0.7rem 1.6rem 0.8rem;
-  border: 5px solid #ffffff;
+  border: 5px solid var(--ai-ink);
   border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
   background: none;
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 clamp(2rem, 4.5vw, 3.25rem) / 1 "Urban Sign", sans-serif;
   letter-spacing: 0.04em;
   -webkit-text-stroke: 3px currentColor;
@@ -150,23 +226,9 @@ body.ai {
 .ai-button:hover,
 .ai-button:focus-visible {
   transform: translateX(-50%) rotate(1deg) scale(1.08);
-  background: #ffffff;
+  background: var(--ai-accent);
   color: var(--ai-bg);
   outline: none;
-}
-
-/* On the paint now: its own ground, and clear of the words. */
-.ai-button--end {
-  top: 1.25rem;
-  bottom: auto;
-  background: var(--ai-bg);
-}
-
-@media (max-aspect-ratio: 4 / 5) {
-  .ai-button--end {
-    top: auto;
-    bottom: 0.75rem;
-  }
 }
 
 .ai-button[hidden] {
@@ -182,7 +244,7 @@ body.ai {
 
 .ai-line {
   position: absolute;
-  background: color-mix(in srgb, #ffffff 18%, transparent);
+  background: color-mix(in srgb, var(--ai-ink) 18%, transparent);
 }
 
 .ai-line--h {
@@ -207,7 +269,17 @@ body.ai {
   pointer-events: none;
 }
 
+.ai-freeze {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .ai-glass[hidden],
+.ai-freeze[hidden],
 .ai-page[hidden] {
   display: none;
 }
@@ -219,11 +291,11 @@ body.ai {
   z-index: 5;
   box-sizing: border-box;
   --page-pad: clamp(1.25rem, 10vw, 9rem);
-  padding: clamp(1.5rem, 8vh, 5rem) var(--page-pad);
+  padding: clamp(1.5rem, 8vh, 5rem) var(--page-pad) 6rem;
   overflow: auto;
   visibility: hidden;
   background: var(--ai-bg);
-  color: #ffffff;
+  color: var(--ai-text);
   font: 400 1.05rem / 1.6 ui-monospace, "JetBrains Mono", monospace;
   cursor: auto;
   user-select: text;
@@ -244,36 +316,495 @@ body.ai {
   font: inherit;
 }
 
-/* The story's scene: beside the text, below it on a phone. Not on the pane. */
+/* The page's scene: fixed beside the text while it scrolls; a phone gets it as
+   a band at the top. Above the text there, so a model is never hidden by it. */
 .ai-page-tool {
-  position: absolute;
+  cursor: grab;
+  touch-action: pan-y;
+  position: fixed;
   top: 8%;
   right: 0;
   width: 44vw;
   height: 84%;
-  pointer-events: none;
 }
 
-.ai-page > :not(canvas) {
+.ai-page > :not(canvas, .ai-drop) {
   position: relative;
   max-width: calc(56vw - var(--page-pad) - 1.5rem);
 }
 
+/* Projects: a frame top right, the next model kicks the last one out of it. */
+.ai-page--projects .ai-page-tool {
+  top: 50%;
+  right: 1.5rem;
+  transform: translateY(-50%); /* level with the text of the project it shows */
+  width: min(36vw, 480px);
+  height: auto;
+  aspect-ratio: 5 / 4;
+  border: 4px solid var(--ai-ink);
+  border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
+  background: var(--ai-bg);
+}
+
+.ai-page--projects > :not(canvas, .ai-drop) {
+  max-width: calc(100vw - min(36vw, 480px) - 1.5rem - var(--page-pad) - 2rem);
+}
+
+.ai-proj {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.ai-page .ai-proj h2 {
+  margin: 0;
+  color: var(--ai-text);
+  font: 400 clamp(2.5rem, 6vw, 4.5rem) / 1 "Urban Sign", sans-serif;
+}
+
+.ai-page .ai-proj-points li {
+  margin: 0.5rem 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+
+.ai-proj-points li::before {
+  content: "→ ";
+  color: var(--ai-accent);
+}
+
+.ai-proj-more {
+  margin-top: 0.75rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 3px solid var(--ai-ink);
+  border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
+  background: none;
+  color: var(--ai-text);
+  font: 400 1.35rem / 1.2 "Urban Sign", sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.ai-proj-more:hover,
+.ai-proj-more:focus-visible {
+  background: var(--ai-accent);
+  color: var(--ai-bg);
+  outline: none;
+}
+
+/* The overlay page behind "Wanna know more?". */
+.ai-more {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  box-sizing: border-box;
+  padding: clamp(1.5rem, 6vh, 4rem) clamp(1.25rem, 10vw, 9rem) 6rem;
+  overflow: auto;
+  background: var(--ai-panel);
+  color: var(--ai-text);
+  font: 400 1.05rem / 1.6 ui-monospace, "JetBrains Mono", monospace;
+  cursor: auto;
+  user-select: text;
+  overscroll-behavior: contain;
+}
+
+.ai-more[hidden] {
+  display: none;
+}
+
+.ai-more > * {
+  max-width: 62rem;
+}
+
+.ai-more h1 {
+  margin: 0.5rem 0;
+  font: 400 clamp(3rem, 8vw, 6rem) / 1 "Urban Sign", sans-serif;
+}
+
+.ai-more h2 {
+  margin: 2rem 0 0.5rem;
+  color: var(--ai-accent);
+  font: inherit;
+}
+
+.ai-more-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--ai-ink);
+  background: var(--ai-panel);
+  color: var(--ai-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ai-more-links {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ai-more-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.ai-more-shots img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* About: the main page's highlights, in blue. */
+.ai-page .about-highlight {
+  color: var(--ai-accent);
+  font-weight: 700;
+}
+
+.ai-page-facts {
+  color: var(--ai-accent);
+}
+
+.ai-page blockquote {
+  margin: 1.5rem 0;
+  font: 400 clamp(1.8rem, 4vw, 2.75rem) / 1.15 "Urban Sign", sans-serif;
+  color: var(--ai-accent);
+}
+
+/* Contact: the fallen icons' real links. */
+/* Reach over the whole icon, the label at its foot (pinata.ts places them). */
+.ai-drop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  max-width: none;
+  min-width: 44px;
+  visibility: hidden;
+  color: var(--ai-accent);
+  white-space: nowrap;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+/* The things fall and get thrown all over this side of the page. */
+.ai-page--contact .ai-page-tool {
+  top: 0;
+  width: 62vw;
+  height: 100%;
+  touch-action: none;
+}
+
+.ai-page.is-open .ai-drop.is-on {
+  visibility: visible;
+}
+
+.ai-page .ai-drop:hover,
+.ai-page .ai-drop:focus-visible {
+  color: var(--ai-accent);
+}
+
+/* Header and footer: always there at the very edge, shown only while pointed at
+   (or tabbed into). Under the tour, so they never take a click from its arrows. */
+.ai-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-sizing: border-box;
+  height: 3rem;
+  padding: 0 clamp(1.25rem, 3vw, 2.5rem);
+  background: var(--ai-bg);
+  color: var(--ai-text);
+  font: 400 0.85rem / 1 ui-monospace, "JetBrains Mono", monospace;
+  cursor: auto;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.ai-bar[hidden] {
+  display: none;
+}
+
+.ai-bar:hover,
+.ai-bar:has(:focus-visible) {
+  opacity: 1;
+}
+
+.ai-bar--top {
+  top: 0;
+  border-bottom: 1px solid var(--ai-accent);
+}
+
+.ai-bar--bottom {
+  bottom: 0;
+  border-top: 1px solid var(--ai-accent);
+}
+
+.ai-bar a,
+.ai-bar button {
+  padding: 0.4rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ai-bar a:hover,
+.ai-bar button:hover,
+.ai-bar a:focus-visible,
+.ai-bar button:focus-visible {
+  color: var(--ai-accent);
+  outline: none;
+}
+
+/* Three columns, the middle one really in the middle. */
+.ai-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.ai-bar > :first-child {
+  justify-self: start;
+}
+
+.ai-bar-mid,
+.ai-bar-end {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.ai-bar-end {
+  justify-self: end;
+}
+
+/* The legal texts in the overlay. */
+.ai-legal svg {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.12em;
+}
+
+.ai-legal h1 {
+  font-size: clamp(1.75rem, 8vw, 5rem);
+  overflow-wrap: anywhere;
+}
+
+.ai-legal h1,
+.ai-legal h2,
+.ai-legal h3 {
+  color: var(--ai-accent);
+}
+
+.ai-legal a {
+  color: var(--ai-accent);
+}
+
+.ai-legal button {
+  margin-left: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border: 2px solid var(--ai-ink);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ai-legal button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Desktop has the copyright in the footer, phones as a watermark. */
+@media (hover: hover) {
+  .ai-mark {
+    display: none;
+  }
+}
+
+.ai-short {
+  display: none;
+}
+
+.ai-mark span {
+  font-family: ui-monospace, "JetBrains Mono", monospace; /* Urban Sign has no real © */
+}
+
+.ai-bar .is-on {
+  color: var(--ai-accent);
+}
+
+/* The copyright as a watermark, just above the footer's height. */
+.ai-mark {
+  position: absolute;
+  left: clamp(1.25rem, 3vw, 2.5rem);
+  bottom: 3.25rem;
+  z-index: 6;
+  color: var(--ai-accent);
+  font: 400 clamp(1.25rem, 2.2vw, 1.75rem) / 1 "Urban Sign", sans-serif;
+  opacity: 0.45;
+  pointer-events: none;
+  transition: bottom 240ms ease;
+}
+
+/* The mist on the pane in the finale, in front of everything. */
+.ai-spray {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* In place of the native one, see page-scrollbar.ts: the whole bar in the
+   accent, the dot to drag in the page's red. Off on phones, as on the main page. */
+.ai-page,
+.ai-more {
+  scrollbar-width: none;
+}
+
+.ai-page::-webkit-scrollbar,
+.ai-more::-webkit-scrollbar {
+  display: none;
+}
+
+.ai-scrollbar {
+  position: absolute;
+  top: 6px;
+  right: 3px;
+  bottom: 6px;
+  z-index: 9;
+  width: 18px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.ai-scrollbar[hidden] {
+  display: none;
+}
+
+.ai-scrollbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--ai-accent);
+}
+
+.ai-scrollbar-dot {
+  position: relative;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--ai-accent);
+  border-radius: 50%;
+  background: var(--ai-bg);
+  will-change: transform;
+}
+
+.ai-scrollbar:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 640px) {
+  .ai-scrollbar {
+    display: none;
+  }
+}
+
+/* The tour: one button that splits into two arrows, above every page. */
+.ai-tour {
+  position: absolute;
+  z-index: 7;
+  top: 3.5rem; /* below the header */
+  left: 50%;
+  display: flex;
+  gap: 1rem;
+  transform: translateX(-50%);
+}
+
+.ai-tour[hidden] {
+  display: none;
+}
+
+.ai-tour .ai-button {
+  position: static;
+  transform: rotate(-2deg);
+  background: var(--ai-bg);
+  white-space: nowrap;
+  animation: ai-tour-in 300ms ease;
+}
+
+.ai-tour .ai-button:hover,
+.ai-tour .ai-button:focus-visible {
+  transform: rotate(1deg) scale(1.08);
+  background: var(--ai-accent);
+  color: var(--ai-bg);
+}
+
+.ai-tour-start {
+  color: var(--ai-accent);
+  box-sizing: border-box;
+  width: var(--ai-pill);
+  font-size: var(--ai-pill-font);
+  padding: 0.5rem 0.5rem 0.6rem;
+}
+
+.ai-tour.is-split {
+  top: auto;
+  left: auto;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  transform: none;
+}
+
+.ai-tour-arrow {
+  min-width: 56px;
+  min-height: 48px;
+  padding: 0.2rem 0.9rem;
+  font-size: 1.75rem;
+  -webkit-text-stroke: 1px currentColor;
+}
+
+.ai-tour-prev { animation-name: ai-tour-left; }
+.ai-tour-next { animation-name: ai-tour-right; }
+
+@keyframes ai-tour-in { from { opacity: 0; } }
+@keyframes ai-tour-left { from { transform: translateX(50%); } }
+@keyframes ai-tour-right { from { transform: translateX(-50%); } }
+
 @media (max-aspect-ratio: 4 / 5) {
-  /* First thing under the back arrow: the hit has to be seen, not scrolled to. */
   .ai-page {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    padding-bottom: 6rem;
   }
 
-  .ai-page > :not(canvas) {
+  .ai-page > :not(canvas, .ai-drop) {
     max-width: none;
     flex: none;
-  }
-
-  .ai-page-back {
-    order: -2;
   }
 
   .ai-page-tool {
@@ -283,6 +814,49 @@ body.ai {
     width: 100%;
     height: 34vh;
     margin-top: 0.5rem;
+  }
+
+  .ai-page--projects .ai-page-tool {
+    position: fixed;
+    top: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    width: 40vw;
+    height: auto;
+  }
+
+  .ai-page--projects > :not(canvas, .ai-drop) {
+    max-width: none;
+    width: 100%;
+  }
+
+  .ai-page--projects h1 {
+    min-height: 26vw;
+    padding-right: 42vw;
+    font-size: 13vw;
+    box-sizing: border-box;
+  }
+
+  /* The frame covers the top right, so a project only reads below it. */
+  .ai-proj {
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding-top: 34vw;
+  }
+
+  .ai-page--contact .ai-page-tool {
+    width: 100%;
+    height: 56vh;
+  }
+
+  .ai-tour {
+    top: 15%;
+  }
+
+  .ai-tour.is-split {
+    top: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 }
 
@@ -309,19 +883,99 @@ body.ai {
   color: inherit;
 }
 
-.ai-page-back {
-  padding: 0.3rem 0.8rem 0.3rem 0;
-  border: 0;
-  background: none;
-  color: #ffffff;
-  font: inherit;
-  cursor: pointer;
-}
-
 .ai-glow {
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
   box-shadow: inset 0 0 70px 14px var(--ai-accent);
+}
+
+/* Phones and the like, no hover to show the bars with: a classic header and
+   footer that step aside while scrolling down. The arrows stand on the footer
+   and go down with it. */
+@media (hover: none) {
+  .ai-bar {
+    justify-content: space-between;
+    gap: 0.25rem;
+    padding: 0 0.6rem;
+    font-size: clamp(0.62rem, 2.9vw, 0.85rem); /* one line, however narrow */
+    white-space: nowrap;
+    opacity: 1;
+    transition: transform 240ms ease;
+  }
+
+  .ai-bar a,
+  .ai-bar button {
+    padding: 0.55rem 0.15rem; /* a finger's worth */
+  }
+
+  .ai-bars-away .ai-bar--top {
+    transform: translateY(-100%);
+  }
+
+  .ai-bars-away .ai-bar--bottom {
+    transform: translateY(100%);
+  }
+
+  .ai-tour.is-split {
+    bottom: 3.75rem;
+    transition: bottom 240ms ease;
+  }
+
+  .ai-bars-away .ai-mark {
+    bottom: 0.75rem;
+  }
+
+  .ai-long {
+    display: none;
+  }
+
+  .ai-short {
+    display: inline;
+  }
+
+  .ai-bar {
+    display: flex;
+  }
+
+  .ai-bar-mid,
+  .ai-bar--bottom .ai-bar-end {
+    display: contents;
+  }
+
+  .ai-bar--top .ai-bar-end {
+    gap: 0.25rem;
+  }
+
+  .ai-bar-copy {
+    display: none;
+  }
+
+  .ai-bars-away .ai-tour.is-split {
+    bottom: 0.75rem;
+  }
+
+  .ai-page {
+    padding-top: 4.5rem;
+    padding-bottom: 10rem;
+  }
+}
+
+@media (hover: none) and (max-aspect-ratio: 4 / 5) {
+  .ai-page--projects .ai-page-tool {
+    top: 3.5rem;
+  }
+
+  .ai-bars-away .ai-page--projects .ai-page-tool {
+    top: 0.5rem;
+  }
+
+  .ai-tour {
+    top: 19%;
+  }
+
+  .ai-word--left {
+    top: 12%;
+  }
 }

@@ -26,7 +26,7 @@ const CONSENTS: { id: ConsentId; label: () => string; loaded: () => boolean }[] 
   { id: "facedots", label: () => UI.consentFacedots, loaded: () => document.documentElement.dataset.faceModel === "loaded" },
 ];
 
-function renderConsents(slot: HTMLElement) {
+export function renderConsents(slot: HTMLElement) {
   slot.innerHTML = CONSENTS.map(({ id, label }) => {
     const on = hasConsent(id);
     return `<div class="legal-consent-row">
