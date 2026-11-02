@@ -1,9 +1,21 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Connect } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 import { fetchContributions } from "./api/_contributions";
 
 const root = (path: string) => fileURLToPath(new URL(path, import.meta.url));
+
+const siteRoutes: Connect.NextHandleFunction = (req, res, next) => {
+  const path = (req.url ?? "/").split(/[?#]/)[0];
+  if (path === "/" || path === "/agressiveIntro") {
+    res.statusCode = 302;
+    res.setHeader("location", "/adhdActivated");
+    res.end();
+    return;
+  }
+  if (/^\/adhdActivated\/.+/.test(path)) req.url = "/adhdActivated.html";
+  next();
+};
 
 // Impressum/Datenschutz are separate static pages (full reload, no
 // client-side router in this project), so they need their own entries —
@@ -13,6 +25,12 @@ export default defineConfig({
   // stylesheet is the only one importing it.
   plugins: [
     tailwindcss(),
+    // The same routes as vercel.json, for `npm run dev` and `npm run preview`.
+    {
+      name: "site-routes",
+      configureServer: (server) => { server.middlewares.use(siteRoutes); },
+      configurePreviewServer: (server) => { server.middlewares.use(siteRoutes); },
+    },
     // `npm run dev` has no Vercel functions — serve /api/contributions
     // from the same code the Vercel route uses (api/contributions.ts).
     {
@@ -43,10 +61,10 @@ export default defineConfig({
         warn(warning);
       },
       input: {
-        main: root("index.html"),
+        lessAdhd: root("lessAdhd.html"),
         links: root("links.html"),
         ctLook: root("ct-look.html"),
-        agressiveIntro: root("agressiveIntro.html"),
+        adhdActivated: root("adhdActivated.html"),
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),

@@ -2,14 +2,30 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/",
+      "destination": "/adhdActivated",
+      "permanent": false
+    },
+    {
+      "source": "/agressiveIntro",
+      "destination": "/adhdActivated",
+      "permanent": true
+    },
+    {
       "source": "/graph/:id(yourbrand|tschobbo|kevdev)",
-      "destination": "/#eng/:id",
+      "destination": "/lessAdhd#eng/:id",
       "permanent": true
     },
     {
       "source": "/graph/:id(yourbrand|tschobbo|kevdev).html",
-      "destination": "/#eng/:id",
+      "destination": "/lessAdhd#eng/:id",
       "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/adhdActivated/:path*",
+      "destination": "/adhdActivated.html"
     }
   ]
 }

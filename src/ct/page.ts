@@ -61,14 +61,14 @@ const FINDINGS: Finding[] = [
       "Mandanten-Console mit Diff und WCAG-Kontrastprüfung",
       "Audit: 34 MB → 8 ms · JWT-Prüfung ≈ 30 % CPU behoben",
     ],
-    href: "/#eng/yourbrand", parts: ["frontal"],
+    href: "/lessAdhd#eng/yourbrand", parts: ["frontal"],
   },
   {
     id: "tschobbo", no: "02", region: "Broca- & Wernicke-Areal", sub: "Sprache sprechen · Sprache verstehen", title: "TschoBBo",
     lead: "Lokale Sprachmodelle statt Cloud — und abgeschickt wird immer von mir.",
     stats: [["590", "Tests"], ["≈ 4×", "schneller"], ["bis 92 %", "JEV"]],
     points: ["scrape · scrapers/*.ts", "filter · lib/filter-runner.ts", "anschreiben · lib/anschreiben.ts", "review · ui/", "gmail · mail/gmail.ts"],
-    href: "/#eng/tschobbo", parts: ["broca", "wernicke"],
+    href: "/lessAdhd#eng/tschobbo", parts: ["broca", "wernicke"],
   },
   {
     id: "horror", no: "03", region: "Amygdala", sub: "Angst · Schreck · Flucht", title: "Hinter dir",
@@ -82,7 +82,7 @@ const FINDINGS: Finding[] = [
     lead: "Wireframe ohne Bibliothek — alle Modelle dieser Seite kommen aus ihm.",
     stats: [["21", "Modelle"], ["0", "Libraries"], ["3", "Konverter"]],
     points: [".obj → obj2model.js", ".stl → stl2model.js", ".dcm (CT) → dcm2stl.py → stl2model.js"],
-    href: "/#projects", parts: ["occipital"],
+    href: "/lessAdhd#projects", parts: ["occipital"],
   },
 ];
 

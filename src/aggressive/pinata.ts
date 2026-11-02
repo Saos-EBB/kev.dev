@@ -11,7 +11,9 @@ import { BLUE, COLORS, box, dispose, part, place, reducedMotion, runScene } from
 const CUT_AT = 1.6; // s until the blade reaches the piñata
 const VIEW = 4.2; // half the height of the picture, in scene units
 const GRAVITY = 14;
-const BOUNCE = 0.35;
+const BOUNCE = 0.22;
+const AIR_SPIN = 2.2, AIR_DRAG = 0.5; // per second: what the air takes from a turn and from speed
+const FLOOR_GRIP = 0.78; // what's left of the speed per step on the floor
 const THROW_MAX = 22; // units/s
 const GRAB = 22; // how hard a held thing follows the pointer
 const MOVED = 6; // px: more than this and a press on a link was a throw, not a click
@@ -135,7 +137,7 @@ export function createPinata(canvas: HTMLCanvasElement, links: HTMLElement[]) {
     const it = held.item;
     it.vx = THREE.MathUtils.clamp(it.vx, -THROW_MAX, THROW_MAX);
     it.vy = THREE.MathUtils.clamp(it.vy, -THROW_MAX, THROW_MAX);
-    it.spin = -it.vx * 0.8;
+    it.spin = THREE.MathUtils.clamp(-it.vx * 0.25, -4, 4);
     held = null;
     calm = 0;
   };
@@ -164,16 +166,18 @@ export function createPinata(canvas: HTMLCanvasElement, links: HTMLElement[]) {
   let calm = 0;
   function step(dt: number) {
     calm += dt;
-    if (calm > 4.5 && !held) for (const it of items) if (it.out) { it.asleep = true; it.vx = it.vy = it.spin = 0; }
+    if (calm > 3.5 && !held) for (const it of items) if (it.out) { it.asleep = true; it.vx = it.vy = it.spin = 0; }
     for (const it of items) {
       if (!it.out || it.asleep) continue;
       if (held?.item === it) {
         it.vx = (held.x - it.x) * GRAB;
         it.vy = (held.y - it.y) * GRAB;
-        it.spin *= 0.9;
+        it.spin *= 0.8;
       } else {
         it.vy -= GRAVITY * dt;
       }
+      it.spin *= Math.exp(-AIR_SPIN * dt);
+      it.vx *= Math.exp(-AIR_DRAG * dt);
       it.x += it.vx * dt;
       it.y += it.vy * dt;
       it.angle += it.spin * dt;
@@ -182,18 +186,18 @@ export function createPinata(canvas: HTMLCanvasElement, links: HTMLElement[]) {
       if (it.y < bottom) {
         it.y = bottom;
         it.vy = Math.abs(it.vy) < 1.4 ? 0 : -it.vy * BOUNCE;
-        it.vx *= 0.82;
-        it.spin = it.spin * 0.6 + it.vx * -0.25 * dt * 60 * 0.05;
+        it.vx *= FLOOR_GRIP;
+        it.spin *= 0.45;
       }
       // Comes to lie on one of its sides.
-      if (it.on && Math.abs(it.vx) < 1 && held?.item !== it) {
+      if (it.on && Math.abs(it.vx) < 2.5 && held?.item !== it) {
         const quarter = it.tall ? Math.PI * 2 : Math.PI / 2;
         const flat = Math.round(it.angle / quarter) * quarter;
         it.angle += (flat - it.angle) * Math.min(dt * 8, 1);
-        it.spin *= 0.7;
-        it.vx *= 0.9;
+        it.spin *= 0.5;
+        it.vx *= 0.8;
       }
-      const ex = extX(it);
+      const ex = extX(it) + 0.3; // a little spare: turned towards the camera they look wider
       if (it.x < -width + ex) { it.x = -width + ex; it.vx = Math.abs(it.vx) * BOUNCE; }
       if (it.x > width - ex) { it.x = width - ex; it.vx = -Math.abs(it.vx) * BOUNCE; }
       if (it.y > VIEW - extY(it)) { it.y = VIEW - extY(it); it.vy = -Math.abs(it.vy) * BOUNCE; }
@@ -210,7 +214,7 @@ export function createPinata(canvas: HTMLCanvasElement, links: HTMLElement[]) {
         const dx = b.x - a.x, dy = b.y - a.y, min = a.r + b.r, d = Math.hypot(dx, dy) || 0.001;
         if (d >= min || (a.asleep && b.asleep)) continue;
         // A proper knock wakes a sleeper; anything less just lands on it.
-        const knock = Math.hypot(b.vx - a.vx, b.vy - a.vy) > 4;
+        const knock = Math.hypot(b.vx - a.vx, b.vy - a.vy) > 6;
         if (knock) { a.asleep = b.asleep = false; a.quiet = b.quiet = 0; }
         const nx = dx / d, ny = dy / d, push = (min - d) / 2;
         const aHeld = held?.item === a || a.asleep, bHeld = held?.item === b || b.asleep;
@@ -219,8 +223,8 @@ export function createPinata(canvas: HTMLCanvasElement, links: HTMLElement[]) {
         const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
         if (rel > 0) continue;
         const j2 = (-(1 + BOUNCE) * rel) / 2;
-        if (!aHeld) { a.vx -= j2 * nx; a.vy -= j2 * ny; a.spin += j2 * 0.4; }
-        if (!bHeld) { b.vx += j2 * nx; b.vy += j2 * ny; b.spin -= j2 * 0.4; }
+        if (!aHeld) { a.vx -= j2 * nx; a.vy -= j2 * ny; a.spin += j2 * 0.08; }
+        if (!bHeld) { b.vx += j2 * nx; b.vy += j2 * ny; b.spin -= j2 * 0.08; }
       }
     }
   }
@@ -268,7 +272,7 @@ export function createPinata(canvas: HTMLCanvasElement, links: HTMLElement[]) {
         it.o.visible = true;
         it.vx = rand(-width, width) * 1.1; // anywhere across the floor
         it.vy = rand(1, 6);
-        it.spin = rand(-9, 9);
+        it.spin = rand(-3.5, 3.5);
         calm = 0;
       }
     }
