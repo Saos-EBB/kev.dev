@@ -1,6 +1,7 @@
 // The real models (CC0, see NOTICE.md; public/models/*.bin): geometry only, as
 // vertex count, triangle count, positions, indices. All centred, radius 1. They
 // wear the skull's look: every triangle a line, fading with depth.
+import { THEME } from "./ai-theme";
 import * as THREE from "three";
 import { depthSteps, wireMesh } from "../contact/skull/parts";
 import { COLORS } from "./wire-kit";
@@ -46,7 +47,9 @@ export async function loadParts(name: string) {
 export function wireModel(geo: THREE.BufferGeometry, color: number = COLORS.ink) {
   const parts = wireMesh(geo, color, COLORS.bg, 0.32);
   geo.computeBoundingSphere();
-  depthSteps(parts.lineMat, geo.boundingSphere!.radius + geo.boundingSphere!.center.length());
+  // On white the fade into depth leaves hardly anything: even lines instead.
+  if (THEME === "white") parts.lineMat.opacity = 0.8;
+  else depthSteps(parts.lineMat, geo.boundingSphere!.radius + geo.boundingSphere!.center.length());
   return parts.group;
 }
 

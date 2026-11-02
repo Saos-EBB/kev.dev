@@ -29,6 +29,24 @@ const SITES: Site[] = [
     ],
   },
   {
+    name: "Frost Grind",
+    url: "https://saosgonegametry02.vercel.app",
+    what: t(
+      "Ein Browser-Game, das ich aus Spaß mache: AoE-Grinden wie der Mage in WoW Classic, dazu Roguelike-Runs mit Karten, Runen und Relikten. Komplett in Arbeit, und der Look ist noch ziemlich raw.",
+      "A browser game I make for fun: AoE grinding like the mage in WoW Classic, plus roguelike runs with cards, runes and relics. Entirely a work in progress, and the look is still pretty raw.",
+      "Браузерная игра, которую я делаю ради удовольствия: AoE-гринд как у мага в WoW Classic и рогалик-забеги с картами, рунами и реликвиями. Всё ещё в работе, и внешний вид пока довольно сырой.",
+      "趣味で作っているブラウザゲームです。WoW ClassicのメイジのようなAoE狩りに、カード、ルーン、レリックを使うローグライクのランを組み合わせました。すべて制作途中で、見た目もまだ粗いです。",),
+    why: t(
+      "Es verbindet, was ich an Games mag, und ich probiere gerade aus, was sich gut anfühlt: welche Spells, welches Balancing. Es kann sich also jederzeit alles ändern.",
+      "It combines what I like about games, and I'm trying out what feels good: which spells, which balancing. So anything can change at any time.",
+      "Она объединяет то, что я люблю в играх, и сейчас я пробую, что ощущается хорошо: какие заклинания, какой баланс. Так что всё может измениться в любой момент.",
+      "ゲームの好きな要素を組み合わせ、どの呪文やバランスが気持ちよいかを試しています。そのため、いつでもすべて変わる可能性があります。",),
+    shots: [
+      ["frost-1", t("Auswahl vor dem Run", "Choosing before a run", "Выбор перед забегом", "ラン前の選択")],
+      ["frost-2", t("Im Run", "In a run", "В забеге", "ラン中")],
+    ],
+  },
+  {
     name: "adhdActivated",
     url: "/adhdActivated",
     what: t(

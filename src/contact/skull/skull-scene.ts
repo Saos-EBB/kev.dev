@@ -406,7 +406,11 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     const tall = w / h < 0.8;
     camera.position.set(0, 0.2, tall ? 8.5 : 5.8);
     // narrow screens: the skull's visible middle in the screen's
-    if (tall) camera.lookAt(visualCentre);
+    if (free) {
+      camera.position.x = visualCentre.x;
+      camera.position.y = visualCentre.y;
+      camera.lookAt(visualCentre);
+    } else if (tall) camera.lookAt(visualCentre);
     else camera.lookAt(0, 0.08, 0);
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
@@ -419,6 +423,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   // pan-y in skull.css), so a vertical swipe still scrolls the page.
   const turn = { x: 0, y: 0, tx: 0, ty: 0 };
   let free = false, misty = false;
+  const pivot = new THREE.Vector3();
   const freeTurn = new THREE.Quaternion(), freeStep = new THREE.Quaternion(), freeEuler = new THREE.Euler();
   let drag: { id: number; x: number; y: number } | null = null;
   section.addEventListener("pointerdown", (e) => {
@@ -482,8 +487,11 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // the drag, eased
     turn.x += (turn.tx - turn.x) * 0.15;
     turn.y += (turn.ty - turn.y) * 0.15;
-    if (free) world.quaternion.copy(freeTurn);
-    else world.rotation.set(turn.x, turn.y, 0);
+    if (free) {
+      // Around the skull's own middle, which stays in the middle of the screen.
+      world.quaternion.copy(freeTurn);
+      world.position.copy(visualCentre).sub(pivot.copy(visualCentre).applyQuaternion(freeTurn));
+    } else world.rotation.set(turn.x, turn.y, 0);
     if (Math.abs(turn.tx - turn.x) + Math.abs(turn.ty - turn.y) > 1e-3) dirty = true;
 
     // approach: from far behind the grid, in the middle of its opening, up to
@@ -498,7 +506,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     let kick = 0, shake = 0, kickZ = 0;
     for (const h of hits) {
       if (!h.fired || h.u <= 0) continue;
-      const k = Math.exp(-4 * h.u) * Math.sin(10 * h.u) * 1.5;
+      // Frozen in the finale's ball: the knocks have to be over by then, or the
+      // skull hangs off the middle it turns around.
+      const k = Math.exp(-4 * h.u) * Math.sin(10 * h.u) * 1.5 * (free ? 1 - THREE.MathUtils.smoothstep(h.u, 0, h.stop) : 1);
       kick += k;
       kickZ += k * Math.sign(h.hit.x || 1);
       if (h.u < FREEZE_AT) shake += Math.sin(h.u * 63) * 0.012 * (1 - h.u / FREEZE_AT);
@@ -584,6 +594,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       free = true;
       freeTurn.setFromEuler(world.rotation);
       section.style.touchAction = "none";
+      resize(); // the camera now looks straight at the skull's middle
       dirty = true;
     },
     hitsLeft: () => moreDefs.length - 1 - (fired - 1),

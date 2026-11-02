@@ -11,6 +11,7 @@
   --ai-ink: #ffffff; /* lines, borders, paint */
   --ai-text: #ffffff; /* running text: the blue alone is too pale on white */
   --ai-panel: #2c0710;
+  --ai-grid-line: color-mix(in srgb, var(--ai-ink) 18%, transparent);
   --ai-pill: clamp(14rem, 25vw, 20rem); /* the room's buttons */
   --ai-pill-font: clamp(1.9rem, 4.2vw, 3rem);
   /* read by the skull scene */
@@ -35,10 +36,11 @@
   --ai-bg: #ffffff;
   --ai-accent: #5c0f1f;
   --ai-ink: #89cff0;
-  --ai-line: #3f9fd6; /* the wire models: the paint's blue is too pale for thin lines */
+  --ai-line: #1f7ab8; /* the wire models: the paint's blue is too pale for thin lines */
   --ai-text: #1f6e99;
   --ai-muted: #4a8bb0;
   --ai-panel: #eaf6fc;
+  --ai-grid-line: color-mix(in srgb, var(--ai-line) 70%, transparent);
 }
 
 html,
@@ -102,6 +104,10 @@ body.ai {
   opacity: 0;
   pointer-events: none;
   transition: opacity 400ms ease;
+}
+
+:root[data-ai-theme="white"] .ai-room-under path {
+  stroke: var(--ai-line);
 }
 
 .ai-room-under.is-on {
@@ -244,7 +250,7 @@ body.ai {
 
 .ai-line {
   position: absolute;
-  background: color-mix(in srgb, var(--ai-ink) 18%, transparent);
+  background: var(--ai-grid-line);
 }
 
 .ai-line--h {

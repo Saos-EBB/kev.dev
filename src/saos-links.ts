@@ -16,6 +16,7 @@ const GROUPS: Group[] = [
       { name: "Omas Puppenstube", url: "https://omas-puppenstube.vercel.app", note: "Puppen-Shop, Vorschau" },
       { name: "Maschenwerk", url: "https://maschenwerk.vercel.app", note: "Häkel-Shop, Vorschau", repo: "shop00" },
       { name: "YourBrand", url: "https://your-brand-azure.vercel.app", note: "Community-Plattform", repo: "YourBrand" },
+      { name: "Frost Grind", url: "https://saosgonegametry02.vercel.app", note: "Browser-Game, in Arbeit", repo: "AoeGrinder" },
       { name: "kev.dev Casual", url: CASUAL, note: "Produktseiten", repo: "kevdev-casual" },
       { name: "kev.dev Engineering", url: "https://kevdev-engineering.vercel.app", note: "technische Präsentation", repo: "kevdev-engineering" },
       { name: "b2b-cv", url: "https://saos-repo.vercel.app", repo: "b2b-cv" },
