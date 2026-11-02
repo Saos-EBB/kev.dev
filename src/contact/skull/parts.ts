@@ -85,7 +85,7 @@ export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, 
 // geometry's bounding sphere around its origin. The window ends a little
 // behind the middle, further back the fill hides the lines anyway.
 const DEPTH_STEPS = 16;
-export function depthSteps(lineMat: THREE.LineBasicMaterial, radius: number) {
+export function depthSteps(lineMat: THREE.LineBasicMaterial, radius: number, front = 0.85, back = 0.08) {
   lineMat.opacity = 1;
   lineMat.onBeforeCompile = (shader) => {
     shader.uniforms.uRadius = { value: radius };
@@ -97,6 +97,6 @@ export function depthSteps(lineMat: THREE.LineBasicMaterial, radius: number) {
       .replace("#include <common>", "#include <common>\nvarying float vDepth;")
       .replace("#include <color_fragment>", `#include <color_fragment>
         float depthStep = min(floor(clamp(vDepth, 0.0, 1.0) * ${DEPTH_STEPS}.0), ${DEPTH_STEPS - 1}.0) / ${DEPTH_STEPS - 1}.0;
-        diffuseColor.a = mix(0.85, 0.08, depthStep);`);
+        diffuseColor.a = mix(${front.toFixed(3)}, ${back.toFixed(3)}, depthStep);`);
   };
 }
