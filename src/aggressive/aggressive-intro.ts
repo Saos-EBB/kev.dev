@@ -765,13 +765,13 @@ tourEnd.addEventListener("click", () => {
   tour.hidden = true;
   // Only the skull on the bare background again, like at the start.
   for (const sel of [".ai-paint", ".ai-room", ".ai-room-under", ".ai-words"]) q<HTMLElement>(sel).style.display = "none";
+  skull.clean(); // right away: the clean skull, not the old blades while the page closes
   const finale = () => {
     ended = true;
     const spray = context(sprayCanvas);
     sprayCanvas.hidden = false;
     document.documentElement.style.setProperty("--color-throw", INK);
     document.documentElement.dataset.theme = "light";
-    skull.clean();
     const next = () => {
       if (skull.hitsLeft() < 0) return;
       void skull.moreHit(FROZEN_AT).then(() => {

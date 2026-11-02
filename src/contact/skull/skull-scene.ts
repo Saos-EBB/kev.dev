@@ -592,7 +592,10 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       fired = 0;
       misty = true;
       free = true;
-      freeTurn.setFromEuler(world.rotation);
+      // and back in its starting pose, however it was turned
+      drag = null;
+      turn.x = turn.y = turn.tx = turn.ty = 0;
+      freeTurn.identity();
       section.style.touchAction = "none";
       resize(); // the camera now looks straight at the skull's middle
       dirty = true;
