@@ -39,3 +39,14 @@
 :root[data-theme="light"] .theme-icon--moon {
   display: block;
 }
+
+/* Theme switch (theme.ts): the old page stays as a still image, the new one
+   is revealed by the spill's clip-path (spill.ts). */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}

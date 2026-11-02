@@ -1,5 +1,6 @@
 import "./theme.css";
 import { UI } from "../i18n/ui";
+import { spillFrames } from "./spill";
 
 // Light/dark toggle for the header icon (markup in main.ts, colors in the
 // `:root[data-theme="light"]` override in style.css). Every visit starts
@@ -52,7 +53,24 @@ export function initThemeToggle() {
 
   button.addEventListener("click", () => {
     theme = theme === "light" ? "dark" : "light";
-    apply();
     writeStored(theme);
+    // The new colors spill in from the top left corner (spill.ts). Browsers
+    // without view transitions, and reduced motion, just switch.
+    const reduced =
+      matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !document.documentElement.classList.contains("force-motion");
+    if (!document.startViewTransition || reduced) {
+      apply();
+      return;
+    }
+    const clipPath = spillFrames(innerWidth, innerHeight);
+    const transition = document.startViewTransition(apply);
+    transition.ready.then(() => {
+      const spill = document.documentElement.animate(
+        { clipPath },
+        { duration: 2200, easing: "linear", fill: "both", pseudoElement: "::view-transition-new(root)" },
+      );
+      void transition.finished.then(() => spill.cancel());
+    }, () => {}); // a second click while this one prepares: that one wins
   });
 }
