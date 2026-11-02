@@ -987,3 +987,13 @@ body.ai {
     top: 12%;
   }
 }
+
+/* The theme switch's spill (ai-theme.ts): only the clip-path moves. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}

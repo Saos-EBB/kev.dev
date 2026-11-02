@@ -1,15 +1,36 @@
 // Wireframe building blocks in the skull's look: a fill in the background color
 // hides what's behind, the lines sit on top. Shared by the page scenes.
 import * as THREE from "three";
-import { PALETTE } from "./ai-theme";
+import { PALETTE, onTheme } from "./ai-theme";
 
-export const COLORS = { bg: PALETTE.bg, ink: PALETTE.ink, blue: PALETTE.accent };
+// Always the current theme's colors.
+export const COLORS = {
+  get bg() { return PALETTE.bg; },
+  get ink() { return PALETTE.ink; },
+  get blue() { return PALETTE.accent; },
+};
+
+// Materials that follow a theme switch: what to redo on one, dropped on dispose.
+const followers = new Map<THREE.Material, () => void>();
+onTheme(() => { for (const fn of followers.values()) fn(); });
+export function follow(m: THREE.Material, fn: () => void) {
+  fn();
+  followers.set(m, fn);
+}
+// The material keeps the role its color has now (bg, ink or blue), whatever
+// that role's color turns into. Any other color stays as it is.
+type Role = keyof typeof COLORS;
+export const roleOf = (color: number) => (["bg", "ink", "blue"] as Role[]).find((r) => COLORS[r] === color);
+export function tint(m: THREE.Material & { color: THREE.Color }, color: number) {
+  const role = roleOf(color);
+  if (role) follow(m, () => m.color.setHex(COLORS[role]));
+}
 
 // `sketch`: only the real edges, no triangles: a clean drawing, for models that
 // can't match the skull's scanned detail.
 export type Look = { color?: number; opacity?: number; sketch?: boolean };
 export const DIM: Look = { opacity: 0.4 };
-export const BLUE: Look = { color: COLORS.blue, opacity: 0.95 };
+export const BLUE: Look = { get color() { return COLORS.blue; }, opacity: 0.95 };
 
 let sketching = false;
 // Everything built inside `fn` comes out as a sketch.
@@ -19,8 +40,12 @@ export const sketched = <T>(fn: () => T): T => {
 };
 export const part = (geo: THREE.BufferGeometry, { color = COLORS.ink, opacity = 0.7, sketch = sketching }: Look = {}) => {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: COLORS.bg, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 })));
-  g.add(new THREE.LineSegments(sketch ? new THREE.EdgesGeometry(geo, 25) : new THREE.WireframeGeometry(geo), new THREE.LineBasicMaterial({ color, transparent: true, opacity: sketch ? 1 : opacity })));
+  const fillMat = new THREE.MeshBasicMaterial({ color: COLORS.bg, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  const lineMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: sketch ? 1 : opacity });
+  tint(fillMat, COLORS.bg);
+  tint(lineMat, color);
+  g.add(new THREE.Mesh(geo, fillMat));
+  g.add(new THREE.LineSegments(sketch ? new THREE.EdgesGeometry(geo, 25) : new THREE.WireframeGeometry(geo), lineMat));
   return g;
 };
 export const place = <T extends THREE.Object3D>(o: T, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0) => {
@@ -83,7 +108,9 @@ export function dispose(o: THREE.Object3D) {
   o.traverse((n) => {
     const m = n as THREE.Mesh;
     m.geometry?.dispose();
-    (m.material as THREE.Material | undefined)?.dispose?.();
+    const mat = m.material as THREE.Material | undefined;
+    mat?.dispose?.();
+    if (mat) followers.delete(mat);
   });
 }
 

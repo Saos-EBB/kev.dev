@@ -384,7 +384,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const hits = [first];
   let fired = 1; // how many of the blades are in play
 
-  // Theme toggle (data-theme on <html>): recolor everything in place.
+  // Theme toggle (data-theme, or data-ai-theme on adhdActivated): recolor everything in place.
   new MutationObserver(() => {
     readColors();
     skullParts.lineMat.color.copy(lineColor);
@@ -394,7 +394,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     for (const m of shardMats) { m.lineMat.color.copy(lineColor); m.fillMat.color.copy(bgColor); }
     for (const h of hits) { h.blood.recolor(); h.mist?.recolor(); } // its ink is throwColor itself
     dirty = true;
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-ai-theme"] });
 
   // ── layout ──
   let w = 1, h = 1;
