@@ -727,7 +727,13 @@ q<HTMLElement>(".ai-bar--top").addEventListener("click", (e) => {
   const lang = t.closest<HTMLElement>("[data-lang]")?.dataset.lang;
   if (lang) return setLang(lang as Lang);
   if (t.closest("[data-switch-theme]")) return switchTheme();
-  if (t.closest("[data-end-it]")) return ended ? location.reload() : endIt();
+  if (t.closest("[data-end-it]")) {
+    if (ended) {
+      skull.clean();
+      return playEnd();
+    }
+    return endIt();
+  }
   const name = t.closest<HTMLElement>("[data-nav]")?.dataset.nav;
   if (!name) return;
   if (ended) return location.reload();
@@ -800,22 +806,30 @@ function endIt() {
     ended = true;
     // The banners stay for the end, over the spray.
     stage.classList.add("ai-ended");
-    const spray = context(sprayCanvas);
     sprayCanvas.hidden = false;
     document.documentElement.style.setProperty("--color-throw", PALETTE.inkCss);
     document.documentElement.dataset.theme = "light";
-    const next = () => {
-      if (skull.hitsLeft() < 0) return;
-      void skull.moreHit(FROZEN_AT).then(() => {
-        const [x, y] = skull.wound();
-        window.setTimeout(() => sprayScreen(spray, ((x + 1) / 2) * w, ((1 - y) / 2) * h), BLADE_DELAY * 1000);
-        window.setTimeout(next, 260);
-      });
-    };
-    next();
+    playEnd();
   };
   if (currentPage) closePage(finale);
   else finale();
+}
+// The blades one after another; again from a clean skull and a clean pane when
+// END IT comes once more. A run that's been replaced stops where it is.
+let endRun = 0;
+function playEnd() {
+  const run = ++endRun;
+  const spray = context(sprayCanvas); // sizing it wipes it
+  const next = () => {
+    if (run !== endRun || skull.hitsLeft() < 0) return;
+    void skull.moreHit(FROZEN_AT).then(() => {
+      if (run !== endRun) return;
+      const [x, y] = skull.wound();
+      window.setTimeout(() => run === endRun && sprayScreen(spray, ((x + 1) / 2) * w, ((1 - y) / 2) * h), BLADE_DELAY * 1000);
+      window.setTimeout(next, 260);
+    });
+  };
+  next();
 }
 
 // ── the routes ──
