@@ -650,6 +650,71 @@ body.ai {
   display: none;
 }
 
+/* The room's banner: desktop only, behind the panes and pages, under the footer
+   that fades in on hover. */
+.ai-banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  overflow: hidden;
+  padding: 0.5rem 0 0.6rem;
+  background: var(--ai-accent);
+  color: var(--ai-bg);
+  font: 400 1.5rem / 1 "Urban Sign", sans-serif;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ai-banner[hidden] {
+  display: none;
+}
+
+.ai-banner--top {
+  top: 0;
+  bottom: auto;
+}
+
+/* After the spray in the DOM, so above it; still under the bars. */
+.ai-ended .ai-banner {
+  z-index: 5;
+}
+
+.ai-banner-track {
+  display: flex;
+  width: max-content;
+  animation: ai-banner 64s ease-in-out infinite;
+}
+
+/* Half a cycle ahead: starts at the far end, so it moves against the one below. */
+.ai-banner--top .ai-banner-track {
+  animation-delay: -32s;
+}
+
+.ai-banner-track span {
+  padding: 0 1.25rem;
+}
+
+.ai-banner-track span::after {
+  content: "/";
+  margin-left: 2.5rem;
+}
+
+/* One run of the list, a stop, and back. */
+@keyframes ai-banner {
+  0%, 3% { transform: translateX(0); }
+  50%, 53% { transform: translateX(calc(-100% / 6)); }
+  100% { transform: translateX(0); }
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 900px), (max-aspect-ratio: 4 / 5) {
+  .ai-banner {
+    display: none;
+  }
+}
+
 .ai-mark span {
   font-family: ui-monospace, "JetBrains Mono", monospace; /* Urban Sign has no real © */
 }

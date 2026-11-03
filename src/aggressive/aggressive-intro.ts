@@ -49,6 +49,11 @@ const PIXELS_PER_WORD_DROP = 75; // aimed at each word, so all of them become re
 // The back wall in percent of the screen; lines run from its corners to the screen's.
 const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] };
 
+// The running banner in the room: repeated so one run of the list (a sixth, see
+// ai-banner in the CSS) still leaves any screen width filled.
+const BANNER_SKILLS = ["Fullstack Dev", "SQL", "TypeScript", "Agent Engineering", "NestJS", "React", "PostgreSQL", "Docker", "Canvas 2D"];
+const BANNER = Array(6).fill(BANNER_SKILLS.map((skill) => `<span>${skill}</span>`).join("")).join("");
+
 document.documentElement.dataset.theme = "light";
 document.body.classList.add("ai");
 document.body.innerHTML = `
@@ -70,7 +75,7 @@ document.body.innerHTML = `
     <article class="ai-page" hidden></article>
     <article class="ai-more" hidden></article>
     <div class="ai-tour" hidden>
-      <button class="ai-button ai-tour-start" type="button">GUIDED TOUR</button>
+      <button class="ai-button ai-tour-start" type="button">${LANG === "de" ? "FÜHRUNG" : "GUIDED TOUR"}</button>
       <button class="ai-button ai-tour-arrow ai-tour-prev" type="button" aria-label="${UI.projectBack}" hidden>←</button>
       <button class="ai-button ai-tour-arrow ai-tour-next" type="button" aria-label="${UI.projectOpen}" hidden>→</button>
       <button class="ai-button ai-tour-arrow ai-tour-end" type="button" hidden>END IT</button>
@@ -89,6 +94,7 @@ document.body.innerHTML = `
         <button type="button" data-switch-theme>[theme]</button>
       </span>
     </nav>
+    <div class="ai-banner" aria-hidden="true" hidden><div class="ai-banner-track">${BANNER}</div></div>
     <div class="ai-mark" hidden><span>©</span> Saos</div>
     <footer class="ai-bar ai-bar--bottom" hidden>
       <span class="ai-bar-copy">© copyright saos / kevinschaberl</span>
@@ -787,6 +793,14 @@ tourEnd.addEventListener("click", () => {
   skull.clean(); // right away: the clean skull, not the old blades while the page closes
   const finale = () => {
     ended = true;
+    // The banner stays for the end, over the spray, and gets a twin at the top running the other way.
+    const banner = q<HTMLElement>(".ai-banner");
+    const topBanner = banner.cloneNode(true) as HTMLElement;
+    topBanner.classList.add("ai-banner--top");
+    banner.after(topBanner);
+    // In step with the one below; the CSS delay makes it the mirror image.
+    topBanner.firstElementChild!.getAnimations()[0].currentTime = banner.firstElementChild!.getAnimations()[0].currentTime;
+    stage.classList.add("ai-ended");
     const spray = context(sprayCanvas);
     sprayCanvas.hidden = false;
     document.documentElement.style.setProperty("--color-throw", PALETTE.inkCss);
@@ -888,7 +902,7 @@ async function run() {
       window.setTimeout(() => {
         words.forEach((word) => word.classList.add("is-shown"));
         tour.hidden = false;
-        document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark").forEach((bar) => { bar.hidden = false; });
+        document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });
         roomReady = true;
         if (location.pathname !== BASE) syncRoute(); // arrived by a deep link
       }, WORDS_AFTER * 1000);
