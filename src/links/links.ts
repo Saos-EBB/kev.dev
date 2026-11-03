@@ -7,7 +7,7 @@ import { UI } from "../i18n/ui";
 
 const t = (de: string, en: string, ru: string, ja: string) => pick({ de, en, ru, ja });
 
-type Site = { name: string; url: string; what: string; why: string; shots: [string, string][] };
+type Site = { name: string; url?: string; what: string; why: string; shots: [string, string][] };
 
 const SITES: Site[] = [
   {
@@ -26,24 +26,6 @@ const SITES: Site[] = [
     shots: [
       ["main-1", t("Der Einstieg", "The start", "Начало", "トップ")],
       ["main-2", t("Der Kontakt mit dem Schädel", "Contact with the skull", "Контакты с черепом", "頭蓋骨のある連絡先")],
-    ],
-  },
-  {
-    name: "Frost Grind",
-    url: "https://saosgonegametry02.vercel.app",
-    what: t(
-      "Ein Browser-Game, das ich aus Spaß mache: AoE-Grinden wie der Mage in WoW Classic, dazu Roguelike-Runs mit Karten, Runen und Relikten. Komplett in Arbeit, und der Look ist noch ziemlich raw.",
-      "A browser game I make for fun: AoE grinding like the mage in WoW Classic, plus roguelike runs with cards, runes and relics. Entirely a work in progress, and the look is still pretty raw.",
-      "Браузерная игра, которую я делаю ради удовольствия: AoE-гринд как у мага в WoW Classic и рогалик-забеги с картами, рунами и реликвиями. Всё ещё в работе, и внешний вид пока довольно сырой.",
-      "趣味で作っているブラウザゲームです。WoW ClassicのメイジのようなAoE狩りに、カード、ルーン、レリックを使うローグライクのランを組み合わせました。すべて制作途中で、見た目もまだ粗いです。",),
-    why: t(
-      "Es verbindet, was ich an Games mag, und ich probiere gerade aus, was sich gut anfühlt: welche Spells, welches Balancing. Es kann sich also jederzeit alles ändern.",
-      "It combines what I like about games, and I'm trying out what feels good: which spells, which balancing. So anything can change at any time.",
-      "Она объединяет то, что я люблю в играх, и сейчас я пробую, что ощущается хорошо: какие заклинания, какой баланс. Так что всё может измениться в любой момент.",
-      "ゲームの好きな要素を組み合わせ、どの呪文やバランスが気持ちよいかを試しています。そのため、いつでもすべて変わる可能性があります。",),
-    shots: [
-      ["frost-1", t("Auswahl vor dem Run", "Choosing before a run", "Выбор перед забегом", "ラン前の選択")],
-      ["frost-2", t("Im Run", "In a run", "В забеге", "ラン中")],
     ],
   },
   {
@@ -106,6 +88,25 @@ const SITES: Site[] = [
     ],
   },
   {
+    name: "notHosted",
+    url: "https://claude.ai/artifact/F2nDy7fH1vQBjujLtMP1bB",
+    what: t(
+      "YourBrand und TschoBBo im Überblick: Umfang, Videos, Screens, die Postgres-Abfragen samt ihrer Geschichte und der Loadtester. Beide laufen gerade nicht öffentlich, eine Live-Demo setze ich auf Anfrage auf. Die Seite gibt es nur auf Deutsch.",
+      "YourBrand and TschoBBo at a glance: scope, videos, screens, the Postgres queries and how they changed, and the load tester. Neither is publicly hosted right now, but I set up a live demo on request. The page is in German only.",
+      "YourBrand и TschoBBo в обзоре: объём, видео, скриншоты, запросы Postgres и их история, а также нагрузочный тестер. Сейчас оба не размещены публично, но живое демо я подготовлю по запросу. Страница только на немецком.",
+      "YourBrandとTschoBBoの概要です。規模、動画、画面、Postgresのクエリとその変遷、負荷テストツールをまとめました。どちらも現在は公開していませんが、ご依頼があればライブデモを用意します。このページはドイツ語のみです。",),
+    why: t(
+      "Beide Projekte hängen an Datenbanken, Diensten oder lokalen Modellen, und das soll nicht dauerhaft offen im Netz laufen. Hier sieht man trotzdem, was alles dazugehört.",
+      "Both projects depend on databases, services or local models, which shouldn't run openly on the web all the time. Here you can still see everything that belongs to them.",
+      "Оба проекта зависят от баз данных, сервисов или локальных моделей, и это не должно постоянно работать в открытой сети. Здесь всё равно видно, что в них входит.",
+      "どちらもデータベース、各種サービス、ローカルモデルに依存しており、常時ネットに公開するものではありません。それでも、ここで全体像を見られます。",),
+    shots: [
+      ["nothosted-1", t("YourBrand: Dashboard", "YourBrand: dashboard", "YourBrand: панель управления", "YourBrand: ダッシュボード")],
+      ["nothosted-2", t("KiezConnect, ein Mandant von YourBrand: das Schwarze Brett", "KiezConnect, a YourBrand tenant: the notice board", "KiezConnect, клиент YourBrand: доска объявлений", "YourBrandのテナントKiezConnect: 掲示板")],
+      ["nothosted-3", t("TschoBBo: die Inbox", "TschoBBo: the inbox", "TschoBBo: входящие", "TschoBBo: 受信トレイ")],
+    ],
+  },
+  {
     name: t("Das Portfolio als Kopf-CT", "The portfolio as a head CT", "Портфолио как КТ головы", "頭部CTとしてのポートフォリオ"),
     url: "/ct-look",
     what: t(
@@ -164,6 +165,47 @@ const SITES: Site[] = [
   },
 ];
 
+// Prototypes rather than sites: their own section, and not all of them are public yet.
+const GAMES: Site[] = [
+  {
+    name: "Frost Grind",
+    url: "https://saosgonegametry02.vercel.app",
+    what: t(
+      "Ein Browser-Game, das ich aus Spaß mache: AoE-Grinden wie der Mage in WoW Classic, dazu Roguelike-Runs mit Karten, Runen und Relikten. Komplett in Arbeit, und der Look ist noch ziemlich raw.",
+      "A browser game I make for fun: AoE grinding like the mage in WoW Classic, plus roguelike runs with cards, runes and relics. Entirely a work in progress, and the look is still pretty raw.",
+      "Браузерная игра, которую я делаю ради удовольствия: AoE-гринд как у мага в WoW Classic и рогалик-забеги с картами, рунами и реликвиями. Всё ещё в работе, и внешний вид пока довольно сырой.",
+      "趣味で作っているブラウザゲームです。WoW ClassicのメイジのようなAoE狩りに、カード、ルーン、レリックを使うローグライクのランを組み合わせました。すべて制作途中で、見た目もまだ粗いです。",),
+    why: t(
+      "Es verbindet, was ich an Games mag, und ich probiere gerade aus, was sich gut anfühlt: welche Spells, welches Balancing. Es kann sich also jederzeit alles ändern.",
+      "It combines what I like about games, and I'm trying out what feels good: which spells, which balancing. So anything can change at any time.",
+      "Она объединяет то, что я люблю в играх, и сейчас я пробую, что ощущается хорошо: какие заклинания, какой баланс. Так что всё может измениться в любой момент.",
+      "ゲームの好きな要素を組み合わせ、どの呪文やバランスが気持ちよいかを試しています。そのため、いつでもすべて変わる可能性があります。",),
+    shots: [
+      ["frost-1", t("Auswahl vor dem Run", "Choosing before a run", "Выбор перед забегом", "ラン前の選択")],
+      ["frost-2", t("Im Run", "In a run", "В забеге", "ラン中")],
+    ],
+  },
+  {
+    name: t("Hinter dir", "Hinter dir (Behind you)", "Hinter dir (За тобой)", "Hinter dir(後ろにいる)"),
+    what: t(
+      "Ein First-Person-Horror im Browser: Mit der Taschenlampe durch ein Labyrinth, und etwas folgt dir. Es kommt näher, solange du nicht hinsiehst. Wer drei Gegenstände findet, kommt nach unten zu den Zombie-Wellen. Dazu gibt es eine Wald-Arena, in der ich Waffen und Monster ausprobiere.",
+      "A first-person horror game in the browser: through a maze with a flashlight, and something follows you. It gets closer as long as you don't look. Find three items and you get down to the zombie waves. There is also a forest arena where I try out weapons and monsters.",
+      "Хоррор от первого лица в браузере: с фонариком через лабиринт, а за тобой что-то идёт. Оно приближается, пока ты не смотришь. Кто найдёт три предмета, спустится к волнам зомби. Есть ещё лесная арена, где я пробую оружие и монстров.",
+      "ブラウザで遊べる一人称ホラーです。懐中電灯を手に迷路を進むと、何かが後をつけてきます。見ていない間に近づいてきます。3つのアイテムを見つけると、下のゾンビウェーブに進めます。武器やモンスターを試す森のアリーナもあります。",),
+    why: t(
+      "Das Gegenstück zu Frost Grind: Dort geht es um viele Gegner und Tempo, hier um Licht, Sound und Spannung. Ich will herausfinden, wie viel davon ich später in einem Game haben will.",
+      "The counterpart to Frost Grind: there it's about many enemies and speed, here about light, sound and tension. I want to find out how much of that I'll want in a game later.",
+      "Противоположность Frost Grind: там много врагов и скорость, здесь свет, звук и напряжение. Хочу понять, сколько всего этого мне потом нужно в игре.",
+      "Frost Grindとは対照的です。あちらは大量の敵とスピード、こちらは光と音と緊張感が中心です。将来のゲームにこれをどれくらい入れたいかを確かめています。",),
+    shots: [
+      ["horror-1", t("Der Einstieg", "The start", "Начало", "スタート画面")],
+      ["horror-2", t("Kreide an der Wand, im Licht der Taschenlampe", "Chalk on the wall, in the flashlight", "Мел на стене в свете фонарика", "懐中電灯に照らされた壁のチョーク文字")],
+      ["horror-3", t("Die Zombie-Wellen", "The zombie waves", "Волны зомби", "ゾンビウェーブ")],
+      ["horror-4", t("Die Wald-Arena", "The forest arena", "Лесная арена", "森のアリーナ")],
+    ],
+  },
+];
+
 // The page the visitor just came from isn't offered again. Other sites of mine
 // only send their origin along, this one its whole path.
 const norm = (u: URL) => u.origin + u.pathname.replace(/(\/index)?(\.html)?\/?$/, "").replace(/^(\/adhdActivated)\/.*/, "$1");
@@ -180,7 +222,19 @@ const here = location.origin;
 const source = from === `${here}/lessAdhd` ? "lessAdhd" : from === `${here}/adhdActivated` ? "adhdActivated" : null;
 if (source === "lessAdhd") document.documentElement.dataset.look = stored(sessionStorage, "theme") === "dark" ? "less-dark" : "less-light";
 if (source === "adhdActivated") document.documentElement.dataset.look = stored(localStorage, "kev-ai-theme") === "white" ? "activated-white" : "activated-red";
-const shown = SITES.filter((s) => norm(new URL(s.url, location.href)) !== from);
+const offered = (s: Site) => !s.url || norm(new URL(s.url, location.href)) !== from;
+const siteHtml = (s: Site) => `
+    <section class="site">
+      <h2>${s.name}</h2>
+      <div class="site-text">
+        <div><h3>${t("Was es ist", "What it is", "Что это", "これは何か")}</h3><p>${s.what}</p></div>
+        <div><h3>${t("Warum es so ist", "Why it is that way", "Почему так", "なぜこうなのか")}</h3><p>${s.why}</p></div>
+      </div>
+      ${s.url ? `<a class="site-open" href="${s.url}" target="_blank" rel="noopener">${t("Seite öffnen", "Open site", "Открыть сайт", "サイトを開く")} ↗</a>` : `<p class="site-closed">${t("Noch nicht öffentlich", "Not public yet", "Пока не опубликовано", "まだ公開していません")}</p>`}
+      <div class="site-screens">
+        ${s.shots.map(([file, alt]) => `<a href="/more-stuff/${file}.webp" target="_blank" rel="noopener"><img src="/more-stuff/${file}.webp" alt="${alt}" width="1280" height="800" loading="lazy" decoding="async" /></a>`).join("")}
+      </div>
+    </section>`;
 
 document.documentElement.lang = LANG;
 document.getElementById("links")!.className = "links";
@@ -188,18 +242,14 @@ document.getElementById("links")!.innerHTML = `
   <a class="links-back" href="${source ? `/${source}` : "/"}">← ${source ?? "kev.dev"}</a>
   <h1 class="links-title">${UI.moreStuff}</h1>
   <p class="links-lead">${t("Was ich sonst noch gebaut habe, was es ist und warum es so ist.", "What else I built, what it is and why it is that way.", "Что ещё я построил, что это такое и почему оно так устроено.", "他に作ったもの、それが何で、なぜそうなのか。")}</p>
-  ${shown.map((s) => `
-    <section class="site">
-      <h2>${s.name}</h2>
-      <div class="site-text">
-        <div><h3>${t("Was es ist", "What it is", "Что это", "これは何か")}</h3><p>${s.what}</p></div>
-        <div><h3>${t("Warum es so ist", "Why it is that way", "Почему так", "なぜこうなのか")}</h3><p>${s.why}</p></div>
-      </div>
-      <a class="site-open" href="${s.url}" target="_blank" rel="noopener">${t("Seite öffnen", "Open site", "Открыть сайт", "サイトを開く")} ↗</a>
-      <div class="site-screens">
-        ${s.shots.map(([file, alt]) => `<a href="/more-stuff/${file}.webp" target="_blank" rel="noopener"><img src="/more-stuff/${file}.webp" alt="${alt}" width="1280" height="800" loading="lazy" decoding="async" /></a>`).join("")}
-      </div>
-    </section>`).join("")}
+  ${SITES.filter(offered).map(siteHtml).join("")}
+  <h2 class="links-group">${t("Games in Progress", "Games in progress", "Игры в разработке", "制作中のゲーム")}</h2>
+  <p class="links-lead">${t(
+    "Gerade baue ich ein paar Prototypen, um zu verstehen, was ich am Ende in einem Game haben will: was sich gut anfühlt, was Spaß macht und was wieder rausfliegt. Fertige Spiele sind das nicht, und es kann sich jederzeit alles ändern.",
+    "Right now I'm building a few prototypes to understand what I ultimately want in a game: what feels good, what's fun and what gets thrown out again. These aren't finished games, and anything can change at any time.",
+    "Сейчас я делаю несколько прототипов, чтобы понять, что в итоге хочу видеть в игре: что ощущается хорошо, что весело, а что снова отправится в корзину. Это не готовые игры, и всё может измениться в любой момент.",
+    "最終的にゲームに何を入れたいかを理解するため、いまプロトタイプをいくつか作っています。何が気持ちよく、何が楽しく、何を捨てるかを確かめています。完成したゲームではなく、いつでもすべて変わる可能性があります。",)}</p>
+  ${GAMES.filter(offered).map(siteHtml).join("")}
   <footer class="links-foot">
     <span>© 2026 Kevin Schaberl</span>
     <a href="/impressum">${UI.impressum}</a>
