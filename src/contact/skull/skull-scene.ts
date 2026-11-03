@@ -368,7 +368,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
         const d = settle(u);
         for (const s of shards) {
           // With a later stop nothing hangs in the air: they're gone by then.
-          s.m.visible = u > 0 && (this.stop === FREEZE_AT || u < this.stop);
+          // Frozen earlier (the end), they stay where they are.
+          s.m.visible = u > 0 && (this.stop <= FREEZE_AT || u < this.stop);
           if (!s.m.visible) continue;
           s.m.position.copy(origin).addScaledVector(s.vel, d);
           s.m.rotation.set(s.spin.x * d, s.spin.y * d, s.spin.z * d);
