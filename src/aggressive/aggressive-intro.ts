@@ -87,6 +87,7 @@ document.body.innerHTML = `
       <button type="button" data-nav="about"><span class="ai-long">[abt.me]</span><span class="ai-short">[abt]</span></button>
       <button type="button" data-nav="projects"><span class="ai-long">[projects]</span><span class="ai-short">[stuff]</span></button>
       <button type="button" data-nav="contact"><span class="ai-long">[contact]</span><span class="ai-short">[mail]</span></button>
+      <button type="button" data-end-it><span class="ai-long">[end it]</span><span class="ai-short">[end]</span></button>
       </span>
       <span class="ai-bar-end">
         <button type="button" data-lang="de"${LANG === "de" ? ' class="is-on"' : ""}>[de]</button>
@@ -725,6 +726,7 @@ q<HTMLElement>(".ai-bar--top").addEventListener("click", (e) => {
   const lang = t.closest<HTMLElement>("[data-lang]")?.dataset.lang;
   if (lang) return setLang(lang as Lang);
   if (t.closest("[data-switch-theme]")) return switchTheme();
+  if (t.closest("[data-end-it]")) return ended ? location.reload() : endIt();
   const name = t.closest<HTMLElement>("[data-nav]")?.dataset.nav;
   if (!name) return;
   if (ended) return location.reload();
@@ -784,8 +786,10 @@ function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
   };
   burst();
 }
-tourEnd.addEventListener("click", () => {
+tourEnd.addEventListener("click", () => endIt());
+function endIt() {
   if (throwing) return;
+  if (!more.hidden) closeMore(false);
   touring = false;
   tour.hidden = true;
   // Only the skull on the bare background again, like at the start.
@@ -817,7 +821,7 @@ tourEnd.addEventListener("click", () => {
   };
   if (currentPage) closePage(finale);
   else finale();
-});
+}
 
 // ── the routes ──
 // The address follows whatever opens (setUrl in openPage, closePage, openMore),
