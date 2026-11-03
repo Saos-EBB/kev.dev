@@ -96,6 +96,7 @@ document.body.innerHTML = `
       </span>
     </nav>
     <div class="ai-banner" aria-hidden="true" hidden><div class="ai-banner-track">${BANNER}</div></div>
+    <div class="ai-banner ai-banner--top" aria-hidden="true" hidden><div class="ai-banner-track">${BANNER}</div></div>
     <div class="ai-mark" hidden><span>©</span> Saos</div>
     <footer class="ai-bar ai-bar--bottom" hidden>
       <span class="ai-bar-copy">© copyright saos / kevinschaberl</span>
@@ -797,13 +798,7 @@ function endIt() {
   skull.clean(); // right away: the clean skull, not the old blades while the page closes
   const finale = () => {
     ended = true;
-    // The banner stays for the end, over the spray, and gets a twin at the top running the other way.
-    const banner = q<HTMLElement>(".ai-banner");
-    const topBanner = banner.cloneNode(true) as HTMLElement;
-    topBanner.classList.add("ai-banner--top");
-    banner.after(topBanner);
-    // In step with the one below; the CSS delay makes it the mirror image.
-    topBanner.firstElementChild!.getAnimations()[0].currentTime = banner.firstElementChild!.getAnimations()[0].currentTime;
+    // The banners stay for the end, over the spray.
     stage.classList.add("ai-ended");
     const spray = context(sprayCanvas);
     sprayCanvas.hidden = false;

@@ -650,8 +650,8 @@ body.ai {
   display: none;
 }
 
-/* The room's banner: desktop only, behind the panes and pages, under the footer
-   that fades in on hover. */
+/* The room's banners, one at the bottom and one at the top: desktop only, behind
+   the panes and pages, under the bars that fade in on hover. */
 .ai-banner {
   position: absolute;
   left: 0;
