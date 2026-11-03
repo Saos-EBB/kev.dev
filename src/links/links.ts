@@ -165,8 +165,29 @@ const SITES: Site[] = [
   },
 ];
 
-// Prototypes rather than sites: their own section, and not all of them are public yet.
+// Prototypes rather than sites: their own section, at the top, and not all of them are public yet.
 const GAMES: Site[] = [
+  {
+    name: t("Hinter dir", "Hinter dir (Behind you)", "Hinter dir (За тобой)", "Hinter dir(後ろにいる)"),
+    what: t(
+      "Ein First-Person-Horror im Browser: Mit der Taschenlampe durch ein Labyrinth, und etwas folgt dir. Es kommt näher, solange du nicht hinsiehst. Wer drei Gegenstände findet, kommt nach unten zu den Zombie-Wellen. Dazu gibt es eine Wald-Arena, in der ich Waffen und Monster ausprobiere.",
+      "A first-person horror game in the browser: through a maze with a flashlight, and something follows you. It gets closer as long as you don't look. Find three items and you get down to the zombie waves. There is also a forest arena where I try out weapons and monsters.",
+      "Хоррор от первого лица в браузере: с фонариком через лабиринт, а за тобой что-то идёт. Оно приближается, пока ты не смотришь. Кто найдёт три предмета, спустится к волнам зомби. Есть ещё лесная арена, где я пробую оружие и монстров.",
+      "ブラウザで遊べる一人称ホラーです。懐中電灯を手に迷路を進むと、何かが後をつけてきます。見ていない間に近づいてきます。3つのアイテムを見つけると、下のゾンビウェーブに進めます。武器やモンスターを試す森のアリーナもあります。",),
+    why: t(
+      "Das Gegenstück zu Frost Grind: Dort geht es um viele Gegner und Tempo, hier um Licht, Sound und Spannung. Ich will herausfinden, wie viel davon ich später in einem Game haben will.",
+      "The counterpart to Frost Grind: there it's about many enemies and speed, here about light, sound and tension. I want to find out how much of that I'll want in a game later.",
+      "Противоположность Frost Grind: там много врагов и скорость, здесь свет, звук и напряжение. Хочу понять, сколько всего этого мне потом нужно в игре.",
+      "Frost Grindとは対照的です。あちらは大量の敵とスピード、こちらは光と音と緊張感が中心です。将来のゲームにこれをどれくらい入れたいかを確かめています。",),
+    shots: [
+      ["horror-1", t("Das Menü", "The menu", "Меню", "メニュー")],
+      ["horror-2", t("Kreide an der Wand, im Licht der Taschenlampe", "Chalk on the wall, in the flashlight", "Мел на стене в свете фонарика", "懐中電灯に照らされた壁のチョーク文字")],
+      ["horror-3", t("Halle 1: die erste Zombie-Welle", "Hall 1: the first zombie wave", "Зал 1: первая волна зомби", "ホール1: 最初のゾンビウェーブ")],
+      ["horror-4", t("Halle 2: manche sind größer", "Hall 2: some are bigger", "Зал 2: некоторые крупнее", "ホール2: 大きいのもいる")],
+      ["horror-5", t("Der Endkampf gegen den Großen", "The final fight against the big one", "Финальный бой с Большим", "大きなやつとの最終戦")],
+      ["horror-6", t("Die Wald-Arena", "The forest arena", "Лесная арена", "森のアリーナ")],
+    ],
+  },
   {
     name: "Frost Grind",
     url: "https://saosgonegametry02.vercel.app",
@@ -181,27 +202,12 @@ const GAMES: Site[] = [
       "Она объединяет то, что я люблю в играх, и сейчас я пробую, что ощущается хорошо: какие заклинания, какой баланс. Так что всё может измениться в любой момент.",
       "ゲームの好きな要素を組み合わせ、どの呪文やバランスが気持ちよいかを試しています。そのため、いつでもすべて変わる可能性があります。",),
     shots: [
-      ["frost-1", t("Auswahl vor dem Run", "Choosing before a run", "Выбор перед забегом", "ラン前の選択")],
-      ["frost-2", t("Im Run", "In a run", "В забеге", "ラン中")],
-    ],
-  },
-  {
-    name: t("Hinter dir", "Hinter dir (Behind you)", "Hinter dir (За тобой)", "Hinter dir(後ろにいる)"),
-    what: t(
-      "Ein First-Person-Horror im Browser: Mit der Taschenlampe durch ein Labyrinth, und etwas folgt dir. Es kommt näher, solange du nicht hinsiehst. Wer drei Gegenstände findet, kommt nach unten zu den Zombie-Wellen. Dazu gibt es eine Wald-Arena, in der ich Waffen und Monster ausprobiere.",
-      "A first-person horror game in the browser: through a maze with a flashlight, and something follows you. It gets closer as long as you don't look. Find three items and you get down to the zombie waves. There is also a forest arena where I try out weapons and monsters.",
-      "Хоррор от первого лица в браузере: с фонариком через лабиринт, а за тобой что-то идёт. Оно приближается, пока ты не смотришь. Кто найдёт три предмета, спустится к волнам зомби. Есть ещё лесная арена, где я пробую оружие и монстров.",
-      "ブラウザで遊べる一人称ホラーです。懐中電灯を手に迷路を進むと、何かが後をつけてきます。見ていない間に近づいてきます。3つのアイテムを見つけると、下のゾンビウェーブに進めます。武器やモンスターを試す森のアリーナもあります。",),
-    why: t(
-      "Das Gegenstück zu Frost Grind: Dort geht es um viele Gegner und Tempo, hier um Licht, Sound und Spannung. Ich will herausfinden, wie viel davon ich später in einem Game haben will.",
-      "The counterpart to Frost Grind: there it's about many enemies and speed, here about light, sound and tension. I want to find out how much of that I'll want in a game later.",
-      "Противоположность Frost Grind: там много врагов и скорость, здесь свет, звук и напряжение. Хочу понять, сколько всего этого мне потом нужно в игре.",
-      "Frost Grindとは対照的です。あちらは大量の敵とスピード、こちらは光と音と緊張感が中心です。将来のゲームにこれをどれくらい入れたいかを確かめています。",),
-    shots: [
-      ["horror-1", t("Der Einstieg", "The start", "Начало", "スタート画面")],
-      ["horror-2", t("Kreide an der Wand, im Licht der Taschenlampe", "Chalk on the wall, in the flashlight", "Мел на стене в свете фонарика", "懐中電灯に照らされた壁のチョーク文字")],
-      ["horror-3", t("Die Zombie-Wellen", "The zombie waves", "Волны зомби", "ゾンビウェーブ")],
-      ["horror-4", t("Die Wald-Arena", "The forest arena", "Лесная арена", "森のアリーナ")],
+      ["frost-1", t("Das Menü: Figur, Mods und Mob-Modus", "The menu: character, mods and mob mode", "Меню: персонаж, моды и режим мобов", "メニュー: キャラクター、MOD、モブモード")],
+      ["frost-2", t("Belagerung: die Mobs kommen vom Rand", "Siege: the mobs come from the edge", "Осада: мобы идут с краёв", "包囲: モブが外周から迫る")],
+      ["frost-3", t("Level-Up: eine von vier Karten", "Level up: one of four cards", "Новый уровень: одна из четырёх карт", "レベルアップ: 4枚から1枚を選ぶ")],
+      ["frost-4", t("Feuermagier im Dschungel", "Fire mage in the jungle", "Огненный маг в джунглях", "ジャングルの炎の魔法使い")],
+      ["frost-5", t("Strichkrieger in der Wüste", "Stick warrior in the desert", "Воин-палочка в пустыне", "砂漠の棒人間戦士")],
+      ["frost-6", t("Eismagier in der Schmiede", "Frost mage in the forge", "Ледяной маг в кузне", "鍛冶場の氷の魔法使い")],
     ],
   },
 ];
@@ -242,7 +248,6 @@ document.getElementById("links")!.innerHTML = `
   <a class="links-back" href="${source ? `/${source}` : "/"}">← ${source ?? "kev.dev"}</a>
   <h1 class="links-title">${UI.moreStuff}</h1>
   <p class="links-lead">${t("Was ich sonst noch gebaut habe, was es ist und warum es so ist.", "What else I built, what it is and why it is that way.", "Что ещё я построил, что это такое и почему оно так устроено.", "他に作ったもの、それが何で、なぜそうなのか。")}</p>
-  ${SITES.filter(offered).map(siteHtml).join("")}
   <h2 class="links-group">${t("Games in Progress", "Games in progress", "Игры в разработке", "制作中のゲーム")}</h2>
   <p class="links-lead">${t(
     "Gerade baue ich ein paar Prototypen, um zu verstehen, was ich am Ende in einem Game haben will: was sich gut anfühlt, was Spaß macht und was wieder rausfliegt. Fertige Spiele sind das nicht, und es kann sich jederzeit alles ändern.",
@@ -250,6 +255,8 @@ document.getElementById("links")!.innerHTML = `
     "Сейчас я делаю несколько прототипов, чтобы понять, что в итоге хочу видеть в игре: что ощущается хорошо, что весело, а что снова отправится в корзину. Это не готовые игры, и всё может измениться в любой момент.",
     "最終的にゲームに何を入れたいかを理解するため、いまプロトタイプをいくつか作っています。何が気持ちよく、何が楽しく、何を捨てるかを確かめています。完成したゲームではなく、いつでもすべて変わる可能性があります。",)}</p>
   ${GAMES.filter(offered).map(siteHtml).join("")}
+  <h2 class="links-group">${t("Seiten", "Sites", "Сайты", "サイト")}</h2>
+  ${SITES.filter(offered).map(siteHtml).join("")}
   <footer class="links-foot">
     <span>© 2026 Kevin Schaberl</span>
     <a href="/impressum">${UI.impressum}</a>
