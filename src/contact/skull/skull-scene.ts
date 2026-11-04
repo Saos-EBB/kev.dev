@@ -12,6 +12,7 @@
 // sequence started (no stepping; the blood's particles are computed on the
 // GPU from that same time), so reduced motion just jumps to the end.
 import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { LITE } from "../../viewport";
 import { BLADE_R, bladeGeometry, depthSteps, loadSkullGeometry, wireMesh } from "./parts";
 import { createBlood, type Blood } from "./blood";
@@ -24,6 +25,8 @@ const FREEZE_AT = 0.7; // s after the hit: the frame stops, the blood still in t
 const SHARDS = 18;
 const YAW = Math.PI / 4; // the skull is turned to the viewer's right, the wound faces the camera
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
+const IDLE_AFTER = 3000; // ms without a drag before spin() lets it turn on its own
+const SPIN_SPEED = (Math.PI * 2) / 12; // rad/s: once round every 12 s
 
 // The one hit: upper left of the forehead (a point in skull space: face +z,
 // vault +y; the nearest front vertex is the hit point), a big blade sunk
@@ -61,7 +64,7 @@ const AROUND_PRESSURE = 0.82, AROUND_DROP = 0.2, AROUND_COUNT = LITE ? 1000 : 28
 const MIST_COUNT = LITE ? 3000 : 10000, MIST_PRESSURE = 1.7, MIST_DROP = 0.07;
 const AROUND_DEPTH = { front: 3, range: 12 };
 
-export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number] };
+export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number]; spin(on: boolean): void };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
@@ -205,7 +208,11 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
 
   // ── a hit: blade, cracks, blood, shards ──
   const toCamera = new THREE.Vector3(0, 0, 1).applyAxisAngle(Y_AXIS, -YAW);
-  const shardMats: ReturnType<typeof wireMesh>[] = [];
+  // One pair of materials for every shard of every hit: hundreds of them hang in the end.
+  const shardMats = {
+    fillMat: new THREE.MeshBasicMaterial({ color: bgColor, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }),
+    lineMat: new THREE.LineBasicMaterial({ color: lineColor, transparent: true, opacity: 0.95 }),
+  };
   const blades: ReturnType<typeof wireMesh>[] = [];
   const crackMat = new THREE.MeshBasicMaterial({ color: bgColor, side: THREE.DoubleSide, transparent: true }); // in the transparent pass so it's drawn after the skull's lines, and over them
 
@@ -284,6 +291,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     });
   };
 
+  type Hit = Awaited<ReturnType<typeof makeHit>>;
   const makeHit = async (def: HitDef, startU: number) => {
     const hit = def.hit ?? nearestTo(new THREE.Vector3(...def.want!));
     const inDir = def.out ?? new THREE.Vector3(hit.x, hit.y, 0).normalize(); // the blade lies in the screen plane
@@ -322,16 +330,41 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     // The shards are pieces of the skull: same fill, same lines, a bit brighter.
     const shardAxis = jetAxis.clone().applyAxisAngle(Y_AXIS, YAW); // shards live in world space
     const shards = Array.from({ length: SHARDS }, () => {
-      const part = wireMesh(skullPiece(hit), lineColor, bgColor, 0.95);
-      part.fillMat.side = THREE.DoubleSide;
-      shardMats.push(part);
-      const m = part.group;
+      const m = wireMesh(skullPiece(hit), lineColor, bgColor, 0.95, false, shardMats).group;
       m.visible = false;
       world.add(m);
       const vel = new THREE.Vector3((Math.random() - 0.5) * 3.4, (Math.random() - 0.2) * 3.4, Math.random() * 1.4).addScaledVector(shardAxis, 1.8);
       const spin = new THREE.Vector3(Math.random() * 14, Math.random() * 14, Math.random() * 14);
       return { m, vel, spin };
     });
+    // Once nothing moves any more, a hit's hanging shards are drawn as one mesh
+    // (two draw calls instead of 36): it all turns like a ball in the end, and
+    // every frame of that would otherwise draw each shard on its own.
+    let baked: THREE.Group | null = null;
+    const bake = () => {
+      const fills: THREE.BufferGeometry[] = [], lines: THREE.BufferGeometry[] = [];
+      for (const s of shards) {
+        s.m.updateMatrix();
+        const [fill, line] = s.m.children as [THREE.Mesh, THREE.LineSegments];
+        fills.push(fill.geometry.clone().applyMatrix4(s.m.matrix));
+        lines.push(line.geometry.clone().applyMatrix4(s.m.matrix));
+      }
+      const f = mergeGeometries(fills), l = mergeGeometries(lines);
+      for (const g of [...fills, ...lines]) g.dispose();
+      if (!f || !l) return null;
+      const g = new THREE.Group();
+      g.add(new THREE.Mesh(f, shardMats.fillMat), new THREE.LineSegments(l, shardMats.lineMat));
+      world.add(g);
+      for (const s of shards) world.remove(s.m); // hidden ones would still cost a matrix update each frame
+      return g;
+    };
+    const unbake = () => {
+      if (!baked) return;
+      world.remove(baked);
+      for (const c of baked.children) (c as THREE.Mesh).geometry.dispose();
+      baked = null;
+      for (const s of shards) world.add(s.m);
+    };
 
     return {
       hit,
@@ -348,7 +381,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
         skull.add(this.mist.points);
       },
       // Blade, cracks, blood and shards at this hit's time.
-      pose() {
+      // `still`: no hit is under way, so the skull (and the shards' origin) stays put.
+      pose(still: boolean) {
         const u = this.fired ? this.u : -1e3;
         // blade: flies in, sinks, spins down
         const fly = u + BLADE_FLIGHT;
@@ -366,14 +400,18 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
         // shards: burst from the hit point, slow down, hang there
         const origin = world.worldToLocal(skull.localToWorld(hit.clone()));
         const d = settle(u);
+        // With a later stop nothing hangs in the air: they're gone by then.
+        // Frozen earlier (the end), they stay where they are.
+        const hang = u > 0 && (this.stop <= FREEZE_AT || u < this.stop);
+        const frozen = hang && still && u >= this.stop;
+        if (!frozen) unbake();
         for (const s of shards) {
-          // With a later stop nothing hangs in the air: they're gone by then.
-          // Frozen earlier (the end), they stay where they are.
-          s.m.visible = u > 0 && (this.stop <= FREEZE_AT || u < this.stop);
-          if (!s.m.visible) continue;
+          s.m.visible = hang && !baked;
+          if (!hang || baked) continue;
           s.m.position.copy(origin).addScaledVector(s.vel, d);
           s.m.rotation.set(s.spin.x * d, s.spin.y * d, s.spin.z * d);
         }
+        if (frozen && !baked) baked = bake();
       },
     };
   };
@@ -384,6 +422,17 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const first = await makeHit(placed[0] ?? HIT, -HIT_AT);
   const hits = [first];
   let fired = 1; // how many of the blades are in play
+  // Building a blade (shards, blood) takes ~100 ms: the next one is built ahead
+  // while the browser is idle, so a click (or the end's run of blades) doesn't
+  // wait for it. Only one ahead, built in order, so `hits` has no holes.
+  const pendingHits: (Promise<Hit> | undefined)[] = [Promise.resolve(first)]; // after clean() the first blade comes again
+  const hitAt = (i: number) => (pendingHits[i] ??= makeHit(moreDefs[i - 1], -BLADE_FLIGHT).then((h) => (hits[i] = h)));
+  // A second after a blade, not during it: its blood is still being animated.
+  const buildAhead = () => window.setTimeout(() => void breathe().then(() => {
+    const i = fired;
+    if (i === hits.length && i <= moreDefs.length) void hitAt(i);
+  }), 1000);
+  buildAhead();
 
   // Theme toggle (data-theme, or data-ai-theme on adhdActivated): recolor everything in place.
   new MutationObserver(() => {
@@ -392,7 +441,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     skullParts.fillMat.color.copy(bgColor);
     for (const b of blades) { b.fillMat.color.copy(bgColor); b.lineMat.color.copy(bladeColor); }
     crackMat.color.copy(bgColor);
-    for (const m of shardMats) { m.lineMat.color.copy(lineColor); m.fillMat.color.copy(bgColor); }
+    shardMats.lineMat.color.copy(lineColor);
+    shardMats.fillMat.color.copy(bgColor);
     for (const h of hits) { h.blood.recolor(); h.mist?.recolor(); } // its ink is throwColor itself
     dirty = true;
   }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-ai-theme"] });
@@ -427,14 +477,19 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const pivot = new THREE.Vector3();
   const freeTurn = new THREE.Quaternion(), freeStep = new THREE.Quaternion(), freeEuler = new THREE.Euler();
   let drag: { id: number; x: number; y: number } | null = null;
+  // spin(): standing still for IDLE_AFTER, it turns round its upright axis; a drag stops it.
+  let spinOn = false, spinV = 0, lastTouch = 0;
+  const touched = () => { lastTouch = performance.now(); spinV = 0; };
   section.addEventListener("pointerdown", (e) => {
     if ((e.target as HTMLElement).closest("a, button")) return; // the link shards and the button stay clickable
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    touched();
     section.setPointerCapture(e.pointerId);
     section.classList.add("is-turning");
   });
   section.addEventListener("pointermove", (e) => {
     if (!drag || e.pointerId !== drag.id) return;
+    touched();
     if (free) {
       freeEuler.set((e.clientY - drag.y) * 0.008, (e.clientX - drag.x) * 0.008, 0);
       freeTurn.premultiply(freeStep.setFromEuler(freeEuler));
@@ -450,6 +505,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const endDrag = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.id) return;
     drag = null;
+    touched();
     section.classList.remove("is-turning");
   };
   section.addEventListener("pointerup", endDrag);
@@ -520,7 +576,8 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     skull.rotation.z = kickZ * 0.07;
     world.updateMatrixWorld();
 
-    for (const h of hits) h.pose();
+    const still = !building && hits.every((h) => !h.fired || h.u >= h.stop);
+    for (const h of hits) h.pose(still);
 
     const originWorld = skull.localToWorld(first.hit.clone());
     const u = first.fired ? first.u : -1;
@@ -567,6 +624,12 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       else if (!settledAt) settledAt = now;
       if (!settled && settledAt && (instant || now - settledAt > SETTLED_PAUSE)) { settled = true; onSettled(true); }
     }
+    if (spinOn && !drag && now - lastTouch > IDLE_AFTER) {
+      spinV = Math.min(SPIN_SPEED, spinV + SPIN_SPEED * dt); // eases in over a second
+      if (free) freeTurn.premultiply(freeStep.setFromAxisAngle(Y_AXIS, spinV * dt));
+      else turn.ty += spinV * dt;
+      dirty = true;
+    }
     if (dirty) { dirty = false; pose(); renderer.render(scene, camera); }
     requestAnimationFrame(frame);
   }
@@ -584,6 +647,10 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     setGap(x: number, y: number) {
       gap.x = x; gap.y = y;
       dirty = true;
+    },
+    spin(on: boolean) {
+      spinOn = on;
+      touched();
     },
     wound: () => toScreen(skull.localToWorld(hits[fired - 1].hit.clone())), // the latest hit
     // A clean skull again, every blade back in play, and from now on it turns
@@ -609,8 +676,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       settled = false;
       settledAt = 0;
       building = true;
-      hits[i] ??= await makeHit(moreDefs[i - 1], -BLADE_FLIGHT);
+      await hitAt(i);
       building = false;
+      buildAhead();
       hits[i].stop = stop;
       if (misty) hits[i].addMist();
       hits[i].u = -BLADE_FLIGHT;

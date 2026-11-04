@@ -70,9 +70,10 @@ function indexedWire(geo: THREE.BufferGeometry) {
 // faces' lines, the wireframe sits on top of it.
 // `outline`: only the real edges (EdgesGeometry) instead of every triangle —
 // for flat shapes like the saw blade, whose triangulation would cross its face.
-export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, fill: THREE.Color | number, opacity: number, outline = false) {
-  const fillMat = new THREE.MeshBasicMaterial({ color: fill, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
-  const lineMat = new THREE.LineBasicMaterial({ color: line, transparent: true, opacity });
+// `mats`: materials to share with other meshes instead of a pair of its own.
+export function wireMesh(geo: THREE.BufferGeometry, line: THREE.Color | number, fill: THREE.Color | number, opacity: number, outline = false, mats?: { fillMat: THREE.MeshBasicMaterial; lineMat: THREE.LineBasicMaterial }) {
+  const fillMat = mats?.fillMat ?? new THREE.MeshBasicMaterial({ color: fill, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+  const lineMat = mats?.lineMat ?? new THREE.LineBasicMaterial({ color: line, transparent: true, opacity });
   const g = new THREE.Group();
   const lines = outline ? new THREE.EdgesGeometry(geo, 30) : geo.getIndex() ? indexedWire(geo) : new THREE.WireframeGeometry(geo);
   g.add(new THREE.Mesh(geo, fillMat), new THREE.LineSegments(lines, lineMat));

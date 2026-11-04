@@ -51,14 +51,25 @@ export function initThemeToggle() {
 
   apply();
 
+  // Each theme's background, for the spill. Reading the other one means
+  // switching the page's theme for a moment, a style recalc of the whole page:
+  // done once while the browser is idle, not on the click.
+  const root = document.documentElement;
+  const backgrounds: Partial<Record<Theme, string>> = {};
+  const readBackgrounds = () => {
+    const now = root.getAttribute("data-theme") as Theme;
+    for (const t of [now === "light" ? "dark" : "light", now] as const) {
+      root.setAttribute("data-theme", t);
+      backgrounds[t] = getComputedStyle(document.body).backgroundColor;
+    }
+  };
+  (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500)))(() => { if (!backgrounds.light) readBackgrounds(); });
+
   button.addEventListener("click", () => {
     theme = theme === "light" ? "dark" : "light";
     writeStored(theme);
+    if (!backgrounds[theme]) readBackgrounds(); // clicked before the browser was ever idle
     // The new colors spill in from the top left corner (spill.ts).
-    const root = document.documentElement, old = root.getAttribute("data-theme")!;
-    root.setAttribute("data-theme", theme); // only to read the new background
-    const color = getComputedStyle(document.body).backgroundColor;
-    root.setAttribute("data-theme", old);
-    spillSwitch(apply, color);
+    spillSwitch(apply, backgrounds[theme]!);
   });
 }
