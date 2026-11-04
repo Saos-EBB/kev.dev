@@ -44,6 +44,13 @@
   --ai-grid-line: color-mix(in srgb, var(--ai-line-strong) 70%, transparent);
 }
 
+/* Above 1920×1080 everything in rem grows with the screen (2560×1440: ×1.33):
+   the clamps below top out around 1400 px, and the room's words, banners and
+   pages would otherwise stay small on a big monitor. GROW in the script is the same. */
+html {
+  font-size: max(100%, min(100vw / 120, 100vh / 67.5));
+}
+
 html,
 body.ai {
   height: 100%;

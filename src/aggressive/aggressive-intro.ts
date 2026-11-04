@@ -25,6 +25,7 @@ import { projectCards } from "../projects/projects-data";
 import { LANG, pick, setLang, type Lang } from "../i18n";
 import { softReloaded } from "../i18n/soft-reload";
 import { revokeConsent, type ConsentId } from "../consent";
+import { softReload } from "../i18n/soft-reload";
 import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
 import { renderConsents } from "../legal/legal-overlay";
 import { UI } from "../i18n/ui";
@@ -146,7 +147,21 @@ if (TALL()) {
 q<SVGElement>(".ai-room").innerHTML = (wallGrid ? line(wallGrid, "ai-wall-grid") : "") + line(edges, "ai-wall-edge");
 
 // ── the grid ──
+// Measured once: the grid, the paint on the walls and the blots aimed at the
+// words are laid out for this size. A new size reloads behind a cover, past the
+// press like a language switch, the address keeps the page. On touch only a new
+// width counts (turning the phone): the address bar changes the height all the time.
 const w = innerWidth, h = innerHeight;
+let resizeTimer = 0;
+window.addEventListener("resize", () => {
+  window.clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(() => {
+    const touch = matchMedia("(pointer: coarse)").matches;
+    if (innerWidth !== w || (!touch && innerHeight !== h)) softReload();
+  }, 400);
+});
+// The same growth as the CSS's root font size above 1920×1080.
+const GROW = Math.max(1, Math.min(w / 1920, h / 1080));
 const cell = matchMedia("(max-width: 900px)").matches ? 32 : 48;
 type Line = { el: HTMLElement; horizontal: boolean; dir: number; rank: number };
 const lines: Line[] = [];
@@ -224,7 +239,7 @@ type Drip = { x: number; y: number; width: number; left: number; speed: number }
 
 const rand = (a: number, c: number) => a + Math.random() * (c - a);
 // Blots scale with the screen, or a phone just turns white.
-const scale = Math.min(1, Math.sqrt((w * h) / (1280 * 800)) * 1.1);
+const scale = Math.min(GROW, Math.sqrt((w * h) / (1280 * 800)) * 1.1);
 const radius = () => (Math.random() < 0.1 ? rand(14, 46) : rand(1.5, 12)) * scale;
 
 function makeDrops(fromX: number, fromY: number): Drop[] {
@@ -502,6 +517,7 @@ function dropScene() {
 async function openPage(name: string, saw = false) {
   if (throwing || name === currentPage) return;
   throwing = true;
+  skull.spin(false); // still for the blade, and nobody sees it behind the page
   // Blood in the background color: the scene rereads its colors when the theme attribute is set.
   document.documentElement.style.setProperty("--color-throw", getComputedStyle(document.documentElement).getPropertyValue("--ai-bg").trim());
   document.documentElement.dataset.theme = "light";
@@ -593,6 +609,7 @@ function closePage(then?: () => void) {
   stopGlass = runDrops(ctx, glassDrops(...woundAt), () => {
     glass.hidden = true;
     throwing = false;
+    skull.spin(true); // the room again
     then?.();
   });
 }
@@ -806,6 +823,7 @@ function endIt() {
     ended = true;
     // The banners stay for the end, over the spray.
     stage.classList.add("ai-ended");
+    skull.spin(true);
     sprayCanvas.hidden = false;
     document.documentElement.style.setProperty("--color-throw", PALETTE.inkCss);
     document.documentElement.dataset.theme = "light";
@@ -917,6 +935,7 @@ async function run() {
         tour.hidden = false;
         document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });
         roomReady = true;
+        scene.spin(true); // the room is the menu: it turns while nobody touches it
         if (location.pathname !== BASE) syncRoute(); // arrived by a deep link
       }, WORDS_AFTER * 1000);
     }, HIT_DELAY * 1000);

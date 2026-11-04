@@ -429,6 +429,9 @@ type TextLine = {
 
 let nameTexture: HTMLCanvasElement | null = null;
 let nameLines: TextLine[] = [];
+// The name's colors, read with its layout (updateNameTexture, also after a
+// theme toggle): reading them per shine frame forced a style recalc each time.
+let nameColors = { from: "", mid: "", to: "", glow: [0, 0, 0] };
 
 function readToken(name: string) {
   return getComputedStyle(document.documentElement)
@@ -458,10 +461,10 @@ function paintNameTexture(shine: number | null) {
 
     const textWidth = tctx.measureText(line.text).width;
     const gradient = tctx.createLinearGradient(line.x, 0, line.x + textWidth, 0);
-    gradient.addColorStop(0, readToken("--title-grad-from"));
-    gradient.addColorStop(0.5, readToken("--title-grad-mid"));
-    gradient.addColorStop(1, readToken("--title-grad-to"));
-    const [r, g, b] = hexToRgb(readToken("--title-glow"));
+    gradient.addColorStop(0, nameColors.from);
+    gradient.addColorStop(0.5, nameColors.mid);
+    gradient.addColorStop(1, nameColors.to);
+    const [r, g, b] = nameColors.glow;
 
     tctx.save();
     tctx.fillStyle = gradient;
@@ -491,6 +494,12 @@ function updateNameTexture() {
   const rect = heroContent.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return;
 
+  nameColors = {
+    from: readToken("--title-grad-from"),
+    mid: readToken("--title-grad-mid"),
+    to: readToken("--title-grad-to"),
+    glow: hexToRgb(readToken("--title-glow")),
+  };
   nameLines = [];
   for (const el of [heroName, heroSubtitle]) {
     const elRect = el.getBoundingClientRect();
