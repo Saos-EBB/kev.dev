@@ -13,7 +13,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import * as SkeletonUtils from "three/addons/utils/SkeletonUtils.js";
 import * as sfx from "./horror-audio";
 import { loadSkullGeometry } from "../ct/parts";
-import { FLAME, GUNS, GUN_IDS, MELEES, MELEE_IDS, ROCKET, SABER, gunView, meleeView, saberView, type ArsenalId, type GunId, type MeleeId, type ViewModel } from "./horror-arsenal";
+import { FLAME, GUNS, GUN_IDS, ROCKET, SABER, gunView, saberView, type ArsenalId, type GunId, type ViewModel } from "./horror-arsenal";
 import { MONSTERS, MONSTER_IDS, type Clip, type Fake, type MonsterId } from "./horror-bestiary";
 import { applyLooseTextures } from "./horror-textures";
 
@@ -23,11 +23,9 @@ export type PickupKind = Weapon | "shells" | "health";
 export const WEAPON_NAMES: Record<Weapon, string> = {
   shotgun: "Schrot", bat: "Säge", sword: "Katana", rail: "Railgun", ice: "Eiswerfer", saber: SABER.name,
   ...(Object.fromEntries(GUN_IDS.map((id) => [id, GUNS[id].name])) as Record<GunId, string>),
-  ...(Object.fromEntries(MELEE_IDS.map((id) => [id, MELEES[id].name])) as Record<MeleeId, string>),
 };
-export const WEAPONS: Weapon[] = ["shotgun", "bat", "sword", "rail", "ice", "saber", ...GUN_IDS, ...MELEE_IDS];
-const isPileMelee = (w: Weapon | null): w is MeleeId => !!w && w in MELEES;
-const MELEE = (w: Weapon | null) => w === "bat" || w === "sword" || w === "saber" || isPileMelee(w);
+export const WEAPONS: Weapon[] = ["shotgun", "bat", "sword", "rail", "ice", "saber", ...GUN_IDS];
+const MELEE = (w: Weapon | null) => w === "bat" || w === "sword" || w === "saber";
 const isArsenalGun = (w: Weapon | null): w is GunId => !!w && w in GUNS;
 export type Kill = { kind: ZombieKind; hits: number; head: boolean; at: THREE.Vector3 };
 
@@ -222,19 +220,10 @@ export function createCombat(w: CombatWorld) {
     add("saber", saberView(saber, map));
     await Promise.all(GUN_IDS.map((id, i) => applyLooseTextures(guns[i].scene, GUNS[id].file, "weapons")));
     GUN_IDS.forEach((id, i) => add(id, gunView(guns[i], GUNS[id])));
-    const blades = await Promise.all(MELEE_IDS.map((id) => loader.loadAsync(`/horror/weapons/${MELEES[id].file}.glb`)));
-    await Promise.all(MELEE_IDS.map((id, i) => applyLooseTextures(blades[i].scene, MELEES[id].file, "weapons")));
-    MELEE_IDS.forEach((id, i) => {
-      const v = meleeView(blades[i], MELEES[id]);
-      const holder = new THREE.Group(); holder.add(v); holder.visible = false;
-      viewRoot.add(holder); pileViews.set(id, holder);
-      props[id] = v.clone();
-    });
     arsenal.get("saber")!.loop("Idle");
     for (const p of pickups) if (p.kind in GUNS || p.kind === "saber") dressPickup(p);
   })();
   const flashes = new Map<ArsenalId, THREE.Sprite>();
-  const pileViews = new Map<MeleeId, THREE.Group>();
   // hue for monsters whose texture is missing (cactus green, the rest flesh)
   const MONSTER_TINT: Partial<Record<MonsterId, number>> = { cactus: 0.3, piranha: 0.0, pinguin: 0.6 };
   // the bestiary: each scaled to its height, dimmed a little for the dark
@@ -579,13 +568,6 @@ export function createCombat(w: CombatWorld) {
       setTimeout(sfx.swing, 120);
       return;
     }
-    if (isPileMelee(weapon)) {
-      const m = MELEES[weapon];
-      cooldown = m.every;
-      if (m.saw) { sawT = 0.2; swordHit(m.dmg, m.range); sfx.chop(origin); return; } // revving: every tick is a hit
-      swingT = 0; swung = false; setTimeout(sfx.swing, 90);
-      return;
-    }
     if (MELEE(weapon)) { cooldown = weapon === "sword" ? 0.7 : 0.6; swingT = 0; swung = false; setTimeout(sfx.swing, 90); return; }
     if (!isGun(weapon) || reloadT > 0) return;
     if (mag[weapon] <= 0) { if (!reload()) { sfx.click(); cooldown = 0.3; } return; }
@@ -627,7 +609,6 @@ export function createCombat(w: CombatWorld) {
 
   /* ---------- the second armory's guns: pellets, spread, pierce from GUNS ---------- */
   let slashes = 0; // every third sabre attack is a thrust
-  let sawT = 0; // the chainsaw shakes harder for a moment after each bite
   function fireGun(id: GunId) {
     const g = GUNS[id];
     if (g.special === "rocket") return fireRocket(g.every);
@@ -832,7 +813,6 @@ export function createCombat(w: CombatWorld) {
   // melee connects mid-swing. Bat: the closest zombie in front of you. Sword: every one in reach.
   function meleeHit() {
     if (weapon === "sword") return swordHit();
-    if (isPileMelee(weapon)) return swordHit(MELEES[weapon].dmg, MELEES[weapon].range);
     if (weapon === "saber") return swordHit(SABER.dmg, SABER.range);
     batHit();
   }
@@ -1133,8 +1113,7 @@ export function createCombat(w: CombatWorld) {
     gun.visible = weapon === "shotgun"; batView.visible = weapon === "bat"; swordView.visible = weapon === "sword"; railView.visible = weapon === "rail"; iceView.visible = weapon === "ice";
     for (const [id, v] of arsenal) { v.root.visible = weapon === id; if (v.root.visible) v.update(dt); }
     // automatic guns fire as long as the trigger is held
-    if (trigger && cooldown <= 0 && ((isArsenalGun(weapon) && GUNS[weapon].auto) || (isPileMelee(weapon) && MELEES[weapon].saw))) fire();
-    for (const [id, v] of pileViews) v.visible = weapon === id;
+    if (trigger && cooldown <= 0 && isArsenalGun(weapon) && GUNS[weapon].auto) fire();
     skullCD = Math.max(0, skullCD - dt);
     if (weapon) {
       camera.updateMatrixWorld();
@@ -1167,21 +1146,14 @@ export function createCombat(w: CombatWorld) {
       // swing: wind up over the right shoulder, whip down-left across the view, come back slowly
       if (swingT >= 0) {
         swingT += dt;
-        const timing = weapon === "saber" ? { hit: SABER.hit, end: SABER.every } : SWING; // the pile's blades swing like the bat
+        const timing = weapon === "saber" ? { hit: SABER.hit, end: SABER.every } : SWING;
         if (!swung && swingT > timing.hit) { swung = true; meleeHit(); }
         if (swingT > timing.end) swingT = -1;
       }
       swingPose(swingT, pose);
-      const melee = weapon === "sword" ? swordView : isPileMelee(weapon) ? pileViews.get(weapon) ?? batView : batView;
+      const melee = weapon === "sword" ? swordView : batView;
       melee.position.set(pose[0] + bx, pose[1] + by, pose[2]);
       melee.rotation.set(pose[3], pose[4], pose[5]);
-      // the chainsaw: held out in front, shaking while it runs
-      if (isPileMelee(weapon) && MELEES[weapon].saw) {
-        sawT = Math.max(0, sawT - dt);
-        const shake = (trigger || sawT > 0 ? 0.012 : 0.003) * (Math.random() - 0.5);
-        melee.position.set(0.18 + bx + shake, -0.22 + by + shake, -0.42);
-        melee.rotation.set(-1.35 + shake * 4, 0.15, 0);
-      }
     }
 
     // pickups spin, you take them by walking over them
@@ -1394,6 +1366,10 @@ export function createCombat(w: CombatWorld) {
     unlockChain: () => { chainUnlocked = true; },
     unlockNova: () => { novaUnlocked = true; },
     get abilities() { return { chain: chainUnlocked, nova: novaUnlocked, energy: (energy / CHAIN.max) * 100, mana: energy, novaCD }; },
+    /** the arena's next room: everyone gone at once */
+    clear: () => { for (const z of zombies) scene.remove(z.root); zombies.length = 0; },
+    addShells: (n: number) => { ammo += n; },
+    refillEnergy: () => { energy = CHAIN.max; },
     alive: (kind?: ZombieKind) => zombies.filter((z) => z.dying < 0 && (!kind || z.kind === kind)).length,
     bossHealth: () => { const b = boss(); return b && b.dying < 0 ? Math.max(0, b.hp / b.spec.hp) : -1; },
   };

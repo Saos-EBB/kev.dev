@@ -23,6 +23,7 @@ import * as sfx from "./horror-audio";
 import { createLife } from "./horror-life";
 import { createFigures } from "./horror-figures";
 import { createCombat, WEAPONS, WEAPON_NAMES, type Weapon, type ZombieKind } from "./horror-combat";
+import { createForest, type Forest } from "./horror-forest";
 import { MONSTER_IDS } from "./horror-bestiary";
 import { carveUpper } from "./horror-maze";
 
@@ -32,6 +33,20 @@ const MARKUP = `
   <div class="hud" id="count"><p><span id="clabel">Gegenstände</span> <b id="got">0</b> / <b id="tot">3</b></p><p id="goal">Irgendwo liegen drei Dinge.</p></div>
   <div class="hud" id="bossbar" hidden><small id="bossname">Der Große</small><i><b id="bosshp"></b></i></div>
   <p class="hud" id="fps" hidden></p>
+  <button type="button" id="spawn" hidden></button>
+  <div id="fade" hidden></div>
+  <div class="overlay" id="load" hidden>
+    <div class="box"><h1 id="load-t"></h1><i id="load-bar"><b></b></i></div>
+  </div>
+  <div class="overlay" id="shop" hidden>
+    <div class="box">
+      <h1>Der <span>Pilzladen</span></h1>
+      <p class="muted">Test-Shop. 500 Münzen zum Start, dazu 10 pro Kill.</p>
+      <p>Münzen <b id="coins">0</b></p>
+      <div id="shop-items"></div>
+      <button class="btn" id="shop-out" type="button">Weiter in den Wald</button>
+    </div>
+  </div>
   <div class="hud" id="waves" hidden><p>Welle <b id="wave-n">1</b> / 5 · <b id="wave-k">0</b> / <b id="wave-t">50</b></p><p>Kopfschüsse <b id="heads">0</b></p></div>
   <div class="hud" id="dot"></div>
   <div class="hud" id="card"><small id="card-tag"></small><span id="card-text"></span></div>
@@ -114,6 +129,8 @@ const MARKUP = `
    1 2 3  exit doors of hall 1, 2 and the boss hall: open when it's cleared
    r      mirror room · W the glass · m the room behind the glass (unreachable) */
 // the upper part (x 0..14) is replaced by a fresh random maze on every load, see horror-maze.ts
+const ARENA = { x0: 22, x1: 61, z0: 14, z1: 41 };
+const ARENA_TREES: [number, number][] = [[33, 21], [49, 21], [33, 33], [49, 33]];
 const MAP = carveUpper([
   "################################################################################",
   "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
@@ -128,21 +145,14 @@ const MAP = carveUpper([
   "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
   "######################hhhhhhhhhhhhh###HHHHHH#HHHHHH###BBBBBBBBBBBBBBB###########",
   "################################################################################",
-  // dev arena (not connected, and east of x 14, which the maze generator overwrites): one big bright room, one pillar, endless zombies
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAA##AAAAAAAAA######################################",
-  "######################AAAAAAAAA##AAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
-  "######################AAAAAAAAAAAAAAAAAAAA######################################",
+  // row 13 stays wall so the forest's shell never touches the halls above
+  "################################################################################",
+  // dev arena (not connected): 40 x 28 cells, four 2x2 trees in the middle (see horror-forest.ts)
+  ...Array.from({ length: ARENA.z1 - ARENA.z0 + 1 }, (_, z) => {
+    let row = "#".repeat(ARENA.x0) + "A".repeat(ARENA.x1 - ARENA.x0 + 1) + "#".repeat(79 - ARENA.x1);
+    for (const [px, pz] of ARENA_TREES) if (z + ARENA.z0 === pz || z + ARENA.z0 === pz + 1) row = row.slice(0, px) + "##" + row.slice(px + 2);
+    return row;
+  }),
   "################################################################################",
 ]);
 const UPPER = new Set([".", "S", "a", "b", "c", "D"]);
@@ -316,14 +326,16 @@ function mount() {
   const ceilMat = new THREE.MeshStandardMaterial({ map: tex(concreteCanvas(256, 77, [70, 66, 60]), COLS, ROWS), roughness: 1 });
 
   // walls: every '#' one instance of a box reaching from the lower floor to the ceiling -> one draw call
-  const walls = cellsOf("#");
+  // (the arena's own surfaces are the forest's; nothing of the concrete shows through there)
+  const nearArena = ([x, z]: Cell) => x >= ARENA.x0 - 1 && x <= ARENA.x1 + 1 && z >= ARENA.z0 - 1 && z <= ARENA.z1 + 1;
+  const walls = cellsOf("#").filter((c) => !nearArena(c));
   const wallMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(C, WH + DEPTH, C), wallMat, walls.length);
   const m4 = new THREE.Matrix4();
   walls.forEach(([x, z], i) => wallMesh.setMatrixAt(i, m4.makeTranslation(x * C, (WH - DEPTH) / 2, z * C)));
   wallMesh.castShadow = wallMesh.receiveShadow = true;
   scene.add(wallMesh);
   // floor tiles at their height (one draw call), steps on the stairs, one ceiling for everything
-  const tiles = reachable.concat(cellsOf("m"), cellsOf("A")).filter(([x, z]) => !["v", "W"].includes(MAP[z][x]));
+  const tiles = reachable.concat(cellsOf("m")).filter(([x, z]) => !["v", "W"].includes(MAP[z][x]));
   const floorMesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(C, C).rotateX(-Math.PI / 2), floorMat, tiles.length);
   tiles.forEach(([x, z], i) => floorMesh.setMatrixAt(i, m4.makeTranslation(x * C, floorAt(x * C, z * C), z * C)));
   floorMesh.receiveShadow = true;
@@ -771,6 +783,7 @@ function mount() {
   // medkits are rare (2.5 %)
   function onKill(k: { kind: string; hits: number; head: boolean; at: THREE.Vector3 }) {
     W.killed++;
+    if (phase === "arena") coins += 10;
     if (k.head && k.kind !== "boss" && phase !== "arena") {
       W.heads++; saveHeads();
       for (const [at, give] of REWARDS) if (W.heads === at) give(false);
@@ -781,13 +794,30 @@ function mount() {
     if (phase === "normals" || phase === "bigs") waveHud();
     hud();
   }
-  // dev arena: endless, and it keeps getting faster. Every 30 s the spawn gap shrinks by about a third.
-  let arenaT = 0, arenaInfo = 0;
+  // dev arena: a load test. One more every 0.1 s with no cap, until it lags; button or B turns it off.
+  // `lag` remembers how many were alive when the frame rate stayed under each mark (two readings in a row: one stutter doesn't count).
+  const ARENA_EVERY = 0.1;
+  let arenaSpawn = true, arenaInfo = 0;
+  const lag = [{ fps: 50, low: 0, at: 0 }, { fps: 30, low: 0, at: 0 }];
+  function toggleArenaSpawn() {
+    arenaSpawn = !arenaSpawn;
+    W.nextSpawn = now;
+    showArenaSpawn();
+  }
+  function showArenaSpawn() {
+    const b = $("spawn");
+    b.hidden = false;
+    b.textContent = `Spawn ${arenaSpawn ? "an" : "aus"} [B]`;
+  }
+  function trackLag(fps: number) {
+    for (const m of lag) {
+      m.low = fps < m.fps ? m.low + 1 : 0;
+      if (m.low >= 2 && !m.at) m.at = combat.alive();
+    }
+  }
   function updateArena(dt: number) {
-    arenaT += dt;
-    const every = Math.max(0.12, 1.2 * Math.pow(0.987, arenaT)), cap = Math.min(60, 10 + Math.floor(arenaT / 3));
-    if (now >= W.nextSpawn && W.spawned - W.killed < cap) {
-      W.nextSpawn = now + every;
+    if (arenaSpawn && !trip && now >= W.nextSpawn) {
+      W.nextSpawn += ARENA_EVERY;
       // test bench: anything from the whole bestiary, at random
       const pool: ZombieKind[] = ["normal", "big", ...MONSTER_IDS];
       spawnIn(halls.A, pool[Math.floor(Math.random() * pool.length)], 1);
@@ -795,7 +825,8 @@ function mount() {
     arenaInfo -= dt;
     if (arenaInfo <= 0) {
       arenaInfo = 0.25;
-      $("goal").textContent = `Arena · ${W.killed} tot · ${W.spawned - W.killed} da · alle ${every.toFixed(2)} s · unverwundbar`;
+      const marks = lag.filter((m) => m.at).map((m) => `unter ${m.fps} fps bei ${m.at}`).join(" · ");
+      $("goal").textContent = `Arena · ${combat.alive()} da · ${W.killed} tot · alle ${ARENA_EVERY} s · unverwundbar${marks ? ` · ${marks}` : ""}`;
     }
   }
   function waveDone() {
@@ -906,12 +937,13 @@ function mount() {
     keys[e.code] = true;
     const slots: Record<string, Weapon> = {
       Digit1: "shotgun", Digit2: "bat", Digit3: "sword", Digit4: "rail", Digit5: "ice",
-      Digit6: "saber", Digit7: "pistol", Digit8: "revolver", Digit9: "p90", Digit0: "rifle", Minus: "pump", Equal: "sniper",
+      Digit6: "saber", Digit7: "pistol", Digit8: "p90", Digit9: "rifle", Digit0: "pump", Minus: "rpg", Equal: "flamer",
     };
     if (e.code in slots) combat.select(slots[e.code]);
     if (e.code === "KeyF" && running && !paused) combat.throwOwnSkull();
     if (e.code === "KeyR" && running && !paused) combat.reload();
     if (e.code === "KeyQ" && running && !paused) combat.nova(pos);
+    if (e.code === "KeyB" && phase === "arena" && !e.repeat) toggleArenaSpawn();
   });
   // mouse wheel: next weapon you have
   window.addEventListener("wheel", (e) => {
@@ -921,13 +953,13 @@ function mount() {
     combat.select(order[(i + (e.deltaY > 0 ? 1 : order.length - 1)) % order.length]);
   }, { passive: true });
   window.addEventListener("keyup", (e) => { keys[e.code] = false; });
-  const look = (dx: number, dy: number, k = 0.0022) => { if (cineT >= 0) return; yaw -= dx * k; pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * k)); };
+  const look = (dx: number, dy: number, k = 0.0022) => { if (cineT >= 0 || trip) return; yaw -= dx * k; pitch = Math.max(-1.3, Math.min(1.3, pitch - dy * k)); };
   const lock = () => { try { const p = canvas.requestPointerLock() as unknown as Promise<void> | undefined; p?.catch?.(() => {}); } catch { /* drag-to-look fallback */ } };
   let locked = false, dragging = false;
   const pause = () => { paused = true; $("pause").hidden = false; $("resume").focus(); };
   document.addEventListener("pointerlockchange", () => {
     locked = document.pointerLockElement === canvas;
-    if (!locked && running && !ended && !isTouch) pause();
+    if (!locked && running && !ended && !isTouch && !trip) pause();
   });
   document.addEventListener("mousemove", (e) => { if (locked) look(e.movementX, e.movementY); else if (dragging) look(e.movementX, e.movementY, 0.004); });
   canvas.addEventListener("mousedown", (e) => {
@@ -974,13 +1006,14 @@ function mount() {
   $("fire").addEventListener("touchend", () => combat.trigger(false));
   // shoot / swing; at the mirror, aimed at the glass, that's the end
   function pull() {
-    if (cineT >= 0) return;
+    if (cineT >= 0 || trip) return;
     const facingGlass = -Math.sin(yaw) > 0.6, reach = combat.weapon === "bat" ? 3.2 : 99;
     const atMirror = phase === "mirror" && mirror && pos.x > mirrorX - 6 && mirrorX - pos.x < reach && facingGlass;
     if (atMirror && (combat.weapon === "bat" || combat.ammo > 0)) { combat.fire(); breakMirror(); return; }
     combat.fire();
   }
   $("retry").addEventListener("click", () => location.reload());
+  $("spawn").addEventListener("click", toggleArenaSpawn);
   $("go").addEventListener("click", () => {
     sfx.init();
     $("start").hidden = true; running = true;
@@ -993,6 +1026,107 @@ function mount() {
     const from = (document.querySelector<HTMLInputElement>('input[name="from"]:checked')?.value ?? "start");
     if (from === "start") setTimeout(() => { if (running && !turnedOnce) whisperText("Dreh dich um.", 2200); }, 4000);
     else jumpTo(from as "stairs" | "hall1" | "hall2" | "boss" | "arena");
+  });
+
+  /* ---------- the forest arena: out the door, loading, shop, loading, next arena ---------- */
+  let forest: Forest | null = null, round = 0, coins = 500; // a head start so the test shop works without a fight
+  type TripStage = "in" | "load1" | "shop" | "load2" | "out";
+  let trip: { stage: TripStage; t: number; from: THREE.Vector3; yaw: number; pitch: number } | null = null;
+  const TRIP = { in: 1.8, load: 1.6, out: 1.3 };
+  const fadeEl = $("fade"), loadBar = $("load-bar").firstElementChild as HTMLElement;
+  const LOAD_TEXT = ["Die Tür knarrt …", "Der Wald verschiebt sich …"];
+  function enterForest() {
+    forest = createForest({ scene, C, ...ARENA, pillars: ARENA_TREES, floorY: -DEPTH, ceilY: WH });
+    lamp.visible = false; // no flashlight here: the whole room is lit, nothing to hide
+    camera.far = 160; camera.updateProjectionMatrix();
+    ceiling.visible = false;
+    pos.set(forest.entryAt.x + 3.5, 0, forest.entryAt.z);
+  }
+  const SHOP = [
+    { name: "Schrotbeutel", text: "30 Schrot mehr in der Tasche", price: 100, buy: () => combat.addShells(30) },
+    { name: "Glühpilz-Trank", text: "Kettenblitz-Energie voll", price: 80, buy: () => combat.refillEnergy() },
+    { name: "Moosstiefel", text: "10 % schneller, bleibt für den Lauf", price: 150, buy: () => { fast *= 1.1; } },
+  ];
+  function renderShop() {
+    $("coins").textContent = String(coins);
+    const list = $("shop-items");
+    list.innerHTML = "";
+    for (const item of SHOP) {
+      const b = document.createElement("button");
+      b.type = "button"; b.disabled = coins < item.price;
+      b.innerHTML = `<b></b><span></span><i></i>`;
+      b.children[0].textContent = item.name; b.children[1].textContent = item.text; b.children[2].textContent = `${item.price} Münzen`;
+      b.addEventListener("click", () => { coins -= item.price; item.buy(); sfx.tick(); hud(); renderShop(); });
+      list.append(b);
+    }
+  }
+  function setStage(stage: TripStage) {
+    trip!.stage = stage; trip!.t = 0;
+    $("load").hidden = !stage.startsWith("load");
+    $("shop").hidden = stage !== "shop";
+    if (stage.startsWith("load")) $("load-t").textContent = LOAD_TEXT[stage === "load1" ? 0 : 1];
+    if (stage === "shop") { paused = true; document.exitPointerLock?.(); renderShop(); ($("shop-out") as HTMLElement).focus(); }
+  }
+  function startTrip() {
+    trip = { stage: "in", t: 0, from: pos.clone(), yaw, pitch };
+    combat.trigger(false);
+    $("spawn").hidden = true;
+    fadeEl.hidden = false; fadeEl.style.opacity = "0";
+  }
+  function updateTrip(dt: number) {
+    if (!forest) return;
+    if (!trip) {
+      if (Math.hypot(pos.x - forest.exitAt.x, pos.z - forest.exitAt.z) < 2.4) startTrip();
+      return;
+    }
+    trip.t += dt;
+    if (trip.stage === "in") {
+      const k = Math.min(1, trip.t / TRIP.in), e = k * k * (3 - 2 * k);
+      forest.exitDoor.swing(Math.min(1, k * 2));
+      pos.lerpVectors(trip.from, forest.exitAt, e);
+      // the short way round to face the door
+      const turn = Math.atan2(Math.sin(-Math.PI / 2 - trip.yaw), Math.cos(-Math.PI / 2 - trip.yaw));
+      yaw = trip.yaw + turn * Math.min(1, e * 2);
+      pitch = trip.pitch * (1 - Math.min(1, e * 2));
+      fadeEl.style.opacity = String(Math.max(0, (k - 0.55) / 0.45));
+      if (k >= 1) {
+        combat.clear();
+        forest.exitDoor.swing(0);
+        fadeEl.style.opacity = "1";
+        setStage("load1");
+      }
+    } else if (trip.stage === "load1" || trip.stage === "load2") {
+      const k = Math.min(1, trip.t / TRIP.load);
+      loadBar.style.width = `${k * 100}%`;
+      if (k >= 1) {
+        if (trip.stage === "load1") setStage("shop");
+        else {
+          round++;
+          forest.dress(round);
+          forest.entryDoor.swing(1);
+          trip.from.copy(forest.entryAt);
+          yaw = -Math.PI / 2; pitch = 0; vel.set(0, 0, 0);
+          setStage("out");
+        }
+      }
+    } else if (trip.stage === "out") {
+      const k = Math.min(1, trip.t / TRIP.out), e = 1 - (1 - k) ** 2;
+      pos.set(trip.from.x + e * 3.5, 0, trip.from.z);
+      fadeEl.style.opacity = String(1 - k);
+      forest.entryDoor.swing(1 - Math.max(0, (k - 0.5) * 2));
+      if (k >= 1) {
+        trip = null;
+        fadeEl.hidden = true;
+        showArenaSpawn();
+        W.nextSpawn = now + 2;
+        whisperText(`Arena ${round + 1}`, 1800);
+      }
+    }
+  }
+  $("shop-out").addEventListener("click", () => {
+    paused = false;
+    if (!isTouch) lock();
+    setStage("load2");
   });
 
   // dev shortcut: skip ahead. Doors you'd have opened stand open, items you'd have found are found.
@@ -1021,17 +1155,20 @@ function mount() {
     } else if (where === "arena") {
       phase = "arena";
       grantAll(); onPickup("shotgun");
-      pos.set(26 * C, 0, 20 * C);
+      enterForest();
       ($("got").parentElement as HTMLElement).hidden = true;
       W.nextSpawn = now + 1;
-      // #zoo: the whole bestiary in a ring in front of you, nothing else spawns
+      fpsEl.hidden = false;
+      // #zoo: the whole bestiary in a ring in front of you, nothing else spawns until you turn it on
       if (hashFlags.includes("zoo")) {
-        W.nextSpawn = Infinity;
+        arenaSpawn = false;
+        pos.set((ARENA.x0 + 8) * C, 0, forest!.entryAt.z);
         MONSTER_IDS.forEach((id, i) => {
           const a = -Math.PI / 2 + (i / (MONSTER_IDS.length - 1) - 0.5) * Math.PI * 0.85;
           combat.spawn(id, new THREE.Vector3(pos.x - Math.sin(a) * 9, 0, pos.z - Math.cos(a) * 9));
         });
       }
+      showArenaSpawn();
     } else {
       openNow("1"); openNow("2");
       phase = "bigs"; W.total = 0; // walking into the boss hall starts the fight
@@ -1079,7 +1216,7 @@ function mount() {
     const q = [here];
     for (let i = 0; i < q.length; i++) {
       const [x, z] = q[i], d = flow.get(key([x, z]))!;
-      if (d > 40) continue;
+      if (d > 80) continue;
       for (const [dx, dz] of DIRS) {
         const n: Cell = [x + dx, z + dz];
         if (!solid(...n) && !flow.has(key(n))) { flow.set(key(n), d + 1); q.push(n); }
@@ -1191,8 +1328,9 @@ function mount() {
     if (Q.acc < 1.5) return;
     const fps = Q.n / Q.acc;
     Q.acc = Q.n = 0;
-    if (SHOW_FPS) fpsEl.textContent = `${fps.toFixed(0)} fps · dpr ${Q.dpr.toFixed(2)} · ${renderer.info.render.calls} calls · ${(renderer.info.render.triangles / 1000).toFixed(0)}k tris`;
-    if (Q.flips >= 4) return;
+    if (phase === "arena") trackLag(fps);
+    if (SHOW_FPS || phase === "arena") fpsEl.textContent = `${fps.toFixed(0)} fps · dpr ${Q.dpr.toFixed(2)} · ${renderer.info.render.calls} calls · ${(renderer.info.render.triangles / 1000).toFixed(0)}k tris`;
+    if (Q.flips >= 4 || phase === "arena") return; // the arena measures: resolution stays put
     const dir = fps < 48 && Q.dpr > 0.6 ? -1 : fps > 57 && Q.dpr < Q.cap ? 1 : 0;
     if (!dir) return;
     if (Q.lastDir && dir !== Q.lastDir) Q.flips++;
@@ -1240,7 +1378,7 @@ function mount() {
     for (const it of items) if (!it.got) { it.obj.rotation.y += dt * 1.2; it.obj.position.y = 0.95 + Math.sin(now * 2 + it.id.charCodeAt(0)) * 0.05; }
 
     // --- move (not while it has you)
-    const still = G.t >= 0 || cineT >= 0; // it has you / the end is playing
+    const still = G.t >= 0 || cineT >= 0 || !!trip; // it has you / the end is playing / the walk to the shop
     const mx = still ? 0 : (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + stick.dx;
     const mz = still ? 0 : (keys.KeyS ? 1 : 0) - (keys.KeyW ? 1 : 0) + stick.dy;
     const len = Math.hypot(mx, mz), moving = len > 0.1;
@@ -1294,7 +1432,7 @@ function mount() {
       if (W.killed >= W.total) { waveDone(); W.total = 0; }
     }
     if (W.pending && now >= W.nextWave) startWave(W.pending);
-    if (phase === "arena") updateArena(dt);
+    if (phase === "arena") { updateArena(dt); updateTrip(dt); }
     combat.chain(!!keys.KeyE && !still);
     if (phase === "boss" && W.total) {
       const hp = combat.bossHealth();
@@ -1411,7 +1549,7 @@ function mount() {
     // down in the halls it's brighter and redder: you need to see what's coming
     const below = phase !== "puzzle";
     hemi.intensity = (below ? 3.2 : 0.6) * (0.25 + 0.75 * flick);
-    if (phase === "arena") { hemi.intensity = 7; fog.density = 0.02; hemi.color.set(0xd8c8b8); hemi.groundColor.set(0x4a3a30); } // dev: see everything
+    if (forest) { forest.light(hemi, fog, scene); forest.update(dt); }
     if (below && fog.density > 0.065) { fog.density = 0.065; hemi.color.set(0xa0503a); hemi.groundColor.set(0x2a140c); }
     if (S.active && running && !paused && G.t < 0 && AP.t < 0) updateStalker(dt);
     updateLife(dt, flick, dread, running && !paused);

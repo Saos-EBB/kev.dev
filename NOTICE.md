@@ -52,7 +52,7 @@ Full license texts ship with each package in `node_modules/<package>/`.
   animations); ambient occlusion multiplied into the diffuse, the
   displacement map used as a bump map, both scaled to 1024 px.
 - `public/horror/weapons/fps_*.glb` (same page): the "FPS Pack" (pistol, P90,
-  revolver, rifle, shotgun, sniper rifle, with fire/reload animations), CC0 1.0
+  rifle, shotgun, sniper rifle, with fire/reload animations), CC0 1.0
   per its download page. Exported from the .blend files to GLB; recoloured in
   code. Source URL: TODO.
 - `public/horror/weapons/saber_arms.glb`, `saber.jpg` (same page): "Animated
