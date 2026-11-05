@@ -103,7 +103,7 @@ document.body.innerHTML = `
     <div class="ai-banner ai-banner--top" aria-hidden="true" hidden><div class="ai-banner-track">${BANNER}</div></div>
     <div class="ai-mark" hidden><span>©</span> Saos</div>
     <footer class="ai-bar ai-bar--bottom" hidden>
-      <span class="ai-bar-copy">© copyright saos / kevinschaberl</span>
+      <span class="ai-bar-copy">© copyright <a href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer">saos</a> / <a href="mailto:kevin.schaberl.work@gmail.com">kevinschaberl</a></span>
       <a href="/links">[more stuff]</a>
       <span class="ai-bar-end">
         <a href="/adhdActivated/privacy" data-legal="privacy">[${UI.datenschutz.toLowerCase()}]</a>
