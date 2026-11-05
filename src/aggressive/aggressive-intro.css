@@ -716,7 +716,9 @@ body.ai {
   100% { transform: translateX(0); }
 }
 
-@media (hover: none), (pointer: coarse), (max-width: 900px), (max-aspect-ratio: 4 / 5) {
+/* A tall desktop window: the words stand where the banners would. Phones get
+   theirs in the menu (see the phone block below). */
+@media (hover: hover) and (pointer: fine) and (min-width: 901px) and (max-aspect-ratio: 4 / 5) {
   .ai-banner {
     display: none;
   }
@@ -975,11 +977,16 @@ body.ai {
    and go down with it. Not only by hover: some phones claim to have it, and a
    narrow window gets the phone layout anyway. */
 @media (hover: none), (pointer: coarse), (max-width: 900px) {
+  :root {
+    --ai-banner-h: 1.8rem; /* the banner under the menu, see below */
+    --ai-top: calc(3rem + var(--ai-banner-h)); /* menu plus banner */
+  }
+
   .ai-bar {
     justify-content: space-between;
-    gap: 0.25rem;
-    padding: 0 0.6rem;
-    font-size: clamp(0.62rem, 2.9vw, 0.85rem); /* one line, however narrow */
+    gap: 0;
+    padding: 0 0.5rem;
+    font-size: clamp(0.6rem, 2.75vw, 0.85rem); /* one line, down to 320 px */
     white-space: nowrap;
     opacity: 1;
     transition: transform 240ms ease;
@@ -987,11 +994,58 @@ body.ai {
 
   .ai-bar a,
   .ai-bar button {
-    padding: 0.55rem 0.15rem; /* a finger's worth */
+    padding: 0.55rem 0.1rem; /* a finger's worth */
   }
 
   .ai-bars-away .ai-bar--top {
     transform: translateY(-100%);
+  }
+
+  /* The top banner belongs to the menu: right under it, above the pages, and
+     away with it while scrolling down. The bottom one only comes for the end,
+     on the footer. */
+  .ai-banner {
+    z-index: 6;
+    box-sizing: border-box;
+    height: var(--ai-banner-h);
+    padding: 0.4rem 0 0;
+    font-size: 1.05rem;
+    transition: transform 240ms ease;
+  }
+
+  .ai-banner--top {
+    top: 3rem;
+  }
+
+  .ai-banner:not(.ai-banner--top) {
+    display: none;
+  }
+
+  .ai-ended .ai-banner:not(.ai-banner--top) {
+    display: block;
+    bottom: 3rem;
+  }
+
+  .ai-ended .ai-banner {
+    z-index: 6;
+  }
+
+  .ai-bars-away .ai-banner--top {
+    transform: translateY(calc(-100% - 3rem));
+  }
+
+  .ai-banner-track span {
+    padding: 0 0.85rem;
+  }
+
+  .ai-banner-track span::after {
+    margin-left: 1.7rem;
+  }
+
+  /* The watermark only in the room and at the end, never over a page's text. */
+  .ai-stage:has(.ai-page.is-open) .ai-mark,
+  .ai-ended .ai-mark {
+    display: none;
   }
 
   .ai-bars-away .ai-bar--bottom {
@@ -1036,27 +1090,122 @@ body.ai {
     bottom: 0.75rem;
   }
 
+  .ai-tour {
+    top: calc(var(--ai-top) + 0.5rem); /* below the banner */
+  }
+
+  /* A phone turned sideways: the floor's word stays clear of the footer. */
+  .ai-word--floor {
+    top: min(86%, calc(100% - 3.6rem - 2.1rem));
+  }
+}
+
+/* Sideways and short: under the skull is no room left, so contact goes onto the
+   left wall below about, projects stays alone on the right. */
+@media (max-height: 520px) and (min-aspect-ratio: 4 / 5) {
+  .ai-word--left {
+    top: 40%;
+  }
+
+  .ai-word--floor {
+    top: calc(100% - 5.7rem);
+    left: 15%;
+  }
+
+  .ai-word--right {
+    top: 56%;
+  }
+
+  .ai-mark {
+    display: none; /* where contact now stands */
+  }
+
   .ai-page {
-    padding-top: 4.5rem;
+    padding-top: calc(var(--ai-top) + 1.25rem);
     padding-bottom: 10rem;
   }
 }
 
+/* Phones upright. The room: measured from the menu and the footer rather than in
+   percent, so the four buttons never run into them or into each other, however
+   short the screen. One button high is --ai-pill-h. */
 @media (hover: none) and (max-aspect-ratio: 4 / 5), (pointer: coarse) and (max-aspect-ratio: 4 / 5), (max-width: 900px) and (max-aspect-ratio: 4 / 5) {
-  .ai-page--projects .ai-page-tool {
-    top: 3.5rem;
-  }
-
-  .ai-bars-away .ai-page--projects .ai-page-tool {
-    top: 0.5rem;
-  }
-
-  .ai-tour {
-    top: 19%;
+  :root {
+    --ai-pill-font: 1.7rem;
+    --ai-pill-h: calc(2.8rem + 10px);
   }
 
   .ai-word--left {
-    top: 12%;
+    top: calc(var(--ai-top) + 0.6rem + var(--ai-pill-h) / 2);
+  }
+
+  .ai-tour {
+    top: calc(var(--ai-top) + 1.2rem + var(--ai-pill-h));
+  }
+
+  /* Above the watermark, which stands on the footer. */
+  .ai-word--floor {
+    top: calc(100% - 5.5rem - var(--ai-pill-h) / 2);
+  }
+
+  .ai-word--right {
+    top: calc(100% - 6.1rem - var(--ai-pill-h) * 1.5);
+  }
+
+  /* Projects: the frame as a band under the title that stays at the top while
+     the projects scroll under it, so it never covers half a line. */
+  .ai-page--projects .ai-page-tool {
+    position: sticky;
+    /* Sticky counts from the page's content box, below its top padding
+       (--ai-top + 1.25rem): this is just under the banner. */
+    top: -1rem;
+    box-shadow: 0 0 0 0.5rem var(--ai-bg); /* no line peeks out around it */
+    right: auto;
+    z-index: 1;
+    order: -1;
+    width: 100%;
+    height: 24vh;
+    aspect-ratio: auto;
+    margin: 0 0 0.5rem;
+    transition: top 240ms ease;
+  }
+
+  .ai-bars-away .ai-page--projects .ai-page-tool {
+    top: calc(0.1rem - var(--ai-top) - 1.25rem);
+  }
+
+  .ai-page--projects h1 {
+    order: -2;
+    min-height: 0;
+    padding-right: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  /* One project after the other, no screen-high gaps between them. */
+  .ai-proj {
+    min-height: 0;
+    padding: 1.5rem 0 1.5rem;
+  }
+
+  /* Contact fits one screen: the piñata gets what the text leaves. */
+  .ai-page h1 {
+    margin: 0.5rem 0;
+  }
+
+  .ai-page--contact p {
+    overflow-wrap: anywhere; /* the address on a 320 px screen */
+  }
+
+  /* The arrows stand at the right, so the text may end level with them. */
+  .ai-page--contact {
+    height: 100%;
+    padding-bottom: 7rem;
+  }
+
+  .ai-page--contact .ai-page-tool {
+    flex: 1 1 0;
+    min-height: 0;
+    height: auto;
   }
 }
 

@@ -2,6 +2,7 @@
 // hides what's behind, the lines sit on top. Shared by the page scenes.
 import * as THREE from "three";
 import { PALETTE, onTheme } from "./ai-theme";
+import { LITE } from "../viewport";
 
 // Always the current theme's colors.
 export const COLORS = {
@@ -117,9 +118,11 @@ export function dispose(o: THREE.Object3D) {
 }
 
 // A renderer that keeps its canvas's size and draws while `tick` is running.
+// Phones (LITE) as for the skull: no MSAA, at most 1.5x pixels. Nothing runs
+// while the canvas is scrolled out of sight (the about band on a phone).
 export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCamera, scene: THREE.Scene, tick: (t: number, dt: number) => void) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.5 : 2));
   renderer.setClearColor(0x000000, 0);
   const resize = () => {
     const r = canvas.getBoundingClientRect();
@@ -131,14 +134,24 @@ export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCam
   observer.observe(canvas);
   resize();
   const start = performance.now();
-  let last = start, frameId = 0;
+  let last = start, frameId = 0, seen = true, stopped = false;
   const frame = (now: number) => {
+    frameId = 0;
+    if (stopped || !seen) return;
     tick((now - start) / 1000, Math.min((now - last) / 1000, 0.05));
     last = now;
     renderer.render(scene, camera);
     frameId = requestAnimationFrame(frame);
   };
   frameId = requestAnimationFrame(frame);
+  const sight = new IntersectionObserver(([e]) => {
+    seen = e.isIntersecting;
+    if (seen && !frameId && !stopped) {
+      last = performance.now();
+      frameId = requestAnimationFrame(frame);
+    }
+  });
+  sight.observe(canvas);
   return {
     // The scene as it stands, for the pane the way back tears up.
     paint(ctx: CanvasRenderingContext2D) {
@@ -147,8 +160,10 @@ export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCam
       ctx.drawImage(canvas, r.left, r.top, r.width, r.height);
     },
     stop() {
+      stopped = true;
       cancelAnimationFrame(frameId);
       observer.disconnect();
+      sight.disconnect();
       renderer.dispose();
     },
   };
