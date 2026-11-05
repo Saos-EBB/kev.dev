@@ -653,7 +653,8 @@ body.ai {
   }
 }
 
-.ai-short {
+.ai-short,
+.ai-mail-foot {
   display: none;
 }
 
@@ -1090,8 +1091,18 @@ body.ai {
     bottom: 0.75rem;
   }
 
+  /* No tour on a phone (see PHONE in the script): one "next" button, bottom
+     right, in the room as well as on the pages. */
   .ai-tour {
-    top: calc(var(--ai-top) + 0.5rem); /* below the banner */
+    top: auto;
+    left: auto;
+    right: 0.75rem;
+    bottom: 3.75rem;
+    transform: none;
+  }
+
+  .ai-mail-foot {
+    display: inline;
   }
 
   /* A phone turned sideways: the floor's word stays clear of the footer. */
@@ -1139,17 +1150,26 @@ body.ai {
     top: calc(var(--ai-top) + 0.6rem + var(--ai-pill-h) / 2);
   }
 
-  .ai-tour {
-    top: calc(var(--ai-top) + 1.2rem + var(--ai-pill-h));
-  }
-
-  /* Above the watermark, which stands on the footer. */
-  .ai-word--floor {
-    top: calc(100% - 5.5rem - var(--ai-pill-h) / 2);
-  }
-
+  /* Two above the skull, contact below it, and the room's "next" under that
+     in the middle, where PRESS was. */
   .ai-word--right {
-    top: calc(100% - 6.1rem - var(--ai-pill-h) * 1.5);
+    top: calc(var(--ai-top) + 1.2rem + var(--ai-pill-h) * 1.5);
+  }
+
+  .ai-word--floor {
+    top: calc(100% - 7.5rem - var(--ai-pill-h) / 2);
+  }
+
+  /* Projects stands where the tour was, at the skull's crown: above the skull
+     then, as the tour's button was, or its blades hide it. */
+  .ai-words {
+    z-index: 1;
+  }
+
+  .ai-tour:not(.is-split) {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   /* Projects: the frame as a band under the title that stays at the top while

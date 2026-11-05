@@ -38,6 +38,9 @@ import { createPageScrollbar } from "./page-scrollbar";
 import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
+// Phones (the CSS's phone block): no guided tour, one "next" button from the room
+// through the pages, END IT on the last.
+const PHONE = matchMedia("(hover: none), (pointer: coarse), (max-width: 900px)").matches;
 const LOAD_MIN = 1.6; // s the grid takes to grow in even when everything is cached
 const PART = 1.1; // s the grid takes to leave
 const HIT_DELAY = 0.5; // s from the press to the blade striking (HIT_AT in skull-scene.ts)
@@ -78,7 +81,7 @@ document.body.innerHTML = `
     <div class="ai-tour" hidden>
       <button class="ai-button ai-tour-start" type="button">${LANG === "de" ? "FÜHRUNG" : "GUIDED TOUR"}</button>
       <button class="ai-button ai-tour-arrow ai-tour-prev" type="button" aria-label="${UI.projectBack}" hidden>←</button>
-      <button class="ai-button ai-tour-arrow ai-tour-next" type="button" aria-label="${UI.projectOpen}" hidden>→</button>
+      <button class="ai-button ai-tour-arrow ai-tour-next" type="button" aria-label="${UI.projectOpen}" hidden>${PHONE ? `${LANG === "de" ? "WEITER" : "NEXT"} →` : "→"}</button>
       <button class="ai-button ai-tour-arrow ai-tour-end" type="button" hidden>END IT</button>
     </div>
     <canvas class="ai-spray" aria-hidden="true" hidden></canvas>
@@ -105,6 +108,7 @@ document.body.innerHTML = `
       <span class="ai-bar-end">
         <a href="/adhdActivated/privacy" data-legal="privacy">[${UI.datenschutz.toLowerCase()}]</a>
         <a href="/adhdActivated/imprint" data-legal="imprint">[${UI.impressum.toLowerCase()}]</a>
+        <a class="ai-mail-foot" href="mailto:kevin.schaberl.work@gmail.com">[mail]</a>
       </span>
     </footer>
     <div class="ai-scrollbar" aria-hidden="true" hidden><div class="ai-scrollbar-dot"></div></div>
@@ -709,6 +713,13 @@ function updateTour() {
   const onPage = Boolean(currentPage);
   const allSeen = FREE_ORDER.every((p) => seenPages.has(p));
   tour.classList.toggle("is-split", touring || onPage);
+  if (PHONE) {
+    tourStart.hidden = true;
+    tourPrev.hidden = !onPage;
+    tourNext.hidden = currentPage === "contact" || currentPage === "end";
+    tourEnd.hidden = currentPage !== "contact";
+    return;
+  }
   tourStart.hidden = touring || onPage;
   tourPrev.hidden = touring ? tourAt < 0 : !onPage;
   tourNext.hidden = touring ? tourAt >= TOUR.length - 1 : !onPage || allSeen || !atPageEnd();
@@ -769,6 +780,12 @@ tourStart.addEventListener("click", () => {
 });
 tourNext.addEventListener("click", () => {
   if (touring) return goTour(tourAt + 1);
+  if (PHONE) {
+    if (!currentPage) return goToPage(FREE_ORDER[0]);
+    const next = FREE_ORDER[FREE_ORDER.indexOf(currentPage) + 1];
+    if (next) void openPage(next);
+    return;
+  }
   const at = FREE_ORDER.indexOf(currentPage!);
   const next = currentPage === "projects" ? "contact" : [1, 2].map((n) => FREE_ORDER[(at + n) % 3]).find((p) => !seenPages.has(p));
   if (next) void openPage(next);
@@ -933,6 +950,7 @@ async function run() {
       window.setTimeout(() => {
         words.forEach((word) => word.classList.add("is-shown"));
         tour.hidden = false;
+        updateTour();
         document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });
         roomReady = true;
         scene.spin(true); // the room is the menu: it turns while nobody touches it
