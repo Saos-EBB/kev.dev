@@ -53,9 +53,10 @@ const PIXELS_PER_WORD_DROP = 75; // aimed at each word, so all of them become re
 // The back wall in percent of the screen; lines run from its corners to the screen's.
 const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] };
 
-// The running banner in the room: repeated so one run of the list (a sixth, see
-// ai-banner in the CSS) still leaves any screen width filled.
-const BANNER_SKILLS = ["Fullstack Dev", "SQL", "TypeScript", "Agent Engineering", "NestJS", "React", "PostgreSQL", "Docker", "Canvas 2D"];
+// The running banner in the room: repeated so one run of the list (a sixth of
+// the track) still leaves any screen width filled. The skull's swing runs it,
+// see runBanners().
+const BANNER_SKILLS = ["Fullstack Dev", "TypeScript", "JavaScript", "HTML", "CSS", "Python", "Java", "SQL", "Agent Engineering", "NestJS", "React", "Node.js", "PostgreSQL", "Docker", "Three.js", "GSAP", "Tailwind", "Vite", "Canvas 2D", "Git", "Linux"];
 const BANNER = Array(6).fill(BANNER_SKILLS.map((skill) => `<span>${skill}</span>`).join("")).join("");
 
 document.documentElement.dataset.theme = "light";
@@ -901,6 +902,29 @@ function showProject(to: Target) {
 }
 window.addEventListener("popstate", () => { if (roomReady) syncRoute(); });
 
+// ── the banners ──
+// One swing of the skull is one run of the list: they go as fast as it turns,
+// stand when it stands and come back with it, a drag on the skull included. The
+// top one runs the other way. Moving by whole lists looks the same, so the
+// offset wraps.
+function runBanners(scene: Scene) {
+  const tracks = [...document.querySelectorAll<HTMLElement>(".ai-banner-track")];
+  let shown = -1;
+  const tick = () => {
+    const along = scene.swing();
+    if (along !== shown) {
+      shown = along;
+      for (const track of tracks) {
+        const list = track.scrollWidth / 6;
+        const at = track.parentElement!.classList.contains("ai-banner--top") ? 1 - along : along;
+        track.style.transform = `translateX(${-at * list}px)`;
+      }
+    }
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+
 // ── the sequence ──
 async function run() {
   growGrid(0);
@@ -928,6 +952,7 @@ async function run() {
 
   const scene = await loading;
   skull = scene;
+  runBanners(scene);
   partGrid(0);
   await gsap.fromTo(glow, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.12 });
 

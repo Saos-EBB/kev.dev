@@ -692,13 +692,7 @@ body.ai {
 
 .ai-banner-track {
   display: flex;
-  width: max-content;
-  animation: ai-banner 64s ease-in-out infinite;
-}
-
-/* Half a cycle ahead: starts at the far end, so it moves against the one below. */
-.ai-banner--top .ai-banner-track {
-  animation-delay: -32s;
+  width: max-content; /* moved by the skull's swing, see runBanners() */
 }
 
 .ai-banner-track span {
@@ -708,13 +702,6 @@ body.ai {
 .ai-banner-track span::after {
   content: "/";
   margin-left: 2.5rem;
-}
-
-/* One run of the list, a stop, and back. */
-@keyframes ai-banner {
-  0%, 3% { transform: translateX(0); }
-  50%, 53% { transform: translateX(calc(-100% / 6)); }
-  100% { transform: translateX(0); }
 }
 
 /* A tall desktop window: the words stand where the banners would. Phones get

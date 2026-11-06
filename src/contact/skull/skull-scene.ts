@@ -17,16 +17,18 @@ import { LITE } from "../../viewport";
 import { BLADE_R, bladeGeometry, depthSteps, loadSkullGeometry, wireMesh } from "./parts";
 import { createBlood, type Blood } from "./blood";
 
-const BLADE_FLIGHT = 0.55; // s from off-screen to stuck
+const BLADE_FLIGHT = 0.65; // s from off-screen to stuck
 const HIT_AT = 0.5; // s after the skull is up
 const APPROACH_Z = -38; // how far back the skull starts, inside the camera's 50 far plane
-const FREEZE = 2.6; // how fast shards slow down (1/s) — higher stops sooner
-const FREEZE_AT = 0.7; // s after the hit: the frame stops, the blood still in the air
-const SHARDS = 18;
+const FREEZE = 2.0; // how fast shards slow down (1/s) — higher stops sooner
+const FREEZE_AT = 0.8; // s after the hit: the frame stops, the blood still in the air
+const SHARDS = 12;
 const YAW = Math.PI / 4; // the skull is turned to the viewer's right, the wound faces the camera
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
-const IDLE_AFTER = 3000; // ms without a drag before spin() lets it turn on its own
-const SPIN_SPEED = (Math.PI * 2) / 12; // rad/s: once round every 12 s
+const IDLE_AFTER = 2500; // ms without a drag before spin() lets it turn on its own
+const SWING = Math.PI * 4; // rad: one swing of spin() is two turns, then it turns back
+const SWING_SPEED = 0.025; // swings/s at the base speed: about 42 s per swing
+const SWING_REST = 1.5; // s it stands at either end
 
 // The one hit: upper left of the forehead (a point in skull space: face +z,
 // vault +y; the nearest front vertex is the hit point), a big blade sunk
@@ -64,7 +66,7 @@ const AROUND_PRESSURE = 0.82, AROUND_DROP = 0.2, AROUND_COUNT = LITE ? 1000 : 28
 const MIST_COUNT = LITE ? 3000 : 10000, MIST_PRESSURE = 1.7, MIST_DROP = 0.07;
 const AROUND_DEPTH = { front: 3, range: 12 };
 
-export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number]; spin(on: boolean): void };
+export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number]; spin(on: boolean): void; swing(): number };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
@@ -477,9 +479,13 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const pivot = new THREE.Vector3();
   const freeTurn = new THREE.Quaternion(), freeStep = new THREE.Quaternion(), freeEuler = new THREE.Euler();
   let drag: { id: number; x: number; y: number } | null = null;
-  // spin(): standing still for IDLE_AFTER, it turns round its upright axis; a drag stops it.
-  let spinOn = false, spinV = 0, lastTouch = 0;
-  const touched = () => { lastTouch = performance.now(); spinV = 0; };
+  // spin(): standing still for IDLE_AFTER, it swings SWING round its upright axis,
+  // slow at first and faster towards the end, stands, and swings back; a drag
+  // stops it. `along` (0..1) is where it is in the swing, sideways drags move it
+  // too, so the room's banners (aggressive-intro.ts) can run with the skull.
+  let spinOn = false, ramp = 0, lastTouch = 0, along = 0, swingDir = 1, rest = 0;
+  const touched = () => { lastTouch = performance.now(); ramp = 0; };
+  const dragAlong = (dx: number) => { along = (((along + (dx * 0.008) / SWING) % 1) + 1) % 1; };
   section.addEventListener("pointerdown", (e) => {
     if ((e.target as HTMLElement).closest("a, button")) return; // the link shards and the button stay clickable
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
@@ -492,12 +498,14 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
     touched();
     if (free) {
       freeEuler.set((e.clientY - drag.y) * 0.008, (e.clientX - drag.x) * 0.008, 0);
+      dragAlong(e.clientX - drag.x);
       freeTurn.premultiply(freeStep.setFromEuler(freeEuler));
       drag.x = e.clientX; drag.y = e.clientY;
       dirty = true;
       return;
     }
     turn.ty += (e.clientX - drag.x) * 0.008;
+    dragAlong(e.clientX - drag.x);
     if (e.pointerType === "mouse") turn.tx = Math.max(-0.9, Math.min(0.9, turn.tx + (e.clientY - drag.y) * 0.006));
     drag.x = e.clientX; drag.y = e.clientY;
     dirty = true;
@@ -625,10 +633,25 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       if (!settled && settledAt && (instant || now - settledAt > SETTLED_PAUSE)) { settled = true; onSettled(true); }
     }
     if (spinOn && !drag && now - lastTouch > IDLE_AFTER) {
-      spinV = Math.min(SPIN_SPEED, spinV + SPIN_SPEED * dt); // eases in over a second
-      if (free) freeTurn.premultiply(freeStep.setFromAxisAngle(Y_AXIS, spinV * dt));
-      else turn.ty += spinV * dt;
-      dirty = true;
+      if (rest > 0) rest -= dt;
+      else {
+        ramp = Math.min(1, ramp + dt); // eases in over a second
+        const done = swingDir > 0 ? along : 1 - along;
+        // slow to a bit faster, and a short brake into the end
+        const speed = SWING_SPEED * (0.6 + 0.8 * done) * Math.min(1, 0.15 + (1 - done) / 0.05) * ramp;
+        let next = along + swingDir * speed * dt;
+        if (next >= 1 || next <= 0) {
+          next = next >= 1 ? 1 : 0;
+          swingDir = -swingDir;
+          rest = SWING_REST;
+          ramp = 0;
+        }
+        const step = (next - along) * SWING;
+        along = next;
+        if (free) freeTurn.premultiply(freeStep.setFromAxisAngle(Y_AXIS, step));
+        else turn.ty += step;
+        dirty = true;
+      }
     }
     if (dirty) { dirty = false; pose(); renderer.render(scene, camera); }
     requestAnimationFrame(frame);
@@ -652,6 +675,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       spinOn = on;
       touched();
     },
+    swing: () => along,
     wound: () => toScreen(skull.localToWorld(hits[fired - 1].hit.clone())), // the latest hit
     // A clean skull again, every blade back in play, and from now on it turns
     // like a ball, any way round.
