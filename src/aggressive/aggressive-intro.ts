@@ -35,6 +35,7 @@ import { createToolScene } from "./tool-scene";
 import Lenis from "lenis";
 import { PALETTE, onTheme, switchTheme } from "./ai-theme";
 import { createPageScrollbar } from "./page-scrollbar";
+import { fx, LOUD } from "./loud";
 import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
@@ -59,6 +60,9 @@ const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] };
 const BANNER_SKILLS = ["Fullstack Dev", "TypeScript", "JavaScript", "HTML", "CSS", "Python", "Java", "SQL", "Agent Engineering", "NestJS", "React", "Node.js", "PostgreSQL", "Docker", "Three.js", "GSAP", "Tailwind", "Vite", "Canvas 2D", "Git", "Linux"];
 const BANNER = Array(6).fill(BANNER_SKILLS.map((skill) => `<span>${skill}</span>`).join("")).join("");
 
+// The louder copy (loud.ts) is the same page under its own address.
+const BASE = LOUD ? "/testFable5.2" : "/adhdActivated";
+
 document.documentElement.dataset.theme = "light";
 document.body.classList.add("ai");
 document.body.innerHTML = `
@@ -67,9 +71,9 @@ document.body.innerHTML = `
     <canvas class="ai-paint" aria-hidden="true"></canvas>
     <svg class="ai-room" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
     <nav class="ai-words">
-      <a class="ai-word ai-word--left" href="/adhdActivated/about" data-page="about" tabindex="-1">${UI.navAbout}</a>
-      <a class="ai-word ai-word--right" href="/adhdActivated/projects" data-page="projects" tabindex="-1">${UI.navProjects}</a>
-      <a class="ai-word ai-word--floor" href="/adhdActivated/contact" data-page="contact" tabindex="-1">${UI.navContact}</a>
+      <a class="ai-word ai-word--left" href="${BASE}/about" data-page="about" tabindex="-1">${UI.navAbout}</a>
+      <a class="ai-word ai-word--right" href="${BASE}/projects" data-page="projects" tabindex="-1">${UI.navProjects}</a>
+      <a class="ai-word ai-word--floor" href="${BASE}/contact" data-page="contact" tabindex="-1">${UI.navContact}</a>
     </nav>
     <canvas class="ai-skull" aria-hidden="true"></canvas>
     <button class="ai-button" type="button" hidden>PRESS</button>
@@ -107,8 +111,8 @@ document.body.innerHTML = `
       <span class="ai-bar-copy">© copyright <a href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer">saos</a> / <a href="mailto:kevin.schaberl.work@gmail.com">kevinschaberl</a></span>
       <a href="/links">[more stuff]</a>
       <span class="ai-bar-end">
-        <a href="/adhdActivated/privacy" data-legal="privacy">[${UI.datenschutz.toLowerCase()}]</a>
-        <a href="/adhdActivated/imprint" data-legal="imprint">[${UI.impressum.toLowerCase()}]</a>
+        <a href="${BASE}/privacy" data-legal="privacy">[${UI.datenschutz.toLowerCase()}]</a>
+        <a href="${BASE}/imprint" data-legal="imprint">[${UI.impressum.toLowerCase()}]</a>
         <a class="ai-mail-foot" href="mailto:kevin.schaberl.work@gmail.com">[mail]</a>
       </span>
     </footer>
@@ -116,7 +120,6 @@ document.body.innerHTML = `
   </div>`;
 
 const q = <T extends Element>(sel: string) => document.querySelector<T>(sel)!;
-const BASE = "/adhdActivated";
 let syncing = false, roomReady = false, moreOpenAt: string | null = null;
 function setUrl(path: string) {
   if (!syncing && location.pathname !== path) history.pushState({ inner: true }, "", path);
@@ -493,6 +496,7 @@ page.addEventListener("scroll", () => barsFollow(page), { passive: true });
 // model gets kicked out then and the new one stands in the frame by the time its
 // text has reached the frame's height. Same line scrolling back.
 let frame: ReturnType<typeof createProjectFrame> | null = null;
+let framed = ""; // the project in the frame
 function activeProject() {
   let best = "";
   for (const el of page.querySelectorAll<HTMLElement>(".ai-proj")) {
@@ -500,14 +504,19 @@ function activeProject() {
   }
   return best;
 }
-page.addEventListener("scroll", () => { if (frame) frame.show(activeProject()); }, { passive: true });
+page.addEventListener("scroll", () => {
+  if (!frame) return;
+  const id = activeProject();
+  if (id !== framed) fx.kick(page.querySelector<HTMLElement>(".ai-page-tool")!);
+  frame.show(framed = id);
+}, { passive: true });
 
 function mountScene(name: string) {
   if (name === "about") {
     pageScene = createToolScene(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!);
   } else if (name === "projects") {
     frame = createProjectFrame(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!);
-    frame.show(activeProject());
+    frame.show(framed = activeProject());
     pageScene = frame;
   } else if (name === "contact") {
     pageScene = createPinata(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, [...page.querySelectorAll<HTMLElement>(".ai-drop")]);
@@ -574,6 +583,7 @@ async function openPage(name: string, saw = false) {
     if (seen) {
       const [x, y] = skull.wound();
       woundAt = [((x + 1) / 2) * w, ((1 - y) / 2) * h];
+      fx.boom(...woundAt);
     }
     stopGlass = runDrops(ctx, glassDrops(...woundAt), () => {
       page.classList.add("is-open"); // the same picture, now real text and links
@@ -584,6 +594,8 @@ async function openPage(name: string, saw = false) {
       throwing = false;
       mountScene(name);
       updateTour();
+      fx.sweep();
+      fx.watch(page);
     });
   }, seen ? BLADE_DELAY * 1000 : 0);
 }
@@ -856,12 +868,22 @@ let endRun = 0;
 function playEnd() {
   const run = ++endRun;
   const spray = context(sprayCanvas); // sizing it wipes it
+  let blades = 0;
   const next = () => {
-    if (run !== endRun || skull.hitsLeft() < 0) return;
+    if (run !== endRun) return;
+    if (skull.hitsLeft() < 0) {
+      window.setTimeout(() => run === endRun && fx.boom(w / 2, h / 2, 2), BLADE_DELAY * 1000 + 250);
+      return;
+    }
     void skull.moreHit(FROZEN_AT).then(() => {
       if (run !== endRun) return;
       const [x, y] = skull.wound();
-      window.setTimeout(() => run === endRun && sprayScreen(spray, ((x + 1) / 2) * w, ((1 - y) / 2) * h), BLADE_DELAY * 1000);
+      window.setTimeout(() => {
+        if (run !== endRun) return;
+        const at = [((x + 1) / 2) * w, ((1 - y) / 2) * h] as const;
+        sprayScreen(spray, ...at);
+        fx.boom(...at, 0.45 + 0.04 * blades++, false); // no flash: they come too fast for one each
+      }, BLADE_DELAY * 1000);
       window.setTimeout(next, 260);
     });
   };
@@ -954,6 +976,7 @@ async function run() {
   skull = scene;
   runBanners(scene);
   partGrid(0);
+  fx.boom(w / 2, h / 2, 1.2);
   await gsap.fromTo(glow, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.12 });
 
   skullCanvas.style.opacity = "1";
@@ -970,10 +993,16 @@ async function run() {
     scene.setRise(1);
     window.setTimeout(() => {
       const [x, y] = scene.wound();
-      runDrops(paint, makeDrops(((x + 1) / 2) * w, ((1 - y) / 2) * h), openWords);
+      const at = [((x + 1) / 2) * w, ((1 - y) / 2) * h] as const;
+      fx.boom(...at, 1.5);
+      runDrops(paint, makeDrops(...at), openWords);
       // Once the blood aimed at them has mostly landed.
       window.setTimeout(() => {
-        words.forEach((word) => word.classList.add("is-shown"));
+        words.forEach((word, i) => {
+          word.classList.add("is-shown");
+          const box = word.getBoundingClientRect();
+          window.setTimeout(() => fx.burst(box.left + box.width / 2, box.top + box.height / 2, 30, 620), 180 + i * 110);
+        });
         tour.hidden = false;
         updateTour();
         document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });

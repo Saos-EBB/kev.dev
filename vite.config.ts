@@ -14,6 +14,7 @@ const siteRoutes: Connect.NextHandleFunction = (req, res, next) => {
     return;
   }
   if (/^\/adhdActivated\/.+/.test(path)) req.url = "/adhdActivated.html";
+  if (/^\/testFable5\.2(\/.*)?$/.test(path)) req.url = "/testFable.html";
   next();
 };
 
@@ -65,6 +66,7 @@ export default defineConfig({
         links: root("links.html"),
         ctLook: root("ct-look.html"),
         adhdActivated: root("adhdActivated.html"),
+        testFable: root("testFable.html"),
         impressum: root("impressum.html"),
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),

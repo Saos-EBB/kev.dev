@@ -26,6 +26,14 @@
     {
       "source": "/adhdActivated/:path*",
       "destination": "/adhdActivated"
+    },
+    {
+      "source": "/testFable5.2",
+      "destination": "/testFable"
+    },
+    {
+      "source": "/testFable5.2/:path*",
+      "destination": "/testFable"
     }
   ]
 }

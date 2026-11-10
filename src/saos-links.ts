@@ -50,6 +50,7 @@ const GROUPS: Group[] = [
       { name: "adhdActivated: Schluss", url: `${KEV}/adhdActivated/end` },
       { name: "adhdActivated: Privacy", url: `${KEV}/adhdActivated/privacy` },
       { name: "adhdActivated: Imprint", url: `${KEV}/adhdActivated/imprint` },
+      { name: "kev.dev: testFable5.2", url: `${KEV}/testFable5.2`, note: "adhdActivated, lauter" },
       { name: "kev.dev: lessAdhd", url: `${KEV}/lessAdhd`, note: "Scroll-Portfolio" },
       { name: "kev.dev: Impressum", url: `${KEV}/impressum` },
       { name: "kev.dev: Datenschutz", url: `${KEV}/datenschutz` },
