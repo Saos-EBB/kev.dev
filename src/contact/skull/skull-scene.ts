@@ -83,7 +83,8 @@ const breathe = () =>
 // `stopAt`: seconds after the hit the time stands still (the blood in the air by
 // default; later than the blood's life, and it's gone).
 // `crown`: instead of the fixed hits, this many blades all over the skull.
-type SceneOptions = { stopAt?: number; crown?: number };
+// `onRender`: called right after a frame is drawn, while the canvas still holds it.
+type SceneOptions = { stopAt?: number; crown?: number; onRender?: () => void };
 type HitDef = {
   want?: readonly number[];
   scale: number;
@@ -96,7 +97,7 @@ type HitDef = {
 
 // `section` is the screen-high sticky stage (contact-skull.ts), not the tall
 // scroll track around it: sizes, visibility and dragging are taken from it.
-export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], onSettled: (settled: boolean) => void, { stopAt = FREEZE_AT, crown = 0 }: SceneOptions = {}): Promise<SkullScene> {
+export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], onSettled: (settled: boolean) => void, { stopAt = FREEZE_AT, crown = 0, onRender }: SceneOptions = {}): Promise<SkullScene> {
   // Phones (LITE): no MSAA and at most 1.5x pixels — at 2-3x with
   // antialiasing the dense wire skull lagged there.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
@@ -653,7 +654,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
         dirty = true;
       }
     }
-    if (dirty) { dirty = false; pose(); renderer.render(scene, camera); }
+    if (dirty) { dirty = false; pose(); renderer.render(scene, camera); onRender?.(); }
     requestAnimationFrame(frame);
   }
 

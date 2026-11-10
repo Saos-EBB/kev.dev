@@ -220,6 +220,7 @@ function context(canvas: HTMLCanvasElement) {
   return ctx;
 }
 const paint = context(paintCanvas);
+fx.room.build(stage, [l, t, r, b], skullCanvas, paintCanvas);
 paint.fillStyle = PALETTE.inkCss;
 paint.strokeStyle = PALETTE.inkCss;
 // A theme switch repaints what's on the walls and the pane in the new ink:
@@ -951,7 +952,7 @@ function runBanners(scene: Scene) {
 async function run() {
   growGrid(0);
   let loaded = false;
-  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15 }).then((scene) => {
+  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15, onRender: fx.room.render }).then((scene) => {
     scene.setRise(0.99); // in place, but the blade only starts at 1
     loaded = true;
     return scene;
@@ -990,10 +991,12 @@ async function run() {
   button.addEventListener("click", () => {
     button.remove();
     q<SVGElement>(".ai-room-under").classList.add("is-on");
+    fx.room.arm();
     scene.setRise(1);
     window.setTimeout(() => {
       const [x, y] = scene.wound();
       const at = [((x + 1) / 2) * w, ((1 - y) / 2) * h] as const;
+      fx.room.turnOn();
       fx.boom(...at, 1.5);
       runDrops(paint, makeDrops(...at), openWords);
       // Once the blood aimed at them has mostly landed.

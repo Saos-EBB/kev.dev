@@ -2,12 +2,14 @@
 // extra on top of what the page already does: a blade striking shakes the
 // screen, flashes it and throws sparks and a shockwave; a finished page gets a
 // light sweeping over it; clicks, hovers and dragging the skull spark. The
+// room behind the menu gets light, shade and a mirroring floor (room-light.ts). The
 // glow, shine and slam-ins are CSS (loud.css), keyed on <html data-fx="loud">,
 // which testFable.html sets. On /adhdActivated every function here does nothing.
 //
 // Reduced motion switches all of it off (the attribute goes, so the CSS too).
 // Full-screen flashes are at least FLASH_GAP apart: never three a second.
 import gsap from "gsap";
+import { createRoomLight } from "./room-light";
 import "./loud.css";
 
 const root = document.documentElement;
@@ -160,6 +162,7 @@ function chroma() {
 
 // A blade striking, or anything else that should land like one.
 function boom(x: number, y: number, power = 1, withFlash = true) {
+  light?.flare(power);
   shake(power);
   if (withFlash) flash(power);
   ring(x, y, power);
@@ -216,6 +219,16 @@ if (ON) {
   }, { passive: true });
 }
 
+// The room's light and reflections (room-light.ts): built once the room's
+// walls are known, on from the first hit.
+let light: ReturnType<typeof createRoomLight> | null = null;
+const room = {
+  build(...args: Parameters<typeof createRoomLight>) { light = createRoomLight(...args); },
+  render() { light?.render(); },
+  arm() { light?.arm(); },
+  turnOn() { light?.turnOn(); },
+};
+
 const nothing = () => {};
-const all = { boom, burst, sweep, watch, kick };
-export const fx: typeof all = ON ? all : { boom: nothing, burst: nothing, sweep: nothing, watch: nothing, kick: nothing };
+const all = { boom, burst, sweep, watch, kick, room };
+export const fx: typeof all = ON ? all : { boom: nothing, burst: nothing, sweep: nothing, watch: nothing, kick: nothing, room: { build: nothing, render: nothing, arm: nothing, turnOn: nothing } };
