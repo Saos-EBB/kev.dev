@@ -241,15 +241,17 @@
   animation: fx-pop 320ms var(--fx-slam);
 }
 
-/* Contact (pinata-burst.ts): each link's name on a sign under its thing, in the
-   room's button look, so it reads as something to press. */
+/* Contact (pinata-burst.ts): each link's name on a sign over its thing, in the
+   room's button look, so it reads as something to press. Over it, not under:
+   under a thing on the floor is the floor's line, and on a phone the heading. */
 :root[data-fx="loud"] .ai-drop {
+  align-items: flex-start;
   text-decoration: none;
 }
 
 :root[data-fx="loud"] .ai-drop span {
   flex: none;
-  translate: 0 calc(100% + 0.35rem);
+  translate: 0 calc(-100% - 0.35rem);
   padding: 0.15rem 0.7rem 0.25rem;
   border: 3px solid var(--ai-ink);
   border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
