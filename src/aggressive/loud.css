@@ -1,11 +1,12 @@
-/* /testFable5.2 (loud.ts): glow, shine and slam-ins on top of the room's own
+/* /testFable5.2 (loud.ts): light, shade and slam-ins on top of the room's own
    styles. Everything is keyed on <html data-fx="loud">, so /adhdActivated never
    sees any of it, and reduced motion drops the attribute.
-   Running text keeps its plain look: only headings, buttons and scenes glow. */
+   The light stays quiet: a soft halo here and there, nothing that shines all
+   the time. The loading grid and running text keep their plain look. */
 :root[data-fx="loud"] {
   --fx-glow: var(--ai-accent);
   --fx-shine: #ffffff;
-  --fx-soft: color-mix(in srgb, var(--fx-glow) 45%, transparent);
+  --fx-soft: color-mix(in srgb, var(--fx-glow) 40%, transparent);
   --fx-slam: cubic-bezier(0.2, 1.5, 0.3, 1); /* overshoots, then sits */
 }
 
@@ -32,38 +33,18 @@
 }
 
 .fx-sweep {
-  background: linear-gradient(100deg, transparent 35%, color-mix(in srgb, var(--fx-shine) 45%, transparent) 50%, transparent 65%);
+  background: linear-gradient(100deg, transparent 38%, color-mix(in srgb, var(--fx-shine) 14%, transparent) 50%, transparent 62%);
   opacity: 0;
 }
 
 /* ── the room ── */
-/* The edges of the screen glow and breathe. Under the pages (z-index 5). */
-:root[data-fx="loud"] .ai-stage::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  box-shadow: inset 0 0 9rem 0.5rem var(--fx-soft);
-  pointer-events: none;
-  animation: fx-breathe 2.6s ease-in-out infinite alternate;
-}
-
 /* The same function list in both states, so the hit can fade back into it. */
 :root[data-fx="loud"] .ai-skull {
-  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--ai-ink) 70%, transparent)) drop-shadow(0 0 28px var(--fx-glow)) brightness(1);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--ai-ink) 50%, transparent)) drop-shadow(0 0 14px var(--fx-soft)) brightness(1);
 }
 
 :root[data-fx="loud"] .ai-skull.fx-hit {
-  animation: fx-chroma 380ms ease-out;
-}
-
-/* The loading grid and the flash at its end. */
-:root[data-fx="loud"] .ai-line {
-  box-shadow: 0 0 8px 1px var(--fx-glow);
-}
-
-:root[data-fx="loud"] .ai-glow {
-  box-shadow: inset 0 0 14rem 4rem var(--fx-glow);
+  animation: fx-chroma 320ms ease-out;
 }
 
 /* ── light and reflections in the room (room-light.ts) ──
@@ -134,13 +115,13 @@
 /* The skull's glow lands on the wall behind it and the floor under it. */
 .fx-spill {
   background:
-    radial-gradient(ellipse 30% 44% at var(--middle) 50%, color-mix(in srgb, var(--fx-glow) 26%, transparent), transparent 72%),
-    radial-gradient(ellipse 24% 9% at var(--middle) calc(var(--foot) + 4%), color-mix(in srgb, var(--fx-glow) 30%, transparent), transparent 75%);
+    radial-gradient(ellipse 30% 44% at var(--middle) 50%, color-mix(in srgb, var(--fx-glow) 14%, transparent), transparent 72%),
+    radial-gradient(ellipse 24% 9% at var(--middle) calc(var(--foot) + 4%), color-mix(in srgb, var(--fx-glow) 16%, transparent), transparent 75%);
 }
 
 /* Polished floor: a streak of light under the torch. */
 .fx-sheen {
-  background: radial-gradient(ellipse 22% 70% at var(--mx) 62%, color-mix(in srgb, var(--fx-shine) 30%, transparent), transparent 70%);
+  background: radial-gradient(ellipse 22% 70% at var(--mx) 62%, color-mix(in srgb, var(--fx-shine) 16%, transparent), transparent 70%);
 }
 
 /* The skull's shadow, where it stands. */
@@ -159,14 +140,14 @@
 }
 
 .fx-torch {
-  background: radial-gradient(circle at var(--mx) var(--my), color-mix(in srgb, var(--fx-shine) 14%, transparent), transparent 24vmax);
+  background: radial-gradient(circle at var(--mx) var(--my), color-mix(in srgb, var(--fx-shine) 9%, transparent), transparent 24vmax);
 }
 
-/* Buttons: glow around them and a shine running over them. Their text stays
-   sharp: a shadow in its own color only blurs it. */
+/* ── buttons ──
+   A soft halo, no more. The shine only runs once, when a button is pointed at. */
 :root[data-fx="loud"] :is(.ai-word, .ai-button, .ai-proj-more) {
   overflow: hidden;
-  box-shadow: 0 0 1.1rem 0.1rem var(--fx-glow), 0 0 3.5rem 0.4rem var(--fx-soft), var(--fx-cast, 0 0 0 transparent);
+  box-shadow: 0 0 0.7rem var(--fx-soft), var(--fx-cast, 0 0 0 transparent);
 }
 
 /* The signs hang in front of their wall: each throws a shadow away from the
@@ -186,54 +167,44 @@
   content: "";
   position: absolute;
   inset: 0 -20%;
-  background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--fx-shine) 75%, transparent) 50%, transparent 60%);
+  background: linear-gradient(105deg, transparent 42%, color-mix(in srgb, var(--fx-shine) 35%, transparent) 50%, transparent 58%);
   translate: -120% 0;
   pointer-events: none;
-  animation: fx-shine 3.2s ease-in-out infinite;
 }
 
-:root[data-fx="loud"] .ai-word--right::after { animation-delay: 0.5s; }
-:root[data-fx="loud"] .ai-word--floor::after { animation-delay: 1s; }
+:root[data-fx="loud"] :is(.ai-word, .ai-button, .ai-proj-more):is(:hover, :focus-visible)::after {
+  animation: fx-shine 550ms ease-out;
+}
 
-/* The words slam onto the walls one after the other (loud.ts sparks each). */
+/* The words land on the walls one after the other (loud.ts sparks each). */
 :root[data-fx="loud"] .ai-word.is-shown {
-  animation: fx-slam 520ms var(--fx-slam) both;
+  animation: fx-slam 460ms var(--fx-slam) both;
 }
 
 :root[data-fx="loud"] .ai-word--right.is-shown { animation-delay: 110ms; }
 :root[data-fx="loud"] .ai-word--floor.is-shown { animation-delay: 220ms; }
 
 :root[data-fx="loud"] .ai-word.is-open:is(:hover, :focus-visible) {
-  transform: translate(-50%, -50%) rotate(2deg) scale(1.18);
-  box-shadow: 0 0 1.6rem 0.4rem var(--fx-glow), 0 0 6rem 1.2rem var(--fx-glow), var(--fx-cast, 0 0 0 transparent);
+  transform: translate(-50%, -50%) rotate(1deg) scale(1.12);
+  box-shadow: 0 0 1.1rem 0.15rem var(--fx-soft), var(--fx-cast, 0 0 0 transparent);
 }
 
-/* PRESS lands, then keeps pumping until it's pressed. */
+/* PRESS just appears, and stands still. */
 :root[data-fx="loud"] .ai-stage > .ai-button {
-  animation: fx-slam 520ms var(--fx-slam) both, fx-pump 0.9s 520ms ease-in-out infinite alternate;
+  animation: fx-fade 500ms ease both;
 }
 
 :root[data-fx="loud"] .ai-button:is(:hover, :focus-visible) {
-  box-shadow: 0 0 1.6rem 0.4rem var(--fx-glow), 0 0 6rem 1.2rem var(--fx-glow);
+  box-shadow: 0 0 1.1rem 0.15rem var(--fx-soft);
 }
 
-/* The banners drop in from their edge and catch the light. */
+/* The banners drop in from their edge. */
 :root[data-fx="loud"] .ai-banner {
-  box-shadow: 0 0 1.5rem var(--fx-glow), 0 0 4rem var(--fx-soft);
-  animation: fx-drop-up 480ms var(--fx-slam) both;
+  animation: fx-drop-up 480ms ease-out both;
 }
 
 :root[data-fx="loud"] .ai-banner--top {
   animation-name: fx-drop-down;
-}
-
-:root[data-fx="loud"] .ai-banner::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 42%, color-mix(in srgb, var(--fx-shine) 80%, transparent) 50%, transparent 58%);
-  translate: -100% 0;
-  animation: fx-shine-wide 4.5s ease-in-out infinite;
 }
 
 /* ── the pages ── */
@@ -242,22 +213,16 @@
   overflow-x: hidden;
 }
 
-:root[data-fx="loud"] :is(.ai-page, .ai-more) h1,
-:root[data-fx="loud"] .ai-page .ai-proj h2,
-:root[data-fx="loud"] .ai-page blockquote {
-  text-shadow: 0 0 0.25em var(--fx-glow), 0 0 0.9em var(--fx-soft);
-}
-
 :root[data-fx="loud"] .ai-page--projects .ai-page-tool {
-  box-shadow: 0 0 1.5rem 0.2rem var(--fx-glow), 0 0 5rem 0.6rem var(--fx-soft), inset 0 0 3rem var(--fx-soft);
+  box-shadow: 0 0 1.2rem var(--fx-soft);
 }
 
 :root[data-fx="loud"] .ai-page-tool.fx-kick {
-  animation: fx-kick 420ms var(--fx-slam);
+  animation: fx-kick 380ms var(--fx-slam);
 }
 
 :root[data-fx="loud"] .ai-proj.fx-in h2 {
-  animation: fx-slam 520ms var(--fx-slam) both;
+  animation: fx-slam 460ms var(--fx-slam) both;
   transform-origin: left center;
 }
 
@@ -276,77 +241,73 @@
   animation: fx-pop 320ms var(--fx-slam);
 }
 
-:root[data-fx="loud"] .ai-scrollbar-dot {
-  box-shadow: 0 0 0.8rem 0.15rem var(--fx-glow);
+/* Contact (pinata-burst.ts): each link's name on a sign under its thing, in the
+   room's button look, so it reads as something to press. */
+:root[data-fx="loud"] .ai-drop {
+  text-decoration: none;
 }
 
-/* The end: the skull burns brighter. */
+:root[data-fx="loud"] .ai-drop span {
+  flex: none;
+  translate: 0 calc(100% + 0.35rem);
+  padding: 0.15rem 0.7rem 0.25rem;
+  border: 3px solid var(--ai-ink);
+  border-radius: 225px 12px 255px 10px / 12px 225px 10px 255px;
+  background: var(--ai-bg);
+  color: var(--ai-accent);
+  font: 400 1.35rem / 1.2 "Urban Sign", sans-serif;
+  letter-spacing: 0.04em;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+:root[data-fx="loud"] .ai-drop:is(:hover, :focus-visible) span {
+  background: var(--ai-accent);
+  color: var(--ai-bg);
+}
+
+/* The end: the skull a little brighter. */
 :root[data-fx="loud"] .ai-ended .ai-skull {
-  filter: drop-shadow(0 0 6px var(--ai-ink)) drop-shadow(0 0 46px var(--fx-glow)) brightness(1.15);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ai-ink) 60%, transparent)) drop-shadow(0 0 22px var(--fx-glow)) brightness(1.05);
 }
 
-/* Desktop only: the paint on the walls glows too. A blur over a full-screen
-   canvas that changes every frame is too much for a phone. */
+/* Desktop only: a thin halo around the paint on the walls, and a floor that
+   isn't a mirror (the picture in it is a little soft). A blur over a
+   full-screen canvas that changes every frame is too much for a phone. */
 @media (hover: hover) and (pointer: fine) and (min-width: 901px) {
   :root[data-fx="loud"] .ai-paint {
-    filter: drop-shadow(0 0 14px var(--fx-glow));
+    filter: drop-shadow(0 0 5px var(--fx-soft));
   }
 
-  /* A polished floor isn't a mirror: the picture in it is a little soft. */
   .fx-reflect {
     filter: blur(1.5px);
   }
-
-  /* Blue paint on white: a wide halo runs the blots into one blue wall. */
-  :root[data-fx="loud"][data-ai-theme="white"] .ai-paint {
-    filter: drop-shadow(0 0 5px var(--fx-soft));
-  }
 }
 
-/* Phones: one small shadow on the skull instead of the wide one, and less
-   glow at the edges, or it covers half the wall. */
+/* Phones: an even smaller shadow on the skull. */
 @media (hover: none), (pointer: coarse), (max-width: 900px) {
-  :root[data-fx="loud"] .ai-stage::after {
-    box-shadow: inset 0 0 3rem 0 var(--fx-soft);
-  }
-
-  :root[data-fx="loud"] .ai-banner {
-    box-shadow: 0 0 0.6rem var(--fx-soft);
-  }
-
   :root[data-fx="loud"] .ai-skull,
   :root[data-fx="loud"] .ai-ended .ai-skull {
-    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--ai-ink) 70%, transparent)) drop-shadow(0 0 10px var(--fx-glow)) brightness(1);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--ai-ink) 50%, transparent)) drop-shadow(0 0 7px var(--fx-soft)) brightness(1);
   }
-}
-
-@keyframes fx-breathe {
-  from { opacity: 0.35; }
-  to { opacity: 1; }
 }
 
 @keyframes fx-chroma {
-  from { filter: drop-shadow(12px 0 0 #ff2a4f) drop-shadow(-12px 0 0 #2ad4ff) brightness(1.8); }
+  from { filter: drop-shadow(5px 0 0 #ff2a4f) drop-shadow(-5px 0 0 #2ad4ff) brightness(1.35); }
 }
 
 @keyframes fx-shine {
-  0%, 55% { translate: -120% 0; }
-  100% { translate: 120% 0; }
-}
-
-@keyframes fx-shine-wide {
-  0%, 60% { translate: -100% 0; }
-  100% { translate: 100% 0; }
+  from { translate: -120% 0; }
+  to { translate: 120% 0; }
 }
 
 @keyframes fx-slam {
-  0% { opacity: 0; scale: 3; filter: blur(10px); }
+  0% { opacity: 0; scale: 1.8; filter: blur(6px); }
   55% { opacity: 1; filter: blur(0); }
   100% { opacity: 1; scale: 1; filter: blur(0); }
 }
 
-@keyframes fx-pump {
-  to { scale: 1.09; box-shadow: 0 0 2rem 0.5rem var(--fx-glow), 0 0 7rem 1.5rem var(--fx-glow); }
+@keyframes fx-fade {
+  from { opacity: 0; }
 }
 
 @keyframes fx-drop-down {
@@ -358,7 +319,7 @@
 }
 
 @keyframes fx-kick {
-  from { scale: 1.08; box-shadow: 0 0 3rem 1rem var(--fx-glow), 0 0 9rem 2rem var(--fx-glow), inset 0 0 5rem var(--fx-glow); }
+  from { scale: 1.04; box-shadow: 0 0 2rem 0.3rem var(--fx-glow); }
 }
 
 @keyframes fx-rise {

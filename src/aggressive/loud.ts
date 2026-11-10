@@ -1,6 +1,6 @@
 // /testFable5.2: the same room as /adhdActivated, louder. Everything here is an
 // extra on top of what the page already does: a blade striking shakes the
-// screen, flashes it and throws sparks and a shockwave; a finished page gets a
+// screen, flashes it faintly and throws sparks; a finished page gets a faint
 // light sweeping over it; clicks, hovers and dragging the skull spark. The
 // room behind the menu gets light, shade and a mirroring floor (room-light.ts). The
 // glow, shine and slam-ins are CSS (loud.css), keyed on <html data-fx="loud">,
@@ -23,9 +23,7 @@ const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const css = (name: string) => getComputedStyle(root).getPropertyValue(name).trim();
 
 type Spark = { x: number; y: number; vx: number; vy: number; left: number; life: number; size: number; color: string };
-type Ring = { x: number; y: number; r: number; speed: number; left: number; life: number; width: number; color: string };
 const sparks: Spark[] = [];
-const rings: Ring[] = [];
 
 let ctx: CanvasRenderingContext2D | null = null;
 let flashEl: HTMLElement, sweepEl: HTMLElement;
@@ -50,7 +48,7 @@ function setup() {
   ctx.lineCap = "round";
 }
 
-// Sparks are streaks along their flight, rings a line that widens and thins.
+// Sparks are streaks along their flight.
 let running = false, last = 0;
 function frame(now: number) {
   const dt = Math.min(Math.max((now - last) / 1000, 0), 0.05); // a frame's time can lie before wake()'s
@@ -76,22 +74,8 @@ function frame(now: number) {
       ctx!.stroke();
     }
   }
-  for (let i = rings.length - 1; i >= 0; i--) {
-    const r = rings[i];
-    r.left -= dt;
-    if (r.left <= 0) { rings.splice(i, 1); continue; }
-    r.r += r.speed * dt;
-    r.speed *= 1 - 2.2 * dt;
-    const k = r.left / r.life;
-    ctx!.globalAlpha = k;
-    ctx!.strokeStyle = r.color;
-    ctx!.lineWidth = r.width * k + 1;
-    ctx!.beginPath();
-    ctx!.arc(r.x, r.y, r.r, 0, Math.PI * 2);
-    ctx!.stroke();
-  }
   ctx!.globalAlpha = 1;
-  if (sparks.length || rings.length) requestAnimationFrame(frame);
+  if (sparks.length) requestAnimationFrame(frame);
   else {
     ctx!.clearRect(0, 0, w, h);
     running = false;
@@ -111,15 +95,6 @@ function burst(x: number, y: number, count = 14, speed = 420) {
     const a = rand(0, Math.PI * 2), v = speed * rand(0.25, 1);
     const life = rand(0.35, 0.9);
     sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - speed * 0.25, left: life, life, size: rand(1, 2.6), color: colors[i % 3] });
-  }
-  wake();
-}
-
-function ring(x: number, y: number, power: number) {
-  setup();
-  const reach = Math.hypot(w, h);
-  for (const [k, color] of [[1, css("--fx-shine")], [0.6, css("--ai-accent")]] as const) {
-    rings.push({ x, y, r: 8, speed: reach * 1.5 * k * Math.min(power, 1.5), left: 0.7, life: 0.7, width: 14 * power * k, color });
   }
   wake();
 }
@@ -148,7 +123,7 @@ function flash(power: number) {
   if (now - flashedAt < FLASH_GAP) return;
   flashedAt = now;
   setup();
-  gsap.fromTo(flashEl, { opacity: Math.min(0.3 * power, 0.6) }, { opacity: 0, duration: 0.45, ease: "power2.out", overwrite: true });
+  gsap.fromTo(flashEl, { opacity: Math.min(0.12 * power, 0.25) }, { opacity: 0, duration: 0.45, ease: "power2.out", overwrite: true });
 }
 
 // The skull's lines split into red and blue for a moment (loud.css).
@@ -165,7 +140,6 @@ function boom(x: number, y: number, power = 1, withFlash = true) {
   light?.flare(power);
   shake(power);
   if (withFlash) flash(power);
-  ring(x, y, power);
   burst(x, y, Math.round(46 * power), 950 * Math.min(power, 1.4));
   chroma();
 }

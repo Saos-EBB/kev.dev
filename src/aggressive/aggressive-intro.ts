@@ -30,6 +30,7 @@ import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
 import { renderConsents } from "../legal/legal-overlay";
 import { UI } from "../i18n/ui";
 import { createPinata } from "./pinata";
+import { createPinataBurst } from "./pinata-burst";
 import { createProjectFrame } from "./project-frame";
 import { createToolScene } from "./tool-scene";
 import Lenis from "lenis";
@@ -520,7 +521,7 @@ function mountScene(name: string) {
     frame.show(framed = activeProject());
     pageScene = frame;
   } else if (name === "contact") {
-    pageScene = createPinata(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, [...page.querySelectorAll<HTMLElement>(".ai-drop")]);
+    pageScene = (LOUD ? createPinataBurst : createPinata)(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, [...page.querySelectorAll<HTMLElement>(".ai-drop")]);
   }
 }
 function dropScene() {
@@ -557,7 +558,7 @@ async function openPage(name: string, saw = false) {
     ["tel:+436764718807", UI.phone],
   ] : [];
   // In the order the piñata drops them: phone, cat, letter.
-  const dropLinks = name === "contact" ? [drops[2], drops[0], drops[1]].map(([href, label]) => `<a class="ai-drop" href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""}>${label}</a>`).join("") : "";
+  const dropLinks = name === "contact" ? [drops[2], drops[0], drops[1]].map(([href, label]) => `<a class="ai-drop" href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""}><span>${label}</span></a>`).join("") : "";
   page.className = `ai-page ai-page--${name}`;
   page.innerHTML = `${PAGES[name]()}${hasScene ? `<canvas class="ai-page-tool" aria-hidden="true"></canvas>` : ""}${dropLinks}`;
   page.hidden = false; // laid out but invisible (.ai-page) until the pane is covered
@@ -977,7 +978,6 @@ async function run() {
   skull = scene;
   runBanners(scene);
   partGrid(0);
-  fx.boom(w / 2, h / 2, 1.2);
   await gsap.fromTo(glow, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.12 });
 
   skullCanvas.style.opacity = "1";
