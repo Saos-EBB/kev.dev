@@ -1,10 +1,10 @@
-// /testFable5.2: the same room as /adhdActivated, louder. Everything here is an
-// extra on top of what the page already does: a blade striking shakes the
+// /adhdActivated, the loud part. Everything here is an extra on top of what
+// the page already does: a blade striking shakes the
 // screen, flashes it faintly and throws sparks; a finished page gets a faint
 // light sweeping over it; clicks, hovers and dragging the skull spark. The
 // room behind the menu gets light, shade and a mirroring floor (room-light.ts). The
 // glow, shine and slam-ins are CSS (loud.css), keyed on <html data-fx="loud">,
-// which testFable.html sets. On /adhdActivated every function here does nothing.
+// which adhdActivated.html sets. Without it every function here does nothing.
 //
 // Reduced motion switches all of it off (the attribute goes, so the CSS too).
 // Full-screen flashes are at least FLASH_GAP apart: never three a second.
@@ -14,7 +14,7 @@ import { onTheme } from "./ai-theme";
 import "./loud.css";
 
 const root = document.documentElement;
-export const LOUD = root.dataset.fx === "loud"; // the route, whatever the motion setting
+const LOUD = root.dataset.fx === "loud"; // the page's flag, whatever the motion setting
 const ON = LOUD && !(matchMedia("(prefers-reduced-motion: reduce)").matches && !root.classList.contains("force-motion"));
 if (LOUD && !ON) delete root.dataset.fx;
 

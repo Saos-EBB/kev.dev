@@ -13,7 +13,7 @@
 // the guided tour (two arrows) clicks through the story, and only it reaches the
 // end. About: text plus the hammer on the keyboard (tool-scene.ts). Projects: a
 // tl;dr per project while its model kicks the last one out of the frame
-// (project-frame.ts), more behind a button. Contact: a piñata (pinata.ts).
+// (project-frame.ts), more behind a button. Contact: a piñata (pinata-burst.ts).
 //
 // The skull, blade and flying blood are the contact section's scene; only the
 // paint on the walls is new.
@@ -27,14 +27,13 @@ import { revokeConsent, type ConsentId } from "../consent";
 import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
 import { renderConsents } from "../legal/legal-overlay";
 import { UI } from "../i18n/ui";
-import { createPinata } from "./pinata";
 import { createPinataBurst } from "./pinata-burst";
 import { createProjectFrame } from "./project-frame";
 import { createToolScene } from "./tool-scene";
 import Lenis from "lenis";
 import { PALETTE, onTheme, switchTheme } from "./ai-theme";
 import { createPageScrollbar } from "./page-scrollbar";
-import { fx, LOUD } from "./loud";
+import { fx } from "./loud";
 import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
@@ -61,8 +60,7 @@ const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] } as const;
 const BANNER_SKILLS = ["Fullstack Dev", "TypeScript", "JavaScript", "HTML", "CSS", "Python", "Java", "SQL", "Agent Engineering", "NestJS", "React", "Node.js", "PostgreSQL", "Docker", "Three.js", "GSAP", "Tailwind", "Vite", "Canvas 2D", "Git", "Linux"];
 const BANNER = Array(6).fill(BANNER_SKILLS.map((skill) => `<span>${skill}</span>`).join("")).join("");
 
-// The louder copy (loud.ts) is the same page under its own address.
-const BASE = LOUD ? "/testFable5.2" : "/adhdActivated";
+const BASE = "/adhdActivated";
 
 document.documentElement.dataset.theme = "light";
 document.body.classList.add("ai");
@@ -606,7 +604,7 @@ function mountScene(name: string) {
     frame.show(framed = activeProject());
     pageScene = frame;
   } else if (name === "contact") {
-    pageScene = (LOUD ? createPinataBurst : createPinata)(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, [...page.querySelectorAll<HTMLElement>(".ai-drop")]);
+    pageScene = createPinataBurst(page.querySelector<HTMLCanvasElement>(".ai-page-tool")!, [...page.querySelectorAll<HTMLElement>(".ai-drop")]);
   }
 }
 function dropScene() {

@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="preload" href="/fonts/urban-sign.woff2" as="font" type="font/woff2" crossorigin />
     <title>Kevin Schaberl</title>
-    <script>try{if(localStorage.getItem("kev-ai-theme")==="white")document.documentElement.dataset.aiTheme="white"}catch(e){}</script>
+    <!-- The loud effects (src/aggressive/loud.ts, loud.css) hang on this flag. -->
+    <script>document.documentElement.dataset.fx="loud";try{if(localStorage.getItem("kev-ai-theme")==="white")document.documentElement.dataset.aiTheme="white"}catch(e){}</script>
   </head>
   <body>
     <script type="module" src="/src/aggressive/aggressive-intro.ts"></script>

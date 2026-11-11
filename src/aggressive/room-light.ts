@@ -1,4 +1,4 @@
-// /testFable5.2 (loud.ts): the room behind the menu as a real room. It's dark,
+// /adhdActivated (loud.ts): the room behind the menu as a real room. It's dark,
 // and two lights are in it: the skull, which glows, and the pointer, a torch.
 // Every surface is shaded by how far it is from the skull (the walls get darker
 // towards the viewer, the ceiling most), and the floor is polished: it mirrors

@@ -1,5 +1,4 @@
-// The contact page on /testFable5.2: pinata.ts rebuilt so it reads as what it
-// is, a piñata being split open. (Once this route is the page, pinata.ts goes.)
+// The contact page on /adhdActivated: a piñata being split open.
 //
 // A striped llama swings on its rope. A saw blade drops from above along the
 // rope, cuts it and goes straight through the llama: time stands for a moment,

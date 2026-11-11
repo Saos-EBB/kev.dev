@@ -1,6 +1,6 @@
-/* /testFable5.2 (loud.ts): light, shade and slam-ins on top of the room's own
-   styles. Everything is keyed on <html data-fx="loud">, so /adhdActivated never
-   sees any of it, and reduced motion drops the attribute.
+/* /adhdActivated (loud.ts): light, shade and slam-ins on top of the room's own
+   styles. Everything is keyed on <html data-fx="loud">, which adhdActivated.html
+   sets, and reduced motion drops the attribute.
    The light stays quiet: a soft halo here and there, nothing that shines all
    the time. The loading grid and running text keep their plain look. */
 :root[data-fx="loud"] {
