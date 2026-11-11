@@ -278,12 +278,23 @@ type Drip = { x: number; y: number; width: number; left: number; speed: number }
 const rand = (a: number, c: number) => a + Math.random() * (c - a);
 const radius = () => (Math.random() < 0.1 ? rand(14, 46) : rand(1.5, 12)) * scale;
 
+// Every blot on the walls, in parts of the screen (its size in parts of
+// `scale`), and where they flew from: a new screen size paints the same blots
+// again at their new places, sharp and round (paintWalls). Stretching the old
+// picture instead smears them and pulls them out of shape.
+const blots: { x: number; y: number; r: number }[] = [];
+const keepBlot = (x: number, y: number, r: number) => { blots.push({ x: x / w, y: y / h, r: r / scale }); };
+let blotsFrom = [0.5, 0.5];
+let stopWalls = () => {};
+
 function makeDrops(fromX: number, fromY: number): Drop[] {
   const out: Drop[] = [];
+  blotsFrom = [fromX / w, fromY / h];
   const add = (x: number, y: number, r: number) => {
     const angle = Math.atan2(y - fromY, x - fromX);
     const dist = Math.hypot(x - fromX, y - fromY);
     out.push({ at: rand(0, 1.5) + dist / 1600, x, y, r, angle });
+    keepBlot(x, y, r);
   };
   for (let i = 0; i < w * h * DROPS_PER_PIXEL; i++) add(rand(0, w), rand(0, h), radius());
   for (const word of words) wordDrops(word, add);
@@ -312,22 +323,37 @@ function coverWords(sx = 1, sy = 1) {
     covered.set(word, patch);
     const box = word.getBoundingClientRect();
     if (box.left >= patch.left && box.top >= patch.top && box.right <= patch.right && box.bottom <= patch.bottom) continue;
-    wordDrops(word, (x, y, r) => stamp(paint, { at: 0, x, y, r, angle: Math.atan2(y - h / 2, x - w / 2) }, []));
+    wordDrops(word, (x, y, r) => {
+      stamp(paint, { at: 0, x, y, r, angle: Math.atan2(y - h / 2, x - w / 2) }, []);
+      keepBlot(x, y, r);
+    });
   }
 }
 
-// ── a new size ──
-// What's on a canvas stays and stretches with the screen, like the walls do.
-function refit(canvas: HTMLCanvasElement) {
-  if (!canvas.width || !canvas.height) return;
-  const old = document.createElement("canvas");
-  old.width = canvas.width;
-  old.height = canvas.height;
-  old.getContext("2d")!.drawImage(canvas, 0, 0);
-  const ctx = context(canvas);
-  ctx.drawImage(old, 0, 0, w, h);
+// The walls' paint for the size the screen has now: every blot at once, its
+// drips run to their end. Blots still on their way land with it.
+function paintWalls() {
+  stopWalls();
+  const ctx = context(paintCanvas); // sizing it wipes it
   ctx.fillStyle = ctx.strokeStyle = PALETTE.inkCss;
+  if (!blots.length) return;
+  const fromX = blotsFrom[0] * w, fromY = blotsFrom[1] * h;
+  const drips: Drip[] = [];
+  for (const b of blots) {
+    const x = b.x * w, y = b.y * h;
+    stamp(ctx, { at: 0, x, y, r: b.r * scale, angle: Math.atan2(y - fromY, x - fromX) }, drips);
+  }
+  for (const d of drips) {
+    ctx.lineWidth = d.width;
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x, d.y + d.left);
+    ctx.stroke();
+  }
+  openWords();
 }
+
+// ── a new size ──
 // In place, once the window has come to rest and no pane is being painted (it
 // is laid out for the size it started at). A phone's address bar coming and
 // going only changes the height: the canvases simply stretch for that.
@@ -341,8 +367,8 @@ function resized() {
   drawRoom();
   fx.room.resize(wall);
   if (grid.isConnected) buildGrid(); // still loading: the next frame places the new lines
-  refit(paintCanvas);
-  if (ended) refit(sprayCanvas);
+  paintWalls();
+  if (ended) paintSpray();
   woundAt = [woundAt[0] * sx, woundAt[1] * sy];
   coverWords(sx, sy);
   labelChrome(); // the next button reads differently on a phone
@@ -963,8 +989,19 @@ const sprayCanvas = q<HTMLCanvasElement>(".ai-spray");
 let ended = false;
 // What reaches the visitor: each blow leaves a fine mist on the pane in front of
 // them, thickest towards the wound, and it stays there when the skull is turned.
-function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
+// Every blow's place is kept in parts of the screen (mists): a new screen size
+// sprays them all again at once, as fine as before (paintSpray). Stretching the
+// old picture would blur the drops.
+const mists: [number, number][] = [];
+let sprayRun = 0;
+function paintSpray() {
+  sprayRun++; // drops still coming were aimed at the old size
+  const ctx = context(sprayCanvas); // sizing it wipes it
+  for (const [x, y] of mists) sprayScreen(ctx, x * w, y * h, true);
+}
+function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number, atOnce = false) {
   const reach = Math.min(w, h) * 0.42;
+  const run = sprayRun;
   let frames = 9;
   // the fog itself, then the fine drops in it
   const fog = ctx.createRadialGradient(x, y, 0, x, y, reach * 1.5);
@@ -973,6 +1010,7 @@ function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.fillStyle = fog;
   ctx.fillRect(0, 0, w, h);
   const burst = () => {
+    if (run !== sprayRun) return;
     ctx.fillStyle = PALETTE.inkCss;
     for (let i = 0; i < 420; i++) {
       const haze = Math.random() < 0.15;
@@ -985,7 +1023,7 @@ function sprayScreen(ctx: CanvasRenderingContext2D, x: number, y: number) {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-    if (--frames > 0) requestAnimationFrame(burst);
+    if (--frames > 0) atOnce ? burst() : requestAnimationFrame(burst);
   };
   burst();
 }
@@ -1016,7 +1054,9 @@ function endIt() {
 let endRun = 0;
 function playEnd() {
   const run = ++endRun;
-  const spray = context(sprayCanvas); // sizing it wipes it
+  mists.length = 0;
+  sprayRun++;
+  context(sprayCanvas); // sizing it wipes it
   let blades = 0;
   const next = () => {
     if (run !== endRun) return;
@@ -1030,7 +1070,8 @@ function playEnd() {
       window.setTimeout(() => {
         if (run !== endRun) return;
         const at = [((x + 1) / 2) * w, ((1 - y) / 2) * h] as const;
-        sprayScreen(spray, ...at);
+        mists.push([at[0] / w, at[1] / h]);
+        sprayScreen(sprayCanvas.getContext("2d")!, ...at);
         fx.boom(...at, 0.45 + 0.04 * blades++, false); // no flash: they come too fast for one each
       }, BLADE_DELAY * 1000);
       window.setTimeout(next, 260);
@@ -1146,7 +1187,7 @@ async function run() {
       const drops = makeDrops(...at); // measures the words: before anything below changes the page
       fx.room.turnOn();
       fx.boom(...at, 1.5);
-      runDrops(paint, drops, openWords);
+      stopWalls = runDrops(paint, drops, openWords);
       // Once the blood aimed at them has mostly landed.
       window.setTimeout(() => {
         // Everything that changes the layout first, then the one look at it:
