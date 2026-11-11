@@ -1124,9 +1124,10 @@ async function run() {
     window.setTimeout(() => {
       const [x, y] = scene.wound();
       const at = [((x + 1) / 2) * w, ((1 - y) / 2) * h] as const;
+      const drops = makeDrops(...at); // measures the words: before anything below changes the page
       fx.room.turnOn();
       fx.boom(...at, 1.5);
-      runDrops(paint, makeDrops(...at), openWords);
+      runDrops(paint, drops, openWords);
       // Once the blood aimed at them has mostly landed.
       window.setTimeout(() => {
         // Everything that changes the layout first, then the one look at it:

@@ -294,6 +294,12 @@
   filter: none;
 }
 
+/* The blow's own flare fades the picture in (room-light.ts): a transition on
+   the room around it would be a second full-screen fade on top of that one. */
+:root[data-fx-light] .fx-room {
+  transition: none;
+}
+
 :root[data-fx-light] :is(.ai-word.is-shown, .ai-proj.fx-in h2) {
   animation-name: fx-slam-light;
 }

@@ -693,6 +693,7 @@ body.ai {
 .ai-banner-track {
   display: flex;
   width: max-content; /* moved by the skull's swing, see runBanners() */
+  will-change: transform; /* its own layer: moved every frame, never painted again */
 }
 
 .ai-banner-track span {

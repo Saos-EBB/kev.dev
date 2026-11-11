@@ -34,6 +34,7 @@ type Spark = { x: number; y: number; vx: number; vy: number; left: number; life:
 const sparks: Spark[] = [];
 
 let ctx: CanvasRenderingContext2D | null = null;
+let sparksEl: HTMLCanvasElement;
 let flashEl: HTMLElement, sweepEl: HTMLElement;
 let w = 0, h = 0;
 // The sparks' canvas at the screen's size; again when that changes.
@@ -56,6 +57,10 @@ function setup() {
   sweepEl = document.createElement("div");
   sweepEl.className = "fx-sweep";
   for (const el of [canvas, flashEl, sweepEl]) el.setAttribute("aria-hidden", "true");
+  // Only on screen while sparks fly: an empty full-screen layer still has to
+  // be blended over the page for every frame the skull draws.
+  canvas.style.display = "none";
+  sparksEl = canvas;
   document.body.append(canvas, sweepEl, flashEl);
   size(canvas);
   addEventListener("resize", () => size(canvas), { passive: true });
@@ -92,12 +97,14 @@ function frame(now: number) {
   if (sparks.length) requestAnimationFrame(frame);
   else {
     ctx!.clearRect(0, 0, w, h);
+    sparksEl.style.display = "none";
     running = false;
   }
 }
 function wake() {
   if (running) return;
   running = true;
+  sparksEl.style.display = "";
   last = performance.now();
   requestAnimationFrame(frame);
 }
@@ -122,6 +129,7 @@ const shaking = { k: 0, power: 0 };
 function shake(power: number) {
   const stage = document.querySelector<HTMLElement>(".ai-stage")!;
   shaking.power = Math.max(power, shaking.power * shaking.k);
+  stage.style.willChange = "transform"; // moved as one layer, not painted again for every step
   gsap.fromTo(shaking, { k: 1 }, {
     k: 0, duration: 0.5, ease: "power2.out", overwrite: true,
     onUpdate() {
@@ -130,7 +138,7 @@ function shake(power: number) {
     },
     onComplete() {
       shaking.power = 0;
-      gsap.set(stage, { clearProps: "transform" }); // or the stage stays the pages' containing block
+      gsap.set(stage, { clearProps: "transform,willChange" }); // or the stage stays the pages' containing block
     },
   });
 }
