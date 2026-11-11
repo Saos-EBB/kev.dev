@@ -15,6 +15,7 @@
 // All of it sits between the walls' paint and the words, comes on with the
 // first hit (the start stays blank) and is gone at the end (loud.css).
 import gsap from "gsap";
+import { onTheme } from "./ai-theme";
 
 const DARK = 0.8; // of the dark's full strength (--fx-dim in loud.css); the rest is for the flicker
 const MIRROR = 0.5; // the reflection is drawn at half the screen's pixels: cheaper, and softer
@@ -22,13 +23,18 @@ const FLOOR_BELOW_WALL = 0.055; // of the screen's height: where the skull stand
 
 type Wall = readonly [number, number, number, number]; // the back wall in percent: left, top, right, bottom
 
-export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanvasElement, paint: HTMLCanvasElement) {
+// `lite` (phones, see LIGHT in loud.ts): a dozen full-screen layers over a
+// canvas that draws every frame is too much there. The same shade, glow and
+// shadow are painted once onto a single canvas (drawFlat) that only changes
+// its opacity; no mirror, no grain, no torch, and the skull is measured once
+// instead of every frame (reading its canvas back is slow).
+export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanvasElement, paint: HTMLCanvasElement, lite = false) {
   let [l, t, r, b] = wall;
   const room = document.createElement("div");
   room.className = "fx-room";
   room.setAttribute("aria-hidden", "true");
   const names = ["back", "left", "right", "ceil", "floor"] as const;
-  room.innerHTML = `
+  room.innerHTML = lite ? `<canvas class="fx-flat"></canvas>` : `
     <canvas class="fx-reflect"></canvas>
     ${names.map((name) => `<i class="fx-surf" data-surf="${name}"></i>`).join("")}
     <i class="fx-grain"></i>
@@ -39,14 +45,78 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
     <i class="fx-dark"></i>
     <i class="fx-torch"></i>`;
   stage.querySelector(".ai-words")!.before(room);
-  const dark = room.querySelector<HTMLElement>(".fx-dark")!;
-  const mirror = room.querySelector<HTMLCanvasElement>(".fx-reflect")!;
+  // What a blow lights up: the dark's layer, or on a phone the one picture.
+  const dark = room.querySelector<HTMLElement>(lite ? ".fx-flat" : ".fx-dark")!;
+  const mirror = room.querySelector<HTMLCanvasElement>(lite ? ".fx-flat" : ".fx-reflect")!;
   const ctx = mirror.getContext("2d")!;
   let W = 0, H = 0;
+  const FULL = lite ? 1 : DARK; // the dark layer's resting opacity; the flat picture has DARK painted in
+
+  // The phone's picture: every surface's shade, the dark around the skull, its
+  // glow on wall and floor and its shadow, as in loud.css, in screen pixels.
+  function drawFlat() {
+    const css = getComputedStyle(room);
+    const rgb = (name: string) => {
+      const hex = css.getPropertyValue(name).trim().replace("#", "");
+      return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) || 0).join(", ");
+    };
+    const dim = parseFloat(css.getPropertyValue("--fx-dim")) / 100;
+    const shadow = rgb("--fx-shadow"), glow = rgb("--fx-glow");
+    const shade = (k = 1) => `rgba(${shadow}, ${dim * k})`;
+    const clear = `rgba(${shadow}, 0)`;
+    const w = W = mirror.width = innerWidth, h = H = mirror.height = innerHeight;
+    const X = (x: number) => (x / 100) * w, Y = (y: number) => (y / 100) * h;
+    const surface = (points: number[][], fill: CanvasGradient) => {
+      ctx.beginPath();
+      points.forEach(([x, y], i) => ctx[i ? "lineTo" : "moveTo"](X(x), Y(y)));
+      ctx.fillStyle = fill;
+      ctx.fill();
+    };
+    const across = (x0: number, y0: number, x1: number, y1: number, from: string, to: string) => {
+      const g = ctx.createLinearGradient(X(x0), Y(y0), X(x1), Y(y1));
+      g.addColorStop(0, from);
+      g.addColorStop(1, to);
+      return g;
+    };
+    // An ellipse of light or dark: stops along its radius, 1 = its edge.
+    const ellipse = (cx: number, cy: number, rx: number, ry: number, stops: [number, string][], reach = 1) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(rx, ry);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, reach);
+      for (const [at, color] of stops) g.addColorStop(at / reach, color);
+      ctx.fillStyle = g;
+      ctx.fillRect(-w / rx, -h / ry, (2 * w) / rx, (2 * h) / ry);
+      ctx.restore();
+    };
+    ctx.clearRect(0, 0, w, h);
+    surface([[0, 0], [l, t], [l, b], [0, 100]], across(0, 0, l, 0, shade(), clear));
+    surface([[100, 0], [r, t], [r, b], [100, 100]], across(100, 0, r, 0, shade(), clear));
+    surface([[0, 0], [100, 0], [r, t], [l, t]], across(0, 0, 0, t, shade(), shade(0.5)));
+    surface([[l, b], [r, b], [100, 100], [0, 100]], across(0, 100, 0, b, shade(0.5), clear));
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(X(l), Y(t), X(r - l), Y(b - t));
+    ctx.clip();
+    ellipse(X(50), Y(55), X(75), Y(85), [[0, clear], [0.4, clear], [1.25, shade()]], 1.25);
+    ctx.restore();
+    const vmax = Math.max(w, h) / 100;
+    ellipse(middle * w, h / 2, 56 * vmax, 56 * vmax, [[0, clear], [16 / 56, clear], [1, shade(DARK)]]);
+    ctx.fillStyle = shade(DARK); // beyond the gradient's edge
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    ctx.arc(middle * w, h / 2, 56 * vmax, 0, Math.PI * 2, true);
+    ctx.fill();
+    ellipse(middle * w, h / 2, X(30), Y(44), [[0, `rgba(${glow}, 0.14)`], [0.72, `rgba(${glow}, 0)`]]);
+    ellipse(middle * w, (foot + 0.04) * h, X(24), Y(9), [[0, `rgba(${glow}, 0.16)`], [0.75, `rgba(${glow}, 0)`]]);
+    ellipse(middle * w, foot * h, X(19), Y(5), [[0, `rgba(${shadow}, 0.8)`], [0.45, `rgba(${shadow}, 0.4)`], [1, `rgba(${shadow}, 0)`]]);
+  }
+  if (lite) onTheme(drawFlat);
 
   // Everything that depends on the wall and the screen's size; again when
   // either changes (resize below).
   function layout() {
+    if (lite) return drawFlat();
     const poly = (...points: number[][]) => `polygon(${points.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
     const FLOOR = poly([l, b], [r, b], [100, 100], [0, 100]);
     const surfaces = {
@@ -77,12 +147,11 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
     W = mirror.width = Math.round(innerWidth * dpr * MIRROR);
     H = mirror.height = Math.round(innerHeight * dpr * MIRROR);
   }
-  layout();
 
   // Where the skull stands: its lowest row and its middle, read off a thumbnail
   // of its canvas while it's still clean (until arm()). The mirror turns there.
   let foot = b / 100 + FLOOR_BELOW_WALL, middle = 0.5;
-  let armed = false, on = false;
+  let armed = false, on = false, measured = false;
   const thumb = document.createElement("canvas");
   thumb.width = 96;
   thumb.height = 54;
@@ -103,17 +172,20 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
       if (count >= 3) low = y;
     }
     if (low < 0) return; // nothing drawn yet
+    measured = true;
     foot = (low + 1) / 54;
     middle = (minX + maxX + 1) / 2 / 96;
     room.style.setProperty("--foot", `${foot * 100}%`);
     room.style.setProperty("--middle", `${middle * 100}%`);
+    if (lite) drawFlat();
   }
+  layout();
 
   // Called right after the skull's scene has drawn a frame: only then does its
   // canvas still hold the picture.
   function render() {
-    if (!armed) return measure();
-    if (!on) return;
+    if (!armed) { if (!lite || !measured) measure(); return; }
+    if (!on || lite) return;
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, W, H);
     // the back wall's paint, turned over at the wall's foot
@@ -154,7 +226,7 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
 
   // The tube: a short double dip, never a flash. Stops when the room is gone.
   function flicker() {
-    if (!room.isConnected || stage.classList.contains("ai-ended")) return;
+    if (lite || !room.isConnected || stage.classList.contains("ai-ended")) return;
     if (!gsap.isTweening(dark)) {
       gsap.timeline()
         .to(dark, { opacity: 1, duration: 0.05 })
@@ -184,13 +256,13 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
       if (on) return;
       on = armed = true;
       room.classList.add("is-on");
-      gsap.set(dark, { opacity: DARK });
+      gsap.set(dark, { opacity: FULL });
       gsap.delayedCall(5, flicker);
     },
     // A blow lights the room, then the dark comes back.
     flare(power: number) {
       if (!on) return;
-      gsap.fromTo(dark, { opacity: Math.max(0, DARK - 0.7 * power) }, { opacity: DARK, duration: 1.1, ease: "power2.in", overwrite: true });
+      gsap.fromTo(dark, { opacity: Math.max(0, FULL - 0.7 * power) }, { opacity: FULL, duration: 1.1, ease: "power2.in", overwrite: true });
     },
   };
 }

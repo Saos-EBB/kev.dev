@@ -17,6 +17,13 @@ const root = document.documentElement;
 const LOUD = root.dataset.fx === "loud"; // the page's flag, whatever the motion setting
 const ON = LOUD && !(matchMedia("(prefers-reduced-motion: reduce)").matches && !root.classList.contains("force-motion"));
 if (LOUD && !ON) delete root.dataset.fx;
+// Phones get a lighter version, decided once at load: everything that makes
+// the browser filter or read back a full-screen canvas every frame is left out
+// (the skull's glow and color split, the mirroring floor, grain and blurred
+// corners), and there are fewer, plainer sparks. Shake, flash, the room's shade
+// and the slam-ins stay. loud.css follows the attribute.
+const LIGHT = matchMedia("(hover: none), (pointer: coarse), (max-width: 900px)").matches;
+if (ON && LIGHT) root.dataset.fxLight = "";
 
 const FLASH_GAP = 450; // ms
 const SHAKE = 16; // px at power 1
@@ -54,7 +61,8 @@ function setup() {
   addEventListener("resize", () => size(canvas), { passive: true });
 }
 
-// Sparks are streaks along their flight.
+// Sparks are streaks along their flight: a soft halo, then the hot core.
+const STROKES = LIGHT ? [[1, 1.4]] : [[0.25, 4], [1, 1]];
 let running = false, last = 0;
 function frame(now: number) {
   const dt = Math.min(Math.max((now - last) / 1000, 0), 0.05); // a frame's time can lie before wake()'s
@@ -71,7 +79,7 @@ function frame(now: number) {
     s.y += s.vy * dt;
     const k = s.left / s.life;
     ctx!.strokeStyle = s.color;
-    for (const [alpha, width] of [[0.25, 4], [1, 1]]) { // a soft halo, then the hot core
+    for (const [alpha, width] of STROKES) {
       ctx!.globalAlpha = k * alpha;
       ctx!.lineWidth = s.size * width;
       ctx!.beginPath();
@@ -100,6 +108,7 @@ onTheme(() => { colors = null; });
 function burst(x: number, y: number, count = 14, speed = 420) {
   setup();
   colors ??= [css("--ai-ink"), css("--ai-accent"), css("--fx-shine")];
+  if (LIGHT) count = Math.ceil(count / 2);
   for (let i = 0; i < count && sparks.length < 900; i++) {
     const a = rand(0, Math.PI * 2), v = speed * rand(0.25, 1);
     const life = rand(0.35, 0.9);
@@ -137,6 +146,7 @@ function flash(power: number) {
 
 // The skull's lines split into red and blue for a moment (loud.css).
 function chroma() {
+  if (LIGHT) return;
   const skull = document.querySelector<HTMLElement>(".ai-skull");
   if (!skull) return;
   skull.classList.remove("fx-hit");
@@ -206,7 +216,7 @@ if (ON) {
 // walls are known, on from the first hit.
 let light: ReturnType<typeof createRoomLight> | null = null;
 const room = {
-  build(...args: Parameters<typeof createRoomLight>) { light = createRoomLight(...args); },
+  build(stage: HTMLElement, wall: Parameters<typeof createRoomLight>[1], skull: HTMLCanvasElement, paint: HTMLCanvasElement) { light = createRoomLight(stage, wall, skull, paint, LIGHT); },
   render() { light?.render(); },
   resize(wall: Parameters<typeof createRoomLight>[1]) { light?.resize(wall); },
   arm() { light?.arm(); },

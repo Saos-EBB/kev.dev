@@ -285,12 +285,17 @@
   }
 }
 
-/* Phones: an even smaller shadow on the skull. */
-@media (hover: none), (pointer: coarse), (max-width: 900px) {
-  :root[data-fx="loud"] .ai-skull,
-  :root[data-fx="loud"] .ai-ended .ai-skull {
-    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--ai-ink) 50%, transparent)) drop-shadow(0 0 7px var(--fx-soft)) brightness(1);
-  }
+/* Phones (data-fx-light, set by loud.ts): nothing that filters a full-screen
+   layer. A filter on the skull's canvas is redone for every frame it draws,
+   which is what stalled phones when the blade hit. The room's light is one
+   painted canvas there (.fx-flat, room-light.ts) instead of a stack of layers. */
+:root[data-fx-light] .ai-skull,
+:root[data-fx-light] .ai-ended .ai-skull {
+  filter: none;
+}
+
+:root[data-fx-light] :is(.ai-word.is-shown, .ai-proj.fx-in h2) {
+  animation-name: fx-slam-light;
 }
 
 @keyframes fx-chroma {
@@ -306,6 +311,12 @@
   0% { opacity: 0; scale: 1.8; filter: blur(6px); }
   55% { opacity: 1; filter: blur(0); }
   100% { opacity: 1; scale: 1; filter: blur(0); }
+}
+
+@keyframes fx-slam-light {
+  0% { opacity: 0; scale: 1.8; }
+  55% { opacity: 1; }
+  100% { opacity: 1; scale: 1; }
 }
 
 @keyframes fx-fade {
