@@ -124,6 +124,7 @@ export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCam
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.5 : 2));
   renderer.setClearColor(0x000000, 0);
+  renderer.debug.checkShaderErrors = import.meta.env.DEV; // as for the skull (skull-scene.ts)
   const resize = () => {
     const r = canvas.getBoundingClientRect();
     renderer.setSize(r.width, r.height, false);

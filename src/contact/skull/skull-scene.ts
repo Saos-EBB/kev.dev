@@ -104,6 +104,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
   const px = Math.min(devicePixelRatio, LITE ? 1.5 : 2);
   renderer.setPixelRatio(px);
   renderer.setClearColor(0x000000, 0);
+  // Asking for a shader's error log makes the browser finish compiling it on
+  // the spot; only worth it while developing.
+  renderer.debug.checkShaderErrors = import.meta.env.DEV;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
   // Everything sits in `world`, which the drag turns.
@@ -660,6 +663,18 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
 
   resize();
   reset();
+
+  // Everything the first blade brings (the blood's own shader, the buffers of
+  // blade, cracks and shards) is drawn once now, hidden parts included, and the
+  // real picture right after in the same task, so nobody sees it. Otherwise all
+  // of that is compiled and uploaded the moment the blade strikes, which stalls
+  // a phone exactly there.
+  const hidden: THREE.Object3D[] = [];
+  scene.traverse((o) => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+  renderer.render(scene, camera);
+  for (const o of hidden) o.visible = false;
+  pose();
+  renderer.render(scene, camera);
 
   return {
     setRise(r: number) {

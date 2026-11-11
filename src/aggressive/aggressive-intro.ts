@@ -237,11 +237,14 @@ function partGrid(part: number) {
 }
 
 // ── the paint on the walls ──
+// The walls' paint is blots, not text: on a phone 1.5x pixels are enough for
+// it, and a good third fewer to fill with every blot.
 function context(canvas: HTMLCanvasElement) {
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
+  const px = canvas === paintCanvas && PHONE() ? Math.min(dpr, 1.5) : dpr;
+  canvas.width = w * px;
+  canvas.height = h * px;
   const ctx = canvas.getContext("2d")!;
-  ctx.scale(dpr, dpr);
+  ctx.scale(px, px);
   ctx.lineCap = "round";
   return ctx;
 }
@@ -370,6 +373,7 @@ function stamp(paint: CanvasRenderingContext2D, d: Drop, drips: Drip[]) {
   }
 }
 
+const STAMP_BUDGET = 6; // ms
 function runDrops(paint: CanvasRenderingContext2D, drops: Drop[], onDone: () => void) {
   const drips: Drip[] = [];
   let next = 0;
@@ -380,7 +384,13 @@ function runDrops(paint: CanvasRenderingContext2D, drops: Drop[], onDone: () => 
     if (stopped) return;
     const seconds = (now - start) / 1000, dt = (now - last) / 1000;
     last = now;
-    while (next < drops.length && drops[next].at <= seconds) stamp(paint, drops[next++], drips);
+    // At most a few milliseconds of blots per frame: after a slow frame the
+    // ones that are due don't all land in the next and make that one slow too.
+    const until = performance.now() + STAMP_BUDGET;
+    while (next < drops.length && drops[next].at <= seconds) {
+      stamp(paint, drops[next++], drips);
+      if (!(next & 7) && performance.now() > until) break;
+    }
     for (const d of drips) {
       if (d.left <= 0) continue;
       const step = d.speed * dt;
@@ -1119,14 +1129,16 @@ async function run() {
       runDrops(paint, makeDrops(...at), openWords);
       // Once the blood aimed at them has mostly landed.
       window.setTimeout(() => {
+        // Everything that changes the layout first, then the one look at it:
+        // reading a box between the changes lays the page out again each time.
+        for (const word of words) word.classList.add("is-shown");
+        tour.hidden = false;
+        document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });
+        updateTour();
         words.forEach((word, i) => {
-          word.classList.add("is-shown");
           const box = word.getBoundingClientRect();
           window.setTimeout(() => fx.burst(box.left + box.width / 2, box.top + box.height / 2, 30, 620), 180 + i * 110);
         });
-        tour.hidden = false;
-        updateTour();
-        document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });
         roomReady = true;
         scene.spin(true); // the room is the menu: it turns while nobody touches it
         if (location.pathname !== BASE) syncRoute(); // arrived by a deep link

@@ -38,7 +38,7 @@ let flashEl: HTMLElement, sweepEl: HTMLElement;
 let w = 0, h = 0;
 // The sparks' canvas at the screen's size; again when that changes.
 function size(canvas: HTMLCanvasElement) {
-  const dpr = Math.min(devicePixelRatio, 2);
+  const dpr = LIGHT ? 1 : Math.min(devicePixelRatio, 2); // streaks in flight: a phone doesn't need them sharp
   w = innerWidth;
   h = innerHeight;
   canvas.width = w * dpr;
@@ -216,7 +216,10 @@ if (ON) {
 // walls are known, on from the first hit.
 let light: ReturnType<typeof createRoomLight> | null = null;
 const room = {
-  build(stage: HTMLElement, wall: Parameters<typeof createRoomLight>[1], skull: HTMLCanvasElement, paint: HTMLCanvasElement) { light = createRoomLight(stage, wall, skull, paint, LIGHT); },
+  build(stage: HTMLElement, wall: Parameters<typeof createRoomLight>[1], skull: HTMLCanvasElement, paint: HTMLCanvasElement) {
+    light = createRoomLight(stage, wall, skull, paint, LIGHT);
+    setup(); // the sparks' canvas now, while the page loads, not at the first blow
+  },
   render() { light?.render(); },
   resize(wall: Parameters<typeof createRoomLight>[1]) { light?.resize(wall); },
   arm() { light?.arm(); },
