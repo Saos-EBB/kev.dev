@@ -122,6 +122,9 @@ const shaking = { k: 0, power: 0 };
 function shake(power: number) {
   const stage = document.querySelector<HTMLElement>(".ai-stage")!;
   shaking.power = Math.max(power, shaking.power * shaking.k);
+  // Scale and rotation change every frame: without this hint the browser draws
+  // everything on the stage again for each new scale. Only while it shakes.
+  stage.style.willChange = "transform";
   gsap.fromTo(shaking, { k: 1 }, {
     k: 0, duration: 0.5, ease: "power2.out", overwrite: true,
     onUpdate() {
@@ -130,6 +133,7 @@ function shake(power: number) {
     },
     onComplete() {
       shaking.power = 0;
+      stage.style.willChange = "";
       gsap.set(stage, { clearProps: "transform" }); // or the stage stays the pages' containing block
     },
   });
