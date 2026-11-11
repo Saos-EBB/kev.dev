@@ -3,7 +3,7 @@
 // one snaps the case in two. Runs by itself; dragging turns it.
 import * as THREE from "three";
 import { loadModel, loadParts, wireModel } from "./models";
-import { COLORS, dispose, dragTurn, part, place, reducedMotion, runScene } from "./wire-kit";
+import { CALM, COLORS, dispose, dragTurn, part, place, reducedMotion, runScene } from "./wire-kit";
 
 const FIRST_AT = 1.4, BETWEEN = 1.9; // s: a look at it whole first, then one blow at a time
 const SWING = 0.2; // s of the blow itself
@@ -202,6 +202,8 @@ export function createToolScene(canvas: HTMLCanvasElement) {
         k.v.y *= -0.35; k.v.x *= 0.6; k.v.z *= 0.6; k.s.multiplyScalar(0.5);
       }
     }
+    // The wreck lies still, nobody turns it: only the slow sway is left.
+    if (done === blows && !turn.held && (reduced || performance.now() - snapped > 700) && loose.every((k) => !k.free || k.rest)) return CALM;
   });
 
   return {

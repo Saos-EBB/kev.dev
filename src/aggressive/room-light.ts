@@ -151,7 +151,7 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
   // Where the skull stands: its lowest row and its middle, read off a thumbnail
   // of its canvas while it's still clean (until arm()). The mirror turns there.
   let foot = b / 100 + FLOOR_BELOW_WALL, middle = 0.5;
-  let armed = false, on = false, measured = false;
+  let armed = false, on = false, measured = false, mirrorSkip = false;
   const thumb = document.createElement("canvas");
   thumb.width = 96;
   thumb.height = 54;
@@ -186,6 +186,9 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
   function render() {
     if (!armed) { if (!lite || !measured) measure(); return; }
     if (!on || lite) return;
+    // Every other picture of the skull: the mirror is dim and a little soft,
+    // half the rate doesn't show in it.
+    if ((mirrorSkip = !mirrorSkip)) return;
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, W, H);
     // the back wall's paint, turned over at the wall's foot
@@ -208,12 +211,18 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
   }
 
   // The torch follows the pointer a little behind it, like something with weight.
-  const light = { x: 50, y: 38, tx: 50, ty: 38, moving: false };
+  // Written only once it has moved a fifth of a percent of the screen: every
+  // write paints three full-screen gradients again (dark, sheen, torch).
+  const light = { x: 50, y: 38, tx: 50, ty: 38, moving: false, sx: 50, sy: 38 };
   function follow() {
     light.x += (light.tx - light.x) * 0.14;
     light.y += (light.ty - light.y) * 0.14;
-    room.style.setProperty("--mx", `${light.x.toFixed(2)}%`);
-    room.style.setProperty("--my", `${light.y.toFixed(2)}%`);
+    if (Math.abs(light.x - light.sx) + Math.abs(light.y - light.sy) > 0.2) {
+      light.sx = light.x;
+      light.sy = light.y;
+      room.style.setProperty("--mx", `${light.x.toFixed(1)}%`);
+      room.style.setProperty("--my", `${light.y.toFixed(1)}%`);
+    }
     light.moving = Math.abs(light.tx - light.x) + Math.abs(light.ty - light.y) > 0.05;
     if (light.moving) requestAnimationFrame(follow);
   }
@@ -234,7 +243,7 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
         .to(dark, { opacity: DARK + 0.12, duration: 0.04, delay: 0.06 })
         .to(dark, { opacity: DARK, duration: 0.2 });
     }
-    gsap.delayedCall(4 + Math.random() * 6, flicker);
+    window.setTimeout(flicker, (4 + Math.random() * 6) * 1000); // a timer, not gsap's: that one would tick every frame while waiting
   }
 
   return {
@@ -257,7 +266,7 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
       on = armed = true;
       room.classList.add("is-on");
       gsap.set(dark, { opacity: FULL });
-      gsap.delayedCall(5, flicker);
+      window.setTimeout(flicker, 5000);
     },
     // A blow lights the room, then the dark comes back.
     flare(power: number) {

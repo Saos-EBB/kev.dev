@@ -76,12 +76,13 @@ export const group = (...children: THREE.Object3D[]) => {
 // Dragging turns a model, all the way round. A finger only sideways on a page
 // that scrolls; a mouse both ways.
 export function dragTurn(el: HTMLElement) {
-  const turn = { x: 0, y: 0, moved: false, stop() { el.removeEventListener("pointerdown", down); } };
+  const turn = { x: 0, y: 0, moved: false, held: false, stop() { el.removeEventListener("pointerdown", down); } };
   let last: { x: number; y: number; id: number; mouse: boolean } | null = null;
   const down = (e: PointerEvent) => {
     e.stopPropagation(); // or the skull's stage takes the pointer for itself
     last = { x: e.clientX, y: e.clientY, id: e.pointerId, mouse: e.pointerType === "mouse" };
     turn.moved = false;
+    turn.held = true;
     try { el.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
   };
   el.addEventListener("pointerdown", down);
@@ -94,7 +95,7 @@ export function dragTurn(el: HTMLElement) {
     last.x = e.clientX;
     last.y = e.clientY;
   });
-  const up = () => { last = null; };
+  const up = () => { last = null; turn.held = false; };
   el.addEventListener("pointerup", up);
   el.addEventListener("pointercancel", up);
   return turn;
@@ -120,7 +121,14 @@ export function dispose(o: THREE.Object3D) {
 // A renderer that keeps its canvas's size and draws while `tick` is running.
 // Phones (LITE) as for the skull: no MSAA, at most 1.5x pixels. Nothing runs
 // while the canvas is scrolled out of sight (the about band on a phone).
-export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCamera, scene: THREE.Scene, tick: (t: number, dt: number) => void) {
+//
+// How often it draws: never more than 60 times a second (a 120 Hz screen
+// would have it draw everything twice as often for nothing anyone sees), and
+// `tick` can return a lower rate for the time being, for when all that still
+// moves is a slow sway (CALM): the picture changes by less than a pixel then.
+export const CALM = 20; // frames a second
+const FULL_GAP = 12; // ms: lets 60 Hz through, halves 120 Hz
+export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCamera, scene: THREE.Scene, tick: (t: number, dt: number) => number | void) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !LITE, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, LITE ? 1.5 : 2));
   renderer.setClearColor(0x000000, 0);
@@ -135,14 +143,16 @@ export function runScene(canvas: HTMLCanvasElement, camera: THREE.PerspectiveCam
   observer.observe(canvas);
   resize();
   const start = performance.now();
-  let last = start, frameId = 0, seen = true, stopped = false;
+  let last = start, frameId = 0, seen = true, stopped = false, gap = FULL_GAP;
   const frame = (now: number) => {
     frameId = 0;
     if (stopped || !seen) return;
-    tick((now - start) / 1000, Math.min((now - last) / 1000, 0.05));
+    frameId = requestAnimationFrame(frame);
+    if (now - last < gap) return;
+    const rate = tick((now - start) / 1000, Math.min((now - last) / 1000, 0.05));
+    gap = rate ? 1000 / rate - 4 : FULL_GAP;
     last = now;
     renderer.render(scene, camera);
-    frameId = requestAnimationFrame(frame);
   };
   frameId = requestAnimationFrame(frame);
   const sight = new IntersectionObserver(([e]) => {

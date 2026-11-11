@@ -12,7 +12,7 @@
 import * as THREE from "three";
 import { bladeGeometry } from "../contact/skull/parts";
 import { half, loadModel, wireModel } from "./models";
-import { BLUE, COLORS, box, dispose, follow, part, reducedMotion, runScene } from "./wire-kit";
+import { BLUE, CALM, COLORS, box, dispose, follow, part, reducedMotion, runScene } from "./wire-kit";
 import { THEME } from "./ai-theme";
 import { LITE } from "../viewport";
 import { fx } from "./loud";
@@ -356,16 +356,23 @@ export function createPinataBurst(canvas: HTMLCanvasElement, links: HTMLElement[
   }
 
   // A link stays over its thing, wherever it's been thrown.
-  function placeLink(it: Item) {
+  // `r`: the canvas's box, read once a frame before any link is written (a
+  // read after a write lays the page out again). A link that hasn't moved
+  // isn't written at all: lying still, nothing on the page changes.
+  const placed = new Map<HTMLElement, string>();
+  function placeLink(it: Item, r: DOMRect) {
     const link = it.link!;
-    const r = canvas.getBoundingClientRect();
     const scale = r.height / (VIEW * 2);
     const px = (it.x / (width * 2) + 0.5) * r.width + r.left;
     const py = (0.5 - it.y / (VIEW * 2)) * r.height + r.top + page.scrollTop;
     const w = Math.max(extX(it), 0.5) * 2 * scale, h = Math.max(extY(it), 0.5) * 2 * scale;
-    link.style.width = `${w}px`;
-    link.style.height = `${h}px`;
-    link.style.transform = `translate(${px - w / 2}px, ${py - h / 2}px)`;
+    const at = `${w.toFixed(1)}px ${h.toFixed(1)}px translate(${(px - w / 2).toFixed(1)}px, ${(py - h / 2).toFixed(1)}px)`;
+    if (placed.get(link) === at) return;
+    placed.set(link, at);
+    const [width_, height_, ...move] = at.split(" ");
+    link.style.width = width_;
+    link.style.height = height_;
+    link.style.transform = move.join(" ");
     link.classList.add("is-on");
   }
 
@@ -433,6 +440,7 @@ export function createPinataBurst(canvas: HTMLCanvasElement, links: HTMLElement[
       }
     }
 
+    const box = canvas.getBoundingClientRect();
     items.forEach((it, i) => {
       if (!it.out) return;
       it.scale += ((lift[i] ? 1.12 : 1) - it.scale) * 0.2;
@@ -440,8 +448,10 @@ export function createPinataBurst(canvas: HTMLCanvasElement, links: HTMLElement[
       it.o.rotation.set(0, it.yaw, it.angle);
       it.o.scale.setScalar(it.own * it.scale);
       castShadow(it.shadow, it.x, extX(it), it.y - extY(it) - floor);
-      if (it.link) placeLink(it);
+      if (it.link) placeLink(it, box);
     });
+    // Everything has landed and lies still (until the next hop wakes one).
+    if (!held && !pinata.visible && !blade.visible && !lift.some(Boolean) && items.every((it) => it.out && it.asleep && Math.abs(it.scale - 1) < 0.01) && bits.every((c) => c.down)) return CALM;
   });
 
   return {

@@ -347,6 +347,7 @@ function resized() {
   coverWords(sx, sy);
   labelChrome(); // the next button reads differently on a phone
   bannerLists = null;
+  moveBanners();
   pageScroll.resize();
   moreScroll.resize();
   updateTour();
@@ -565,10 +566,31 @@ let skull: Scene;
 // the wheel anywhere on the stage (over the frame, arrows and bars as well);
 // touch stays native.
 const smooth = (wrapper: HTMLElement, eventsTarget: HTMLElement) => {
-  const lenis = new Lenis({ wrapper, content: wrapper, eventsTarget, autoRaf: true });
+  const lenis = new Lenis({ wrapper, content: wrapper, eventsTarget });
   lenis.stop();
+  lenis.on("virtual-scroll", wakeScroll);
   return lenis;
 };
+// Their frame loop only runs while one of them is easing a scroll (a wheel
+// turn, a scrollTo), not all the time: Lenis's own would call in every frame
+// for as long as the page is open, with nothing to do.
+let scrollLoop = 0, scrollIdle = 0;
+function scrollTick(time: number) {
+  pageScroll.raf(time);
+  moreScroll.raf(time);
+  scrollIdle = pageScroll.isScrolling === "smooth" || moreScroll.isScrolling === "smooth" ? 0 : scrollIdle + 1;
+  scrollLoop = scrollIdle < 6 ? requestAnimationFrame(scrollTick) : 0;
+}
+function wakeScroll() {
+  scrollIdle = 0;
+  if (scrollLoop) return;
+  // Lenis measures time between its frames: after a break, tell it the time
+  // first, or the next scroll would take the whole break for one step.
+  const now = performance.now();
+  pageScroll.raf(now);
+  moreScroll.raf(now);
+  scrollLoop = requestAnimationFrame(scrollTick);
+}
 const pageScroll = smooth(page, stage);
 const moreScroll = smooth(more, more);
 
@@ -879,6 +901,7 @@ function scrollToProject(id: string) {
   const el = page.querySelector<HTMLElement>(`.ai-proj[data-project="${id}"]`);
   if (el) {
     const r = el.getBoundingClientRect();
+    wakeScroll();
     pageScroll.scrollTo(page.scrollTop + r.top - (h - r.height) / 2, { duration: 1.1, force: true });
   }
 }
@@ -1056,32 +1079,29 @@ window.addEventListener("popstate", () => { if (roomReady) syncRoute(); });
 // top one runs the other way. Moving by whole lists looks the same, so the
 // offset wraps.
 // One list's width per track: measured once the banners show and again after
-// a resize, not every frame.
+// a resize, not every frame. They move when the skull has drawn a new picture
+// (its swing is all they follow), so they need no frame loop of their own.
 let bannerLists: number[] | null = null;
-document.fonts.addEventListener?.("loadingdone", () => { bannerLists = null; }); // the banner's font came late
-function runBanners(scene: Scene) {
-  const tracks = [...document.querySelectorAll<HTMLElement>(".ai-banner-track")];
-  const top = tracks.map((track) => track.parentElement!.classList.contains("ai-banner--top"));
-  let shown = -1;
-  const tick = () => {
-    const along = scene.swing();
-    if ((along !== shown || !bannerLists) && !tracks[0].parentElement!.hidden) {
-      shown = along;
-      bannerLists ??= tracks.map((track) => track.scrollWidth / 6);
-      tracks.forEach((track, i) => {
-        track.style.transform = `translateX(${-(top[i] ? 1 - along : along) * bannerLists![i]}px)`;
-      });
-    }
-    requestAnimationFrame(tick);
-  };
-  tick();
+document.fonts.addEventListener?.("loadingdone", () => { bannerLists = null; moveBanners(); }); // the banner's font came late
+const bannerTracks = [...document.querySelectorAll<HTMLElement>(".ai-banner-track")];
+const bannerTop = bannerTracks.map((track) => track.parentElement!.classList.contains("ai-banner--top"));
+let bannerAt = -1;
+function moveBanners() {
+  if (!skull || bannerTracks[0].parentElement!.hidden) return;
+  const along = skull.swing();
+  if (along === bannerAt && bannerLists) return;
+  bannerAt = along;
+  bannerLists ??= bannerTracks.map((track) => track.scrollWidth / 6);
+  bannerTracks.forEach((track, i) => {
+    track.style.transform = `translateX(${-(bannerTop[i] ? 1 - along : along) * bannerLists![i]}px)`;
+  });
 }
 
 // ── the sequence ──
 async function run() {
   growGrid(0);
   let loaded = false;
-  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15, onRender: () => { if (!page.classList.contains("is-open")) fx.room.render(); } }).then((scene) => {
+  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15, onRender: () => { moveBanners(); if (!page.classList.contains("is-open")) fx.room.render(); } }).then((scene) => {
     scene.setRise(0.99); // in place, but the blade only starts at 1
     loaded = true;
     return scene;
@@ -1104,7 +1124,6 @@ async function run() {
 
   const scene = await loading;
   skull = scene;
-  runBanners(scene);
   partGrid(0);
   await gsap.fromTo(glow, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out", yoyo: true, repeat: 1, repeatDelay: 0.12 });
 
@@ -1136,6 +1155,7 @@ async function run() {
         tour.hidden = false;
         document.querySelectorAll<HTMLElement>(".ai-bar, .ai-mark, .ai-banner").forEach((bar) => { bar.hidden = false; });
         updateTour();
+        moveBanners();
         words.forEach((word, i) => {
           const box = word.getBoundingClientRect();
           window.setTimeout(() => fx.burst(box.left + box.width / 2, box.top + box.height / 2, 30, 620), 180 + i * 110);

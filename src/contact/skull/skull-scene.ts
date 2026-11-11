@@ -621,6 +621,9 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
 
   function frame(now: number) {
     if (!visible) return;
+    // Never more than 60 times a second: a 120 Hz screen would draw the whole
+    // skull twice as often for nothing anyone sees.
+    if (now - last < 12) { requestAnimationFrame(frame); return; }
     const dt = Math.min((now - last) / 1000, 1 / 20);
     last = now;
     if (!started && rise >= 0.995) { started = true; first.fired = true; }

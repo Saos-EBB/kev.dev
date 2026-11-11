@@ -4,6 +4,8 @@ import * as THREE from "three";
 import { loadModel, wireModel } from "./models";
 import { dispose, dragTurn, place, reducedMotion, runScene } from "./wire-kit";
 
+const SWAY = 30; // frames a second while a model only sways in the frame: under a pixel a frame
+
 const KICK_AT = 0.2; // s until the new model reaches the old one
 const SETTLE = 0.55; // s until it has stopped in the middle
 
@@ -84,6 +86,7 @@ export function createProjectFrame(canvas: HTMLCanvasElement) {
         out.splice(i, 1);
       }
     }
+    if (!out.length && current && current.t > SETTLE && wanted === shown && !turn.held) return SWAY;
   });
 
   return {
