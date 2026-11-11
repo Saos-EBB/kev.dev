@@ -21,11 +21,9 @@ import gsap from "gsap";
 import { createSkullScene } from "../contact/skull/skull-scene";
 import { ABOUT } from "../about/about-content";
 import { initEngineering, hasEngineering, engHref } from "../engineering";
-import { projectCards } from "../projects/projects-data";
-import { LANG, pick, setLang, type Lang } from "../i18n";
-import { softReloaded } from "../i18n/soft-reload";
+import { projectCards, relocalizeCards } from "../projects/projects-data";
+import { LANG, live, onLang, switchLang, type Lang } from "../i18n";
 import { revokeConsent, type ConsentId } from "../consent";
-import { softReload } from "../i18n/soft-reload";
 import { DATENSCHUTZ, IMPRESSUM } from "../legal/legal-content";
 import { renderConsents } from "../legal/legal-overlay";
 import { UI } from "../i18n/ui";
@@ -41,8 +39,10 @@ import "./aggressive-intro.css";
 
 const TALL = () => innerWidth / innerHeight < 0.8;
 // Phones (the CSS's phone block): no guided tour, one "next" button from the room
-// through the pages, END IT on the last.
-const PHONE = matchMedia("(hover: none), (pointer: coarse), (max-width: 900px)").matches;
+// through the pages, END IT on the last. Asked every time: a window can be
+// dragged narrow.
+const PHONE_QUERY = matchMedia("(hover: none), (pointer: coarse), (max-width: 900px)");
+const PHONE = () => PHONE_QUERY.matches;
 const LOAD_MIN = 1.6; // s the grid takes to grow in even when everything is cached
 const PART = 1.1; // s the grid takes to leave
 const HIT_DELAY = 0.5; // s from the press to the blade striking (HIT_AT in skull-scene.ts)
@@ -53,7 +53,7 @@ const DROPS_PER_PIXEL = 1500 / (1280 * 800); // on the walls at large
 const PIXELS_PER_WORD_DROP = 75; // aimed at each word, so all of them become readable
 
 // The back wall in percent of the screen; lines run from its corners to the screen's.
-const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] };
+const BACK_WALL = { wide: [26, 20, 74, 72], tall: [12, 30, 88, 66] } as const;
 
 // The running banner in the room: repeated so one run of the list (a sixth of
 // the track) still leaves any screen width filled. The skull's swing runs it,
@@ -72,9 +72,9 @@ document.body.innerHTML = `
     <canvas class="ai-paint" aria-hidden="true"></canvas>
     <svg class="ai-room" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
     <nav class="ai-words">
-      <a class="ai-word ai-word--left" href="${BASE}/about" data-page="about" tabindex="-1">${UI.navAbout}</a>
-      <a class="ai-word ai-word--right" href="${BASE}/projects" data-page="projects" tabindex="-1">${UI.navProjects}</a>
-      <a class="ai-word ai-word--floor" href="${BASE}/contact" data-page="contact" tabindex="-1">${UI.navContact}</a>
+      <a class="ai-word ai-word--left" href="${BASE}/about" data-page="about" tabindex="-1"></a>
+      <a class="ai-word ai-word--right" href="${BASE}/projects" data-page="projects" tabindex="-1"></a>
+      <a class="ai-word ai-word--floor" href="${BASE}/contact" data-page="contact" tabindex="-1"></a>
     </nav>
     <canvas class="ai-skull" aria-hidden="true"></canvas>
     <button class="ai-button" type="button" hidden>PRESS</button>
@@ -85,9 +85,9 @@ document.body.innerHTML = `
     <article class="ai-page" hidden></article>
     <article class="ai-more" hidden></article>
     <div class="ai-tour" hidden>
-      <button class="ai-button ai-tour-start" type="button">${LANG === "de" ? "FÜHRUNG" : "GUIDED TOUR"}</button>
-      <button class="ai-button ai-tour-arrow ai-tour-prev" type="button" aria-label="${UI.projectBack}" hidden>←</button>
-      <button class="ai-button ai-tour-arrow ai-tour-next" type="button" aria-label="${UI.projectOpen}" hidden>${PHONE ? `${LANG === "de" ? "WEITER" : "NEXT"} →` : "→"}</button>
+      <button class="ai-button ai-tour-start" type="button"></button>
+      <button class="ai-button ai-tour-arrow ai-tour-prev" type="button" hidden>←</button>
+      <button class="ai-button ai-tour-arrow ai-tour-next" type="button" hidden></button>
       <button class="ai-button ai-tour-arrow ai-tour-end" type="button" hidden>END IT</button>
     </div>
     <canvas class="ai-spray" aria-hidden="true" hidden></canvas>
@@ -100,8 +100,8 @@ document.body.innerHTML = `
       <button type="button" data-end-it><span class="ai-long">[end it]</span><span class="ai-short">[end]</span></button>
       </span>
       <span class="ai-bar-end">
-        <button type="button" data-lang="de"${LANG === "de" ? ' class="is-on"' : ""}>[de]</button>
-        <button type="button" data-lang="en"${LANG === "en" ? ' class="is-on"' : ""}>[en]</button>
+        <button type="button" data-lang="de">[de]</button>
+        <button type="button" data-lang="en">[en]</button>
         <button type="button" data-switch-theme>[theme]</button>
       </span>
     </nav>
@@ -112,8 +112,8 @@ document.body.innerHTML = `
       <span class="ai-bar-copy">© copyright <a href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer">saos</a> / <a href="mailto:kevin.schaberl.work@gmail.com">kevinschaberl</a></span>
       <a href="/links">[more stuff]</a>
       <span class="ai-bar-end">
-        <a href="${BASE}/privacy" data-legal="privacy">[${UI.datenschutz.toLowerCase()}]</a>
-        <a href="${BASE}/imprint" data-legal="imprint">[${UI.impressum.toLowerCase()}]</a>
+        <a href="${BASE}/privacy" data-legal="privacy"></a>
+        <a href="${BASE}/imprint" data-legal="imprint"></a>
         <a class="ai-mail-foot" href="mailto:kevin.schaberl.work@gmail.com">[mail]</a>
       </span>
     </footer>
@@ -133,64 +133,92 @@ const glow = q<HTMLElement>(".ai-glow");
 const button = q<HTMLButtonElement>(".ai-button");
 const words = [...document.querySelectorAll<HTMLAnchorElement>(".ai-word")];
 
-// ── the room's edges ──
-const [l, t, r, b] = TALL() ? BACK_WALL.tall : BACK_WALL.wide;
-const edges = `M${l} ${t}H${r}V${b}H${l}Z M0 0L${l} ${t} M100 0L${r} ${t} M100 100L${r} ${b} M0 100L${l} ${b}`;
-const line = (d: string, cls: string) => `<path class="${cls}" d="${d}" vector-effect="non-scaling-stroke"/>`;
-// Phones: blood alone doesn't show a room on so little wall, so the walls carry
-// the grid in perspective, drawn twice: white under the paint, background color
-// over it, so it reads on both. It comes with the hit; the start stays blank.
-let wallGrid = "";
-if (TALL()) {
-  const mix = (a: number, c: number, k: number) => a + (c - a) * k;
-  for (const k of [0.42, 0.68, 0.84, 0.94]) {
-    const x0 = mix(0, l, k), x1 = mix(100, r, k), y0 = mix(0, t, k), y1 = mix(100, b, k);
-    wallGrid += `M${x0} ${y0}H${x1}V${y1}H${x0}Z`;
-  }
-  for (const k of [0.25, 0.5, 0.75]) {
-    const x = mix(l, r, k), y = mix(t, b, k);
-    wallGrid += `M${x} ${t}L${k * 100} 0M${x} ${b}L${k * 100} 100M${l} ${y}L0 ${k * 100}M${r} ${y}L100 ${k * 100}`;
-  }
-  q<SVGElement>(".ai-room-under").innerHTML = line(wallGrid, "ai-wall-grid") + line(edges, "ai-wall-edge");
+// Everything outside the pages that's written in the visitor's language: at
+// the start, and again when the language is switched (relabel).
+function labelChrome() {
+  const de = LANG === "de";
+  const nav: Record<string, string> = { about: UI.navAbout, projects: UI.navProjects, contact: UI.navContact };
+  for (const word of words) word.textContent = nav[word.dataset.page!];
+  q(".ai-tour-start").textContent = de ? "FÜHRUNG" : "GUIDED TOUR";
+  q(".ai-tour-prev").setAttribute("aria-label", UI.projectBack);
+  const next = q(".ai-tour-next");
+  next.setAttribute("aria-label", UI.projectOpen);
+  next.textContent = PHONE() ? `${de ? "WEITER" : "NEXT"} →` : "→";
+  q('[data-legal="privacy"]').textContent = `[${UI.datenschutz.toLowerCase()}]`;
+  q('[data-legal="imprint"]').textContent = `[${UI.impressum.toLowerCase()}]`;
+  for (const el of document.querySelectorAll<HTMLElement>("[data-lang]")) el.classList.toggle("is-on", el.dataset.lang === LANG);
 }
-q<SVGElement>(".ai-room").innerHTML = (wallGrid ? line(wallGrid, "ai-wall-grid") : "") + line(edges, "ai-wall-edge");
+labelChrome();
+
+// ── the room's edges ──
+const line = (d: string, cls: string) => `<path class="${cls}" d="${d}" vector-effect="non-scaling-stroke"/>`;
+let wall: readonly [number, number, number, number] = BACK_WALL.wide;
+function drawRoom() {
+  const [l, t, r, b] = wall = TALL() ? BACK_WALL.tall : BACK_WALL.wide;
+  const edges = `M${l} ${t}H${r}V${b}H${l}Z M0 0L${l} ${t} M100 0L${r} ${t} M100 100L${r} ${b} M0 100L${l} ${b}`;
+  // Phones: blood alone doesn't show a room on so little wall, so the walls carry
+  // the grid in perspective, drawn twice: white under the paint, background color
+  // over it, so it reads on both. It comes with the hit; the start stays blank.
+  let wallGrid = "";
+  if (TALL()) {
+    const mix = (a: number, c: number, k: number) => a + (c - a) * k;
+    for (const k of [0.42, 0.68, 0.84, 0.94]) {
+      const x0 = mix(0, l, k), x1 = mix(100, r, k), y0 = mix(0, t, k), y1 = mix(100, b, k);
+      wallGrid += `M${x0} ${y0}H${x1}V${y1}H${x0}Z`;
+    }
+    for (const k of [0.25, 0.5, 0.75]) {
+      const x = mix(l, r, k), y = mix(t, b, k);
+      wallGrid += `M${x} ${t}L${k * 100} 0M${x} ${b}L${k * 100} 100M${l} ${y}L0 ${k * 100}M${r} ${y}L100 ${k * 100}`;
+    }
+  }
+  q<SVGElement>(".ai-room-under").innerHTML = wallGrid ? line(wallGrid, "ai-wall-grid") + line(edges, "ai-wall-edge") : "";
+  q<SVGElement>(".ai-room").innerHTML = (wallGrid ? line(wallGrid, "ai-wall-grid") : "") + line(edges, "ai-wall-edge");
+}
+drawRoom();
+
+// ── the screen's size ──
+// Everything is laid out for these, and laid out again when they change
+// (resized, further down): nothing reloads for a new size.
+let w = innerWidth, h = innerHeight;
+let dpr = Math.min(devicePixelRatio, 2);
+let GROW = 1; // the same growth as the CSS's root font size above 1920×1080
+let cell = 48;
+let scale = 1; // blots scale with the screen, or a phone just turns white
+function measureScreen() {
+  w = innerWidth;
+  h = innerHeight;
+  dpr = Math.min(devicePixelRatio, 2);
+  GROW = Math.max(1, Math.min(w / 1920, h / 1080));
+  cell = matchMedia("(max-width: 900px)").matches ? 32 : 48;
+  scale = Math.min(GROW, Math.sqrt((w * h) / (1280 * 800)) * 1.1);
+}
+measureScreen();
 
 // ── the grid ──
-// Measured once: the grid, the paint on the walls and the blots aimed at the
-// words are laid out for this size. A new size reloads behind a cover, past the
-// press like a language switch, the address keeps the page. On touch only a new
-// width counts (turning the phone): the address bar changes the height all the time.
-const w = innerWidth, h = innerHeight;
-let resizeTimer = 0;
-window.addEventListener("resize", () => {
-  window.clearTimeout(resizeTimer);
-  resizeTimer = window.setTimeout(() => {
-    const touch = matchMedia("(pointer: coarse)").matches;
-    if (innerWidth !== w || (!touch && innerHeight !== h)) softReload();
-  }, 400);
-});
-// The same growth as the CSS's root font size above 1920×1080.
-const GROW = Math.max(1, Math.min(w / 1920, h / 1080));
-const cell = matchMedia("(max-width: 900px)").matches ? 32 : 48;
 type Line = { el: HTMLElement; horizontal: boolean; dir: number; rank: number };
 const lines: Line[] = [];
-const addLine = (horizontal: boolean, at: number, size: number) => {
-  const el = document.createElement("i");
-  el.className = horizontal ? "ai-line ai-line--h" : "ai-line ai-line--v";
-  el.style[horizontal ? "top" : "left"] = `${at}px`;
-  grid.append(el);
-  lines.push({ el, horizontal, dir: at < size / 2 ? -1 : 1, rank: Math.abs(at - size / 2) / (size / 2) });
-};
-// A line through the middle, like the main page's grid; both axes from there.
-for (let x = w / 2 % cell; x <= w; x += cell) addLine(false, x, w);
-for (let y = h / 2 % cell; y <= h; y += cell) addLine(true, y, h);
 // The lines either side of the middle: the opening between them shows the skull.
-const inner = {
-  top: Math.max(...lines.filter((n) => n.horizontal && n.dir < 0).map((n) => parseFloat(n.el.style.top))),
-  bottom: Math.min(...lines.filter((n) => n.horizontal && n.dir > 0).map((n) => parseFloat(n.el.style.top))),
-  left: Math.max(...lines.filter((n) => !n.horizontal && n.dir < 0).map((n) => parseFloat(n.el.style.left))),
-  right: Math.min(...lines.filter((n) => !n.horizontal && n.dir > 0).map((n) => parseFloat(n.el.style.left))),
-};
+const inner = { top: 0, bottom: 0, left: 0, right: 0 };
+function buildGrid() {
+  grid.textContent = "";
+  lines.length = 0;
+  const addLine = (horizontal: boolean, at: number, size: number) => {
+    const el = document.createElement("i");
+    el.className = horizontal ? "ai-line ai-line--h" : "ai-line ai-line--v";
+    el.style[horizontal ? "top" : "left"] = `${at}px`;
+    grid.append(el);
+    lines.push({ el, horizontal, dir: at < size / 2 ? -1 : 1, rank: Math.abs(at - size / 2) / (size / 2) });
+  };
+  // A line through the middle, like the main page's grid; both axes from there.
+  for (let x = w / 2 % cell; x <= w; x += cell) addLine(false, x, w);
+  for (let y = h / 2 % cell; y <= h; y += cell) addLine(true, y, h);
+  const at = (horizontal: boolean, dir: number) => lines.filter((n) => n.horizontal === horizontal && n.dir === dir).map((n) => parseFloat(n.el.style[horizontal ? "top" : "left"]));
+  inner.top = Math.max(...at(true, -1));
+  inner.bottom = Math.min(...at(true, 1));
+  inner.left = Math.max(...at(false, -1));
+  inner.right = Math.min(...at(false, 1));
+}
+buildGrid();
 
 // Grows from the middle out, each line from its own centre.
 function growGrid(p: number) {
@@ -211,7 +239,6 @@ function partGrid(part: number) {
 }
 
 // ── the paint on the walls ──
-const dpr = Math.min(devicePixelRatio, 2);
 function context(canvas: HTMLCanvasElement) {
   canvas.width = w * dpr;
   canvas.height = h * dpr;
@@ -221,7 +248,7 @@ function context(canvas: HTMLCanvasElement) {
   return ctx;
 }
 const paint = context(paintCanvas);
-fx.room.build(stage, [l, t, r, b], skullCanvas, paintCanvas);
+fx.room.build(stage, wall, skullCanvas, paintCanvas);
 paint.fillStyle = PALETTE.inkCss;
 paint.strokeStyle = PALETTE.inkCss;
 // A theme switch repaints what's on the walls and the pane in the new ink:
@@ -248,8 +275,6 @@ type Drop = { at: number; x: number; y: number; r: number; angle: number };
 type Drip = { x: number; y: number; width: number; left: number; speed: number };
 
 const rand = (a: number, c: number) => a + Math.random() * (c - a);
-// Blots scale with the screen, or a phone just turns white.
-const scale = Math.min(GROW, Math.sqrt((w * h) / (1280 * 800)) * 1.1);
 const radius = () => (Math.random() < 0.1 ? rand(14, 46) : rand(1.5, 12)) * scale;
 
 function makeDrops(fromX: number, fromY: number): Drop[] {
@@ -260,15 +285,75 @@ function makeDrops(fromX: number, fromY: number): Drop[] {
     out.push({ at: rand(0, 1.5) + dist / 1600, x, y, r, angle });
   };
   for (let i = 0; i < w * h * DROPS_PER_PIXEL; i++) add(rand(0, w), rand(0, h), radius());
-  for (const word of words) {
-    const box = word.getBoundingClientRect();
-    const count = (box.width * box.height) / PIXELS_PER_WORD_DROP;
-    for (let i = 0; i < count; i++) {
-      add(rand(box.left - 10, box.right + 10), rand(box.top - 10, box.bottom + 10), rand(8, 30) * scale);
-    }
-  }
+  for (const word of words) wordDrops(word, add);
   return out.sort((a, c) => a.at - c.at);
 }
+
+// The blots aimed at a word, and the patch of wall they cover, so a word that
+// later stands somewhere else (another language, another screen) can get its own.
+const covered = new Map<HTMLElement, { left: number; top: number; right: number; bottom: number }>();
+function wordDrops(word: HTMLElement, add: (x: number, y: number, r: number) => void) {
+  const box = word.getBoundingClientRect();
+  const count = (box.width * box.height) / PIXELS_PER_WORD_DROP;
+  for (let i = 0; i < count; i++) {
+    add(rand(box.left - 10, box.right + 10), rand(box.top - 10, box.bottom + 10), rand(8, 30) * scale);
+  }
+  covered.set(word, { left: box.left - 10, top: box.top - 10, right: box.right + 10, bottom: box.bottom + 10 });
+}
+// After the words moved: the covered patches stretched with the paint (sx, sy);
+// a word that now reaches out of its patch gets fresh blots at once.
+function coverWords(sx = 1, sy = 1) {
+  if (!roomReady || ended) return;
+  for (const word of words) {
+    const had = covered.get(word);
+    if (!had) continue;
+    const patch = { left: had.left * sx, top: had.top * sy, right: had.right * sx, bottom: had.bottom * sy };
+    covered.set(word, patch);
+    const box = word.getBoundingClientRect();
+    if (box.left >= patch.left && box.top >= patch.top && box.right <= patch.right && box.bottom <= patch.bottom) continue;
+    wordDrops(word, (x, y, r) => stamp(paint, { at: 0, x, y, r, angle: Math.atan2(y - h / 2, x - w / 2) }, []));
+  }
+}
+
+// ── a new size ──
+// What's on a canvas stays and stretches with the screen, like the walls do.
+function refit(canvas: HTMLCanvasElement) {
+  if (!canvas.width || !canvas.height) return;
+  const old = document.createElement("canvas");
+  old.width = canvas.width;
+  old.height = canvas.height;
+  old.getContext("2d")!.drawImage(canvas, 0, 0);
+  const ctx = context(canvas);
+  ctx.drawImage(old, 0, 0, w, h);
+  ctx.fillStyle = ctx.strokeStyle = PALETTE.inkCss;
+}
+// In place, once the window has come to rest and no pane is being painted (it
+// is laid out for the size it started at). A phone's address bar coming and
+// going only changes the height: the canvases simply stretch for that.
+let resizeTimer = 0;
+function resized() {
+  if (throwing) { resizeTimer = window.setTimeout(resized, 150); return; }
+  const touch = matchMedia("(pointer: coarse)").matches;
+  if (innerWidth === w && (touch || innerHeight === h)) return;
+  const sx = innerWidth / w, sy = innerHeight / h;
+  measureScreen();
+  drawRoom();
+  fx.room.resize(wall);
+  if (grid.isConnected) buildGrid(); // still loading: the next frame places the new lines
+  refit(paintCanvas);
+  if (ended) refit(sprayCanvas);
+  woundAt = [woundAt[0] * sx, woundAt[1] * sy];
+  coverWords(sx, sy);
+  labelChrome(); // the next button reads differently on a phone
+  bannerLists = null;
+  pageScroll.resize();
+  moreScroll.resize();
+  updateTour();
+}
+window.addEventListener("resize", () => {
+  window.clearTimeout(resizeTimer);
+  resizeTimer = window.setTimeout(resized, 150);
+}, { passive: true });
 
 // Hits the wall flying outward from the wound: stretched that way, plus spray.
 function stamp(paint: CanvasRenderingContext2D, d: Drop, drips: Drip[]) {
@@ -325,7 +410,7 @@ function openWords() {
 
 // ── the page on the glass ──
 // The story's lines. A draft: Kevin's to rewrite in his own words.
-const STORY = pick({
+const STORY = live({
   de: {
     close: "Schließen", why: "Warum", learned: "Gelernt", decisions: "Entscheidungen", challenge: "Die Herausforderung", graph: "Graph und Code ansehen",
     endTitle: "Früher Böden.",
@@ -530,6 +615,13 @@ function dropScene() {
   frame = null;
 }
 
+// In the order the piñata drops them: phone, cat, letter.
+const DROPS = () => [
+  ["tel:+436764718807", UI.phone],
+  ["https://github.com/saos-ebb", "GitHub"],
+  ["mailto:kevin.schaberl.work@gmail.com", UI.email],
+];
+
 async function openPage(name: string, saw = false) {
   if (throwing || name === currentPage) return;
   throwing = true;
@@ -552,13 +644,7 @@ async function openPage(name: string, saw = false) {
   currentPage = name;
   setUrl(`${BASE}/${name}`);
   const hasScene = name !== "end";
-  const drops = name === "contact" ? [
-    ["https://github.com/saos-ebb", "GitHub"],
-    ["mailto:kevin.schaberl.work@gmail.com", UI.email],
-    ["tel:+436764718807", UI.phone],
-  ] : [];
-  // In the order the piñata drops them: phone, cat, letter.
-  const dropLinks = name === "contact" ? [drops[2], drops[0], drops[1]].map(([href, label]) => `<a class="ai-drop" href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""}><span>${label}</span></a>`).join("") : "";
+  const dropLinks = name === "contact" ? DROPS().map(([href, label]) => `<a class="ai-drop" href="${href}"${href.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""}><span>${label}</span></a>`).join("") : "";
   page.className = `ai-page ai-page--${name}`;
   page.innerHTML = `${PAGES[name]()}${hasScene ? `<canvas class="ai-page-tool" aria-hidden="true"></canvas>` : ""}${dropLinks}`;
   page.hidden = false; // laid out but invisible (.ai-page) until the pane is covered
@@ -640,11 +726,14 @@ page.addEventListener("click", (e) => {
     openProject(id);
   }
 });
-const openProject = (id: string) => openMore(moreHtml(id), `${BASE}/projects/${id}`);
-function openMore(html: string, path: string) {
+const openProject = (id: string) => openMore(() => { more.innerHTML = moreHtml(id); }, `${BASE}/projects/${id}`);
+// `fill` writes the overlay; kept, so a language switch can write it again.
+let fillMore = () => {};
+function openMore(fill: () => void, path: string) {
   moreOpenAt = path;
   setUrl(path);
-  more.innerHTML = html;
+  fillMore = fill;
+  fill();
   more.hidden = false;
   pageScroll.stop();
   moreScroll.resize();
@@ -656,13 +745,42 @@ function openMore(html: string, path: string) {
 // Imprint and privacy: the main page's texts in this page's own overlay.
 function openLegal(name: string) {
   const legal = name === "imprint" ? IMPRESSUM : DATENSCHUTZ;
-  openMore(`
+  openMore(() => {
+    more.innerHTML = `
     <button class="ai-more-close" type="button" aria-label="${STORY.close}">✕</button>
     ${UI.legalNote ? `<p class="ai-page-facts" lang="${LANG}">${UI.legalNote}</p>` : ""}
-    <div class="ai-legal">${legal.html}</div>`, `${BASE}/${name}`);
-  const slot = more.querySelector<HTMLElement>(".legal-consents");
-  if (slot) renderConsents(slot);
+    <div class="ai-legal">${legal.html}</div>`;
+    const slot = more.querySelector<HTMLElement>(".legal-consents");
+    if (slot) renderConsents(slot);
+  }, `${BASE}/${name}`);
 }
+
+// ── another language ──
+// In place: the words in the room, the buttons, and whatever page and overlay
+// are open are written again. A page keeps its scene (the canvas and the
+// piñata's links stay, only the text around them changes) and its place.
+onLang(relocalizeCards);
+onLang(function relabel() {
+  if (throwing) { window.setTimeout(relabel, 150); return; } // the pane is painting the old text
+  labelChrome();
+  coverWords();
+  const keepPlace = (el: HTMLElement, lenis: Lenis, write: () => void) => {
+    const k = el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight);
+    write();
+    lenis.resize();
+    lenis.scrollTo(k * (el.scrollHeight - el.clientHeight), { immediate: true, force: true });
+  };
+  if (currentPage) {
+    keepPlace(page, pageScroll, () => {
+      for (const el of [...page.children]) if (!el.matches(".ai-page-tool, .ai-drop")) el.remove();
+      page.insertAdjacentHTML("afterbegin", PAGES[currentPage!]());
+      page.querySelectorAll(".ai-drop span").forEach((label, i) => { label.textContent = DROPS()[i][1]; });
+    });
+    fx.watch(page);
+  }
+  if (!more.hidden) keepPlace(more, moreScroll, fillMore);
+  updateTour();
+});
 q<HTMLElement>(".ai-bar--bottom").addEventListener("click", (e) => {
   const link = (e.target as HTMLElement).closest<HTMLElement>("[data-legal]");
   if (!link) return;
@@ -684,7 +802,6 @@ const closeMore = (url = true) => {
 };
 const scrollbar = createPageScrollbar(q<HTMLElement>(".ai-scrollbar"), () =>
   !more.hidden ? more : page.classList.contains("is-open") ? page : null);
-page.addEventListener("scroll", () => scrollbar.render(), { passive: true });
 more.addEventListener("scroll", () => scrollbar.render(), { passive: true });
 more.addEventListener("click", (e) => {
   const t = e.target as HTMLElement;
@@ -728,7 +845,7 @@ function updateTour() {
   const onPage = Boolean(currentPage);
   const allSeen = FREE_ORDER.every((p) => seenPages.has(p));
   tour.classList.toggle("is-split", touring || onPage);
-  if (PHONE) {
+  if (PHONE()) {
     tourStart.hidden = true;
     tourPrev.hidden = !onPage;
     tourNext.hidden = currentPage === "contact" || currentPage === "end";
@@ -740,8 +857,7 @@ function updateTour() {
   tourNext.hidden = touring ? tourAt >= TOUR.length - 1 : !onPage || allSeen || !atPageEnd();
   tourEnd.hidden = touring ? tourAt !== TOUR.length - 1 : !allSeen || (onPage && !atPageEnd());
 }
-page.addEventListener("scroll", updateTour, { passive: true });
-window.addEventListener("resize", updateTour);
+page.addEventListener("scroll", updateTour, { passive: true }); // the scrollbar too
 function goTour(i: number) {
   if (throwing) return;
   tourAt = i;
@@ -768,7 +884,7 @@ function goToPage(name: string) {
 q<HTMLElement>(".ai-bar--top").addEventListener("click", (e) => {
   const t = e.target as HTMLElement;
   const lang = t.closest<HTMLElement>("[data-lang]")?.dataset.lang;
-  if (lang) return setLang(lang as Lang);
+  if (lang) return void switchLang(lang as Lang);
   if (t.closest("[data-switch-theme]")) return switchTheme();
   if (t.closest("[data-end-it]")) {
     if (ended) {
@@ -795,7 +911,7 @@ tourStart.addEventListener("click", () => {
 });
 tourNext.addEventListener("click", () => {
   if (touring) return goTour(tourAt + 1);
-  if (PHONE) {
+  if (PHONE()) {
     if (!currentPage) return goToPage(FREE_ORDER[0]);
     const next = FREE_ORDER[FREE_ORDER.indexOf(currentPage) + 1];
     if (next) void openPage(next);
@@ -931,18 +1047,22 @@ window.addEventListener("popstate", () => { if (roomReady) syncRoute(); });
 // stand when it stands and come back with it, a drag on the skull included. The
 // top one runs the other way. Moving by whole lists looks the same, so the
 // offset wraps.
+// One list's width per track: measured once the banners show and again after
+// a resize, not every frame.
+let bannerLists: number[] | null = null;
+document.fonts.addEventListener?.("loadingdone", () => { bannerLists = null; }); // the banner's font came late
 function runBanners(scene: Scene) {
   const tracks = [...document.querySelectorAll<HTMLElement>(".ai-banner-track")];
+  const top = tracks.map((track) => track.parentElement!.classList.contains("ai-banner--top"));
   let shown = -1;
   const tick = () => {
     const along = scene.swing();
-    if (along !== shown) {
+    if ((along !== shown || !bannerLists) && !tracks[0].parentElement!.hidden) {
       shown = along;
-      for (const track of tracks) {
-        const list = track.scrollWidth / 6;
-        const at = track.parentElement!.classList.contains("ai-banner--top") ? 1 - along : along;
-        track.style.transform = `translateX(${-at * list}px)`;
-      }
+      bannerLists ??= tracks.map((track) => track.scrollWidth / 6);
+      tracks.forEach((track, i) => {
+        track.style.transform = `translateX(${-(top[i] ? 1 - along : along) * bannerLists![i]}px)`;
+      });
     }
     requestAnimationFrame(tick);
   };
@@ -953,7 +1073,7 @@ function runBanners(scene: Scene) {
 async function run() {
   growGrid(0);
   let loaded = false;
-  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15, onRender: fx.room.render }).then((scene) => {
+  const loading = createSkullScene(stage, skullCanvas, [], () => {}, { stopAt: 2.6, crown: 15, onRender: () => { if (!page.classList.contains("is-open")) fx.room.render(); } }).then((scene) => {
     scene.setRise(0.99); // in place, but the blade only starts at 1
     loaded = true;
     return scene;
@@ -1022,8 +1142,8 @@ async function run() {
       goToPage(word.dataset.page!);
     });
   }
-  // A deep link doesn't wait to be pressed, nor does a language switch.
-  if (location.pathname !== BASE || softReloaded) button.click();
+  // A deep link doesn't wait to be pressed.
+  if (location.pathname !== BASE) button.click();
 }
 
 void run();

@@ -22,49 +22,62 @@ const FLOOR_BELOW_WALL = 0.055; // of the screen's height: where the skull stand
 
 type Wall = readonly [number, number, number, number]; // the back wall in percent: left, top, right, bottom
 
-export function createRoomLight(stage: HTMLElement, [l, t, r, b]: Wall, skull: HTMLCanvasElement, paint: HTMLCanvasElement) {
-  const w = innerWidth, h = innerHeight;
-  const poly = (...points: number[][]) => `polygon(${points.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
-  const FLOOR = poly([l, b], [r, b], [100, 100], [0, 100]);
-  const surfaces = {
-    back: poly([l, t], [r, t], [r, b], [l, b]),
-    left: poly([0, 0], [l, t], [l, b], [0, 100]),
-    right: poly([100, 0], [r, t], [r, b], [100, 100]),
-    ceil: poly([0, 0], [100, 0], [r, t], [l, t]),
-    floor: FLOOR,
-  };
-  // Lit from the skull: every surface is brightest where it meets the back wall
-  // and darkest at the screen's edge. In screen percent, so it fits the wall.
-  const shade = {
-    back: `radial-gradient(ellipse 75% 85% at 50% 55%, transparent 40%, var(--shade) 125%)`,
-    left: `linear-gradient(to right, var(--shade) 0%, transparent ${l}%)`,
-    right: `linear-gradient(to left, var(--shade) 0%, transparent ${100 - r}%)`,
-    ceil: `linear-gradient(to bottom, var(--shade) 0%, var(--shade-soft) ${t}%)`,
-    floor: `linear-gradient(to top, var(--shade-soft) 0%, transparent ${100 - b}%)`,
-  };
-
+export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanvasElement, paint: HTMLCanvasElement) {
+  let [l, t, r, b] = wall;
   const room = document.createElement("div");
   room.className = "fx-room";
   room.setAttribute("aria-hidden", "true");
+  const names = ["back", "left", "right", "ceil", "floor"] as const;
   room.innerHTML = `
-    <canvas class="fx-reflect" style="clip-path: ${FLOOR}"></canvas>
-    ${Object.entries(surfaces).map(([name, shape]) => `<i class="fx-surf" style="clip-path: ${shape}; background: ${shade[name as keyof typeof shade]}"></i>`).join("")}
+    <canvas class="fx-reflect"></canvas>
+    ${names.map((name) => `<i class="fx-surf" data-surf="${name}"></i>`).join("")}
     <i class="fx-grain"></i>
-    <svg class="fx-corners" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M${l} ${t}H${r}V${b}H${l}Z M0 0L${l} ${t} M100 0L${r} ${t} M100 100L${r} ${b} M0 100L${l} ${b}"/></svg>
+    <svg class="fx-corners" viewBox="0 0 100 100" preserveAspectRatio="none"><path/></svg>
     <i class="fx-spill"></i>
-    <i class="fx-sheen" style="clip-path: ${FLOOR}"></i>
+    <i class="fx-sheen"></i>
     <i class="fx-shadow"></i>
     <i class="fx-dark"></i>
     <i class="fx-torch"></i>`;
   stage.querySelector(".ai-words")!.before(room);
   const dark = room.querySelector<HTMLElement>(".fx-dark")!;
-
   const mirror = room.querySelector<HTMLCanvasElement>(".fx-reflect")!;
-  const dpr = Math.min(devicePixelRatio, 2);
-  mirror.width = Math.round(w * dpr * MIRROR);
-  mirror.height = Math.round(h * dpr * MIRROR);
   const ctx = mirror.getContext("2d")!;
-  const W = mirror.width, H = mirror.height;
+  let W = 0, H = 0;
+
+  // Everything that depends on the wall and the screen's size; again when
+  // either changes (resize below).
+  function layout() {
+    const poly = (...points: number[][]) => `polygon(${points.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
+    const FLOOR = poly([l, b], [r, b], [100, 100], [0, 100]);
+    const surfaces = {
+      back: poly([l, t], [r, t], [r, b], [l, b]),
+      left: poly([0, 0], [l, t], [l, b], [0, 100]),
+      right: poly([100, 0], [r, t], [r, b], [100, 100]),
+      ceil: poly([0, 0], [100, 0], [r, t], [l, t]),
+      floor: FLOOR,
+    };
+    // Lit from the skull: every surface is brightest where it meets the back wall
+    // and darkest at the screen's edge. In screen percent, so it fits the wall.
+    const shade = {
+      back: `radial-gradient(ellipse 75% 85% at 50% 55%, transparent 40%, var(--shade) 125%)`,
+      left: `linear-gradient(to right, var(--shade) 0%, transparent ${l}%)`,
+      right: `linear-gradient(to left, var(--shade) 0%, transparent ${100 - r}%)`,
+      ceil: `linear-gradient(to bottom, var(--shade) 0%, var(--shade-soft) ${t}%)`,
+      floor: `linear-gradient(to top, var(--shade-soft) 0%, transparent ${100 - b}%)`,
+    };
+    for (const name of names) {
+      const el = room.querySelector<HTMLElement>(`[data-surf="${name}"]`)!;
+      el.style.clipPath = surfaces[name];
+      el.style.background = shade[name];
+    }
+    mirror.style.clipPath = FLOOR;
+    room.querySelector<HTMLElement>(".fx-sheen")!.style.clipPath = FLOOR;
+    room.querySelector("path")!.setAttribute("d", `M${l} ${t}H${r}V${b}H${l}Z M0 0L${l} ${t} M100 0L${r} ${t} M100 100L${r} ${b} M0 100L${l} ${b}`);
+    const dpr = Math.min(devicePixelRatio, 2);
+    W = mirror.width = Math.round(innerWidth * dpr * MIRROR);
+    H = mirror.height = Math.round(innerHeight * dpr * MIRROR);
+  }
+  layout();
 
   // Where the skull stands: its lowest row and its middle, read off a thumbnail
   // of its canvas while it's still clean (until arm()). The mirror turns there.
@@ -134,8 +147,8 @@ export function createRoomLight(stage: HTMLElement, [l, t, r, b]: Wall, skull: H
   }
   addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse" || !on) return;
-    light.tx = (e.clientX / w) * 100;
-    light.ty = (e.clientY / h) * 100;
+    light.tx = (e.clientX / innerWidth) * 100;
+    light.ty = (e.clientY / innerHeight) * 100;
     if (!light.moving) { light.moving = true; requestAnimationFrame(follow); }
   }, { passive: true });
 
@@ -154,6 +167,17 @@ export function createRoomLight(stage: HTMLElement, [l, t, r, b]: Wall, skull: H
 
   return {
     render,
+    // A new screen size, maybe with another back wall. Once armed the skull
+    // can't be measured again: where it stands moves along with the wall's foot.
+    resize(to: Wall) {
+      if (armed) {
+        foot += (to[3] - b) / 100;
+        room.style.setProperty("--foot", `${foot * 100}%`);
+      }
+      [l, t, r, b] = to;
+      if (!armed) foot = b / 100 + FLOOR_BELOW_WALL;
+      layout();
+    },
     // From here on the skull isn't clean any more: keep the last measurement.
     arm() { armed = true; },
     turnOn() {

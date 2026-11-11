@@ -4,7 +4,7 @@
 // German is the source; the type is taken from it, so a missing key in
 // another language is a type error.
 
-import { pick } from "./index";
+import { live } from "./index";
 
 const de = {
   // header / nav
@@ -820,4 +820,4 @@ const ja: Ui = {
   aboutProjectsButton: "プロジェクト",
 };
 
-export const UI: Ui = pick({ de, en, ru, ja });
+export const UI: Ui = live({ de, en, ru, ja });

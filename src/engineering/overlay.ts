@@ -8,7 +8,7 @@
 // and pan. Positions come from the data (layer = column, order = row).
 
 import "./engineering.css";
-import { LANG, pick } from "../i18n";
+import { LANG, live } from "../i18n";
 import { LITE } from "../viewport";
 import type { EngRoute } from "./index";
 import type { EngFlow, EngNode, EngProject, EngStep, Text } from "./types";
@@ -18,7 +18,7 @@ import { yourbrand } from "./data/yourbrand";
 
 const PROJECTS: EngProject[] = [yourbrand, tschobbo, kevdev];
 
-const UI = pick({
+const UI = live({
   de: {
     label: "Engineering",
     back: "zurück zur Seite",

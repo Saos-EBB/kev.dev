@@ -48,7 +48,12 @@ const loaders: Partial<Record<Lang, () => Promise<{ default: Record<string, Card
   ru: () => import("./projects-i18n-ru"),
   ja: () => import("./projects-i18n-ja"),
 };
-const T: Record<string, CardText> = (await loaders[LANG]?.().catch(() => null))?.default ?? {};
+const load = async () => (await loaders[LANG]?.().catch(() => null))?.default ?? {};
+let T: Record<string, CardText> = await load();
+// After a language switch in place (switchLang): fetch the new language's texts.
+export async function reloadCardTexts() {
+  T = await load();
+}
 
 // The card in the current language: German original with the translated
 // text laid over it. Links and screenshots keep their href/src.

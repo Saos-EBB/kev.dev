@@ -10,6 +10,7 @@
 // Full-screen flashes are at least FLASH_GAP apart: never three a second.
 import gsap from "gsap";
 import { createRoomLight } from "./room-light";
+import { onTheme } from "./ai-theme";
 import "./loud.css";
 
 const root = document.documentElement;
@@ -28,6 +29,17 @@ const sparks: Spark[] = [];
 let ctx: CanvasRenderingContext2D | null = null;
 let flashEl: HTMLElement, sweepEl: HTMLElement;
 let w = 0, h = 0;
+// The sparks' canvas at the screen's size; again when that changes.
+function size(canvas: HTMLCanvasElement) {
+  const dpr = Math.min(devicePixelRatio, 2);
+  w = innerWidth;
+  h = innerHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
+  ctx.lineCap = "round";
+}
 function setup() {
   if (ctx) return;
   const canvas = document.createElement("canvas");
@@ -38,14 +50,8 @@ function setup() {
   sweepEl.className = "fx-sweep";
   for (const el of [canvas, flashEl, sweepEl]) el.setAttribute("aria-hidden", "true");
   document.body.append(canvas, sweepEl, flashEl);
-  const dpr = Math.min(devicePixelRatio, 2);
-  w = innerWidth;
-  h = innerHeight;
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  ctx = canvas.getContext("2d")!;
-  ctx.scale(dpr, dpr);
-  ctx.lineCap = "round";
+  size(canvas);
+  addEventListener("resize", () => size(canvas), { passive: true });
 }
 
 // Sparks are streaks along their flight.
@@ -88,9 +94,12 @@ function wake() {
   requestAnimationFrame(frame);
 }
 
+// The sparks' colors, read once per theme: a burst comes with every pointer move of a drag.
+let colors: string[] | null = null;
+onTheme(() => { colors = null; });
 function burst(x: number, y: number, count = 14, speed = 420) {
   setup();
-  const colors = [css("--ai-ink"), css("--ai-accent"), css("--fx-shine")];
+  colors ??= [css("--ai-ink"), css("--ai-accent"), css("--fx-shine")];
   for (let i = 0; i < count && sparks.length < 900; i++) {
     const a = rand(0, Math.PI * 2), v = speed * rand(0.25, 1);
     const life = rand(0.35, 0.9);
@@ -199,10 +208,11 @@ let light: ReturnType<typeof createRoomLight> | null = null;
 const room = {
   build(...args: Parameters<typeof createRoomLight>) { light = createRoomLight(...args); },
   render() { light?.render(); },
+  resize(wall: Parameters<typeof createRoomLight>[1]) { light?.resize(wall); },
   arm() { light?.arm(); },
   turnOn() { light?.turnOn(); },
 };
 
 const nothing = () => {};
 const all = { boom, burst, sweep, watch, kick, room };
-export const fx: typeof all = ON ? all : { boom: nothing, burst: nothing, sweep: nothing, watch: nothing, kick: nothing, room: { build: nothing, render: nothing, arm: nothing, turnOn: nothing } };
+export const fx: typeof all = ON ? all : { boom: nothing, burst: nothing, sweep: nothing, watch: nothing, kick: nothing, room: { build: nothing, render: nothing, resize: nothing, arm: nothing, turnOn: nothing } };

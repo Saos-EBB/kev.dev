@@ -3,7 +3,7 @@
 // saying so (UI.legalNote). Statute names, the authority and its address
 // stay in their original German form in every language, so they remain
 // unambiguous.
-import { pick } from "../i18n";
+import { live } from "../i18n";
 
 export interface LegalText {
   title: string;
@@ -18,7 +18,7 @@ const DSB = `<a href="https://www.dsb.gv.at" target="_blank" rel="noopener noref
 const joinCjk = (html: string) =>
   html.replace(/([^\x00-\x7F])\s*\n\s*(?=[^\x00-\x7F])/g, "$1");
 
-export const IMPRESSUM: LegalText = pick<LegalText>({
+export const IMPRESSUM: LegalText = live<LegalText>({
   de: {
     title: "Impressum",
     html: `
@@ -175,7 +175,7 @@ export const IMPRESSUM: LegalText = pick<LegalText>({
   },
 });
 
-export const DATENSCHUTZ: LegalText = pick<LegalText>({
+export const DATENSCHUTZ: LegalText = live<LegalText>({
   de: {
     title: "Datenschutzerklärung",
     html: `

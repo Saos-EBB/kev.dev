@@ -4,7 +4,7 @@
 // the German changes. Inline markup: hl() is the accent highlight, the
 // story's last paragraph links to #projects.
 
-import { pick } from "../i18n";
+import { live } from "../i18n";
 
 const hl = (s: string) => `<span class="about-highlight">${s}</span>`;
 const projectsLink = (label: string) => `<a class="about-inline-link" href="#projects">${label}</a>`;
@@ -257,4 +257,4 @@ const ja: AboutContent = {
 };
 
 
-export const ABOUT: AboutContent = pick({ de, en, ru, ja });
+export const ABOUT: AboutContent = live({ de, en, ru, ja });

@@ -5,6 +5,10 @@
 // (viewport.ts) is decided once.
 //
 // Every module reads LANG / the ui() strings at render time.
+//
+// The room (aggressive-intro.ts) measures nothing it can't measure again, so
+// it switches in place instead: switchLang() below. What it shows is live()
+// content, which always reads the current language.
 
 import { softReload } from "./soft-reload";
 
@@ -48,7 +52,7 @@ function isLang(code: string): code is Lang {
   return LANGS.some((l) => l.code === code);
 }
 
-export const LANG: Lang = readLang();
+export let LANG: Lang = readLang();
 export const LANG_AI = LANGS.some((l) => l.code === LANG && l.ai);
 
 // The YourBrand page (iframe) keeps its own language store — always start
@@ -71,8 +75,31 @@ export function setLang(lang: Lang) {
   softReload();
 }
 
+// In place, without a reload: only for pages built to follow it (onLang).
+// Resolves once every listener has caught up.
+const listeners: (() => void | Promise<void>)[] = [];
+export const onLang = (fn: () => void | Promise<void>) => { listeners.push(fn); };
+export async function switchLang(lang: Lang) {
+  if (lang === LANG) return;
+  LANG = lang;
+  try {
+    localStorage.setItem(STORE_KEY, lang);
+    localStorage.setItem(B2B_STORE_KEY, JSON.stringify({ state: { uiLang: lang }, version: 0 }));
+  } catch {
+    // storage blocked — only for this visit then
+  }
+  document.documentElement.lang = lang;
+  for (const fn of listeners) await fn();
+}
+
 // Picks the current language's entry, German as the fallback for anything
 // not translated (yet).
 export function pick<T>(byLang: Partial<Record<Lang, T>> & { de: T }): T {
   return byLang[LANG] ?? byLang.de;
+}
+
+// Like pick(), but for content kept in a module-level constant: every read
+// goes to the language current at that moment, so it follows switchLang().
+export function live<T extends object>(byLang: Partial<Record<Lang, T>> & { de: T }): T {
+  return new Proxy(byLang.de, { get: (_, key) => Reflect.get(byLang[LANG] ?? byLang.de, key) });
 }

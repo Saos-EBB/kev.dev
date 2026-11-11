@@ -7,7 +7,7 @@
 // color — every project looks like itself, on the same grid.
 
 import type { ProjectCard } from "./project-cards";
-import { localizeCard } from "./projects-i18n";
+import { localizeCard, reloadCardTexts } from "./projects-i18n";
 
 const cards: ProjectCard[] = [
   {
@@ -787,3 +787,8 @@ const cards: ProjectCard[] = [
 
 // In the visitor's language (projects-i18n.ts).
 export const projectCards: ProjectCard[] = cards.map(localizeCard);
+// The same list in the language switched to in place (switchLang in i18n).
+export async function relocalizeCards() {
+  await reloadCardTexts();
+  projectCards.splice(0, projectCards.length, ...cards.map(localizeCard));
+}
