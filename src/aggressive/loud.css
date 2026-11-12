@@ -79,10 +79,6 @@
   opacity: 1;
 }
 
-.ai-ended .fx-room {
-  display: none;
-}
-
 .fx-room > * {
   position: absolute;
   inset: 0;

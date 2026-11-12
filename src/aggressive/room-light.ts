@@ -13,7 +13,7 @@
 // from the room's own geometry. Good enough to read as a room, not a renderer.
 //
 // All of it sits between the walls' paint and the words, comes on with the
-// first hit (the start stays blank) and is gone at the end (loud.css).
+// first hit (the start stays blank) and stays for the end.
 import gsap from "gsap";
 import { onTheme } from "./ai-theme";
 
@@ -235,7 +235,7 @@ export function createRoomLight(stage: HTMLElement, wall: Wall, skull: HTMLCanva
 
   // The tube: a short double dip, never a flash. Stops when the room is gone.
   function flicker() {
-    if (lite || !room.isConnected || stage.classList.contains("ai-ended")) return;
+    if (lite || !room.isConnected) return;
     if (!gsap.isTweening(dark)) {
       gsap.timeline()
         .to(dark, { opacity: 1, duration: 0.05 })

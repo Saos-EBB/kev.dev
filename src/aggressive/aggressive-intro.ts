@@ -281,22 +281,25 @@ const radius = () => (Math.random() < 0.1 ? rand(14, 46) : rand(1.5, 12)) * scal
 // Every blot on the walls, in parts of the screen (its size in parts of
 // `scale`), and where they flew from: a new screen size paints the same blots
 // again at their new places, sharp and round (paintWalls). Stretching the old
-// picture instead smears them and pulls them out of shape.
-const blots: { x: number; y: number; r: number }[] = [];
-const keepBlot = (x: number, y: number, r: number) => { blots.push({ x: x / w, y: y / h, r: r / scale }); };
+// picture instead smears them and pulls them out of shape. The scattered ones
+// and the ones aimed at the words are kept apart: how many are scattered goes
+// by the screen's area, or a smaller window's walls would fill up.
+type Blot = { x: number; y: number; r: number };
+const blots: Blot[] = [], wordBlots: Blot[] = [];
+const keepBlot = (list: Blot[], x: number, y: number, r: number) => { list.push({ x: x / w, y: y / h, r: r / scale }); };
 let blotsFrom = [0.5, 0.5];
 let stopWalls = () => {};
 
 function makeDrops(fromX: number, fromY: number): Drop[] {
   const out: Drop[] = [];
   blotsFrom = [fromX / w, fromY / h];
-  const add = (x: number, y: number, r: number) => {
+  const add = (x: number, y: number, r: number, list = wordBlots) => {
     const angle = Math.atan2(y - fromY, x - fromX);
     const dist = Math.hypot(x - fromX, y - fromY);
     out.push({ at: rand(0, 1.5) + dist / 1600, x, y, r, angle });
-    keepBlot(x, y, r);
+    keepBlot(list, x, y, r);
   };
-  for (let i = 0; i < w * h * DROPS_PER_PIXEL; i++) add(rand(0, w), rand(0, h), radius());
+  for (let i = 0; i < w * h * DROPS_PER_PIXEL; i++) add(rand(0, w), rand(0, h), radius(), blots);
   for (const word of words) wordDrops(word, add);
   return out.sort((a, c) => a.at - c.at);
 }
@@ -325,7 +328,7 @@ function coverWords(sx = 1, sy = 1) {
     if (box.left >= patch.left && box.top >= patch.top && box.right <= patch.right && box.bottom <= patch.bottom) continue;
     wordDrops(word, (x, y, r) => {
       stamp(paint, { at: 0, x, y, r, angle: Math.atan2(y - h / 2, x - w / 2) }, []);
-      keepBlot(x, y, r);
+      keepBlot(wordBlots, x, y, r);
     });
   }
 }
@@ -339,7 +342,11 @@ function paintWalls() {
   if (!blots.length) return;
   const fromX = blotsFrom[0] * w, fromY = blotsFrom[1] * h;
   const drips: Drip[] = [];
-  for (const b of blots) {
+  // As many scattered ones as a screen this size gets: the first of the list
+  // (so the same ones come back with the old size), new ones if it's short.
+  const count = Math.ceil(w * h * DROPS_PER_PIXEL);
+  while (blots.length < count) blots.push({ x: Math.random(), y: Math.random(), r: radius() / scale });
+  for (const b of [...blots.slice(0, count), ...wordBlots]) {
     const x = b.x * w, y = b.y * h;
     stamp(ctx, { at: 0, x, y, r: b.r * scale, angle: Math.atan2(y - fromY, x - fromX) }, drips);
   }
@@ -982,7 +989,7 @@ tourPrev.addEventListener("click", () => {
   if (touring) goTour(tourAt - 1);
   else closePage();
 });
-// The end: only the clean skull on the bare background, all fifteen blades go
+// The end: the clean skull in its room, all fifteen blades go
 // in one after another, the blood stays in the air, and it all turns like a ball.
 const FROZEN_AT = 0.42; // early, while the blood is still close to its wound
 const sprayCanvas = q<HTMLCanvasElement>(".ai-spray");
@@ -1033,8 +1040,8 @@ function endIt() {
   if (!more.hidden) closeMore(false);
   touring = false;
   tour.hidden = true;
-  // Only the skull on the bare background again, like at the start.
-  for (const sel of [".ai-paint", ".ai-room", ".ai-room-under", ".ai-words"]) q<HTMLElement>(sel).style.display = "none";
+  // The room stays, as in the menu; only its words go.
+  q<HTMLElement>(".ai-words").style.display = "none";
   skull.clean(); // right away: the clean skull, not the old blades while the page closes
   const finale = () => {
     ended = true;
