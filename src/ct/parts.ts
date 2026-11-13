@@ -1,11 +1,8 @@
-// 3D parts for the CT skull (ct-scene.ts, saw.ts): the
-// craniumCut01 skull from the 2D renderer's models, turned to face the
-// camera, and an extruded saw blade.
+// The CT skull's mesh (ct-scene.ts; the horror game's boss uses it too):
+// the craniumCut01 skull from the 2D renderer's models, turned to face the
+// camera.
 import * as THREE from "three";
 import { loadCranium } from "../projects/widgets/renderer-models/cranium";
-
-export const BLADE_R = 0.62;
-const BLADE_R_IN = 0.53;
 
 export async function loadSkullGeometry() {
   const m = await loadCranium();
@@ -18,27 +15,5 @@ export async function loadSkullGeometry() {
   g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   g.setIndex(idx);
   g.center();
-  return g;
-}
-
-export function bladeGeometry() {
-  const s = new THREE.Shape();
-  const teeth = 30;
-  for (let i = 0; i < teeth; i++) {
-    const a0 = (i / teeth) * Math.PI * 2, a1 = ((i + 0.7) / teeth) * Math.PI * 2;
-    const p = (r: number, a: number) => [Math.cos(a) * r, Math.sin(a) * r] as const;
-    const [x0, y0] = p(BLADE_R_IN, a0), [x1, y1] = p(BLADE_R, a1);
-    if (i === 0) s.moveTo(x0, y0); else s.lineTo(x0, y0);
-    s.lineTo(x1, y1);
-  }
-  s.closePath();
-  const hole = new THREE.Path(); hole.absarc(0, 0, 0.09, 0, Math.PI * 2, true); s.holes.push(hole);
-  for (let i = 0; i < 3; i++) {
-    const a = (i / 3) * Math.PI * 2, slot = new THREE.Path();
-    slot.absarc(Math.cos(a) * 0.3, Math.sin(a) * 0.3, 0.05, 0, Math.PI * 2, true);
-    s.holes.push(slot);
-  }
-  const g = new THREE.ExtrudeGeometry(s, { depth: 0.035, bevelEnabled: false, curveSegments: 6 });
-  g.translate(0, 0, -0.0175);
   return g;
 }

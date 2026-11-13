@@ -1,5 +1,5 @@
-// Green splatter-movie blood, shared by the main page's contact skull
-// (src/contact/skull/skull-scene.ts) and the CT page's finale (src/ct/saw.ts):
+// Green splatter-movie blood for the main page's contact skull
+// (src/contact/skull/skull-scene.ts):
 // spurts out of a wound in PULSES like a heartbeat (each weaker than the
 // last); every drop has its own birth time, life, direction and speed, and
 // the vertex shader throws it on a ballistic arc — a closed-form function of

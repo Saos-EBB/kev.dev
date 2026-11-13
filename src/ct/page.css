@@ -190,51 +190,6 @@ html::-webkit-scrollbar,
   color: var(--muted);
 }
 
-/* The contact links, riding on the shards (page.ts placeShards). */
-.ct-shard {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 5;
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--bg);
-  border: 2px solid #ff2a3d;
-  box-shadow: 0 0 26px #ff2a3d88;
-  color: #ff2a3d !important;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s, color var(--transition-hover), border-color var(--transition-hover);
-}
-
-.ct-shard.is-on {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.ct-shard:hover,
-.ct-shard:focus-visible {
-  color: var(--hot) !important;
-  border-color: var(--hot);
-}
-
-.ct-shard svg {
-  width: 30px;
-  height: 30px;
-}
-
-/* No WebGL: the links as a plain row under the contact. */
-.no-skull .ct-shard {
-  position: static;
-  display: inline-grid;
-  margin: 0 0 40px 48px;
-  opacity: 1;
-  pointer-events: auto;
-}
-
 /* ── header ───────────────────────────────────────────────────────── */
 
 .ct-header {
@@ -684,7 +639,7 @@ main .ct-r {
 /* ── contact ──────────────────────────────────────────────────────── */
 
 /* Exactly the last screen above the footer: at the end of the page the
-   heading and the mail are still in view, next to the blades. */
+   heading and the links are still in view, next to the skull. */
 .ct-contact {
   min-height: calc(100vh - 110px);
   padding-top: 30vh;
@@ -707,6 +662,28 @@ main .ct-r {
 
 .ct-mail:hover {
   color: var(--hot);
+}
+
+.ct-contact-links {
+  display: flex;
+  gap: 14px;
+  margin: 28px 0 0;
+}
+
+.ct-contact-links a {
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--violet);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--violet);
+  transition: background var(--transition-hover), color var(--transition-hover);
+}
+
+.ct-contact-links a:hover {
+  background: var(--violet);
+  color: var(--bg);
 }
 
 /* ── footer ───────────────────────────────────────────────────────── */
@@ -817,12 +794,6 @@ main .ct-r {
     font-size: clamp(13px, 2.4vw, 20px);
   }
 
-  .ct-shard {
-    z-index: 7;
-    width: 58px;
-    height: 58px;
-  }
-
   .ct-footer {
     width: calc(50vw - 16px);
     padding: 24px;
@@ -921,12 +892,6 @@ main .ct-r {
     font-size: min(16px, 4.6vw);
   }
 
-  .ct-shard {
-    z-index: 7;
-    width: 58px;
-    height: 58px;
-  }
-
   .ct-status {
     right: 16px;
     top: 40vw;
@@ -936,21 +901,8 @@ main .ct-r {
     padding: 32px 16px;
   }
 
-  /* The finale (page.ts sets .ct-finale on <html> in the contact section):
-     the skull takes the whole width and most of the height, the band
-     behind it grows along, and the contact text sits under it. */
-  .ct-finale .ct-skull {
-    width: 100vw;
-    height: calc(58vh - 56px);
-  }
-
-  .ct-finale .ct-body::before {
-    height: 58vh;
-  }
-
   .ct-contact {
     min-height: calc(100vh - 120px);
-    padding-top: 60vh;
   }
 
   /* Short phones: what the intro and the contact can do without, so the

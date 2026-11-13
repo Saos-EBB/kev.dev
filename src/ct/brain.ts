@@ -1,9 +1,11 @@
 // The brain kit at runtime: one dot cloud per piece, coloured in the shader
 // from a per-region palette, so lighting a region (or the atlas) is only a
 // uniform update. The geometry comes from brain-build.ts, built once in a
-// worker. Hang `group` into the skull rig.
+// worker; the dots are drawn like the skull's (dots.ts). Hang `group` into
+// the skull rig.
 import * as THREE from "three";
 import { buildBrain, DEEP, PARTS, REG, type BrainData, type Part } from "./brain-build";
+import { DOT_FILL_RATIO, DOT_FRAG, DOT_VERT } from "./dots";
 
 export type { Part } from "./brain-build";
 
@@ -13,22 +15,21 @@ const BASE: Record<Part, string> = {
   broca: "#ff3a44", wernicke: "#e0283a", fusiform: "#8e1220", cerebellum: "#d8344a", stem: "#7a1420",
   amygdala: "#ffe08a", hippocampus: "#ffe08a", thalamus: "#ffe08a", accumbens: "#ffe08a",
 };
-export const HOT = "#ffe08a";
-export const ATLAS: Partial<Record<Part, string>> = {
-  cerebellum: "#ffd400", motor: "#57ff8f", parietal: "#57b9ff", fusiform: "#ff8a3d", temporal: "#ff5fc8",
-  thalamus: "#ffffff", hippocampus: "#7fe6ff", accumbens: "#ffd400",
-};
+const HOT = "#ffe08a";
 
 const N = PARTS.length;
-const DOT = 0.012;
 
+// `inner` > 0: a dot on a cut face. Those go pale towards the middle of
+// the piece (white matter under a rim of cortex) and are left out while
+// the brain is see-through, where they would show as fans of lines.
 const VERT = /* glsl */ `
+${DOT_VERT}
 attribute float shade;
+attribute float inner;
 attribute float region;
 uniform vec4 uColor[${N}];
 uniform float uBig[${N}];
-uniform float uSize;
-uniform float uScale;
+uniform float uCutFaces;
 #ifdef OFFSET
 uniform vec3 uOff[${N}];
 #endif
@@ -36,20 +37,24 @@ varying vec4 vColor;
 void main() {
   int r = int(region + 0.5);
   vec4 c = uColor[r];
-  vColor = vec4(c.rgb * shade, c.a);
   vec3 p = position;
 #ifdef OFFSET
   p += uOff[r]; // the part's way out when the brain comes apart
 #endif
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  gl_PointSize = uSize * uBig[r] * (uScale / -mv.z);
-  gl_Position = c.a > 0.0 ? projectionMatrix * mv : vec4(2.0, 2.0, 2.0, 1.0);
+  vec3 n = normalize(normalMatrix * normal);
+  vec3 rgb = mix(c.rgb, c.rgb * 0.5 + vec3(0.42, 0.36, 0.34), inner * 0.65);
+  vColor = vec4(rgb * shade * dotLight(n, mv.xyz) * dotDepth(mv.z), c.a);
+  bool hidden = c.a <= 0.0 || (inner > 0.0 && uCutFaces < 0.5);
+  gl_PointSize = dotSize(position, mv.z) * uBig[r];
+  gl_Position = hidden ? vec4(2.0, 2.0, 2.0, 1.0) : projectionMatrix * mv;
 }`;
 const FRAG = /* glsl */ `
+${DOT_FRAG}
 uniform float uOpacity;
 varying vec4 vColor;
 void main() {
-  gl_FragColor = vec4(vColor.rgb, vColor.a * uOpacity);
+  gl_FragColor = vec4(vColor.rgb, vColor.a * uOpacity * dotAlpha());
   #include <colorspace_fragment>
 }`;
 // The occluder moves with its parts too, so a part that comes out still
@@ -64,7 +69,7 @@ const OCC_FRAG = /* glsl */ `void main() { gl_FragColor = vec4(0.0); }`;
 
 export interface Brain {
   group: THREE.Group;
-  /** Lit parts (yellow unless `colors` says otherwise), 1.7x bigger dots. Fades over ~300 ms. */
+  /** Lit parts (yellow unless `colors` says otherwise), bigger dots. Fades over ~300 ms. */
   setHighlight(parts: Part[], colors?: Partial<Record<Part, string>>): void;
   /** Take the brain apart: `parts` move `out` along their out-direction
    *  (towards the viewer in side view), the rest `spread`. Glides there. */
@@ -79,21 +84,22 @@ export interface Brain {
   setScale(s: number): void;
 }
 
-async function loadData(pointsScale: number): Promise<BrainData> {
+async function loadData(spacing: number): Promise<BrainData> {
   try {
     const worker = new Worker(new URL("./brain.worker.ts", import.meta.url), { type: "module" });
     return await new Promise<BrainData>((resolve, reject) => {
       worker.onmessage = (e) => { resolve(e.data); worker.terminate(); };
       worker.onerror = (e) => { reject(e); worker.terminate(); };
-      worker.postMessage({ pointsScale });
+      worker.postMessage({ spacing });
     });
   } catch {
-    return buildBrain(pointsScale); // no module workers: same build, main thread
+    return buildBrain(spacing); // no module workers: same build, main thread
   }
 }
 
-export async function createBrain(opts: { pointsScale?: number } = {}): Promise<Brain> {
-  const data = await loadData(opts.pointsScale ?? 1);
+// spacing: distance between two dots, as for the skull (dots.ts).
+export async function createBrain(spacing: number): Promise<Brain> {
+  const data = await loadData(spacing);
   const group = new THREE.Group();
   // No transform: brain-build already fitted the kit into the skull's
   // cavity (endocast.json).
@@ -108,11 +114,12 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
   const uniforms = {
     uColor: { value: cur },
     uBig: { value: big },
-    uSize: { value: DOT },
+    uSize: { value: spacing * DOT_FILL_RATIO },
     uScale: { value: 400 },
     uOpacity: { value: 1 },
+    uCutFaces: { value: 1 },
   };
-  const deepUniforms = { ...uniforms, uSize: { value: DOT * 1.1 }, uOpacity: { value: 1 } };
+  const deepUniforms = { ...uniforms, uOpacity: { value: 1 } };
   // Current and target offset per part (brain space).
   const off = PARTS.map(() => new THREE.Vector3());
   const offTarget = PARTS.map(() => new THREE.Vector3());
@@ -120,7 +127,14 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
 
   const surfaceMat = new THREE.ShaderMaterial({
     uniforms: { ...uniforms, uOff: offUniform }, vertexShader: VERT, fragmentShader: FRAG, defines: { OFFSET: "" },
+    alphaToCoverage: true,
   });
+  // While the brain is see-through: blended, no depth.
+  const ghostMat = new THREE.ShaderMaterial({
+    uniforms: surfaceMat.uniforms, vertexShader: VERT, fragmentShader: FRAG, defines: { OFFSET: "" },
+    transparent: true, depthWrite: false,
+  });
+  const clouds: THREE.Points[] = [];
   const deepMat = new THREE.ShaderMaterial({
     uniforms: deepUniforms, vertexShader: VERT, fragmentShader: FRAG,
     transparent: true, depthTest: false, depthWrite: false,
@@ -141,9 +155,13 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
     occluders.push(occ);
     const dg = new THREE.BufferGeometry();
     dg.setAttribute("position", new THREE.BufferAttribute(part.dots.position, 3));
+    dg.setAttribute("normal", new THREE.BufferAttribute(part.dots.normal, 3));
     dg.setAttribute("shade", new THREE.BufferAttribute(part.dots.shade, 1));
+    dg.setAttribute("inner", new THREE.BufferAttribute(part.dots.inner, 1));
     dg.setAttribute("region", new THREE.BufferAttribute(part.dots.region, 1));
-    group.add(occ, new THREE.Points(dg, surfaceMat));
+    const cloud = new THREE.Points(dg, surfaceMat);
+    clouds.push(cloud);
+    group.add(occ, cloud);
   }
 
   // Deep structures: dots on small spheres, drawn through everything;
@@ -151,14 +169,20 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
   const deepPts: { pts: THREE.Points; base: THREE.Vector3; i: number }[] = [];
   for (const name of DEEP) {
     const [x, y, z, r] = data.deep[name];
-    // evenly over the whole sphere; half the cortex density (~26k dots per unit²),
-    // since they draw through everything and front and back both show
-    const count = Math.max(150, Math.round(4 * Math.PI * r * r * 13000 * (opts.pointsScale ?? 1)));
-    const sp = new Float32Array(count * 3), d = new THREE.Vector3();
-    for (let i = 0; i < count; i++) d.randomDirection().multiplyScalar(r).toArray(sp, i * 3);
+    // evenly over the whole sphere (a spiral), a little wider apart than
+    // the cortex: they draw through everything, front and back both show
+    const count = Math.max(150, Math.round((4 * Math.PI * r * r) / (spacing * spacing * 1.6)));
+    const sp = new Float32Array(count * 3), sn = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const y = 1 - (2 * (i + 0.5)) / count, q = Math.sqrt(1 - y * y), a = i * 2.39996;
+      sn.set([Math.cos(a) * q, y, Math.sin(a) * q], i * 3);
+      sp.set([sn[i * 3] * r, y * r, sn[i * 3 + 2] * r], i * 3);
+    }
     const sg = new THREE.BufferGeometry();
     sg.setAttribute("position", new THREE.BufferAttribute(sp, 3));
-    sg.setAttribute("shade", new THREE.BufferAttribute(new Float32Array(count).fill(1), 1));
+    sg.setAttribute("normal", new THREE.BufferAttribute(sn, 3));
+    sg.setAttribute("shade", new THREE.BufferAttribute(new Float32Array(count).fill(1.6), 1));
+    sg.setAttribute("inner", new THREE.BufferAttribute(new Float32Array(count), 1));
     sg.setAttribute("region", new THREE.BufferAttribute(new Float32Array(count).fill(PARTS.indexOf(name)), 1));
     const pts = new THREE.Points(sg, deepMat);
     pts.position.set(x, y, z);
@@ -184,7 +208,7 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
         const c = new THREE.Color(lit ? colors[p] ?? HOT : BASE[p]);
         const deep = i >= REG.length;
         target[i].set(c.r, c.g, c.b, deep ? (lit ? 1 : 0) : 1);
-        big[i] = lit ? 1.7 : 1;
+        big[i] = lit ? 1.3 : 1;
       });
     },
     setExplode(parts, out, spread) {
@@ -194,8 +218,8 @@ export async function createBrain(opts: { pointsScale?: number } = {}): Promise<
       group.visible = a > 0;
       const solid = a >= 1;
       uniforms.uOpacity.value = a;
-      surfaceMat.transparent = !solid;
-      surfaceMat.depthWrite = solid;
+      uniforms.uCutFaces.value = solid ? 1 : 0;
+      for (const c of clouds) c.material = solid ? surfaceMat : ghostMat;
       for (const o of occluders) o.visible = solid;
     },
     anchor(p, cam, w, h) {

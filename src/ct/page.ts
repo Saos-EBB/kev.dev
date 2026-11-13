@@ -11,8 +11,7 @@
 //    per row
 //  - anamnesis: the intro backwards with the scroll — the brain sinks back
 //    into the skull, it turns to face you, the cut closes
-//  - contact: back to the front, three saw blades hit it (saw.ts); the
-//    links ride on the shards that freeze in the air.
+//  - contact: closed again and facing you, next to the links.
 // Copy from the mockup, the project texts from the main page's
 // projects-data.ts. German, like the mockup.
 import "@fontsource-variable/jetbrains-mono";
@@ -86,18 +85,18 @@ const FINDINGS: Finding[] = [
   },
 ];
 
-// Ordered by where their regions sit on screen, top to bottom, so no two
-// pointer lines cross.
-// Order as in the live prototype.
+// The first four stand left of the skull, the rest right; each side in the
+// order its regions sit on screen, top to bottom, so the pointer lines
+// don't cross.
 const ATLAS: { id: string; part: Part; label: string; name: string; sub: string; color: string }[] = [
-  { id: "loadtest", part: "cerebellum", label: "Kleinhirn", name: "Loadtest", sub: "C++17-Lastgenerator ohne Libraries", color: "#ffd400" },
   { id: "oskalizer", part: "motor", label: "Motorcortex", name: "Oskalizer", sub: "Tastatur-Spielplatz", color: "#57ff8f" },
   { id: "kevdev", part: "parietal", label: "Parietallappen", name: "kev.dev", sub: "Aufzug, Stoff, Würfe", color: "#57b9ff" },
+  { id: "loadtest", part: "cerebellum", label: "Kleinhirn", name: "Loadtest", sub: "C++17-Lastgenerator ohne Libraries", color: "#ffd400" },
   { id: "facedots", part: "fusiform", label: "Gyrus fusiformis", name: "FaceDots", sub: "Foto zu Punkten", color: "#ff8a3d" },
-  { id: "aniscript", part: "temporal", label: "Schläfenlappen", name: "AniScript", sub: "Userscript", color: "#ff5fc8" },
   { id: "releasewatcher", part: "thalamus", label: "Thalamus", name: "ReleaseWatcher", sub: "CLI + Web-UI", color: "#ffffff" },
-  { id: "grundlagen", part: "hippocampus", label: "Hippocampus", name: "Grundlagen", sub: "Bootcamp · Java", color: "#7fe6ff" },
   { id: "shop", part: "accumbens", label: "Belohnungssystem", name: "Shop", sub: "Shop-Modul für YourBrand", color: "#ffd400" },
+  { id: "aniscript", part: "temporal", label: "Schläfenlappen", name: "AniScript", sub: "Userscript", color: "#ff5fc8" },
+  { id: "grundlagen", part: "hippocampus", label: "Hippocampus", name: "Grundlagen", sub: "Bootcamp · Java", color: "#7fe6ff" },
 ];
 
 const ICON = {
@@ -105,7 +104,7 @@ const ICON = {
   mail: '<path d="M3 5h18v14H3z"/><path d="m3 6 9 7 9-7"/>',
   phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
 };
-const icon = (d: string) => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const icon = (d: string) => `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 
 const atlasList = (rows: typeof ATLAS) => `<ul class="ct-atlas-list">${rows.map((a) => `
         <li tabindex="0" data-region="${a.part}" style="--c: ${a.color}">
@@ -207,19 +206,20 @@ document.body.innerHTML = `
 
     <section class="ct-contact" id="kontakt" data-state="contact" aria-labelledby="h-kontakt">
      <div class="ct-l">
-      <p class="ct-kick">Der Schädel dreht sich zurück · ${PHONE ? "ein Sägeblatt" : "drei Sägeblätter"} · die Splitter sind die Links</p>
+      <p class="ct-kick">Befund abgeschlossen · der Schädel ist wieder zu</p>
       <h2 class="ct-h ct-h2" id="h-kontakt">Zweit&shy;meinung?</h2>
      </div>
      <div class="ct-r">
-      <p class="ct-claim">Wenn du hier ankommst, fliegt das Blatt.</p>
+      <p class="ct-claim">Schreib mir, ruf an oder schau dir den Code an.</p>
       <p><a class="ct-mail" href="mailto:kevin.schaberl.work@gmail.com">kevin.schaberl.work@gmail.com</a></p>
+      <p class="ct-contact-links">
+        <a href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer" aria-label="GitHub">${icon(ICON.github)}</a>
+        <a href="mailto:kevin.schaberl.work@gmail.com" aria-label="E-Mail">${icon(ICON.mail)}</a>
+        <a href="tel:+436764718807" aria-label="Telefon">${icon(ICON.phone)}</a>
+      </p>
      </div>
     </section>
   </main>
-
-  <a class="ct-shard" href="https://github.com/saos-ebb" target="_blank" rel="noopener noreferrer" aria-label="GitHub">${icon(ICON.github)}</a>
-  <a class="ct-shard" href="mailto:kevin.schaberl.work@gmail.com" aria-label="E-Mail">${icon(ICON.mail)}</a>
-  <a class="ct-shard" href="tel:+436764718807" aria-label="Telefon">${icon(ICON.phone)}</a>
 
   <footer class="ct-footer">
     <span>© 2026 Kevin Schaberl / SAOS</span>
@@ -259,7 +259,6 @@ const svg = document.querySelector<SVGSVGElement>(".ct-pointers")!;
 const status = document.querySelector<HTMLElement>(".ct-status")!;
 const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-state]"));
 const intro = sections[0];
-const shards = Array.from(document.querySelectorAll<HTMLElement>(".ct-shard"));
 const atlasRows = Array.from(document.querySelectorAll<HTMLElement>(".ct-atlas-list li"));
 
 const sm = (e0: number, e1: number, t: number) => { const u = Math.min(Math.max((t - e0) / (e1 - e0), 0), 1); return u * u * (3 - 2 * u); };
@@ -335,11 +334,7 @@ let sceneReady = false;
 }
 
 import("./ct-scene").then(async ({ createCtScene }) => {
-  const ct = await createCtScene(canvas, {
-    phone: PHONE,
-    saw: true,
-    sawSingle: PHONE, // phones: one blade + blood, like the main page's contact
-  });
+  const ct = await createCtScene(canvas, { phone: PHONE });
   // The camera backs off until the skull fits: the middle column on desktop
   // (about 0.6 × the screen height wide at distance 8.4), the canvas on
   // phones, where it can be taller than wide.
@@ -394,14 +389,7 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     const a = pickActive();
     if (a !== active) {
       active = a;
-      // phones: the finale gets the whole width (page.css), so the blood
-      // and the shards aren't cut off by the small skull window
-      document.documentElement.classList.toggle("ct-finale", active === "contact");
       turn.tx = 0; turn.ty = 0;
-      if (active === "contact") ct.saw?.start();
-      else if (ct.saw?.running) ct.saw.reset();
-      if (REDUCED && active === "contact") ct.saw?.finish();
-      ct.requestRender();
     }
     const st = STATES[active];
 
@@ -430,9 +418,8 @@ import("./ct-scene").then(async ({ createCtScene }) => {
       tRot = ease((t - 0.35) / 0.35) * (Math.PI / 2);
       tLift = ease((t - 0.72) / 0.28);
     } else if (st.front) {
-      // Contact: facing you, closed, brain hidden; lift 0.6 sinks the skull
-      // a little so the blade and the fountain above it stay in the frame.
-      tRot = 0; tCut = -5; tOp = 0; tLift = 0.6;
+      // Contact: facing you, closed, brain hidden.
+      tRot = 0; tCut = -5; tOp = 0; tLift = 0;
     }
     else { tRot = Math.PI / 2; tCut = 0.02; tOp = st.op ?? 1; tLift = 1; }
     const f = REDUCED ? 1 : 1 - Math.exp(-dt * 8);
@@ -451,13 +438,13 @@ import("./ct-scene").then(async ({ createCtScene }) => {
     }
 
     drawPointers(ct, active, st, hi);
-    placeShards(ct);
   });
 }).catch(() => { canvas.remove(); status.remove(); document.documentElement.classList.add("no-skull"); sceneReady = true; });
 
 const cr = () => canvas.getBoundingClientRect();
 
 // Lines from the lit regions to the section's heading (atlas: to each row).
+let drawn = "";
 function drawPointers(ct: CtScene, active: string, st: State, hi: Part[]) {
   let out = "";
   const sideView = Math.abs(currentRot(ct) - Math.PI / 2) < 0.2;
@@ -477,33 +464,12 @@ function drawPointers(ct: CtScene, active: string, st: State, hi: Part[]) {
       if (ty < -50 || ty > innerHeight + 50) continue;
       const col = st.colors?.[part] ?? HOT;
       const bend = left ? 140 : -140;
-      out += `<path d="M${ax} ${ay} C${ax - bend} ${ay} ${tx + bend} ${ty} ${tx} ${ty}" fill="none" stroke="${col}" stroke-width="1.6" opacity="0.9"/>`
-        + `<circle cx="${ax}" cy="${ay}" r="6" fill="#05060a" stroke="${col}" stroke-width="3"/>`
-        + `<circle cx="${ax}" cy="${ay}" r="18" fill="none" stroke="${col}" stroke-opacity="0.35" stroke-width="2"/>`;
+      out += `<path d="M${ax} ${ay} C${ax - bend} ${ay} ${tx + bend} ${ty} ${tx} ${ty}" fill="none" stroke="${col}" stroke-width="1.2" opacity="0.8"/>`
+        + `<circle cx="${ax}" cy="${ay}" r="5" fill="#05060a" stroke="${col}" stroke-width="2"/>`
+        + `<circle cx="${ax}" cy="${ay}" r="13" fill="none" stroke="${col}" stroke-opacity="0.35" stroke-width="1.2"/>`;
     }
   }
-  if (svg.innerHTML !== out) svg.innerHTML = out;
+  if (out !== drawn) svg.innerHTML = drawn = out;
 }
 // Lines only while the model sits in its side pose (not while dragged off).
 const currentRot = (ct: CtScene) => (Math.abs(ct.rig.rotation.x) > 0.2 ? 0 : ct.rig.rotation.y);
-
-// The contact links ride on the first shard of each hit.
-function placeShards(ct: CtScene) {
-  const pts = ct.saw?.linkPoints() ?? [];
-  const r = cr();
-  shards.forEach((a, i) => {
-    const p = pts[i];
-    if (p) {
-      const [x, y] = ct.project(p);
-      // Shards fly wherever they fly; the link stays on the skull's side of
-      // the text (desktop: the middle column) and fully on screen.
-      const m = a.offsetWidth / 2 + 8;
-      const inset = PHONE ? 0 : 48 + Math.min(innerWidth * 0.28, 400);
-      const px = Math.min(Math.max(r.left + x, r.left + inset + m), r.right - inset - m);
-      const py = Math.min(Math.max(r.top + y, m), innerHeight - m);
-      a.style.transform = `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) translate(-50%, -50%)`;
-    }
-    a.classList.toggle("is-on", !!p);
-  });
-}
-

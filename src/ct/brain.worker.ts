@@ -2,13 +2,12 @@
 // typed arrays back without copying.
 import { buildBrain } from "./brain-build";
 
-self.onmessage = (e: MessageEvent<{ pointsScale: number }>) => {
-  const data = buildBrain(e.data.pointsScale);
-  const transfer: Transferable[] = [];
+self.onmessage = (e: MessageEvent<{ spacing: number }>) => {
+  const data = buildBrain(e.data.spacing);
+  const transfer = new Set<ArrayBufferLike>([data.outward.buffer]);
   for (const p of data.parts) {
-    transfer.push(p.dots.position.buffer, p.dots.shade.buffer, p.dots.region.buffer, p.occluder.position.buffer, p.occluder.region.buffer, p.occluder.index.buffer);
+    for (const a of [...Object.values(p.dots), ...Object.values(p.occluder)]) transfer.add(a.buffer);
   }
-  for (const a of data.anchors) transfer.push(a.buffer);
-  transfer.push(data.outward.buffer);
-  (self as unknown as Worker).postMessage(data, transfer);
+  for (const a of data.anchors) transfer.add(a.buffer);
+  (self as unknown as Worker).postMessage(data, [...transfer] as Transferable[]);
 };

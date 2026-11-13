@@ -1,19 +1,20 @@
 // Procedural brain kit for the CT skull (the Kopf-CT page, /ct-look):
 // every region is its own piece, the pieces visibly "plugged together"
-// (grooves along every border), rendered as dots. Ported from the offline
+// (grooves along every border), rendered as dots. Not a model from the 3D
+// renderer: modelled here, out of spheres. Started as a port of the offline
 // prototype that made the CT-Schädel mockup images ("#skull infos /
-// ct-skull-prototype.html") — same functions, same numbers. Not a model
-// from the 3D renderer: modelled here, out of spheres.
+// ct-skull-prototype.html"); the folds, the cut faces and the dots' spread
+// are newer.
 //
-// Pure geometry, no DOM: runs in brain.worker.ts (the seam BFS over ~52k
-// vertices per hemisphere is too slow for the main thread), with a
-// main-thread fallback in brain.ts.
+// Pure geometry, no DOM: runs in brain.worker.ts (too slow for the main
+// thread), with a main-thread fallback in brain.ts.
 //
 // Coordinates as the skull after its remap: +z face/front, +y up, x
 // sideways; left hemisphere side = -1 (x < 0). Speech areas left only.
 import * as THREE from "three";
 import { ImprovedNoise } from "three/addons/math/ImprovedNoise.js";
-import { MeshSurfaceSampler } from "three/addons/math/MeshSurfaceSampler.js";
+import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { mulberry, scatter } from "./dots";
 import endo from "./endocast.json";
 
 export const REG = ["frontal", "motor", "parietal", "occipital", "temporal", "broca", "wernicke", "fusiform", "cerebellum", "stem"] as const;
@@ -32,9 +33,6 @@ const DEEP_AT: Record<Deep, [number, number, number, number]> = {
   thalamus: [-0.08, 0.02, -0.12, 0.09],
   accumbens: [-0.1, -0.1, 0.3, 0.05],
 };
-
-// Baked light for the dots' shading (local: it turns with the brain).
-const LDIR = new THREE.Vector3(-0.3, 0.7, 0.65).normalize();
 
 const sm = (e0: number, e1: number, t: number) => {
   const u = Math.min(Math.max((t - e0) / (e1 - e0), 0), 1);
@@ -63,10 +61,47 @@ function region(noise: ImprovedNoise, n: { x: number; y: number; z: number }, si
   return "frontal";
 }
 
-function hemisphere(noise: ImprovedNoise, side: number) {
-  const g = new THREE.SphereGeometry(1, 260, 200);
+// A unit sphere of even triangles (no poles, no seam), welded. Every
+// geometry here is welded and free of collapsed triangles, so a mesh edge
+// is a real edge.
+function ball(detail: number) {
+  const g = new THREE.IcosahedronGeometry(1, detail);
+  g.deleteAttribute("uv");
+  g.deleteAttribute("normal");
+  return mergeVertices(g, 1e-5);
+}
+function weld(g: THREE.BufferGeometry) {
+  g.deleteAttribute("uv");
+  g.deleteAttribute("normal");
+  const m = mergeVertices(g, 1e-5);
+  const idx = m.index!.array, kept: number[] = [];
+  for (let t = 0; t < idx.length; t += 3) {
+    const a = idx[t], b = idx[t + 1], c = idx[t + 2];
+    if (a !== b && b !== c && a !== c) kept.push(a, b, c);
+  }
+  m.setIndex(kept);
+  return m;
+}
+const constant = (g: THREE.BufferGeometry, name: string, value: number) =>
+  g.setAttribute(name, new THREE.BufferAttribute(new Float32Array(g.getAttribute("position").count).fill(value), 1));
+
+// 1 on a sulcus' line, falling to 0 within SULCUS_W of it. The distance to
+// the line is the field's value over its slope, so the line is equally
+// wide everywhere (the value alone gives blots where the field runs flat).
+const SULCUS_W = 0.125; // in the field's units; / ~5 = world units
+function sulcus(noise: ImprovedNoise, x: number, y: number, z: number) {
+  const field = (x: number, y: number, z: number) =>
+    noise.noise(x + 0.9 * noise.noise(x * 0.45 + 3, y * 0.45, z * 0.45), y + 0.9 * noise.noise(x * 0.45, y * 0.45 + 9, z * 0.45), z);
+  const h = 0.04, v = field(x, y, z);
+  const slope = Math.hypot(field(x + h, y, z) - v, field(x, y + h, z) - v, field(x, y, z + h) - v) / h;
+  return Math.exp(-((v / Math.max(slope, 0.25) / SULCUS_W) ** 2));
+}
+
+// `fold` per vertex: 0 on a gyrus' crown, 1 at the bottom of a sulcus.
+function hemisphere(noise: ImprovedNoise, base: THREE.BufferGeometry, side: number) {
+  const g = base.clone();
   const pos = g.getAttribute("position");
-  const reg = new Float32Array(pos.count);
+  const reg = new Float32Array(pos.count), fold = new Float32Array(pos.count);
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
@@ -84,182 +119,142 @@ function hemisphere(noise: ImprovedNoise, side: number) {
     pz -= 0.12 * tw * sm(0.15, 0.45, v.z);
     py += 0.06 * sm(0.25, 0.5, v.z) * sm(0.1, -0.25, v.y) * (1 - tw); // orbitofrontal underside higher
     py += 0.12 * sm(-0.4, -0.75, v.z) * sm(0.0, -0.4, v.y); // tentorium: room for the cerebellum
-    // Gyri: soft ridged noise, low frequency.
-    // Gyri: ridged noise — denser and deeper than first built, closer to a
-    // real cortex (reference photo: Wikimedia "Brain - Lobes", CC BY 2.5).
-    const nz = 1 - Math.abs(noise.noise(pz * 10, py * 10, px * 10 + side * 7));
-    const d = 0.032 * nz * nz * (n.x > -0.08 ? 1 : 0.35);
+    // Sulci: the lines where a (warped) noise field crosses zero — long,
+    // winding and about a gyrus apart. They cut in, the crowns between
+    // them bulge out a little.
+    const f = sulcus(noise, pz * 4.6, py * 5.6, px * 5.6 + side * 7);
+    const d = (0.014 * (1 - f) - 0.04 * f) * (0.35 + 0.65 * sm(-0.14, -0.04, n.x)); // shallower on the medial side
     const len = Math.hypot(px, py, pz);
+    fold[i] = f;
     pos.setXYZ(i, (px + (px / len) * d) * side, py + (py / len) * d + 0.12, pz + (pz / len) * d - 0.02);
   }
   g.setAttribute("region", new THREE.BufferAttribute(reg, 1));
+  g.setAttribute("fold", new THREE.BufferAttribute(fold, 1));
   return g;
 }
 
 // Grooves along every border between regions (the kit's seams): graph
 // distance to the nearest border by BFS, then pushed in along -normal.
+// Leaves `seam` per vertex: that distance, in edges.
 function seams(g: THREE.BufferGeometry, depth: number, width: number) {
   const idx = g.index!.array;
   const pos = g.getAttribute("position");
   const reg = g.getAttribute("region");
-  // Weld the UV sphere's duplicate vertices by position for adjacency.
-  const id = new Int32Array(pos.count);
-  const map = new Map<string, number>();
-  let k = 0;
-  for (let i = 0; i < pos.count; i++) {
-    const key = `${pos.getX(i).toFixed(5)},${pos.getY(i).toFixed(5)},${pos.getZ(i).toFixed(5)}`;
-    let n = map.get(key);
-    if (n === undefined) map.set(key, (n = k++));
-    id[i] = n;
-  }
-  const adj = Array.from({ length: k }, () => new Set<number>());
-  const rOf = new Int32Array(k);
-  for (let i = 0; i < pos.count; i++) rOf[id[i]] = reg.getX(i);
+  const adj: number[][] = Array.from({ length: pos.count }, () => []);
   for (let t = 0; t < idx.length; t += 3) {
-    const a = id[idx[t]], b = id[idx[t + 1]], c = id[idx[t + 2]];
-    adj[a].add(b).add(c);
-    adj[b].add(a).add(c);
-    adj[c].add(a).add(b);
+    const a = idx[t], b = idx[t + 1], c = idx[t + 2];
+    adj[a].push(b, c);
+    adj[b].push(a, c);
+    adj[c].push(a, b);
   }
-  const dist = new Int32Array(k).fill(99);
+  const dist = new Float32Array(pos.count).fill(99);
   const q: number[] = [];
-  for (let a = 0; a < k; a++) {
-    for (const b of adj[a]) {
-      if (rOf[b] !== rOf[a]) {
-        dist[a] = 0;
-        q.push(a);
-        break;
-      }
-    }
+  for (let a = 0; a < pos.count; a++) {
+    if (adj[a].some((b) => reg.getX(b) !== reg.getX(a))) { dist[a] = 0; q.push(a); }
   }
   for (let h = 0; h < q.length; h++) {
     const a = q[h];
     if (dist[a] >= width) continue;
     for (const b of adj[a]) {
-      if (rOf[b] === rOf[a] && dist[b] > dist[a] + 1) {
-        dist[b] = dist[a] + 1;
-        q.push(b);
-      }
+      if (reg.getX(b) === reg.getX(a) && dist[b] > dist[a] + 1) { dist[b] = dist[a] + 1; q.push(b); }
     }
   }
   g.computeVertexNormals();
   const nrm = g.getAttribute("normal");
   for (let i = 0; i < pos.count; i++) {
-    const dd = dist[id[i]];
-    if (dd > width) continue;
-    const s = depth * Math.cos(((dd / (width + 1)) * Math.PI) / 2) ** 2;
+    if (dist[i] > width) continue;
+    const s = depth * Math.cos(((dist[i] / (width + 1)) * Math.PI) / 2) ** 2;
     pos.setXYZ(i, pos.getX(i) - nrm.getX(i) * s, pos.getY(i) - nrm.getY(i) * s, pos.getZ(i) - nrm.getZ(i) * s);
   }
-  g.setAttribute("seam", new THREE.BufferAttribute(Float32Array.from({ length: pos.count }, (_, i) => dist[id[i]]), 1));
-  g.computeVertexNormals();
+  g.setAttribute("seam", new THREE.BufferAttribute(dist, 1));
 }
 
-function cerebellum() {
-  const g = new THREE.SphereGeometry(1, 160, 120);
+// Two lobes with a notch between them and fine level folia.
+function cerebellum(noise: ImprovedNoise) {
+  const g = ball(40);
   const pos = g.getAttribute("position");
+  const fold = new Float32Array(pos.count);
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
-    const lobe = 1 - 0.18 * Math.exp(-(v.x * v.x) / 0.02); // midline notch (vermis)
-    const fol = 0.03 * Math.pow(Math.abs(Math.sin(v.y * 26 + v.z * 9)), 0.6); // folia: fine parallel ridges
-    const r = lobe + fol;
+    const notch = 1 - 0.2 * Math.exp(-(v.x * v.x) / 0.02); // midline (vermis)
+    const f = (0.5 + 0.5 * Math.sin(v.y * 30 + v.z * 4 + 1.6 * noise.noise(v.x * 3, v.y * 3, v.z * 3))) ** 5;
+    const r = notch * (1 - 0.04 * f);
+    fold[i] = f;
     pos.setXYZ(i, v.x * 0.42 * r, v.y * 0.19 * r - 0.37, v.z * 0.26 * r - 0.56); // tucked under the occipital lobe
   }
-  g.setAttribute("region", new THREE.BufferAttribute(new Float32Array(pos.count).fill(REG.indexOf("cerebellum")), 1));
-  g.computeVertexNormals();
+  constant(g, "region", REG.indexOf("cerebellum"));
+  g.setAttribute("fold", new THREE.BufferAttribute(fold, 1));
   return g;
 }
 
 function stem() {
   const pts = [[0, -0.82], [0.07, -0.82], [0.085, -0.7], [0.1, -0.6], [0.14, -0.52], [0.15, -0.44], [0.12, -0.36], [0.1, -0.22], [0, -0.2]]
     .map(([r, y]) => new THREE.Vector2(r, y));
-  const g = new THREE.LatheGeometry(pts, 48);
+  const g = weld(new THREE.LatheGeometry(pts, 48));
   g.rotateX(0.22);
   g.translate(0, 0.02, -0.26);
-  g.setAttribute("region", new THREE.BufferAttribute(new Float32Array(g.getAttribute("position").count).fill(REG.indexOf("stem")), 1));
-  g.computeVertexNormals();
+  constant(g, "region", REG.indexOf("stem"));
+  constant(g, "fold", 0);
   return g;
 }
 
-// Dots on a surface: shade baked from the normal; region, colour edge and
-// seam gap from the nearest vertex (spatial hash).
-function sampleDots(g: THREE.BufferGeometry, n: number) {
-  const pos = g.getAttribute("position");
-  const regA = g.getAttribute("region");
-  const seamA = g.getAttribute("seam");
-  const cell = 0.05;
-  const key = (x: number, y: number, z: number) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`;
-  const hash = new Map<string, number[]>();
-  for (let i = 0; i < pos.count; i += 2) {
-    const k = key(pos.getX(i), pos.getY(i), pos.getZ(i));
-    let arr = hash.get(k);
-    if (!arr) hash.set(k, (arr = []));
-    arr.push(i);
+// A piece's dots: where, facing where, of which region; `shade` darkens
+// them (sulci) or lifts them (the edge of a seam); `inner` is 0 on the
+// outside and > 0 on a cut face — the more, the deeper inside the piece.
+type Dots = { position: Float32Array; normal: Float32Array; region: Float32Array; shade: Float32Array; inner: Float32Array };
+
+const SULCUS = 0.7; // fold value from which a sulcus gets no dots
+
+// Dots on the outside. Region from the nearest corner of the dot's
+// triangle, fold and seam distance blended over it.
+function surfaceDots(g: THREE.BufferGeometry, spacing: number, rand: () => number): Dots {
+  const reg = g.getAttribute("region").array, fold = g.getAttribute("fold").array;
+  const seam = g.getAttribute("seam")?.array;
+  const s = scatter(g.getAttribute("position").array, g.getAttribute("normal").array, g.index!.array, spacing, rand);
+  const out: Dots = { position: new Float32Array(s.count * 3), normal: new Float32Array(s.count * 3), region: new Float32Array(s.count), shade: new Float32Array(s.count), inner: new Float32Array(0) };
+  let n = 0;
+  for (let i = 0; i < s.count; i++) {
+    const a = s.tri[i * 3], b = s.tri[i * 3 + 1], c = s.tri[i * 3 + 2];
+    const wa = s.w[i * 3], wb = s.w[i * 3 + 1], wc = s.w[i * 3 + 2];
+    const dd = seam ? seam[a] * wa + seam[b] * wb + seam[c] * wc : 99;
+    if (dd < 0.9) continue; // the gap between two pieces
+    const f = fold[a] * wa + fold[b] * wb + fold[c] * wc;
+    if (f > SULCUS) continue; // the bottom of a sulcus stays empty: a dark line
+    out.position.set(s.position.subarray(i * 3, i * 3 + 3), n * 3);
+    out.normal.set(s.normal.subarray(i * 3, i * 3 + 3), n * 3);
+    out.region[n] = reg[wa >= wb && wa >= wc ? a : wb >= wc ? b : c];
+    out.shade[n] = (1 - 0.5 * f) * (dd < 2.4 ? 1.2 : 1); // darker into the sulci, a light edge along the seam
+    n++;
   }
-  const flat = g.index ? g.toNonIndexed() : g.clone();
-  flat.computeVertexNormals();
-  const sampler = new MeshSurfaceSampler(new THREE.Mesh(flat)).build();
-  const P = new Float32Array(n * 3), S = new Float32Array(n), R = new Float32Array(n);
-  const p = new THREE.Vector3(), nn = new THREE.Vector3();
-  for (let i = 0; i < n; ) {
-    sampler.sample(p, nn);
-    let best = 0, bd = 1e9;
-    const cx = Math.floor(p.x / cell), cy = Math.floor(p.y / cell), cz = Math.floor(p.z / cell);
-    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
-      const arr = hash.get(`${cx + dx},${cy + dy},${cz + dz}`);
-      if (!arr) continue;
-      for (const j of arr) {
-        const d = (pos.getX(j) - p.x) ** 2 + (pos.getY(j) - p.y) ** 2 + (pos.getZ(j) - p.z) ** 2;
-        if (d < bd) { bd = d; best = j; }
-      }
-    }
-    const dd = seamA ? seamA.getX(best) : 99;
-    if (dd <= 1 && Math.random() < 0.98) continue; // the gap between two pieces
-    let shade = 0.3 + 0.7 * Math.pow(Math.max(0, nn.dot(LDIR)), 1.2);
-    if (dd >= 2 && dd <= 3) shade *= 1.35; // light edge along the seam
-    P.set([p.x, p.y, p.z], i * 3);
-    S[i] = shade;
-    R[i] = regA.getX(best);
-    i++;
-  }
-  return { position: P, shade: S, region: R };
+  return { position: out.position.slice(0, n * 3), normal: out.normal.slice(0, n * 3), region: out.region.slice(0, n), shade: out.shade.slice(0, n), inner: new Float32Array(n) };
 }
 
 // The inside of every piece. A region is only a patch of the surface; on
 // its own it would come out as a hollow shell. Closing it: side walls from
 // the patch's border down to a small copy of the patch near the centre `c`
-// (the inner cap), so each piece is a solid wedge. Returned as triangles
-// with their region, wound like the surface (closed: every edge has its
-// reverse).
+// (the inner cap), so each piece is a solid wedge. Returned as loose
+// triangles with their region, wound like the surface (closed: every edge
+// has its reverse), and `depth`: 0 at the surface, 1 at the inner cap.
 // `keep` is the triangle index list of the surface (seam triangles removed).
 const INNER = 0.12; // inner cap at 12 % of the way out from the centre
 function interior(g: THREE.BufferGeometry, keep: ArrayLike<number>, c: THREE.Vector3) {
   const pos = g.getAttribute("position"), reg = g.getAttribute("region");
-  // Weld duplicate vertices (UV seam, poles) so only real borders count.
-  const id = new Int32Array(pos.count), map = new Map<string, number>();
-  for (let i = 0; i < pos.count; i++) {
-    const key = `${pos.getX(i).toFixed(5)},${pos.getY(i).toFixed(5)},${pos.getZ(i).toFixed(5)}`;
-    let n = map.get(key);
-    if (n === undefined) map.set(key, (n = map.size));
-    id[i] = n;
-  }
-  const edges = new Map<string, number>(); // directed welded edge -> how often
-  const ek = (a: number, b: number) => `${id[a]}>${id[b]}`;
-  const degenerate = (t: number) => id[keep[t]] === id[keep[t + 1]] || id[keep[t + 1]] === id[keep[t + 2]] || id[keep[t]] === id[keep[t + 2]]; // at a pole
+  const edges = new Set<number>(); // directed edges of the kept triangles
+  const ek = (a: number, b: number) => a * pos.count + b;
   for (let t = 0; t < keep.length; t += 3) {
-    if (degenerate(t)) continue;
-    for (let e = 0; e < 3; e++) {
-      const k = ek(keep[t + e], keep[t + ((e + 1) % 3)]);
-      edges.set(k, (edges.get(k) ?? 0) + 1);
-    }
+    for (let e = 0; e < 3; e++) edges.add(ek(keep[t + e], keep[t + ((e + 1) % 3)]));
   }
-  const P: number[] = [], R: number[] = [];
+  const P: number[] = [], R: number[] = [], D: number[] = [];
   const at = (i: number) => new THREE.Vector3().fromBufferAttribute(pos, i);
   const inner = (i: number) => at(i).sub(c).multiplyScalar(INNER).add(c);
-  const tri = (p: THREE.Vector3, q: THREE.Vector3, r: THREE.Vector3, region: number) => { P.push(p.x, p.y, p.z, q.x, q.y, q.z, r.x, r.y, r.z); R.push(region, region, region); };
+  const tri = (p: THREE.Vector3, q: THREE.Vector3, r: THREE.Vector3, region: number, dp: number, dq: number, dr: number) => {
+    P.push(p.x, p.y, p.z, q.x, q.y, q.z, r.x, r.y, r.z);
+    R.push(region, region, region);
+    D.push(dp, dq, dr);
+  };
   const open = new Set<number>(); // regions that have a border at all (cerebellum, stem are closed already)
   for (let t = 0; t < keep.length; t += 3) {
-    if (degenerate(t)) continue;
     const region = reg.getX(keep[t]);
     for (let e = 0; e < 3; e++) {
       const i = keep[t + e], j = keep[t + ((e + 1) % 3)];
@@ -267,54 +262,34 @@ function interior(g: THREE.BufferGeometry, keep: ArrayLike<number>, c: THREE.Vec
       open.add(region);
       // Wall: runs the border edge the other way (j -> i), so it joins the
       // patch, its neighbouring walls and the cap without a crack.
-      tri(at(j), at(i), inner(i), region);
-      tri(at(j), inner(i), inner(j), region);
+      tri(at(j), at(i), inner(i), region, 0, 0, 1);
+      tri(at(j), inner(i), inner(j), region, 0, 1, 1);
     }
   }
   // inner caps, reversed (they face the centre), only for pieces with a border
   for (let t = 0; t < keep.length; t += 3) {
     const region = reg.getX(keep[t]);
-    if (open.has(region) && !degenerate(t)) tri(inner(keep[t]), inner(keep[t + 2]), inner(keep[t + 1]), region);
+    if (open.has(region)) tri(inner(keep[t]), inner(keep[t + 2]), inner(keep[t + 1]), region, 1, 1, 1);
   }
   const out = new THREE.BufferGeometry();
   out.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
   out.setAttribute("region", new THREE.Float32BufferAttribute(R, 1));
+  out.setAttribute("depth", new THREE.Float32BufferAttribute(D, 1));
+  out.computeVertexNormals(); // loose triangles: flat
   return out;
 }
 
-// Dots on the inside surfaces: region straight from the triangle, no seam gap.
-function sampleInterior(g: THREE.BufferGeometry, n: number) {
-  const reg = g.getAttribute("region");
-  const sampler = new MeshSurfaceSampler(new THREE.Mesh(g)).build();
-  const P = new Float32Array(n * 3), S = new Float32Array(n), R = new Float32Array(n);
-  const p = new THREE.Vector3(), nn = new THREE.Vector3(), ab = new THREE.Vector3(), ac = new THREE.Vector3();
-  // sample() doesn't say which triangle it picked, and the region is per
-  // triangle: pick the face with the sampler's own area-weighted draw
-  const face = (sampler as unknown as { sampleFaceIndex(): number }).sampleFaceIndex.bind(sampler);
-  const tri = new THREE.Triangle(), pa = g.getAttribute("position");
-  for (let i = 0; i < n; i++) {
-    const f = face();
-    tri.setFromAttributeAndIndices(pa, f * 3, f * 3 + 1, f * 3 + 2);
-    let u = Math.random(), v = Math.random();
-    if (u + v > 1) { u = 1 - u; v = 1 - v; }
-    p.copy(tri.a).addScaledVector(ab.subVectors(tri.b, tri.a), u).addScaledVector(ac.subVectors(tri.c, tri.a), v);
-    tri.getNormal(nn);
-    P.set([p.x, p.y, p.z], i * 3);
-    S[i] = 0.3 + 0.7 * Math.pow(Math.max(0, nn.dot(LDIR)), 1.2);
-    R[i] = reg.getX(f * 3);
+// Dots on the cut faces: a thin rim of cortex, the rest white matter.
+function interiorDots(g: THREE.BufferGeometry, spacing: number, rand: () => number): Dots {
+  const pos = g.getAttribute("position"), reg = g.getAttribute("region").array, depth = g.getAttribute("depth").array;
+  const s = scatter(pos.array, g.getAttribute("normal").array, Uint32Array.from({ length: pos.count }, (_, i) => i), spacing, rand);
+  const region = new Float32Array(s.count), inner = new Float32Array(s.count);
+  for (let i = 0; i < s.count; i++) {
+    const a = s.tri[i * 3];
+    region[i] = reg[a];
+    inner[i] = 0.02 + 0.98 * sm(0.07, 0.2, depth[a] * s.w[i * 3] + depth[a + 1] * s.w[i * 3 + 1] + depth[a + 2] * s.w[i * 3 + 2]);
   }
-  return { position: P, shade: S, region: R };
-}
-
-function area(g: THREE.BufferGeometry, index?: ArrayLike<number>) {
-  const pos = g.getAttribute("position"), tri = new THREE.Triangle();
-  const n = index ? index.length : pos.count;
-  let sum = 0;
-  for (let t = 0; t < n; t += 3) {
-    const [i, j, k] = index ? [index[t], index[t + 1], index[t + 2]] : [t, t + 1, t + 2];
-    sum += tri.setFromAttributeAndIndices(pos, i, j, k).getArea();
-  }
-  return sum;
+  return { position: s.position.slice(), normal: s.normal.slice(), region, shade: new Float32Array(s.count).fill(1), inner };
 }
 
 // ── fitting the kit into the skull ──────────────────────────────────────
@@ -403,7 +378,7 @@ function makeFit(geos: THREE.BufferGeometry[]) {
 }
 
 export type BrainPart = {
-  dots: { position: Float32Array; shade: Float32Array; region: Float32Array };
+  dots: Dots;
   // Depth-only occluder so dots on the back don't shine through the gaps
   // (with its region per vertex, so it moves along when a part comes out).
   occluder: { position: Float32Array; region: Float32Array; index: Uint32Array };
@@ -420,10 +395,14 @@ export type BrainData = {
   outward: Float32Array;
 };
 
-// pointsScale: 1 on desktop (~45k dots per 30k vertices), ~1/3 on phones.
-export function buildBrain(pointsScale = 1): BrainData {
+const cat = (x: Float32Array, y: Float32Array) => { const o = new Float32Array(x.length + y.length); o.set(x); o.set(y, x.length); return o; };
+
+// spacing: distance between two dots (dots.ts scatter).
+export function buildBrain(spacing: number): BrainData {
   const noise = new ImprovedNoise();
-  const geos = [hemisphere(noise, -1), hemisphere(noise, 1), cerebellum(), stem()];
+  const rand = mulberry(3);
+  const base = ball(71);
+  const geos = [hemisphere(noise, base, -1), hemisphere(noise, base, 1), cerebellum(noise), stem()];
   const fit = makeFit(geos);
   for (const g of geos) {
     const pos = g.getAttribute("position");
@@ -431,43 +410,42 @@ export function buildBrain(pointsScale = 1): BrainData {
       const { p } = fit(pos.getX(i), pos.getY(i), pos.getZ(i));
       pos.setXYZ(i, p.x, p.y, p.z);
     }
-    g.computeVertexNormals();
   }
   const deep = Object.fromEntries(DEEP.map((name) => {
     const [x, y, z, r] = DEEP_AT[name];
     const { p, s } = fit(x, y, z);
     return [name, [p.x, p.y, p.z, r * s]];
   })) as BrainData["deep"];
-  for (const g of geos) if (g.getAttribute("position").count > 30000) seams(g, 0.045, 4);
+  seams(geos[0], 0.04, 5);
+  seams(geos[1], 0.04, 5);
 
   const parts = geos.map((g): BrainPart => {
+    g.computeVertexNormals();
     const pos = g.getAttribute("position");
-    const n = Math.round((45000 * pointsScale * pos.count) / 30000);
-    const surface = sampleDots(g, n);
-    const region = Float32Array.from(g.getAttribute("region").array as ArrayLike<number>);
+    const surface = surfaceDots(g, spacing, rand);
+    const region = Float32Array.from(g.getAttribute("region").array);
     // Only triangles that lie wholly in one part: the occluder moves with
     // its part, and a triangle across a seam would stretch over the gap
     // when one side comes out.
-    const all = g.index ? g.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i);
+    const all = g.index!.array;
     const kept: number[] = [];
     for (let t = 0; t < all.length; t += 3) {
       const a = all[t], b = all[t + 1], c = all[t + 2];
       if (region[a] === region[b] && region[a] === region[c]) kept.push(a, b, c);
     }
-    // Close every piece (walls + inner cap), dotted as densely as the outside.
+    // Close every piece (walls + inner cap), dotted like the outside.
     g.computeBoundingBox();
     const inside = interior(g, kept, g.boundingBox!.getCenter(new THREE.Vector3()));
-    const ni = Math.round((n * area(inside)) / area(g, all));
-    const inDots = ni ? sampleInterior(inside, ni) : { position: new Float32Array(), shade: new Float32Array(), region: new Float32Array() };
-    const cat = (x: Float32Array, y: Float32Array) => { const o = new Float32Array(x.length + y.length); o.set(x); o.set(y, x.length); return o; };
-    const dots = { position: cat(surface.position, inDots.position), shade: cat(surface.shade, inDots.shade), region: cat(surface.region, inDots.region) };
+    const inPos = inside.getAttribute("position").array as Float32Array;
+    const cut = inPos.length ? interiorDots(inside, spacing, rand) : null;
     // Occluder: the surface plus the inside, so a piece that comes out
     // hides what's behind it from every side.
-    const inPos = inside.getAttribute("position").array as Float32Array;
     const index = Uint32Array.from([...kept, ...Array.from({ length: inPos.length / 3 }, (_, i) => pos.count + i)]);
     return {
-      dots,
-      occluder: { position: cat(Float32Array.from(pos.array as ArrayLike<number>), inPos), region: cat(region, inside.getAttribute("region").array as Float32Array), index },
+      dots: cut
+        ? { position: cat(surface.position, cut.position), normal: cat(surface.normal, cut.normal), region: cat(surface.region, cut.region), shade: cat(surface.shade, cut.shade), inner: cat(surface.inner, cut.inner) }
+        : surface,
+      occluder: { position: cat(Float32Array.from(pos.array), inPos), region: cat(region, inside.getAttribute("region").array as Float32Array), index },
     };
   });
 
