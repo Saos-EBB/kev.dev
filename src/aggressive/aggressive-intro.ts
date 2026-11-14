@@ -243,7 +243,14 @@ function context(canvas: HTMLCanvasElement) {
   const px = canvas === paintCanvas && PHONE() ? Math.min(dpr, 1.5) : dpr;
   canvas.width = w * px;
   canvas.height = h * px;
-  const ctx = canvas.getContext("2d")!;
+  // A big screen's walls are painted on the CPU: Chrome's GPU canvas, fed the
+  // thousands of blots of the hit, corrupted them at 2560x1440 (a block right
+  // of the skull smeared sideways, ink went missing), at 1920x1080 it held.
+  // Asking to read it back keeps it off the GPU; it costs frames while the
+  // blood lands, so only where it's needed. Decided by the first call: the
+  // context keeps its kind when a resize sizes it again.
+  const cpu = canvas === paintCanvas && canvas.width * canvas.height > 2_600_000;
+  const ctx = canvas.getContext("2d", cpu ? { willReadFrequently: true } : undefined)!;
   ctx.scale(px, px);
   ctx.lineCap = "round";
   return ctx;
@@ -326,10 +333,12 @@ function coverWords(sx = 1, sy = 1) {
     covered.set(word, patch);
     const box = word.getBoundingClientRect();
     if (box.left >= patch.left && box.top >= patch.top && box.right <= patch.right && box.bottom <= patch.bottom) continue;
+    paint.beginPath();
     wordDrops(word, (x, y, r) => {
       stamp(paint, { at: 0, x, y, r, angle: Math.atan2(y - h / 2, x - w / 2) }, []);
       keepBlot(wordBlots, x, y, r);
     });
+    paint.fill();
   }
 }
 
@@ -346,17 +355,13 @@ function paintWalls() {
   // (so the same ones come back with the old size), new ones if it's short.
   const count = Math.ceil(w * h * DROPS_PER_PIXEL);
   while (blots.length < count) blots.push({ x: Math.random(), y: Math.random(), r: radius() / scale });
+  ctx.beginPath();
   for (const b of [...blots.slice(0, count), ...wordBlots]) {
     const x = b.x * w, y = b.y * h;
     stamp(ctx, { at: 0, x, y, r: b.r * scale, angle: Math.atan2(y - fromY, x - fromX) }, drips);
   }
-  for (const d of drips) {
-    ctx.lineWidth = d.width;
-    ctx.beginPath();
-    ctx.moveTo(d.x, d.y);
-    ctx.lineTo(d.x, d.y + d.left);
-    ctx.stroke();
-  }
+  for (const d of drips) drip(ctx, d, d.left);
+  ctx.fill();
   openWords();
 }
 
@@ -391,20 +396,32 @@ window.addEventListener("resize", () => {
 }, { passive: true });
 
 // Hits the wall flying outward from the wound: stretched that way, plus spray.
+// Only adds the blot to the current path: the caller fills once for all of
+// them. Thousands of fills of their own a frame broke Chrome's GPU canvas on
+// big screens: bands of the wall smeared sideways, ink went missing.
 function stamp(paint: CanvasRenderingContext2D, d: Drop, drips: Drip[]) {
-  paint.beginPath();
-  paint.ellipse(d.x, d.y, d.r * 1.35, d.r, d.angle, 0, Math.PI * 2);
-  paint.fill();
+  const rx = d.r * 1.35;
+  paint.moveTo(d.x + Math.cos(d.angle) * rx, d.y + Math.sin(d.angle) * rx);
+  paint.ellipse(d.x, d.y, rx, d.r, d.angle, 0, Math.PI * 2);
   const spray = d.r > 6 ? 5 : 1;
   for (let i = 0; i < spray; i++) {
     const a = d.angle + rand(-0.5, 0.5), s = d.r * rand(1.3, 2.8);
-    paint.beginPath();
-    paint.arc(d.x + Math.cos(a) * s, d.y + Math.sin(a) * s, rand(0.5, d.r * 0.18 + 0.8), 0, Math.PI * 2);
-    paint.fill();
+    const x = d.x + Math.cos(a) * s, y = d.y + Math.sin(a) * s, r = rand(0.5, d.r * 0.18 + 0.8);
+    paint.moveTo(x + r, y);
+    paint.arc(x, y, r, 0, Math.PI * 2);
   }
   if (d.r > 16 * scale && drips.length < 140) {
     drips.push({ x: d.x + rand(-d.r, d.r) * 0.6, y: d.y, width: rand(1.5, d.r * 0.22), left: rand(40, 260), speed: rand(40, 150) });
   }
+}
+
+// A drip's next stretch, into the current path: a bar, overlapping the last
+// one so there's no seam, with a round end so it doesn't stop square.
+function drip(paint: CanvasRenderingContext2D, d: Drip, step: number) {
+  const r = d.width / 2;
+  paint.rect(d.x - r, d.y - 0.5, d.width, step + 0.5);
+  paint.moveTo(d.x + r, d.y + step);
+  paint.arc(d.x, d.y + step, r, 0, Math.PI * 2);
 }
 
 const STAMP_BUDGET = 6; // ms
@@ -420,6 +437,7 @@ function runDrops(paint: CanvasRenderingContext2D, drops: Drop[], onDone: () => 
     last = now;
     // At most a few milliseconds of blots per frame: after a slow frame the
     // ones that are due don't all land in the next and make that one slow too.
+    paint.beginPath(); // one path and one fill for all that lands this frame
     const until = performance.now() + STAMP_BUDGET;
     while (next < drops.length && drops[next].at <= seconds) {
       stamp(paint, drops[next++], drips);
@@ -428,14 +446,11 @@ function runDrops(paint: CanvasRenderingContext2D, drops: Drop[], onDone: () => 
     for (const d of drips) {
       if (d.left <= 0) continue;
       const step = d.speed * dt;
-      paint.lineWidth = d.width;
-      paint.beginPath();
-      paint.moveTo(d.x, d.y);
-      paint.lineTo(d.x, d.y + step);
-      paint.stroke();
+      drip(paint, d, step);
       d.y += step;
       d.left -= step;
     }
+    paint.fill();
     if (next === drops.length && !done) { done = true; onDone(); }
     if (next < drops.length || drips.some((d) => d.left > 0)) requestAnimationFrame(tick);
   };
