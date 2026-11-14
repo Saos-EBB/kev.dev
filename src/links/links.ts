@@ -126,6 +126,26 @@ const SITES: Site[] = [
       ["nothosted-3", t("TschoBBo: die Inbox", "TschoBBo: the inbox", "TschoBBo: входящие", "TschoBBo: 受信トレイ")],
     ],
   },
+  {
+    name: t("Maschenwerk: das Shop-Modul", "Maschenwerk: the shop module", "Maschenwerk: модуль магазина", "Maschenwerk: ショップモジュール"),
+    url: "https://maschenwerk.vercel.app",
+    what: t(
+      "Ein Online-Shop für handgehäkelte Tops, Cardigans, Taschen und Accessoires, gebaut aus dem Shop-Modul von YourBrand mit NestJS, Postgres, Redis und Next.js. Gekauft wird als Gast, der Betrag ist erst nur reserviert, und Risiko-Regeln halten auffällige Bestellungen an, bis die Inhaberin entscheidet. Die Rechnung entsteht mit dem Zahlungseingang.",
+      "An online shop for hand-crocheted tops, cardigans, bags and accessories, built from YourBrand's shop module with NestJS, Postgres, Redis and Next.js. Customers buy as guests, the amount is only reserved at first, and risk rules hold suspicious orders until the owner decides. The invoice is created when the payment arrives.",
+      "Интернет-магазин вязаных крючком топов, кардиганов, сумок и аксессуаров, построенный из модуля магазина YourBrand на NestJS, Postgres, Redis и Next.js. Покупают как гости, сумма сначала только резервируется, а правила риска задерживают подозрительные заказы, пока решение не примет владелица. Счёт создаётся при поступлении оплаты.",
+      "かぎ針編みのトップス、カーディガン、バッグ、小物のオンラインショップです。YourBrandのショップモジュールから、NestJS、Postgres、Redis、Next.jsで作りました。購入はゲストで行い、金額はまず仮押さえのみ。リスクルールが怪しい注文を止め、オーナーが判断します。請求書は入金と同時に作成されます。",),
+    why: t(
+      "Hier zeigt sich, ob ein Modul aus YourBrand auch allein trägt, mit einem ganz eigenen Look. Der Loadtester hat ein eigenes Ziel für den Shop, so intensiv wie YourBrand habe ich ihn aber noch nicht getestet. Die Screens zeigen den lokalen Stand mit Demo-Daten.",
+      "This shows whether a YourBrand module holds up on its own, with a look all of its own. The load tester has its own target for the shop, but I haven't tested it as intensely as YourBrand yet. The screens show the local build with demo data.",
+      "Здесь видно, выдерживает ли модуль YourBrand работу сам по себе, с совершенно собственным видом. У нагрузочного тестера есть отдельная цель для магазина, но так интенсивно, как YourBrand, я его ещё не тестировал. На скриншотах локальная версия с демо-данными.",
+      "YourBrandのモジュールが、まったく別の見た目でも単体で成り立つかを確かめています。負荷テストツールにはショップ用のターゲットもありますが、YourBrandほど集中的にはまだテストしていません。画面はデモデータを入れたローカル環境のものです。",),
+    shots: [
+      ["shop-1", t("Die Startseite", "The home page", "Главная", "トップページ")],
+      ["shop-2", t("Die Stücke im Chrom-Rahmen", "The pieces in chrome frames", "Изделия в хромовых рамках", "クロームの枠に入った作品")],
+      ["shop-3", t("Eine Produktseite", "A product page", "Страница товара", "商品ページ")],
+      ["shop-4", t("Die Konsole: angehaltene Bestellungen", "The console: held orders", "Консоль: задержанные заказы", "管理画面: 保留中の注文")],
+    ],
+  },
 ];
 
 // Prototypes rather than sites: their own section, after the sites.
@@ -189,15 +209,19 @@ document.getElementById("links")!.className = "links";
 document.getElementById("links")!.innerHTML = `
   <a class="links-back" href="${source ? `/${source}` : "/"}">← ${source ?? "kev.dev"}</a>
   <h1 class="links-title">${UI.moreStuff}</h1>
-  <p class="links-lead">${t("Was ich sonst noch gebaut habe, was es ist und warum es so ist.", "What else I built, what it is and why it is that way.", "Что ещё я построил, что это такое и почему оно так устроено.", "他に作ったもの、それが何で、なぜそうなのか。")}</p>
+  <p class="links-lead">${t(
+    "Was ich sonst noch gebaut habe. Zusammen zeigt es, wie ich mir Fullstack beibringe und wie die Teile zusammenspielen: YourBrand als Plattform, daraus das Shop-Modul mit Maschenwerk als Demo, und ein eigener Loadtester für beide. Dazu die Frontends für mein Portfolio, die ich weiterentwickle: zuerst Stil und Idee, dann Performance, dann die Handy-Version.",
+    "What else I built. Together it shows how I'm teaching myself full stack and how the parts play together: YourBrand as the platform, its shop module with Maschenwerk as the demo, and my own load tester for both. Plus the frontends for my portfolio, which I keep developing: style and idea first, then performance, then the mobile version.",
+    "Что ещё я построил. Вместе это показывает, как я сам учу фулстек и как части работают вместе: YourBrand как платформа, из неё модуль магазина с Maschenwerk как демо, и собственный нагрузочный тестер для обоих. Плюс фронтенды для моего портфолио, которые я развиваю дальше: сначала стиль и идея, потом производительность, потом мобильная версия.",
+    "他に作ったものです。全体で、私がフルスタックを独学している様子と、各部分の連携を示しています。プラットフォームとしてのYourBrand、そこから生まれたショップモジュールとデモのMaschenwerk、両方に使う自作の負荷テストツール。さらにポートフォリオのフロントエンドを、まずスタイルとアイデア、次にパフォーマンス、そしてモバイル版の順で育てています。",)}</p>
   <h2 class="links-group">${t("Seiten", "Sites", "Сайты", "サイト")}</h2>
   ${SITES.filter(offered).map(siteHtml).join("")}
   <h2 class="links-group">${t("Game in Progress", "Game in progress", "Игра в разработке", "制作中のゲーム")}</h2>
   <p class="links-lead">${t(
-    "Ein Prototyp, an dem ich herausfinde, was ich am Ende in einem Game haben will: was sich gut anfühlt, was Spaß macht und was wieder rausfliegt.",
-    "A prototype where I find out what I ultimately want in a game: what feels good, what's fun and what gets thrown out again.",
-    "Прототип, на котором я выясняю, что в итоге хочу видеть в игре: что ощущается хорошо, что весело, а что снова отправится в корзину.",
-    "最終的にゲームに何を入れたいかを確かめるプロトタイプです。何が気持ちよく、何が楽しく、何を捨てるかを試しています。",)}</p>
+    "Das gehört nicht zum Rest. Ehrlich gesagt baue ich es nur für mich, zum Selberspielen.",
+    "This one isn't part of the rest. Honestly, I'm only building it for me, to play myself.",
+    "Это не связано с остальным. Честно говоря, я делаю это только для себя, чтобы самому играть.",
+    "これは他とは関係ありません。正直に言うと、自分で遊ぶためだけに作っています。",)}</p>
   ${GAMES.filter(offered).map(siteHtml).join("")}
   <footer class="links-foot">
     <span>© 2026 Kevin Schaberl</span>
