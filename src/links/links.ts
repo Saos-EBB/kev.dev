@@ -25,7 +25,7 @@ const SITES: Site[] = [
       "できることを主張するだけでなく、サイト自体で見せるためです。もっと知りたい人は、大きなプロジェクトのグラフとコードを開けます。",),
     shots: [
       ["main-1", t("Der Einstieg", "The start", "Начало", "トップ")],
-      ["main-2", t("Der Kontakt mit dem Schädel", "Contact with the skull", "Контакты с черепом", "頭蓋骨のある連絡先")],
+      ["main-2", t("Der Kontakt: Let's talk now", "Contact: Let's talk now", "Контакты: Let's talk now", "連絡先: Let's talk now")],
     ],
   },
   {
@@ -37,10 +37,10 @@ const SITES: Site[] = [
       "То же содержание в виде комнаты: пильный диск бьёт по черепу, и только кровь открывает пути к разделам обо мне, проектам и контактам. В конце летят все диски.",
       "同じ内容を部屋にしました。のこぎりの刃が頭蓋骨に当たり、血によって自己紹介、プロジェクト、連絡先への道が現れます。最後にはすべての刃が飛びます。",),
     why: t(
-      "Die laute Variante, bei der man etwas anfassen kann: Der Hammer zerschlägt die Tastatur, und was aus der Piñata fällt, lässt sich herumwerfen.",
-      "The loud version, with things to touch: the hammer smashes the keyboard, and what falls out of the piñata can be thrown around.",
-      "Громкий вариант, где можно что-то потрогать: молоток разбивает клавиатуру, а то, что выпало из пиньяты, можно разбрасывать.",
-      "触って遊べる、にぎやかなバージョンです。ハンマーがキーボードを壊し、ピニャータから落ちた物は投げて遊べます。",),
+      "Die laute Variante, bei der man etwas anfassen kann: Der Hammer zerschlägt die Tastatur, und was aus der Piñata fällt, lässt sich herumwerfen. Jeder Treffer schüttelt den Bildschirm, blitzt kurz auf und wirft Funken.",
+      "The loud version, with things to touch: the hammer smashes the keyboard, and what falls out of the piñata can be thrown around. Every hit shakes the screen, flashes briefly and throws sparks.",
+      "Громкий вариант, где можно что-то потрогать: молоток разбивает клавиатуру, а то, что выпало из пиньяты, можно разбрасывать. Каждый удар трясёт экран, коротко вспыхивает и сыплет искрами.",
+      "触って遊べる、にぎやかなバージョンです。ハンマーがキーボードを壊し、ピニャータから落ちた物は投げて遊べます。当たるたびに画面が揺れ、一瞬光り、火花が飛びます。",),
     shots: [
       ["intro-1", t("Der Raum", "The room", "Комната", "部屋")],
       ["intro-2", t("Über mich: der Hammer und die Tastatur", "About: the hammer and the keyboard", "Обо мне: молоток и клавиатура", "自己紹介: ハンマーとキーボード")],
@@ -69,6 +69,26 @@ const SITES: Site[] = [
     ],
   },
   {
+    name: t("Das Portfolio als Kopf-CT", "The portfolio as a head CT", "Портфолио как КТ головы", "頭部CTとしてのポートフォリオ"),
+    url: "/ct-look",
+    what: t(
+      "Meine Projekte in einem Schädel aus Punkten, der sich beim Scrollen öffnet. Jedes Projekt ist eine Hirnregion. Am Ende ist der Schädel wieder zu, und daneben stehen die Kontakt-Links. Die Seite gibt es nur auf Deutsch.",
+      "My projects inside a skull made of points that opens as you scroll. Every project is a brain region. At the end the skull is closed again, with the contact links next to it. The page is in German only.",
+    "Мои проекты внутри черепа из точек, который открывается при прокрутке. Каждый проект это область мозга. В конце череп снова закрыт, а рядом стоят ссылки для связи. Страница только на немецком.",
+    "スクロールすると開く、点でできた頭蓋骨の中に私のプロジェクトがあります。各プロジェクトは脳の領域です。最後に頭蓋骨は再び閉じ、その横に連絡先リンクがあります。このページはドイツ語のみです。",),
+    why: t(
+      "Eine einzige Idee trägt hier die ganze Seite, statt dass 3D nur Deko ist. Der Schädel ist ein CT-Datensatz aus meinem eigenen 3D-Renderer.",
+      "One single idea carries the whole page here, instead of 3D being mere decoration. The skull is a CT dataset from my own 3D renderer.",
+    "Здесь всю страницу несёт одна идея, а 3D не просто украшение. Череп это набор данных КТ из моего собственного 3D-рендерера.",
+    "ここでは3Dは単なる飾りではなく、1つのアイデアがページ全体を支えています。頭蓋骨は自作の3DレンダラーのCTデータです。",),
+    shots: [
+      ["ct-1", t("Der Schädel öffnet sich", "The skull opens", "Череп открывается", "頭蓋骨が開く")],
+      ["ct-2", t("Ein Projekt als Hirnregion", "A project as a brain region", "Проект как область мозга", "脳の領域としてのプロジェクト")],
+      ["ct-3", t("Der Atlas mit den kleineren Projekten", "The atlas of the smaller projects", "Атлас небольших проектов", "小さなプロジェクトのアトラス")],
+      ["ct-4", t("Kontakt: der Schädel ist wieder zu", "Contact: the skull is closed again", "Контакты: череп снова закрыт", "連絡先: 頭蓋骨は再び閉じている")],
+    ],
+  },
+  {
     name: "kev.dev Engineering",
     url: "https://kevdev-engineering.vercel.app",
     what: t(
@@ -89,7 +109,7 @@ const SITES: Site[] = [
   },
   {
     name: "notHosted",
-    url: "https://claude.ai/artifact/F2nDy7fH1vQBjujLtMP1bB",
+    url: "/notHosted",
     what: t(
       "YourBrand und TschoBBo im Überblick: Umfang, Videos, Screens, die Postgres-Abfragen samt ihrer Geschichte und der Loadtester. Beide laufen gerade nicht öffentlich, eine Live-Demo setze ich auf Anfrage auf. Die Seite gibt es nur auf Deutsch.",
       "YourBrand and TschoBBo at a glance: scope, videos, screens, the Postgres queries and how they changed, and the load tester. Neither is publicly hosted right now, but I set up a live demo on request. The page is in German only.",
@@ -107,107 +127,49 @@ const SITES: Site[] = [
     ],
   },
   {
-    name: t("Das Portfolio als Kopf-CT", "The portfolio as a head CT", "Портфолио как КТ головы", "頭部CTとしてのポートフォリオ"),
-    url: "/ct-look",
+    name: t("Maschenwerk: das Shop-Modul", "Maschenwerk: the shop module", "Maschenwerk: модуль магазина", "Maschenwerk: ショップモジュール"),
+    url: "https://maschenwerk.vercel.app",
     what: t(
-      "Meine Projekte in einem Schädel aus Punkten, der sich beim Scrollen öffnet. Jedes Projekt ist eine Hirnregion. Am Ende treffen ihn Sägeblätter, und die Splitter sind die Kontakt-Links. Die Seite gibt es nur auf Deutsch.",
-      "My projects inside a skull made of points that opens as you scroll. Every project is a brain region. At the end saw blades hit it, and the shards are the contact links. The page is in German only.",
-    "Мои проекты внутри черепа из точек, который открывается при прокрутке. Каждый проект это область мозга. В конце в него врезаются пильные диски, а осколки становятся ссылками для связи. Страница только на немецком.",
-    "スクロールすると開く、点でできた頭蓋骨の中に私のプロジェクトがあります。各プロジェクトは脳の領域です。最後にのこぎりの刃が当たり、破片が連絡先リンクになります。このページはドイツ語のみです。",),
+      "Ein Online-Shop für handgehäkelte Tops, Cardigans, Taschen und Accessoires, gebaut aus dem Shop-Modul von YourBrand mit NestJS, Postgres, Redis und Next.js. Gekauft wird als Gast, der Betrag ist erst nur reserviert, und Risiko-Regeln halten auffällige Bestellungen an, bis die Inhaberin entscheidet. Die Rechnung entsteht mit dem Zahlungseingang.",
+      "An online shop for hand-crocheted tops, cardigans, bags and accessories, built from YourBrand's shop module with NestJS, Postgres, Redis and Next.js. Customers buy as guests, the amount is only reserved at first, and risk rules hold suspicious orders until the owner decides. The invoice is created when the payment arrives.",
+      "Интернет-магазин вязаных крючком топов, кардиганов, сумок и аксессуаров, построенный из модуля магазина YourBrand на NestJS, Postgres, Redis и Next.js. Покупают как гости, сумма сначала только резервируется, а правила риска задерживают подозрительные заказы, пока решение не примет владелица. Счёт создаётся при поступлении оплаты.",
+      "かぎ針編みのトップス、カーディガン、バッグ、小物のオンラインショップです。YourBrandのショップモジュールから、NestJS、Postgres、Redis、Next.jsで作りました。購入はゲストで行い、金額はまず仮押さえのみ。リスクルールが怪しい注文を止め、オーナーが判断します。請求書は入金と同時に作成されます。",),
     why: t(
-      "Eine einzige Idee trägt hier die ganze Seite, statt dass 3D nur Deko ist. Der Schädel ist ein CT-Datensatz aus meinem eigenen 3D-Renderer.",
-      "One single idea carries the whole page here, instead of 3D being mere decoration. The skull is a CT dataset from my own 3D renderer.",
-    "Здесь всю страницу несёт одна идея, а 3D не просто украшение. Череп это набор данных КТ из моего собственного 3D-рендерера.",
-    "ここでは3Dは単なる飾りではなく、1つのアイデアがページ全体を支えています。頭蓋骨は自作の3DレンダラーのCTデータです。",),
+      "Hier zeigt sich, ob ein Modul aus YourBrand auch allein trägt, mit einem ganz eigenen Look. Der Loadtester hat ein eigenes Ziel für den Shop, so intensiv wie YourBrand habe ich ihn aber noch nicht getestet. Online steht eine Vorschau hinter Passwort, bestellen geht dort noch nicht. Die Screens zeigen den lokalen Stand mit Demo-Daten.",
+      "This shows whether a YourBrand module holds up on its own, with a look all of its own. The load tester has its own target for the shop, but I haven't tested it as intensely as YourBrand yet. Online there is a password-protected preview where ordering doesn't work yet. The screens show the local build with demo data.",
+      "Здесь видно, выдерживает ли модуль YourBrand работу сам по себе, с совершенно собственным видом. У нагрузочного тестера есть отдельная цель для магазина, но так интенсивно, как YourBrand, я его ещё не тестировал. Онлайн есть превью под паролем, заказывать там пока нельзя. На скриншотах локальная версия с демо-данными.",
+      "YourBrandのモジュールが、まったく別の見た目でも単体で成り立つかを確かめています。負荷テストツールにはショップ用のターゲットもありますが、YourBrandほど集中的にはまだテストしていません。オンラインにはパスワード付きのプレビューがあり、まだ注文はできません。画面はデモデータを入れたローカル環境のものです。",),
     shots: [
-      ["ct-1", t("Der Schädel öffnet sich", "The skull opens", "Череп открывается", "頭蓋骨が開く")],
-      ["ct-2", t("Ein Projekt als Hirnregion", "A project as a brain region", "Проект как область мозга", "脳の領域としてのプロジェクト")],
-      ["ct-3", t("Der Atlas mit den kleineren Projekten", "The atlas of the smaller projects", "Атлас небольших проектов", "小さなプロジェクトのアトラス")],
-      ["ct-4", t("Kontakt: Sägeblätter und Splitter", "Contact: saw blades and shards", "Контакты: пильные диски и осколки", "連絡先: のこぎりの刃と破片")],
-    ],
-  },
-  {
-    name: t("Das frühere Portfolio", "The earlier portfolio", "Прежнее портфолио", "以前のポートフォリオ"),
-    url: "https://saos-repo.vercel.app",
-    what: t(
-      "Mein Portfolio vor kev.dev, in Next.js: Profil, Projekte und Über mich als getrennte Seiten, dazu eine Pitch-Seite für das White-Label-Konzept von YourBrand.",
-      "My portfolio before kev.dev, in Next.js: profile, projects and about as separate pages, plus a pitch page for YourBrand's white-label concept.",
-    "Моё портфолио до kev.dev на Next.js: профиль, проекты и обо мне как отдельные страницы, плюс питч-страница концепции white-label YourBrand.",
-    "kev.dev以前のポートフォリオで、Next.js製です。プロフィール、プロジェクト、自己紹介が別ページになり、YourBrandのホワイトラベル構想のピッチページもあります。",),
-    why: t(
-      "Jede Seite soll für sich verschickbar sein: Wer nur die Fakten braucht, bekommt nur die Fakten, und wer mehr will, klickt weiter.",
-      "Each page can be sent on its own: whoever needs only the facts gets only the facts, and whoever wants more clicks on.",
-    "Каждую страницу можно отправить отдельно: кому нужны только факты, получит только факты, а кто хочет больше, кликнет дальше.",
-    "各ページは単独で送れます。事実だけ必要な人には事実だけを、もっと知りたい人は先へクリックできます。",),
-    shots: [
-      ["portfolio-1", t("Profil, nur die Fakten", "Profile, just the facts", "Профиль, только факты", "プロフィール、事実のみ")],
-      ["portfolio-2", t("Die drei wichtigsten Projekte", "The three key projects", "Три главных проекта", "主要な3つのプロジェクト")],
-      ["portfolio-3", t("Pitch-Seite für das White-Label-Konzept", "Pitch page for the white-label concept", "Питч-страница концепции white-label", "ホワイトラベル構想のピッチページ")],
-    ],
-  },
-  {
-    name: t("Der Lebenslauf", "The CV", "Резюме", "履歴書"),
-    url: "https://saosme-navy.vercel.app",
-    what: t(
-      "Mein Lebenslauf als eigene Seite im Terminal-Look: Profil, Skills, Projekte, Werdegang und Kontakt.",
-      "My CV as its own page in a terminal look: profile, skills, projects, career and contact.",
-    "Моё резюме на отдельной странице в стиле терминала: профиль, навыки, проекты, опыт и контакты.",
-    "ターミナル風の専用ページにした履歴書です。プロフィール、スキル、プロジェクト、経歴、連絡先があります。",),
-    why: t(
-      "Die Oberfläche ist bewusst ohne UI-Framework wie Bootstrap oder Tailwind gebaut, jedes Element folgt einem strengen Raster. Die Seite ist also selbst schon eine Arbeitsprobe.",
-      "The interface is deliberately built without a UI framework like Bootstrap or Tailwind, with every element on a strict grid. So the page is a work sample in itself.",
-    "Интерфейс намеренно сделан без UI-фреймворков вроде Bootstrap или Tailwind, каждый элемент стоит на строгой сетке. Так что страница сама по себе образец работы.",
-    "UIはBootstrapやTailwindなどのフレームワークを使わずに作り、すべての要素を厳密なグリッドに沿わせました。ページ自体が作品サンプルです。",),
-    shots: [
-      ["cv-1", t("Einstieg mit Drahtgitter-Würfel", "Start with a wireframe cube", "Начало с каркасным кубом", "ワイヤーフレームの立方体で開始")],
-      ["cv-2", t("Kontakt", "Contact", "Контакты", "連絡先")],
+      ["shop-1", t("Die Startseite", "The home page", "Главная", "トップページ")],
+      ["shop-2", t("Die Stücke im Chrom-Rahmen", "The pieces in chrome frames", "Изделия в хромовых рамках", "クロームの枠に入った作品")],
+      ["shop-3", t("Eine Produktseite", "A product page", "Страница товара", "商品ページ")],
+      ["shop-4", t("Die Konsole: angehaltene Bestellungen", "The console: held orders", "Консоль: задержанные заказы", "管理画面: 保留中の注文")],
     ],
   },
 ];
 
-// Prototypes rather than sites: their own section, at the top, and not all of them are public yet.
+// Prototypes rather than sites: their own section, after the sites.
 const GAMES: Site[] = [
-  {
-    name: t("Hinter dir", "Hinter dir (Behind you)", "Hinter dir (За тобой)", "Hinter dir(後ろにいる)"),
-    what: t(
-      "Ein First-Person-Horror im Browser: Mit der Taschenlampe durch ein Labyrinth, und etwas folgt dir. Es kommt näher, solange du nicht hinsiehst. Wer drei Gegenstände findet, kommt nach unten zu den Zombie-Wellen. Dazu gibt es eine Wald-Arena, in der ich Waffen und Monster ausprobiere.",
-      "A first-person horror game in the browser: through a maze with a flashlight, and something follows you. It gets closer as long as you don't look. Find three items and you get down to the zombie waves. There is also a forest arena where I try out weapons and monsters.",
-      "Хоррор от первого лица в браузере: с фонариком через лабиринт, а за тобой что-то идёт. Оно приближается, пока ты не смотришь. Кто найдёт три предмета, спустится к волнам зомби. Есть ещё лесная арена, где я пробую оружие и монстров.",
-      "ブラウザで遊べる一人称ホラーです。懐中電灯を手に迷路を進むと、何かが後をつけてきます。見ていない間に近づいてきます。3つのアイテムを見つけると、下のゾンビウェーブに進めます。武器やモンスターを試す森のアリーナもあります。",),
-    why: t(
-      "Das Gegenstück zu Frost Grind: Dort geht es um viele Gegner und Tempo, hier um Licht, Sound und Spannung. Ich will herausfinden, wie viel davon ich später in einem Game haben will.",
-      "The counterpart to Frost Grind: there it's about many enemies and speed, here about light, sound and tension. I want to find out how much of that I'll want in a game later.",
-      "Противоположность Frost Grind: там много врагов и скорость, здесь свет, звук и напряжение. Хочу понять, сколько всего этого мне потом нужно в игре.",
-      "Frost Grindとは対照的です。あちらは大量の敵とスピード、こちらは光と音と緊張感が中心です。将来のゲームにこれをどれくらい入れたいかを確かめています。",),
-    shots: [
-      ["horror-1", t("Das Menü", "The menu", "Меню", "メニュー")],
-      ["horror-2", t("Kreide an der Wand, im Licht der Taschenlampe", "Chalk on the wall, in the flashlight", "Мел на стене в свете фонарика", "懐中電灯に照らされた壁のチョーク文字")],
-      ["horror-3", t("Halle 1: die erste Zombie-Welle", "Hall 1: the first zombie wave", "Зал 1: первая волна зомби", "ホール1: 最初のゾンビウェーブ")],
-      ["horror-4", t("Halle 2: manche sind größer", "Hall 2: some are bigger", "Зал 2: некоторые крупнее", "ホール2: 大きいのもいる")],
-      ["horror-5", t("Der Endkampf gegen den Großen", "The final fight against the big one", "Финальный бой с Большим", "大きなやつとの最終戦")],
-      ["horror-6", t("Die Wald-Arena", "The forest arena", "Лесная арена", "森のアリーナ")],
-    ],
-  },
   {
     name: "Frost Grind",
     url: "https://saosgonegametry02.vercel.app",
     what: t(
-      "Ein Browser-Game, das ich aus Spaß mache: AoE-Grinden wie der Mage in WoW Classic, dazu Roguelike-Runs mit Karten, Runen und Relikten. Komplett in Arbeit, und der Look ist noch ziemlich raw.",
-      "A browser game I make for fun: AoE grinding like the mage in WoW Classic, plus roguelike runs with cards, runes and relics. Entirely a work in progress, and the look is still pretty raw.",
-      "Браузерная игра, которую я делаю ради удовольствия: AoE-гринд как у мага в WoW Classic и рогалик-забеги с картами, рунами и реликвиями. Всё ещё в работе, и внешний вид пока довольно сырой.",
-      "趣味で作っているブラウザゲームです。WoW ClassicのメイジのようなAoE狩りに、カード、ルーン、レリックを使うローグライクのランを組み合わせました。すべて制作途中で、見た目もまだ粗いです。",),
+      "Ein Browser-Game, das ich aus Spaß mache: AoE-Grinden wie der Mage in WoW Classic als Roguelike, mit Level-Karten, Runen, Relikten und Gear, das man an der Figur sieht. Zwei Klassen, generierte Maps in fünf Themes, Portale und eine Weltkarte. Der Prototyp ist fast fertig, gerade läuft der Feinschliff an Maps, Items und Kosmetik. Spielbar nur am Desktop.",
+      "A browser game I make for fun: AoE grinding like the mage in WoW Classic as a roguelike, with level-up cards, runes, relics and gear you can see on the character. Two classes, generated maps in five themes, portals and a world map. The prototype is nearly done, right now I'm polishing maps, items and cosmetics. Desktop only.",
+      "Браузерная игра, которую я делаю ради удовольствия: AoE-гринд как у мага в WoW Classic в виде рогалика, с картами уровней, рунами, реликвиями и снаряжением, которое видно на персонаже. Два класса, генерируемые карты в пяти темах, порталы и карта мира. Прототип почти готов, сейчас я шлифую карты, предметы и косметику. Только для компьютера.",
+      "趣味で作っているブラウザゲームです。WoW ClassicのメイジのようなAoE狩りをローグライクにし、レベルアップカード、ルーン、レリック、キャラクターに表示される装備を加えました。2つのクラス、5つのテーマで生成されるマップ、ポータル、ワールドマップがあります。プロトタイプはほぼ完成で、今はマップ、アイテム、コスメを仕上げています。PC専用です。",),
     why: t(
-      "Es verbindet, was ich an Games mag, und ich probiere gerade aus, was sich gut anfühlt: welche Spells, welches Balancing. Es kann sich also jederzeit alles ändern.",
-      "It combines what I like about games, and I'm trying out what feels good: which spells, which balancing. So anything can change at any time.",
-      "Она объединяет то, что я люблю в играх, и сейчас я пробую, что ощущается хорошо: какие заклинания, какой баланс. Так что всё может измениться в любой момент.",
-      "ゲームの好きな要素を組み合わせ、どの呪文やバランスが気持ちよいかを試しています。そのため、いつでもすべて変わる可能性があります。",),
+      "Es verbindet, was ich an Games mag, und ich probiere aus, was sich gut anfühlt: welche Spells, welches Balancing. Die meisten Zahlen sind noch Platzhalter, es kann sich also jederzeit alles ändern.",
+      "It combines what I like about games, and I'm trying out what feels good: which spells, which balancing. Most numbers are still placeholders, so anything can change at any time.",
+      "Она объединяет то, что я люблю в играх, и я пробую, что ощущается хорошо: какие заклинания, какой баланс. Большинство чисел пока заглушки, так что всё может измениться в любой момент.",
+      "ゲームの好きな要素を組み合わせ、どの呪文やバランスが気持ちよいかを試しています。ほとんどの数値はまだ仮なので、いつでもすべて変わる可能性があります。",),
     shots: [
       ["frost-1", t("Das Menü: Figur, Mods und Mob-Modus", "The menu: character, mods and mob mode", "Меню: персонаж, моды и режим мобов", "メニュー: キャラクター、MOD、モブモード")],
       ["frost-2", t("Belagerung: die Mobs kommen vom Rand", "Siege: the mobs come from the edge", "Осада: мобы идут с краёв", "包囲: モブが外周から迫る")],
       ["frost-3", t("Level-Up: eine von vier Karten", "Level up: one of four cards", "Новый уровень: одна из четырёх карт", "レベルアップ: 4枚から1枚を選ぶ")],
-      ["frost-4", t("Feuermagier im Dschungel", "Fire mage in the jungle", "Огненный маг в джунглях", "ジャングルの炎の魔法使い")],
-      ["frost-5", t("Strichkrieger in der Wüste", "Stick warrior in the desert", "Воин-палочка в пустыне", "砂漠の棒人間戦士")],
-      ["frost-6", t("Eismagier in der Schmiede", "Frost mage in the forge", "Ледяной маг в кузне", "鍛冶場の氷の魔法使い")],
+      ["frost-4", t("Die Weltkarte: fünf Gebiete, jedes öffnet das nächste", "The world map: five areas, each unlocks the next", "Карта мира: пять областей, каждая открывает следующую", "ワールドマップ: 5つのエリアが順に解放される")],
+      ["frost-5", t("Das Charakterfenster mit Gear-Slots und Inventar", "The character window with gear slots and inventory", "Окно персонажа со слотами снаряжения и инвентарём", "装備スロットとインベントリのあるキャラクター画面")],
+      ["frost-6", t("Ein Run beginnt im Wald", "A run starts in the forest", "Забег начинается в лесу", "森でランが始まる")],
     ],
   },
 ];
@@ -247,16 +209,20 @@ document.getElementById("links")!.className = "links";
 document.getElementById("links")!.innerHTML = `
   <a class="links-back" href="${source ? `/${source}` : "/"}">← ${source ?? "kev.dev"}</a>
   <h1 class="links-title">${UI.moreStuff}</h1>
-  <p class="links-lead">${t("Was ich sonst noch gebaut habe, was es ist und warum es so ist.", "What else I built, what it is and why it is that way.", "Что ещё я построил, что это такое и почему оно так устроено.", "他に作ったもの、それが何で、なぜそうなのか。")}</p>
-  <h2 class="links-group">${t("Games in Progress", "Games in progress", "Игры в разработке", "制作中のゲーム")}</h2>
   <p class="links-lead">${t(
-    "Gerade baue ich ein paar Prototypen, um zu verstehen, was ich am Ende in einem Game haben will: was sich gut anfühlt, was Spaß macht und was wieder rausfliegt. Fertige Spiele sind das nicht, und es kann sich jederzeit alles ändern.",
-    "Right now I'm building a few prototypes to understand what I ultimately want in a game: what feels good, what's fun and what gets thrown out again. These aren't finished games, and anything can change at any time.",
-    "Сейчас я делаю несколько прототипов, чтобы понять, что в итоге хочу видеть в игре: что ощущается хорошо, что весело, а что снова отправится в корзину. Это не готовые игры, и всё может измениться в любой момент.",
-    "最終的にゲームに何を入れたいかを理解するため、いまプロトタイプをいくつか作っています。何が気持ちよく、何が楽しく、何を捨てるかを確かめています。完成したゲームではなく、いつでもすべて変わる可能性があります。",)}</p>
-  ${GAMES.filter(offered).map(siteHtml).join("")}
+    "Was ich sonst noch gebaut habe. Zusammen zeigt es, wie ich mir Fullstack beibringe und wie die Teile zusammenspielen: YourBrand als Plattform, daraus das Shop-Modul mit Maschenwerk als Demo, und ein eigener Loadtester für beide. Dazu die Frontends für mein Portfolio, die ich weiterentwickle: zuerst Stil und Idee, dann Performance, dann die Handy-Version.",
+    "What else I built. Together it shows how I'm teaching myself full stack and how the parts play together: YourBrand as the platform, its shop module with Maschenwerk as the demo, and my own load tester for both. Plus the frontends for my portfolio, which I keep developing: style and idea first, then performance, then the mobile version.",
+    "Что ещё я построил. Вместе это показывает, как я сам учу фулстек и как части работают вместе: YourBrand как платформа, из неё модуль магазина с Maschenwerk как демо, и собственный нагрузочный тестер для обоих. Плюс фронтенды для моего портфолио, которые я развиваю дальше: сначала стиль и идея, потом производительность, потом мобильная версия.",
+    "他に作ったものです。全体で、私がフルスタックを独学している様子と、各部分の連携を示しています。プラットフォームとしてのYourBrand、そこから生まれたショップモジュールとデモのMaschenwerk、両方に使う自作の負荷テストツール。さらにポートフォリオのフロントエンドを、まずスタイルとアイデア、次にパフォーマンス、そしてモバイル版の順で育てています。",)}</p>
   <h2 class="links-group">${t("Seiten", "Sites", "Сайты", "サイト")}</h2>
   ${SITES.filter(offered).map(siteHtml).join("")}
+  <h2 class="links-group">${t("Game in Progress", "Game in progress", "Игра в разработке", "制作中のゲーム")}</h2>
+  <p class="links-lead">${t(
+    "Das gehört nicht zum Rest. Ehrlich gesagt baue ich es nur für mich, zum Selberspielen.",
+    "This one isn't part of the rest. Honestly, I'm only building it for me, to play myself.",
+    "Это не связано с остальным. Честно говоря, я делаю это только для себя, чтобы самому играть.",
+    "これは他とは関係ありません。正直に言うと、自分で遊ぶためだけに作っています。",)}</p>
+  ${GAMES.filter(offered).map(siteHtml).join("")}
   <footer class="links-foot">
     <span>© 2026 Kevin Schaberl</span>
     <a href="/impressum">${UI.impressum}</a>

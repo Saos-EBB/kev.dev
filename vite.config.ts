@@ -69,6 +69,7 @@ export default defineConfig({
         datenschutz: root("datenschutz.html"),
         yourbrand: root("yourbrand/index.html"),
         saos: root("saos.html"),
+        notHosted: root("notHosted.html"),
       },
       // saos.html's skull variant imports src/main.ts too, so main's
       // modules are shared between two entries. By default Rolldown then
