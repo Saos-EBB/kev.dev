@@ -88,7 +88,7 @@ const de = {
   tenantModules: "Module",
   tenantMobile: "Mobil",
   // contact / footer / legal
-  contactHeadline: "Lass uns reden",
+  contactHeadline: "Let's talk now",
   contactOpen: "Kontakt öffnen",
   email: "E-Mail",
   phone: "Telefon",
