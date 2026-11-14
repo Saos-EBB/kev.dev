@@ -135,10 +135,10 @@ const SITES: Site[] = [
       "Интернет-магазин вязаных крючком топов, кардиганов, сумок и аксессуаров, построенный из модуля магазина YourBrand на NestJS, Postgres, Redis и Next.js. Покупают как гости, сумма сначала только резервируется, а правила риска задерживают подозрительные заказы, пока решение не примет владелица. Счёт создаётся при поступлении оплаты.",
       "かぎ針編みのトップス、カーディガン、バッグ、小物のオンラインショップです。YourBrandのショップモジュールから、NestJS、Postgres、Redis、Next.jsで作りました。購入はゲストで行い、金額はまず仮押さえのみ。リスクルールが怪しい注文を止め、オーナーが判断します。請求書は入金と同時に作成されます。",),
     why: t(
-      "Hier zeigt sich, ob ein Modul aus YourBrand auch allein trägt, mit einem ganz eigenen Look. Der Loadtester hat ein eigenes Ziel für den Shop, so intensiv wie YourBrand habe ich ihn aber noch nicht getestet. Die Screens zeigen den lokalen Stand mit Demo-Daten.",
-      "This shows whether a YourBrand module holds up on its own, with a look all of its own. The load tester has its own target for the shop, but I haven't tested it as intensely as YourBrand yet. The screens show the local build with demo data.",
-      "Здесь видно, выдерживает ли модуль YourBrand работу сам по себе, с совершенно собственным видом. У нагрузочного тестера есть отдельная цель для магазина, но так интенсивно, как YourBrand, я его ещё не тестировал. На скриншотах локальная версия с демо-данными.",
-      "YourBrandのモジュールが、まったく別の見た目でも単体で成り立つかを確かめています。負荷テストツールにはショップ用のターゲットもありますが、YourBrandほど集中的にはまだテストしていません。画面はデモデータを入れたローカル環境のものです。",),
+      "Hier zeigt sich, ob ein Modul aus YourBrand auch allein trägt, mit einem ganz eigenen Look. Der Loadtester hat ein eigenes Ziel für den Shop, so intensiv wie YourBrand habe ich ihn aber noch nicht getestet. Online steht eine Vorschau hinter Passwort, bestellen geht dort noch nicht. Die Screens zeigen den lokalen Stand mit Demo-Daten.",
+      "This shows whether a YourBrand module holds up on its own, with a look all of its own. The load tester has its own target for the shop, but I haven't tested it as intensely as YourBrand yet. Online there is a password-protected preview where ordering doesn't work yet. The screens show the local build with demo data.",
+      "Здесь видно, выдерживает ли модуль YourBrand работу сам по себе, с совершенно собственным видом. У нагрузочного тестера есть отдельная цель для магазина, но так интенсивно, как YourBrand, я его ещё не тестировал. Онлайн есть превью под паролем, заказывать там пока нельзя. На скриншотах локальная версия с демо-данными.",
+      "YourBrandのモジュールが、まったく別の見た目でも単体で成り立つかを確かめています。負荷テストツールにはショップ用のターゲットもありますが、YourBrandほど集中的にはまだテストしていません。オンラインにはパスワード付きのプレビューがあり、まだ注文はできません。画面はデモデータを入れたローカル環境のものです。",),
     shots: [
       ["shop-1", t("Die Startseite", "The home page", "Главная", "トップページ")],
       ["shop-2", t("Die Stücke im Chrom-Rahmen", "The pieces in chrome frames", "Изделия в хромовых рамках", "クロームの枠に入った作品")],
@@ -167,9 +167,9 @@ const GAMES: Site[] = [
       ["frost-1", t("Das Menü: Figur, Mods und Mob-Modus", "The menu: character, mods and mob mode", "Меню: персонаж, моды и режим мобов", "メニュー: キャラクター、MOD、モブモード")],
       ["frost-2", t("Belagerung: die Mobs kommen vom Rand", "Siege: the mobs come from the edge", "Осада: мобы идут с краёв", "包囲: モブが外周から迫る")],
       ["frost-3", t("Level-Up: eine von vier Karten", "Level up: one of four cards", "Новый уровень: одна из четырёх карт", "レベルアップ: 4枚から1枚を選ぶ")],
-      ["frost-4", t("Feuermagier im Dschungel", "Fire mage in the jungle", "Огненный маг в джунглях", "ジャングルの炎の魔法使い")],
-      ["frost-5", t("Strichkrieger in der Wüste", "Stick warrior in the desert", "Воин-палочка в пустыне", "砂漠の棒人間戦士")],
-      ["frost-6", t("Eismagier in der Schmiede", "Frost mage in the forge", "Ледяной маг в кузне", "鍛冶場の氷の魔法使い")],
+      ["frost-4", t("Die Weltkarte: fünf Gebiete, jedes öffnet das nächste", "The world map: five areas, each unlocks the next", "Карта мира: пять областей, каждая открывает следующую", "ワールドマップ: 5つのエリアが順に解放される")],
+      ["frost-5", t("Das Charakterfenster mit Gear-Slots und Inventar", "The character window with gear slots and inventory", "Окно персонажа со слотами снаряжения и инвентарём", "装備スロットとインベントリのあるキャラクター画面")],
+      ["frost-6", t("Ein Run beginnt im Wald", "A run starts in the forest", "Забег начинается в лесу", "森でランが始まる")],
     ],
   },
 ];
