@@ -5,7 +5,7 @@
 // caches it for an hour and serves the old copy for a day while it
 // refreshes, so the graph keeps itself up to date without a redeploy.
 
-import { fetchContributions } from "./_contributions";
+import { fetchContributions } from "./_contributions.js";
 
 export async function GET(): Promise<Response> {
   const data = await fetchContributions().catch(() => null);

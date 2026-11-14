@@ -1,7 +1,7 @@
 import { defineConfig, type Connect } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
-import { fetchContributions } from "./api/_contributions";
+import { fetchContributions } from "./api/_contributions.ts";
 
 const root = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
