@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="YourBrand und TschoBBo im Überblick: Umfang, Videos, Screens, Postgres und Loadtester. Beide laufen gerade nicht öffentlich." />
+    <link rel="preload" href="/fonts/urban-sign.woff2" as="font" type="font/woff2" crossorigin />
+    <title>notHosted — Kevin Schaberl</title>
+    <!-- From the notHosted artifact. Screens and videos in public/not-hosted/. German only. -->
+    <style>
+/* Layout: a single reading column on the linktree's cherry, projects as long sections, screens break out wider. */
+@font-face { font-family: "Urban Sign"; src: url("/fonts/urban-sign.woff2") format("woff2"); font-display: swap; }
+:root {
+  color-scheme: dark;
+  --bg: #5c0f1f;
+  --panel: #4a0b18;
+  --text: #ffffff;
+  --muted: #f2d5dc;
+  --line: rgba(255, 255, 255, .25);
+  --teal: #0f4c4c;
+  --teal-hover: #146262;
+  --yb: #ff8ad6;
+  --tb: #d5b3ff;
+  --over: #ffc400;
+  --display: "Urban Sign", Impact, "Arial Narrow", sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 17px/1.6 var(--body); }
+img { max-width: 100%; }
+main { max-width: 1040px; margin: 0 auto; padding: 56px 20px 72px; display: grid; gap: 72px; }
+main > * { min-width: 0; }
+h1, h2 { font-family: var(--display); font-weight: 400; line-height: 1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(64px, 15vw, 150px); }
+h2 { font-size: clamp(48px, 9vw, 88px); color: var(--accent); }
+h3 { font: 600 21px/1.3 var(--body); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 65ch; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.lead { font-size: 20px; }
+.muted { color: var(--muted); }
+.stack { display: grid; gap: 16px; }
+.stack > * { min-width: 0; }
+header { display: grid; gap: 24px; }
+section.project { display: grid; gap: 40px; --accent: var(--yb); border-top: 1px solid var(--line); padding-top: 40px; }
+section.project > * { min-width: 0; }
+section.tb { --accent: var(--tb); }
+.kind { font: 500 13px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-block; padding: 9px 16px; background: var(--teal); border: 1px solid #fff; color: #fff; text-decoration: none; font-weight: 500; }
+.btn:hover { background: var(--teal-hover); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px 32px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { font: 500 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 4px 0 0; }
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 70ch; }
+.mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 32px; }
+.mods div { min-width: 0; border-top: 1px solid var(--line); padding-top: 10px; }
+.mods b { display: block; font-family: var(--mono); font-weight: 500; color: var(--accent); }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tabs button { font: 500 15px var(--body); color: #fff; background: transparent; border: 1px solid var(--line); padding: 7px 14px; cursor: pointer; }
+.tabs button:hover { border-color: #fff; }
+.tabs button[aria-selected="true"] { background: #fff; color: var(--bg); border-color: #fff; }
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.shots figure { margin: 0; min-width: 0; }
+.shots button { display: block; width: 100%; padding: 0; border: 1px solid var(--line); background: var(--panel); cursor: zoom-in; aspect-ratio: 16 / 10; }
+.shots button:hover { border-color: #fff; }
+.shots img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.shots figcaption { font-size: 14px; line-height: 1.4; margin-top: 6px; color: var(--muted); }
+.tag { font: 500 13px var(--mono); color: var(--muted); }
+.chart { display: grid; gap: 8px; max-width: 720px; }
+.row { display: grid; grid-template-columns: 76px 1fr 64px; gap: 10px; align-items: center; font: 400 14px var(--mono); font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 18px; }
+.bar { height: 100%; background: var(--accent); }
+.bar.over { background: var(--over); }
+.budget { position: absolute; top: -4px; bottom: -4px; left: 44.44%; border-left: 1px dashed #fff; }
+.val { text-align: right; }
+.pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; counter-reset: s; }
+.pipe li { counter-increment: s; border-top: 2px solid var(--accent); padding-top: 8px; min-width: 0; }
+.pipe li::before { content: counter(s) " "; font: 500 13px var(--mono); color: var(--muted); }
+.pipe b { font-weight: 600; }
+.pipe span { display: block; font-size: 15px; line-height: 1.45; color: var(--muted); }
+dialog { background: var(--panel); color: #fff; border: 1px solid #fff; padding: 12px; max-width: min(1280px, 96vw); width: 100%; }
+dialog::backdrop { background: rgba(20, 2, 7, .85); }
+dialog img { display: block; width: 100%; height: auto; max-height: 78vh; object-fit: contain; }
+.dbar { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-top: 10px; }
+.dbar button { background: var(--teal); color: #fff; border: 1px solid #fff; font: 500 15px var(--body); padding: 6px 12px; cursor: pointer; flex: none; }
+footer { border-top: 1px solid var(--line); padding-top: 24px; }
+@media (max-width: 480px) { body { font-size: 16px; } main { gap: 56px; padding-block: 40px 56px; } .lead { font-size: 18px; } }
+h4 { font: 600 17px/1.35 var(--body); margin: 0; text-wrap: balance; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+pre { margin: 0; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); overflow-x: auto; font: 400 13px/1.55 var(--mono); max-width: 100%; }
+code { font-family: var(--mono); font-size: .92em; }
+pre code { font-size: inherit; }
+video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; background: var(--panel); border: 1px solid var(--line); }
+.changes { display: grid; gap: 28px; }
+.change { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
+.when { display: grid; gap: 2px; align-content: start; font: 400 13px/1.5 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.diff { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.diff > div { min-width: 0; display: grid; gap: 4px; align-content: start; }
+.ask { display: grid; gap: 16px; border: 1px solid #fff; padding: 20px; background: var(--panel); scroll-margin-top: 16px; }
+.ask > * { min-width: 0; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.fields label { display: grid; gap: 4px; font-size: 14px; color: var(--muted); min-width: 0; }
+.fields .wide { grid-column: 1 / -1; }
+input, select, textarea { width: 100%; font: 400 16px/1.4 var(--body); color: #fff; background: var(--bg); border: 1px solid var(--line); padding: 8px 10px; border-radius: 0; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+::placeholder { color: var(--muted); opacity: .75; }
+button.btn { font: 500 16px var(--body); cursor: pointer; }
+#copied { align-self: center; }
+@media (max-width: 560px) { .change { grid-template-columns: 1fr; gap: 8px; } .when { display: flex; gap: 12px; } }
+.back { color: var(--muted); text-decoration: none; font: 500 14px var(--mono); }
+.back:hover { color: #fff; }
+footer.foot { max-width: 1040px; margin: 0 auto; padding: 24px 20px 40px; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--muted); }
+    </style>
+  </head>
+  <body>
+<main>
+  <header>
+    <a class="back" href="/links">← More stuff</a>
+    <h1>notHosted</h1>
+    <p class="lead">Diese zwei Projekte laufen gerade nicht öffentlich. Auf Anfrage setze ich dir eine Live-Demo auf.</p>
+    <div class="links"><a class="btn" href="#demo">Demo anfragen</a></div>
+  </header>
+
+  <section class="project">
+    <div class="stack">
+      <span class="kind">White-Label-SaaS für Matching und Community</span>
+      <h2>YourBrand</h2>
+      <p class="lead">Ein modularer Kern, aus dem viele Plattformen werden können: vom Schachklub über die Nachbarschaftshilfe bis zur Partnerbörse. Jeder Mandant läuft aus demselben Image, mit eigener Datenbank, eigenem Speicher-Bucket und eigenem Redis-Bereich.</p>
+      <div class="links">
+        <a class="btn" href="https://github.com/Saos-EBB/YourBrand">Code auf GitHub</a>
+        <a class="btn" href="/yourbrand/">B2B-Seite</a>
+        <a class="btn" href="/lessAdhd#eng/yourbrand">Architektur-Graph</a>
+      </div>
+    </div>
+
+    <dl class="facts">
+      <div><dt>Team</dt><dd>Solo gebaut</dd></div>
+      <div><dt>Aufwand</dt><dd>ca. 450 h Prototyp (April bis Juni 2026), seitdem 200 bis 300 h</dd></div>
+      <div><dt>Stack</dt><dd>TypeScript, NestJS, PostgreSQL, PostGIS, Redis, Socket.io, BullMQ, Stripe, Docker</dd></div>
+      <div><dt>Version</dt><dd>TypeScript, die Version auf dieser Seite</dd></div>
+      <div><dt>Umsetzung</dt><dd>Architektur, Datenmodell, Businesslogik und APIs von mir, den Rest mit Claude Code als Implementierungs-Agent</dd></div>
+    </dl>
+
+    <div class="stack">
+      <h3>TypeScript und Python</h3>
+      <p>Alles auf dieser Seite gehört zur TypeScript-Version mit NestJS. Daneben baue ich eine zweite Version in Python mit Django, nach dem Vorbild anderer Apps. Mit ihr teste ich gerade, wie viele Requests pro Sekunde ich herausholen kann. Stand heute liegt sie bei 1.000 req/s.</p>
+    </div>
+
+    <div class="stack">
+      <h3>Fünf Mandanten, ein Code</h3>
+      <p>Was sie unterscheidet, steht nur in ihrer <code>tenant.json</code>: Marke, Farben, Schrift, Navigation, Sprachen, Paket und Module.</p>
+      <div class="tabs" role="tablist" aria-label="Mandanten" id="tabs"></div>
+      <p id="about"></p>
+      <p class="tag" id="meta"></p>
+      <video id="vid" controls preload="none" playsinline width="1440" height="900"></video>
+      <p class="tag" id="vid-cap"></p>
+      <div class="shots" id="shots"></div>
+    </div>
+
+    <div class="stack">
+      <h3>Module</h3>
+      <p>Jedes Feature ist ein eigenes NestJS-Modul hinter einem Schalter. Abgeschaltete Module werden gar nicht erst geladen.</p>
+      <div class="mods">
+        <div><b>chat</b>Erst die Kontaktanfrage, dann der Chat. Tippen und Gelesen live per WebSocket.</div>
+        <div><b>matching</b>Swipe-Deck nach gemeinsamen Interessen und Entfernung. Gegenseitiges Like ergibt ein Match.</div>
+        <div><b>payments</b>Abos über Stripe Embedded Checkout, mit Webhooks und Erinnerung vor Ablauf.</div>
+        <div><b>board</b>Schwarzes Brett mit Aushängen, sichtbar von 150 m bis für alle. Laufen nach 14 Tagen ab.</div>
+        <div><b>caretaker</b>Ein Konto betreut wenige andere. Die betreute Person stimmt zu und kann die Betreuung beenden.</div>
+        <div><b>orgs</b>Ein Träger sieht sein Team und alle Betreuungen auf einen Blick.</div>
+        <div><b>hidden</b>Öffentliche Duelle, Echtzeit-Spiele und eine Coin-Wirtschaft im Dark Mode.</div>
+        <div><b>shop (in Arbeit)</b>Essen, Merch, Lizenz-Keys. Auffällige Bestellungen halten an, bis ein Mensch entscheidet.</div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <h3>Was der Kern mitbringt</h3>
+      <ul class="plain">
+        <li><strong>Sicherheit:</strong> Row-Level Security auf sensiblen Profildaten, E-Mail AES-256-verschlüsselt, JWT mit rotierenden Refresh-Tokens, Rate-Limits in Redis.</li>
+        <li><strong>Moderation:</strong> Melde-System, Bans mit Dauer und Strike, Profanity-Filter, automatische Sperre ab 10 verschiedenen Meldungen.</li>
+        <li><strong>DSGVO:</strong> Auskunft als PDF, Soft-Deletes mit 30 Tagen Reaktivierung, Daten pro Mandant physisch getrennt.</li>
+        <li><strong>Barrierefreiheit:</strong> Leichte Sprache, Kontrast- und Schriftgrößen-Optionen, Vorlesen im Mandanten Miteinander.</li>
+        <li><strong>Geodaten:</strong> Umkreissuche mit PostGIS direkt in der Datenbank, Städte-Autocomplete aus GeoNames.</li>
+        <li><strong>Hintergrundjobs:</strong> Bilder auf WebP verkleinern und DSGVO-PDFs bauen läuft in einem BullMQ-Worker.</li>
+      </ul>
+    </div>
+
+    <div class="stack" id="postgres">
+      <h3>PostgreSQL</h3>
+      <p>PostgreSQL 16 mit PostGIS 3.4. Das Schema startet mit 40 Tabellen in einer Baseline und wächst über nummerierte Migrationen, 15 sind es bisher. Jeder Mandant hat seine eigene Datenbank und zieht sie beim Start nach. Die wichtigen Abfragen schreibe ich als rohes SQL neben TypeORM.</p>
+      <h4>Das Swipe-Deck</h4>
+      <p>Die aufwendigste Abfrage: Sie filtert im Umkreis, schließt Geswiptes aus und bewertet gemeinsame Interessen und Entfernung. Gekürzt aus <code>matching.service.ts</code>.</p>
+      <pre><code>WITH viewer_location AS (...), my_interests AS (...),
+candidates AS (
+  SELECT p.user_id, p.nickname, p.city,
+    CASE WHEN p.location IS NOT NULL THEN
+      ROUND(ST_Distance(
+        (SELECT location FROM viewer_location)::geography,
+        p.location::geography) / 1000)::int
+    END AS distance_km,
+    mu.file_url AS photo_url
+  FROM profiles p
+  JOIN users u ON u.id = p.user_id
+    AND u.is_banned = false AND u.deleted_at IS NULL
+  LEFT JOIN media_uploads mu
+    ON mu.id = p.photo_id AND mu.moderation_status = &#x27;approved&#x27;
+  WHERE p.user_id &lt;&gt; $1 AND p.is_published = true
+    AND (p.location IS NULL OR ST_DWithin(
+      (SELECT location FROM viewer_location)::geography,
+      p.location::geography, $2))
+    -- Likes gelten für immer, Skips laufen nach 30 Tagen ab
+    AND NOT EXISTS (SELECT 1 FROM swipes s
+      WHERE s.swiper_id = $1 AND s.swiped_id = p.user_id
+        AND (s.action = &#x27;like&#x27; OR (s.action = &#x27;skip&#x27;
+          AND s.swiped_at &gt; NOW() - INTERVAL &#x27;30 days&#x27;)))
+),
+interest_scores AS (
+  SELECT ui.user_id, SUM(CASE
+      WHEN ui.is_green = mi.is_green THEN 2  -- beide Green oder beide Red
+      ELSE -1                                -- einer Green, einer Red
+    END)::int AS interest_score
+  FROM user_interests ui
+  JOIN my_interests mi ON mi.interest_id = ui.interest_id
+  GROUP BY ui.user_id
+)
+SELECT c.*, COALESCE(iss.interest_score, 0) + CASE
+    WHEN c.distance_km IS NOT NULL
+    THEN GREATEST(0, 10 - c.distance_km::float / 10) ELSE 0
+  END AS match_score
+FROM candidates c
+LEFT JOIN interest_scores iss ON iss.user_id = c.user_id
+ORDER BY match_score DESC
+LIMIT $3</code></pre>
+      <h4>Regeln in der Datenbank</h4>
+      <p>Was die Datenbank selbst erzwingt, kann die API nicht vergessen. Das sind drei echte Beispiele aus der Baseline, gekürzt.</p>
+      <pre><code>-- Sensible Profildaten: Row-Level Security
+ALTER TABLE public.profile_sensitive_data ENABLE ROW LEVEL SECURITY;
+CREATE POLICY admin_access ON public.profile_sensitive_data
+  FOR SELECT USING (public.is_admin_context());
+
+-- Gelesen kann nicht vor gesendet liegen
+CONSTRAINT chk_message_read_after_sent
+  CHECK ((read_at IS NULL) OR (read_at &gt;= sent_at))
+
+-- Nur eine offene Kontaktanfrage pro Paar
+ADD CONSTRAINT uq_contact_request_active EXCLUDE USING btree
+  (sender_id WITH =, receiver_id WITH =) WHERE (...)</code></pre>
+    </div>
+
+    <div class="stack">
+      <h3>Wie sich das SQL verändert hat</h3>
+      <p>Die meisten Änderungen kamen aus Audits und Lasttests, nachdem ein Problem sichtbar geworden war. Die Werte stammen aus den Commits und Migrationen im öffentlichen Repo, jeder Eintrag verlinkt seinen Commit. Sie wurden auf einem Laptop gemessen.</p>
+      <div class="changes"><article class="change"><div class="when"><time>10.06.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/09c8d56">09c8d56</a></div><div class="stack"><h4>Deck: Profile ohne Standort fliegen nicht mehr raus</h4><p><strong>Warum:</strong> Die Umkreissuche verlangte einen Standort. Wer keinen hinterlegt hatte, tauchte nie im Swipe-Deck auf.</p><div class="diff"><div><span class="tag">Vorher</span><pre><code>AND p.location IS NOT NULL
+AND ST_DWithin(
+  (SELECT location FROM viewer_location)::geography,
+  p.location::geography, $2)</code></pre></div><div><span class="tag">Nachher</span><pre><code>AND (p.location IS NULL
+  OR ST_DWithin(
+    (SELECT location FROM viewer_location)::geography,
+    p.location::geography, $2))</code></pre></div></div><p><strong>Gebracht:</strong> Diese Profile bleiben im Deck und bekommen nur keine Entfernungspunkte. Dazu gibt es keinen Messwert, das war ein Logik-Fix.</p></div></article><article class="change"><div class="when"><time>10.09.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/18c70ee">18c70ee</a></div><div class="stack"><h4>Fünf fehlende Indizes</h4><p><strong>Warum:</strong> Fünf Spalten, die wie Fremdschlüssel gelesen werden, hatten keinen Index. Jeder Lesezugriff war ein Sequential Scan.</p><pre><code>CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_beef_votes_beef_id
+  ON public.beef_votes (beef_id);
+-- ebenso beef_comments, coin_transactions, teeth, badges</code></pre><p><strong>Gebracht:</strong> Lesen über Index statt Scan. Angelegt mit <code>CONCURRENTLY</code>, damit Schreibzugriffe nicht blockieren. Dazu gibt es keinen Messwert.</p></div></article><article class="change"><div class="when"><time>12.09.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/5ef65c1">5ef65c1</a></div><div class="stack"><h4>Ban-Trigger entfernt</h4><p><strong>Warum:</strong> Ein Audit fand dieselbe Regel zweimal, im Trigger und im App-Code. Der Trigger markierte einen manuellen Unban durch Admins fälschlich als vom Job aufgehoben.</p><pre><code>DROP TRIGGER IF EXISTS trg_strikes_check_ban_expiry ON public.strikes;
+DROP FUNCTION IF EXISTS public.trigger_check_ban_expiry();</code></pre><p><strong>Gebracht:</strong> Die Aufhebung eines Banns hat jetzt genau eine Quelle, und die falsche Markierung ist weg.</p></div></article><article class="change"><div class="when"><time>24.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/62978bd">62978bd</a></div><div class="stack"><h4>Zustandswechsel atomar statt lesen und speichern</h4><p><strong>Warum:</strong> Der Minuten-Cron läuft auf jeder Backend-Instanz und konnte für denselben Beef mehrere Spiele anlegen.</p><div class="diff"><div><span class="tag">Vorher</span><pre><code>await this.beefRepo.save(beef);</code></pre></div><div><span class="tag">Nachher</span><pre><code>UPDATE beefs SET status = $2, game_deadline_at = $3
+WHERE id = $1 AND status = $4;  -- 0 Zeilen: abbrechen
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_beef_games_beef
+  ON beef_games (beef_id);</code></pre></div></div><p><strong>Gebracht:</strong> Nur wer den Wechsel wirklich macht, legt das Spiel an. Ein Unique-Index verhindert Dubletten auch bei künftigen Fehlern.</p></div></article><article class="change"><div class="when"><time>24.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/a88e126">a88e126</a></div><div class="stack"><h4>Zeitlimits für Abfragen</h4><p><strong>Warum:</strong> Eine hängende Abfrage hielt ihre Verbindung fest und blockierte den Pool.</p><pre><code>statement_timeout: 5_000,
+idle_in_transaction_session_timeout: 10_000,</code></pre><p><strong>Gebracht:</strong> Das Backend gibt die Verbindung nach 5 s frei, offene Transaktionen ohne Aktivität enden nach 10 s. Der Worker darf für DSGVO-Exporte und Rechnungen länger.</p></div></article><article class="change"><div class="when"><time>26.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/5b9f4cb">5b9f4cb</a></div><div class="stack"><h4>Doppelten UNIQUE entfernt</h4><p><strong>Warum:</strong> <code>user_interests</code> hatte denselben Constraint zweimal, also doppelte Schreibkosten bei jedem Insert.</p><pre><code>ALTER TABLE user_interests
+  DROP CONSTRAINT IF EXISTS user_interests_user_id_interest_id_key;</code></pre><p><strong>Gebracht:</strong> Ein Index weniger zu pflegen. <code>ON CONFLICT</code> greift weiter.</p></div></article><article class="change"><div class="when"><time>27.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/0904cd0">0904cd0</a></div><div class="stack"><h4>Gelesen-Zeit aus der Datenbank</h4><p><strong>Warum:</strong> <code>read_at</code> kam aus der Node-Uhr und konnte vor <code>sent_at</code> liegen. Das verletzte <code>chk_message_read_after_sent</code>.</p><div class="diff"><div><span class="tag">Vorher</span><pre><code>{ read_at: new Date() }</code></pre></div><div><span class="tag">Nachher</span><pre><code>{ read_at: () =&gt; &#x27;clock_timestamp()&#x27; }</code></pre></div></div><p><strong>Gebracht:</strong> Vorher 156 bis 533 Mal Status 500 ab etwa 800 req/s im Nutzer-Mix. Diese Ursache ist behoben.</p></div></article><article class="change"><div class="when"><time>27.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/0904cd0">0904cd0</a></div><div class="stack"><h4>Medien-Warteschlange seitenweise</h4><p><strong>Warum:</strong> Ohne <code>LIMIT</code> lud jeder Aufruf die ganze Queue. Bei 150.000 offenen Medien waren das 34 MB JSON, und die Instanz stand schon bei 5 r/s.</p><div class="diff"><div><span class="tag">Vorher</span><pre><code>WHERE m.moderation_status = &#x27;pending&#x27;
+  AND m.deleted_at IS NULL
+ORDER BY m.uploaded_at ASC</code></pre></div><div><span class="tag">Nachher</span><pre><code>WHERE m.moderation_status = &#x27;pending&#x27;
+  AND m.deleted_at IS NULL
+  AND ($2::uuid IS NULL OR (m.uploaded_at, m.id) &gt;
+    (SELECT uploaded_at, id FROM media_uploads WHERE id = $2))
+ORDER BY m.uploaded_at ASC, m.id ASC
+LIMIT $1</code></pre></div></div><p><strong>Gebracht:</strong> 34 MB wurden zu 11 KB pro Aufruf, und die 504-Kaskade auf Nachbar-Routen ist weg. Ein Teilindex deckt Filter, Sortierung und Cursor ab.</p></div></article><article class="change"><div class="when"><time>27.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/0904cd0">0904cd0</a></div><div class="stack"><h4>39 Indizes auf Fremdschlüsseln</h4><p><strong>Warum:</strong> PostgreSQL indiziert Fremdschlüssel nicht von selbst. Bei <code>ON DELETE</code> scannte es die referenzierende Tabelle für jede betroffene Zeile.</p><pre><code>CREATE INDEX IF NOT EXISTS idx_messages_media_id ON messages (media_id);
+-- und 38 weitere</code></pre><p><strong>Gebracht:</strong> <code>DELETE FROM media_uploads</code> mit 150.000 Zeilen dauerte vorher über 2 Minuten. Laut Migration fällt das auf Sekunden, nachgemessen ist dieser Wert im Repo nicht.</p></div></article><article class="change"><div class="when"><time>27.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/16b2308">16b2308</a></div><div class="stack"><h4>Chat-Liste: LATERAL statt korrelierter Subquery</h4><p><strong>Warum:</strong> <code>MAX(sent_at)</code> lief pro Nachricht. Bei 1.800 Nachrichten pro Unterhaltung kostete das rund 9 ms allein in Subqueries.</p><div class="diff"><div><span class="tag">Vorher</span><pre><code>WHERE msg.conversation_id IN (:...ids)
+  AND msg.sent_at = (
+    SELECT MAX(m2.sent_at) FROM messages m2
+    WHERE m2.conversation_id = msg.conversation_id)</code></pre></div><div><span class="tag">Nachher</span><pre><code>FROM unnest($1::uuid[]) AS cid
+JOIN LATERAL (
+  SELECT m.* FROM messages m
+  WHERE m.conversation_id = cid
+  ORDER BY m.sent_at DESC, m.id DESC
+  LIMIT 1
+) lm ON true</code></pre></div></div><p><strong>Gebracht:</strong> 0,27 ms für 3 Unterhaltungen statt 12 ms für eine, über <code>idx_msg_conversation</code> mit <code>LIMIT 1</code>.</p></div></article><article class="change"><div class="when"><time>28.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/8e3771e">8e3771e</a></div><div class="stack"><h4>Index für den Benachrichtigungs-Feed</h4><p><strong>Warum:</strong> <code>ORDER BY is_read ASC, created_at DESC</code> lief als Seq Scan über alle Benachrichtigungen.</p><pre><code>CREATE INDEX IF NOT EXISTS idx_notif_user_feed
+  ON notifications (user_id, is_read, created_at DESC, id DESC);</code></pre><p><strong>Gebracht:</strong> Bei 71.000 Zeilen rund 0,7 ms statt rund 20 ms, also etwa 30× schneller.</p></div></article><article class="change"><div class="when"><time>28.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/a587999">a587999</a></div><div class="stack"><h4>Postgres-Einstellungen für den Lasttest</h4><p><strong>Warum:</strong> Rund ein Drittel der aktiven Queries wartete auf den WAL-Flush des eigenen COMMIT.</p><pre><code>shared_buffers=512MB  wal_buffers=16MB
+commit_delay=200      random_page_cost=1.1</code></pre><p><strong>Gebracht:</strong> Gemeinsamer WAL-Flush ohne Datenrisiko, anders als <code>synchronous_commit=off</code>. Zusammen mit Prod-Image und größerem Heavy-Gate: 1.200 req/s in 3 von 3 Läufen bestanden, 1.300 req/s degradiert ohne 504.</p></div></article><article class="change"><div class="when"><time>28.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/5ff6beb">5ff6beb</a></div><div class="stack"><h4>Dashboard-Abfragen 30 s cachen</h4><p><strong>Warum:</strong> Die Statistik-Queries scannen ganze Tabellen. Unter Last lag dort rund ein Zwölftel der aktiven DB-Zeit.</p><p><strong>Gebracht:</strong> Postgres-CPU bei 1.100 bis 1.200 req/s von etwa 5 auf etwa 2,5 Kerne, zusammen mit dem größeren Heavy-Gate.</p></div></article><article class="change"><div class="when"><time>28.10.2026</time><a href="https://github.com/Saos-EBB/YourBrand/commit/785f347">785f347</a></div><div class="stack"><h4>Deck-Rangliste einmal rechnen, dann nur nachprüfen</h4><p><strong>Warum:</strong> Das Deck bewertete bei jedem Aufruf alle Kandidaten. Bei 50.000 Profilen kostete das rund 90 ms DB-Zeit pro Aufruf.</p><pre><code>WHERE p.user_id = ANY($2::uuid[])
+  AND p.is_published = true
+  AND NOT EXISTS (SELECT 1 FROM swipes s
+    WHERE s.swiper_id = $1 AND s.swiped_id = p.user_id
+      AND (s.action = &#x27;like&#x27;
+        OR (s.action = &#x27;skip&#x27;
+          AND s.swiped_at &gt; NOW() - INTERVAL &#x27;30 days&#x27;)))</code></pre><p><strong>Gebracht:</strong> Die Rangliste (60 Plätze) liegt 5 Minuten in Redis, jeder Aufruf prüft nur noch, wer noch passt. Rund 0,5 ms, unabhängig von der Nutzerzahl. Im A/B bei 1.400 req/s: alt 2× nicht bestanden, neu 3× bestanden.</p></div></article></div>
+    </div>
+
+    <div class="stack">
+      <h3>Mandanten-Console</h3>
+      <p>Verwaltet alle Mandanten: Übersicht mit Kennzahlen und Verlauf, Config-Editor mit Prüfung, Diff und Auto-Commit, 19 Farb-Tokens mit WCAG-Kontrastprüfung, Logo-Upload mit erzeugtem Favicon. Ein neuer Mandant ist eine Config-Datei und ein Befehl.</p>
+    </div>
+
+    <div class="stack">
+      <h3>Loadtester</h3>
+      <p>Wie viel YourBrand aushält, habe ich gemessen. Ab etwa 75 req/s war beim ersten Bash-Skript mein Rechner am Limit, nicht die App. Deshalb gibt es einen eigenen Lastgenerator in C++17: feste Rate, epoll, keep-alive, keine Libraries, rund 1.300 Zeilen. Dazu kommen ein Live-Dashboard mit Durchsatz, p50/p95 und Statuscodes pro Sekunde sowie ein gewichteter Nutzer-Mix über 101 Endpunkte unter Last.</p>
+      <p><strong>Ergebnis:</strong> 1.200 req/s in allen Budgets, grob 6.000 bis 8.000 gleichzeitige Nutzer, gemessen auf einem Laptop mit 8 Kernen und 32 GB. Bei 1.300 req/s wird es langsamer, ein Lastabwurf verhindert aber den Kollaps.</p>
+      <p>Für mich war das ein Adrenalinkick. Von 300 auf 400 req/s zu kommen war schon cool, aber auf die 1.200 req/s bin ich stolz, mit den Grenzen meiner Hardware.</p>
+      <div class="chart" role="img" aria-label="p95 der schnellen Routen: 20 ms bei 600 req/s, 19 ms bei 1000, 49 ms bei 1100, 99 ms bei 1200 und 225 ms bei 1300. Das Budget liegt bei 100 ms.">
+        <div class="row"><span>600/s</span><div class="track"><div class="bar" style="width:8.89%"></div><div class="budget"></div></div><span class="val">20 ms</span></div>
+        <div class="row"><span>1.000/s</span><div class="track"><div class="bar" style="width:8.44%"></div><div class="budget"></div></div><span class="val">19 ms</span></div>
+        <div class="row"><span>1.100/s</span><div class="track"><div class="bar" style="width:21.78%"></div><div class="budget"></div></div><span class="val">49 ms</span></div>
+        <div class="row"><span>1.200/s</span><div class="track"><div class="bar" style="width:44%"></div><div class="budget"></div></div><span class="val">99 ms</span></div>
+        <div class="row"><span>1.300/s</span><div class="track"><div class="bar over" style="width:100%"></div><div class="budget"></div></div><span class="val">225 ms</span></div>
+      </div>
+      <p class="tag">p95 der schnellen Routen, Lauf vom 28.10.2026. Gestrichelt: Budget von 100 ms.</p>
+      <ul class="plain">
+        <li>Eine Admin-Route lieferte bei 150.000 offenen Medien 34 MB pro Aufruf und riss Nachbar-Routen mit. Jetzt seitenweise, 8 ms.</li>
+        <li>Die JWT-Prüfung las das Secret bei jedem Request neu ein und kostete rund 30 % CPU.</li>
+        <li>bcrypt blockierte den Thread-Pool. Mit eigenem Auth-Pool gehen rund 3× mehr Logins durch.</li>
+        <li>Zeitstempel aus der Node-Uhr erzeugten unter Last Hunderte 500er im Chat. Sie kommen jetzt aus der Datenbank.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="project tb">
+    <div class="stack">
+      <span class="kind">Bewerbungs-Bot, läuft lokal</span>
+      <h2>TschoBBo</h2>
+      <p class="lead">Mein persönliches Bewerbungs-Tool. Es sucht österreichische Jobbörsen ab und schreibt deutsche Anschreiben mit einem lokalen Sprachmodell, ohne Cloud. Abgeschickt wird immer von mir. Beim Scrapen arbeitet Tschobbo sichtbar für dich, ein lila Slime-Blob mit Sonnenbrille.</p>
+      <div class="links">
+        <a class="btn" href="https://github.com/Saos-EBB/JoBBoT">Code auf GitHub</a>
+        <a class="btn" href="/lessAdhd#eng/tschobbo">Architektur-Graph</a>
+      </div>
+    </div>
+
+    <ol class="pipe">
+      <li><b>Scrape</b><span>karriere.at, devjobs.at, LinkedIn, AMS, jobs.at</span></li>
+      <li><b>Filter</b><span>Regex oder JEV, ein kleines lokales Modell</span></li>
+      <li><b>Anschreiben</b><span>llama.cpp mit Gemma 4</span></li>
+      <li><b>Review</b><span>Mail-Client-Oberfläche, die Entscheidung bleibt bei mir</span></li>
+      <li><b>Gmail-Entwurf</b><span>Versand bleibt bewusst manuell</span></li>
+    </ol>
+
+    <div class="shots" id="tb-shots"></div>
+
+    <div class="stack">
+      <h3>Was sonst dazugehört</h3>
+      <ul class="plain">
+        <li>Ein Gmail-Sync erkennt Abgeschicktes von selbst. JEV liest die Antworten und erkennt Absage, Zusage oder „bitte übers Portal bewerben“.</li>
+        <li>Ein Kalender zeigt den Verlauf, und fürs AMS druckt das Tool einen Bewerbungsnachweis.</li>
+        <li>Das Modell habe ich nach Messung gewählt: Mit llama.cpp und Gemma 4 entstehen Anschreiben rund viermal schneller als vorher mit Ollama und Mistral, bei gleichem Prompt und gleichen Jobs.</li>
+        <li>Ein Job ist eine JSON-Datei, geschrieben über Temp-Datei und rename. Es bleiben nie halb geschriebene Daten zurück.</li>
+        <li>590 Tests laufen ohne Netz und ohne Modell.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="ask" id="demo" aria-labelledby="ask-h">
+      <h3 id="ask-h">Demo anfragen</h3>
+      <p>Füll das kurz aus und kopiere den Text. Auf der Kontaktseite findest du meine Adresse. Von dieser Seite aus wird nichts verschickt.</p>
+      <form id="ask" class="fields">
+        <label for="f-proj">Projekt<select id="f-proj"><option>YourBrand</option><option>TschoBBo</option><option>Beide</option></select></label>
+        <label for="f-name">Dein Name<input id="f-name" type="text" autocomplete="name"></label>
+        <label for="f-org">Firma (optional)<input id="f-org" type="text" autocomplete="organization"></label>
+        <label for="f-when">Wann passt es?<input id="f-when" type="text" placeholder="z. B. nächste Woche nachmittags"></label>
+        <label class="wide" for="f-why">Was möchtest du sehen?<textarea id="f-why" rows="3" placeholder="z. B. Mandanten-Console und Lasttest"></textarea></label>
+        <label class="wide" for="f-out">Deine Anfrage<textarea id="f-out" rows="6" readonly></textarea></label>
+      </form>
+      <div class="links"><button class="btn" type="button" id="copy">Text kopieren</button><a class="btn" href="/adhdActivated/contact">Zur Kontaktseite</a><span id="copied" role="status" class="muted"></span></div>
+    </section>
+</main>
+
+<dialog id="big" aria-label="Screenshot">
+  <img id="big-img" alt="">
+  <div class="dbar"><span id="big-cap"></span><button type="button" id="big-close">Schließen</button></div>
+</dialog>
+<footer class="foot">
+  <span>© 2026 Kevin Schaberl</span>
+  <a href="/impressum">Impressum</a>
+  <a href="/datenschutz">Datenschutz</a>
+</footer>
+<script type="module">
+const TENANTS = [
+  { name: "YourBrand", dir: "yourbrand", kind: "Die neutrale Basis", pack: "Premium: chat, matching, payments, hidden",
+    about: "Die Grundausstattung, von der jeder Mandant ausgeht: dunkles Theme in Pink, Lila und Hellblau, Sidebar-Navigation, neun Sprachen inklusive Leichter Sprache und Leetspeak.",
+    shots: [["01-dashboard", "Dashboard mit Moderation und Kennzahlen"], ["02-discover", "Entdecken mit Filtern nach Stadt, Umkreis und Alter"], ["05-chat-conversation", "Chat"], ["08-settings", "Einstellungen mit Design und Barrierefreiheit"]] },
+  { name: "Campus Match", dir: "campus-match", kind: "Dating und Freundschaften an der Uni", pack: "Premium: chat, matching, payments",
+    about: "Eine Kennenlern-App für Studierende: Leiste oben statt Sidebar, dunkles Pink und Flieder. Die Hidden Zone ist bewusst abgeschaltet. Sprachen: Deutsch und Englisch.",
+    shots: [["00-login", "Login"], ["01-dashboard", "Dashboard mit Kennzahlen"], ["05-chat-conversation", "Chat in Pink und Flieder"], ["07-settings", "Einstellungen"]] },
+  { name: "KiezConnect", dir: "kiez", kind: "Schwarzes Brett für die Nachbarschaft", pack: "Core: chat, payments, board",
+    about: "Ein Nachbarschaftsnetz für einen Kiez-Verein: hell, Ziegelrot, Aushänge mit Abreißzetteln wie am echten Brett. Kein Matching, hier geht es um Hilfe. Sprachen: Deutsch, Englisch, Leichte Sprache.",
+    shots: [["02-board", "Brett, nach Umkreis und Art gefiltert"], ["03-board-notice", "Aushang: Zettel abreißen und schreiben"], ["04-board-new", "Neuer Aushang"], ["05-requests", "Kontaktanfragen"], ["01-dashboard", "Dashboard mit Aushängen aus der Nähe"], ["00-login", "Login mit öffentlichen Aushängen"]] },
+  { name: "Miteinander", dir: "miteinander", kind: "Barrierearm, für betreutes Wohnen", pack: "Connect: chat, caretaker, orgs",
+    about: "Für einen Träger im ambulant betreuten Wohnen: Leichte Sprache als Standard, Atkinson Hyperlegible in 18 px, große Felder, Vorlesen, fertige Antworten im Chat und ein Hilfe-Knopf, der immer sichtbar ist.",
+    shots: [["01-dashboard", "Start mit „Meine Leute“ und Kennzahlen"], ["02-care", "Betreuung: Freigaben und Schutz"], ["03-org", "Organisation: betreute Personen, Rechte, Team"], ["06-chat-conversation", "Chat mit Vorlesen und fertigen Antworten"]] },
+  { name: "Underground", dir: "underground", kind: "Gaming-Crew mit Hidden Zone", pack: "Premium: chat, matching, payments, hidden",
+    about: "Eine Community für eine Gaming-Crew: dunkel, Signalgelb, die Navigation als Linienplan mit eigenen Menünamen. Volles Premium mit öffentlichen Beef-Duellen, Münzen und Bestenliste.",
+    shots: [["01-dashboard", "Leitstand: das Dashboard am Linienplan"], ["03-discover", "Crew: Entdecken unter eigenem Namen"], ["04-notifications", "Durchsagen mit Beef-Ergebnissen"], ["06-chat-conversation", "Chat"]] },
+];
+const TB = [["inbox", "Inbox mit Stellen und Filter-Ergebnis"], ["suche", "Suchbegriffe pro Portal"], ["scrape", "Scrape mit Tschobbo unten rechts"], ["aussortiert", "Aussortiert"]];
+
+const dialog = document.getElementById("big");
+const bigImg = document.getElementById("big-img");
+const bigCap = document.getElementById("big-cap");
+document.getElementById("big-close").addEventListener("click", () => dialog.close());
+dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+
+function shot(src, cap) {
+  const fig = document.createElement("figure");
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.setAttribute("aria-label", "Vergrößern: " + cap);
+  const img = document.createElement("img");
+  img.src = src; img.alt = cap; img.loading = "lazy";
+  btn.append(img);
+  btn.addEventListener("click", () => { bigImg.src = src; bigImg.alt = cap; bigCap.textContent = cap; dialog.showModal(); });
+  const c = document.createElement("figcaption");
+  c.textContent = cap;
+  fig.append(btn, c);
+  return fig;
+}
+
+const tabs = document.getElementById("tabs");
+function show(i) {
+  const t = TENANTS[i];
+  [...tabs.children].forEach((b, n) => b.setAttribute("aria-selected", String(n === i)));
+  document.getElementById("about").textContent = t.about;
+  document.getElementById("meta").textContent = t.kind + " · " + t.pack;
+  const vid = document.getElementById("vid");
+  vid.poster = "/not-hosted/yb/" + t.dir + "/poster.webp";
+  vid.src = "/not-hosted/yb/" + t.dir + "/clickthrough.mp4";
+  vid.setAttribute("aria-label", "Einmal durch " + t.name + " geklickt");
+  document.getElementById("vid-cap").textContent = "Einmal durch " + t.name + " geklickt, rund eine Minute.";
+  document.getElementById("shots").replaceChildren(...t.shots.map(([f, cap]) => shot("/not-hosted/yb/" + t.dir + "/" + f + ".webp", cap)));
+}
+TENANTS.forEach((t, i) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.role = "tab"; b.textContent = t.name;
+  b.addEventListener("click", () => show(i));
+  tabs.append(b);
+});
+show(0);
+document.getElementById("tb-shots").append(...TB.map(([f, cap]) => shot("/not-hosted/tb/" + f + ".webp", cap)));
+
+const out = document.getElementById("f-out");
+const val = (id) => document.getElementById(id).value.trim();
+function compose() {
+  const who = val("f-name") || "[dein Name]";
+  const lines = ["Hallo Kevin,", "", "ich hätte gern eine Live-Demo von " + val("f-proj") + "."];
+  if (val("f-why")) lines.push("Mich interessiert vor allem: " + val("f-why"));
+  if (val("f-when")) lines.push("Zeitlich passt: " + val("f-when"));
+  lines.push("", "Viele Grüße", who + (val("f-org") ? ", " + val("f-org") : ""));
+  out.value = lines.join("\n");
+}
+document.getElementById("ask").addEventListener("input", compose);
+document.getElementById("ask").addEventListener("submit", (e) => e.preventDefault());
+compose();
+document.getElementById("copy").addEventListener("click", () => {
+  const said = document.getElementById("copied");
+  navigator.clipboard.writeText(out.value).then(() => { said.textContent = "Kopiert."; }, () => { out.focus(); out.select(); said.textContent = "Text ist markiert, bitte selbst kopieren."; });
+});
+</script>
+  </body>
+</html>
