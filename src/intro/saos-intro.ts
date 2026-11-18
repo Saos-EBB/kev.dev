@@ -2,11 +2,9 @@ import gsap from "gsap";
 import "./saos-intro.css";
 import { UI } from "../i18n/ui";
 
-// Intro overlay: a "SAOS" still that shatters like glass (or slides away)
+// Intro overlay: a "SAOS" still that shatters like glass
 // and reveals the hero underneath. Faked physics — the shard pattern is
 // baked once below, GSAP only tweens 21 divs. No runtime simulation.
-
-export type IntroMode = "shatter" | "slide";
 
 // Baked once (seeded radial crack pattern around the impact point, 7 rays
 // x 3 rings), in percent of the screen. Together they cover the full
@@ -62,10 +60,7 @@ interface StillOptions {
 // The still: background, faint grid, wordmark and a hint, drawn on a canvas
 // so we can grab it as one image. gray=true is used by the loader to draw
 // the "not yet loaded" version; the colored version is the same call without
-// the flag (same data-URL reused for both the classic intro and the fill layer).
-function drawStill(width: number, height: number, opts: StillOptions = {}): string {
-  return drawStillCanvas(width, height, opts).toDataURL();
-}
+// the flag.
 
 function drawStillCanvas(width: number, height: number, opts: StillOptions = {}): HTMLCanvasElement {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -110,122 +105,6 @@ function drawStillCanvas(width: number, height: number, opts: StillOptions = {})
   ctx.fillText(opts.hint ?? UI.introClick, width / 2, height * 0.86);
 
   return canvas;
-}
-
-export function mountSaosIntro(
-  overlayEl: HTMLElement,
-  onComplete: () => void,
-  mode: IntroMode = "shatter",
-): () => void {
-  let destroyed = false;
-  let triggered = false;
-  let tween: gsap.core.Animation | null = null;
-
-  overlayEl.classList.add("saos-intro");
-  overlayEl.classList.add("is-active");
-  overlayEl.setAttribute("role", "button");
-  overlayEl.setAttribute("tabindex", "0");
-  overlayEl.setAttribute("aria-label", UI.introSkip);
-
-  const still = document.createElement("div");
-  still.className = "saos-intro-still";
-  overlayEl.appendChild(still);
-
-  // The wordmark uses the display font — draw the still only once it's in.
-  document.fonts.load("100px 'Urban Sign'").finally(() => {
-    if (destroyed) return;
-    still.style.backgroundImage = `url(${drawStill(window.innerWidth, window.innerHeight, {})})`;
-  });
-
-  function finish() {
-    if (!destroyed) onComplete();
-  }
-
-  function slideAway() {
-    tween = gsap.to(overlayEl, {
-      yPercent: -100,
-      duration: 0.9,
-      ease: "power3.inOut",
-      onComplete: finish,
-    });
-  }
-
-  function shatter() {
-    const image = still.style.backgroundImage;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    const shards = SHARDS.map((poly, i) => {
-      const cx = poly.reduce((sum, p) => sum + p[0], 0) / poly.length;
-      const cy = poly.reduce((sum, p) => sum + p[1], 0) / poly.length;
-      const el = document.createElement("div");
-      el.className = "saos-intro-shard";
-      el.style.backgroundImage = image;
-      el.style.clipPath = `polygon(${poly.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
-      el.style.transformOrigin = `${cx}% ${cy}%`;
-      overlayEl.appendChild(el);
-      return { el, i, cx, cy };
-    });
-    still.remove();
-
-    const tl = gsap.timeline({ onComplete: finish });
-    tween = tl;
-
-    for (const { el, i, cx, cy } of shards) {
-      // Direction away from the impact point, in px.
-      const dx = ((cx - IMPACT.x) / 100) * w;
-      const dy = ((cy - IMPACT.y) / 100) * h;
-      const dist = Math.hypot(cx - IMPACT.x, cy - IMPACT.y);
-
-      // Stagger = resistance: shards near the impact let go first.
-      const start = dist * 0.006 + shardNoise(i, 1) * 0.08;
-      const duration = 1.1 + shardNoise(i, 2) * 0.5;
-      const spin = (shardNoise(i, 3) - 0.5) * 2; // -1..1
-
-      // Gravity: y eases IN, so shards hang for a beat and then drop.
-      tl.to(el, { y: h * (0.9 + shardNoise(i, 4) * 0.5) + dy * 0.3, duration, ease: "power2.in" }, start);
-      tl.to(el, { x: dx * 0.5 + spin * 60, duration, ease: "power1.out" }, start);
-      tl.to(el, { rotation: spin * 70, scale: 0.85, duration, ease: "power1.in" }, start);
-      tl.to(el, { opacity: 0, duration: duration * 0.5, ease: "power1.in" }, start + duration * 0.5);
-    }
-  }
-
-  function trigger() {
-    // Ignore clicks until the still exists — the shards copy its image.
-    if (triggered || destroyed || !still.style.backgroundImage) return;
-    triggered = true;
-    // The hero underneath is usable right away; only the pieces are in the way.
-    overlayEl.classList.remove("is-active");
-    overlayEl.removeAttribute("tabindex");
-    overlayEl.removeAttribute("role");
-    if (mode === "slide") slideAway();
-    else shatter();
-  }
-
-  function onKeyDown(e: KeyboardEvent) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      trigger();
-    }
-  }
-
-  overlayEl.addEventListener("click", trigger);
-  overlayEl.addEventListener("keydown", onKeyDown);
-  overlayEl.focus({ preventScroll: true });
-
-  return function destroy() {
-    destroyed = true;
-    overlayEl.removeEventListener("click", trigger);
-    overlayEl.removeEventListener("keydown", onKeyDown);
-    tween?.kill();
-    gsap.killTweensOf(overlayEl);
-    overlayEl.replaceChildren();
-    overlayEl.classList.remove("saos-intro", "is-active");
-    overlayEl.removeAttribute("role");
-    overlayEl.removeAttribute("tabindex");
-    overlayEl.removeAttribute("aria-label");
-    overlayEl.style.transform = "";
-  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

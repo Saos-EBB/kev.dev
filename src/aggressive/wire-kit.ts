@@ -30,16 +30,9 @@ export function tint(m: THREE.Material & { color: THREE.Color }, color: number) 
 // `sketch`: only the real edges, no triangles: a clean drawing, for models that
 // can't match the skull's scanned detail.
 export type Look = { color?: number; opacity?: number; sketch?: boolean };
-export const DIM: Look = { opacity: 0.4 };
 export const BLUE: Look = { get color() { return COLORS.blue; }, opacity: 0.95 };
 
-let sketching = false;
-// Everything built inside `fn` comes out as a sketch.
-export const sketched = <T>(fn: () => T): T => {
-  sketching = true;
-  try { return fn(); } finally { sketching = false; }
-};
-export const part = (geo: THREE.BufferGeometry, { color = COLORS.ink, opacity = 0.7, sketch = sketching }: Look = {}) => {
+export const part = (geo: THREE.BufferGeometry, { color = COLORS.ink, opacity = 0.7, sketch = false }: Look = {}) => {
   const g = new THREE.Group();
   const fillMat = new THREE.MeshBasicMaterial({ color: COLORS.bg, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
   const lineMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: sketch ? 1 : opacity });
@@ -55,9 +48,7 @@ export const place = <T extends THREE.Object3D>(o: T, x = 0, y = 0, z = 0, rx = 
   return o;
 };
 export const box = (w: number, h: number, d: number, sx = 1, sy = 1, sz = 1, look?: Look) => part(new THREE.BoxGeometry(w, h, d, sx, sy, sz), look);
-export const cyl = (r1: number, r2: number, h: number, seg = 12, look?: Look) => part(new THREE.CylinderGeometry(r1, r2, h, seg, 1), look);
 export const ball = (r: number, look?: Look) => part(new THREE.SphereGeometry(r, 14, 10), look);
-export const lathe = (pts: number[][], seg = 16, look?: Look) => part(new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x, y)), seg), look);
 export const shape = (pts: number[][], depth: number, look?: Look, holes: number[][][] = []) => {
   const s = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
   for (const h of holes) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));

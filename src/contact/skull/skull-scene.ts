@@ -1,4 +1,4 @@
-// Contact 3D scene (loaded lazily by contact-skull.ts): the craniumCut01
+// Contact 3D scene (used by aggressive-intro.ts): the craniumCut01
 // skull comes at you from far behind the grid as you scroll in (setRise); once it's up, one
 // saw blade flies in and cuts deep into it, and green blood spurts out of
 // the wound in one hard burst towards the viewer, like a cheap splatter movie
@@ -34,7 +34,7 @@ const SWING_REST = 1.5; // s it stands at either end
 // vault +y; the nearest front vertex is the hit point), a big blade sunk
 // deep (depth = how far its rim goes past the hit point).
 const HIT = { want: [-0.32, 0.6, 0.35], scale: 0.78, depth: 0.42, tilt: [0.25, -0.3] } as const;
-// The blades the [more?] button sends after it (skull-more.ts), one per press;
+// The blades the [more?] button sends after it, one per press;
 // the last one comes by itself when the song starts.
 const MORE_HITS = [
   { want: [-0.85, 0.35, -0.2], scale: 0.7, depth: 0.38, tilt: [-0.2, 0.25] },
@@ -66,7 +66,7 @@ const AROUND_PRESSURE = 0.82, AROUND_DROP = 0.2, AROUND_COUNT = LITE ? 1000 : 28
 const MIST_COUNT = LITE ? 3000 : 10000, MIST_PRESSURE = 1.7, MIST_DROP = 0.07;
 const AROUND_DEPTH = { front: 3, range: 12 };
 
-export type SkullScene = { setRise(r: number): void; setGap(x: number, y: number): void; finish(): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number]; spin(on: boolean): void; swing(): number };
+export type SkullScene = { setRise(r: number): void; hitsLeft(): number; moreHit(stop?: number): Promise<void>; clean(): void; wound(): readonly [number, number]; spin(on: boolean): void; swing(): number };
 
 const css = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const easeOut = (x: number) => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3);
@@ -95,7 +95,7 @@ type HitDef = {
   out?: THREE.Vector3;
 };
 
-// `section` is the screen-high sticky stage (contact-skull.ts), not the tall
+// `section` is the screen-high stage, not a tall
 // scroll track around it: sizes, visibility and dragging are taken from it.
 export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasElement, links: HTMLElement[], onSettled: (settled: boolean) => void, { stopAt = FREEZE_AT, crown = 0, onRender }: SceneOptions = {}): Promise<SkullScene> {
   // Phones (LITE): no MSAA and at most 1.5x pixels — at 2-3x with
@@ -477,7 +477,7 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
 
   // ── drag to turn the whole scene ──
   // Sideways and up/down for a mouse; on touch only sideways (touch-action
-  // pan-y in skull.css), so a vertical swipe still scrolls the page.
+  // pan-y), so a vertical swipe still scrolls the page.
   const turn = { x: 0, y: 0, tx: 0, ty: 0 };
   let free = false, misty = false;
   const pivot = new THREE.Vector3();
@@ -686,10 +686,6 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       if (started && r < 0.5) reset(); // scrolled back out: replay next time
       dirty = true;
     },
-    setGap(x: number, y: number) {
-      gap.x = x; gap.y = y;
-      dirty = true;
-    },
     spin(on: boolean) {
       spinOn = on;
       touched();
@@ -726,13 +722,6 @@ export async function createSkullScene(section: HTMLElement, canvas: HTMLCanvasE
       if (misty) hits[i].addMist();
       hits[i].u = -BLADE_FLIGHT;
       if (i < fired) hits[i].fired = true; // unless scrolled back out meanwhile
-    },
-    finish() {
-      rise = 1; started = true; instant = true;
-      first.fired = true;
-      first.u = FREEZE_AT;
-      dirty = true;
-      pose(); renderer.render(scene, camera);
     },
   };
 }
