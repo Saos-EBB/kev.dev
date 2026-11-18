@@ -26,8 +26,6 @@ const STRIKES_DATA = [
   { id: 's3', user: 'Marco_B',     reason: 'Unangemessenes Foto', given_by: 'AdminUser1', date: '08.06.2025' },
 ]
 
-export const PROFANITY_WORDS = ['scheiße', 'idiot', 'wichser', 'hurensohn', 'depp', 'arschloch', 'bastard']
-
 const MEDIA_DATA = [
   { id: 'm1', type: 'image' as const, uploader: 'Sarah_K',    uploaded: 'Heute 10:14',   color: '#e879f9' },
   { id: 'm2', type: 'audio' as const, uploader: 'Marco_B',    uploaded: 'Heute 09:50',   color: '#60a5fa' },

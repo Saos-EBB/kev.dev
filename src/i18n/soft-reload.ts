@@ -37,8 +37,6 @@ try {
   color = sessionStorage.getItem(KEY);
   sessionStorage.removeItem(KEY);
 } catch { /* nothing to cover */ }
-// True right after a language switch: pages can skip what a first visit waits for.
-export const softReloaded = color !== null;
 if (color) {
   const d = cover(color);
   const drain = () => requestAnimationFrame(() => requestAnimationFrame(() => {
